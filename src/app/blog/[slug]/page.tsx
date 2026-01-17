@@ -77,8 +77,8 @@ export default async function BlogPostPage({ params }: BlogPostPageProps) {
               <Link
                 key={tag}
                 href={`/tags/${encodeURIComponent(tag)}`}
-                className="px-2 py-1 bg-gray-100 dark:bg-gray-700 rounded hover:bg-blue-100 dark:hover:bg-blue-900/30 transition-colors"
-                style={{ color: 'var(--foreground)' }}
+                className="px-2 py-1 rounded transition-colors"
+                style={{ backgroundColor: 'var(--tag-bg)', color: 'var(--tag-text)' }}
               >
                 #{tag}
               </Link>

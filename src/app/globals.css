@@ -5,6 +5,8 @@
 :root {
   --background: #ffffff;
   --foreground: #171717;
+  --tag-bg: #f3f4f6;
+  --tag-text: #374151;
 }
 
 @theme inline {
@@ -18,17 +20,23 @@
   :root {
     --background: #0a0a0a;
     --foreground: #ffffff;
+    --tag-bg: #374151;
+    --tag-text: #ffffff;
   }
 }
 
 .dark {
   --background: #0a0a0a;
   --foreground: #ffffff;
+  --tag-bg: #374151;
+  --tag-text: #ffffff;
 }
 
 .light {
   --background: #ffffff;
   --foreground: #171717;
+  --tag-bg: #f3f4f6;
+  --tag-text: #374151;
 }
 
 body {
