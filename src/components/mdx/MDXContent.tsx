@@ -1,7 +1,7 @@
 'use client';
 
-import { useMemo } from 'react';
 import ReactMarkdown from 'react-markdown';
+import rehypeRaw from 'rehype-raw';
 
 interface MDXContentProps {
   content: string;
@@ -11,6 +11,7 @@ export default function MDXContent({ content }: MDXContentProps) {
   return (
     <article className="prose prose-lg dark:prose-invert max-w-none">
       <ReactMarkdown
+        rehypePlugins={[rehypeRaw]}
         components={{
           h1: ({ children }) => (
             <h1 className="text-3xl font-bold text-gray-900 dark:text-white mt-8 mb-4">
@@ -88,6 +89,63 @@ export default function MDXContent({ content }: MDXContentProps) {
               {children}
             </strong>
           ),
+          // HTML elements for custom blocks
+          details: ({ children, ...props }) => (
+            <details
+              className="my-4 border border-gray-200 dark:border-gray-700 rounded-lg overflow-hidden"
+              {...props}
+            >
+              {children}
+            </details>
+          ),
+          summary: ({ children }) => (
+            <summary className="px-4 py-3 bg-gray-50 dark:bg-gray-800 cursor-pointer font-medium text-gray-900 dark:text-white hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors">
+              {children}
+            </summary>
+          ),
+          div: ({ className, children, ...props }) => (
+            <div className={className} {...props}>
+              {children}
+            </div>
+          ),
+          table: ({ children }) => (
+            <div className="overflow-x-auto my-4">
+              <table className="min-w-full border-collapse border border-gray-300 dark:border-gray-600">
+                {children}
+              </table>
+            </div>
+          ),
+          thead: ({ children }) => (
+            <thead className="bg-gray-100 dark:bg-gray-800">{children}</thead>
+          ),
+          tbody: ({ children }) => <tbody>{children}</tbody>,
+          tr: ({ children }) => (
+            <tr className="border-b border-gray-300 dark:border-gray-600">{children}</tr>
+          ),
+          th: ({ children }) => (
+            <th className="px-4 py-2 text-left font-semibold text-gray-900 dark:text-white border border-gray-300 dark:border-gray-600">
+              {children}
+            </th>
+          ),
+          td: ({ children }) => (
+            <td className="px-4 py-2 text-gray-700 dark:text-gray-300 border border-gray-300 dark:border-gray-600">
+              {children}
+            </td>
+          ),
+          input: ({ type, checked, ...props }) => {
+            if (type === 'checkbox') {
+              return (
+                <input
+                  type="checkbox"
+                  checked={checked}
+                  readOnly
+                  className="mr-2 w-4 h-4"
+                  {...props}
+                />
+              );
+            }
+            return <input type={type} {...props} />;
+          },
         }}
       >
         {content}
