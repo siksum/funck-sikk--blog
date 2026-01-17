@@ -482,30 +482,36 @@ export default function PostEditor({ initialData = {}, isEdit = false }: PostEdi
             </label>
 
             {/* Toolbar */}
-            <div className="flex flex-wrap gap-1 p-2 bg-gray-100 dark:bg-gray-700 border border-b-0 border-gray-300 dark:border-gray-600 rounded-t-lg">
-              {toolbarButtons.map((button, index) => (
-                <button
-                  key={index}
-                  type="button"
-                  onClick={() => button.action(textareaRef.current!, formData.content, (c) => setFormData({ ...formData, content: c }))}
-                  className="p-2 text-gray-600 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600 rounded transition-colors"
-                  title={button.label}
-                >
-                  {button.icon}
-                </button>
-              ))}
-              <div className="w-px h-6 bg-gray-300 dark:bg-gray-600 mx-1 self-center" />
-              {specialButtons.map((button, index) => (
-                <button
-                  key={`special-${index}`}
-                  type="button"
-                  onClick={button.action}
-                  className="p-2 text-gray-600 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600 rounded transition-colors"
-                  title={button.label}
-                >
-                  {button.icon}
-                </button>
-              ))}
+            <div className="bg-gray-100 dark:bg-gray-700 border border-b-0 border-gray-300 dark:border-gray-600 rounded-t-lg">
+              {/* Basic formatting buttons */}
+              <div className="flex flex-wrap gap-1 p-2 border-b border-gray-200 dark:border-gray-600">
+                {toolbarButtons.map((button, index) => (
+                  <button
+                    key={index}
+                    type="button"
+                    onClick={() => button.action(textareaRef.current!, formData.content, (c) => setFormData({ ...formData, content: c }))}
+                    className="p-2 text-gray-600 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600 rounded transition-colors"
+                    title={button.label}
+                  >
+                    {button.icon}
+                  </button>
+                ))}
+              </div>
+              {/* Special block buttons with labels */}
+              <div className="flex flex-wrap gap-1 p-2">
+                {specialButtons.map((button, index) => (
+                  <button
+                    key={`special-${index}`}
+                    type="button"
+                    onClick={button.action}
+                    className="px-2 py-1.5 text-gray-600 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600 rounded transition-colors flex items-center gap-1 text-xs border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800"
+                    title={button.label}
+                  >
+                    {button.icon}
+                    <span>{button.label}</span>
+                  </button>
+                ))}
+              </div>
             </div>
 
             <textarea
