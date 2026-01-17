@@ -1,0 +1,64 @@
+---
+title: 'Next.js 시작하기: 현대적인 웹 개발의 첫 걸음'
+description: 'Next.js의 기본 개념과 프로젝트 설정 방법을 알아봅니다. App Router, Server Components 등 최신 기능을 소개합니다.'
+date: '2026-01-17'
+category: 'Next.js'
+tags: ['Next.js', 'React', 'Web Development']
+thumbnail: '/images/nextjs-thumb.jpg'
+---
+
+# Next.js 시작하기
+
+Next.js는 React 기반의 풀스택 웹 프레임워크입니다. 이 글에서는 Next.js의 핵심 개념과 시작하는 방법을 알아보겠습니다.
+
+## Next.js란?
+
+Next.js는 Vercel에서 개발한 React 프레임워크로, 다음과 같은 기능을 제공합니다:
+
+- **Server-Side Rendering (SSR)**: 서버에서 HTML을 생성하여 SEO와 초기 로딩 속도를 개선합니다.
+- **Static Site Generation (SSG)**: 빌드 시 정적 HTML을 생성합니다.
+- **App Router**: 새로운 라우팅 시스템으로 더 직관적인 파일 기반 라우팅을 제공합니다.
+
+## 프로젝트 생성
+
+새 Next.js 프로젝트를 생성하려면 다음 명령어를 실행합니다:
+
+```bash
+npx create-next-app@latest my-app
+cd my-app
+npm run dev
+```
+
+## App Router 구조
+
+Next.js 13부터 도입된 App Router는 다음과 같은 구조를 가집니다:
+
+```
+src/
+├── app/
+│   ├── layout.tsx    # 루트 레이아웃
+│   ├── page.tsx      # 홈 페이지
+│   └── blog/
+│       ├── page.tsx  # /blog 페이지
+│       └── [slug]/
+│           └── page.tsx  # 동적 라우트
+```
+
+## Server Components
+
+기본적으로 App Router의 모든 컴포넌트는 서버 컴포넌트입니다. 클라이언트 상호작용이 필요한 경우 `'use client'` 지시어를 사용합니다.
+
+```tsx
+'use client';
+
+import { useState } from 'react';
+
+export default function Counter() {
+  const [count, setCount] = useState(0);
+  return <button onClick={() => setCount(count + 1)}>Count: {count}</button>;
+}
+```
+
+## 마무리
+
+Next.js는 현대적인 웹 개발에 필요한 모든 것을 제공합니다. 다음 글에서는 더 심화된 주제를 다루겠습니다.

@@ -2,16 +2,16 @@
 
 import { useState, useEffect, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
-import Link from 'next/link';
 import { Post } from '@/types';
 import { searchPosts } from '@/lib/search';
 
 interface SearchModalProps {
   isOpen: boolean;
   onClose: () => void;
+  posts: Post[];
 }
 
-export default function SearchModal({ isOpen, onClose }: SearchModalProps) {
+export default function SearchModal({ isOpen, onClose, posts }: SearchModalProps) {
   const [query, setQuery] = useState('');
   const [results, setResults] = useState<Post[]>([]);
   const [isSearching, setIsSearching] = useState(false);
@@ -26,13 +26,13 @@ export default function SearchModal({ isOpen, onClose }: SearchModalProps) {
 
     setIsSearching(true);
     const timer = setTimeout(() => {
-      const searchResults = searchPosts(query);
+      const searchResults = searchPosts(posts, query);
       setResults(searchResults);
       setIsSearching(false);
     }, 300);
 
     return () => clearTimeout(timer);
-  }, [query]);
+  }, [query, posts]);
 
   // Close on escape key
   useEffect(() => {

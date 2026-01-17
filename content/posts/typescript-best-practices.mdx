@@ -1,0 +1,64 @@
+---
+title: 'TypeScript 베스트 프랙티스: 더 안전한 코드 작성하기'
+description: 'TypeScript를 효과적으로 사용하기 위한 베스트 프랙티스와 팁들을 정리했습니다.'
+date: '2026-01-16'
+category: 'TypeScript'
+tags: ['TypeScript', 'JavaScript', 'Programming']
+---
+
+# TypeScript 베스트 프랙티스
+
+TypeScript를 더 효과적으로 사용하기 위한 베스트 프랙티스를 소개합니다.
+
+## 1. 엄격한 타입 검사 사용
+
+`tsconfig.json`에서 strict 모드를 활성화하세요:
+
+```json
+{
+  "compilerOptions": {
+    "strict": true
+  }
+}
+```
+
+## 2. 타입 추론 활용하기
+
+불필요한 타입 어노테이션을 피하고 타입 추론을 활용하세요:
+
+```typescript
+// Bad
+const name: string = 'John';
+
+// Good
+const name = 'John';
+```
+
+## 3. Union Types 사용
+
+여러 타입을 허용해야 할 때 Union Types를 사용하세요:
+
+```typescript
+type Status = 'pending' | 'approved' | 'rejected';
+
+function updateStatus(status: Status) {
+  // status는 위 세 가지 값 중 하나만 가능
+}
+```
+
+## 4. 제네릭 활용
+
+재사용 가능한 컴포넌트를 만들 때 제네릭을 활용하세요:
+
+```typescript
+function getFirst<T>(arr: T[]): T | undefined {
+  return arr[0];
+}
+
+const firstNumber = getFirst([1, 2, 3]); // number
+const firstString = getFirst(['a', 'b']); // string
+```
+
+## 결론
+
+TypeScript의 타입 시스템을 잘 활용하면 더 안전하고 유지보수하기 쉬운 코드를 작성할 수 있습니다.

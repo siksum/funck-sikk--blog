@@ -1,13 +1,11 @@
 import { Post } from '@/types';
-import { getAllPosts } from './posts';
 
-export function searchPosts(query: string): Post[] {
+export function searchPosts(posts: Post[], query: string): Post[] {
   if (!query.trim()) {
     return [];
   }
 
   const searchTerms = query.toLowerCase().split(' ').filter(Boolean);
-  const posts = getAllPosts();
 
   return posts.filter((post) => {
     const searchableText = [
