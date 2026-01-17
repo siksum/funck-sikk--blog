@@ -29,22 +29,22 @@ export default function MDXContent({ content }: MDXContentProps) {
             </h3>
           ),
           p: ({ children }) => (
-            <p className="text-gray-700 dark:text-gray-300 leading-relaxed mb-4">
+            <p className="text-gray-700 dark:text-white leading-relaxed mb-4">
               {children}
             </p>
           ),
           ul: ({ children }) => (
-            <ul className="list-disc list-inside text-gray-700 dark:text-gray-300 mb-4 space-y-2">
+            <ul className="list-disc list-inside text-gray-700 dark:text-white mb-4 space-y-2">
               {children}
             </ul>
           ),
           ol: ({ children }) => (
-            <ol className="list-decimal list-inside text-gray-700 dark:text-gray-300 mb-4 space-y-2">
+            <ol className="list-decimal list-inside text-gray-700 dark:text-white mb-4 space-y-2">
               {children}
             </ol>
           ),
           li: ({ children }) => (
-            <li className="text-gray-700 dark:text-gray-300">{children}</li>
+            <li className="text-gray-700 dark:text-white">{children}</li>
           ),
           code: ({ className, children, ...props }) => {
             const isInline = !className;
@@ -70,7 +70,7 @@ export default function MDXContent({ content }: MDXContentProps) {
             </pre>
           ),
           blockquote: ({ children }) => (
-            <blockquote className="border-l-4 border-blue-500 pl-4 italic text-gray-600 dark:text-gray-400 my-4">
+            <blockquote className="border-l-4 border-blue-500 pl-4 italic text-gray-600 dark:text-gray-200 my-4">
               {children}
             </blockquote>
           ),
@@ -128,7 +128,7 @@ export default function MDXContent({ content }: MDXContentProps) {
             </th>
           ),
           td: ({ children }) => (
-            <td className="px-4 py-2 text-gray-700 dark:text-gray-300 border border-gray-300 dark:border-gray-600">
+            <td className="px-4 py-2 text-gray-700 dark:text-white border border-gray-300 dark:border-gray-600">
               {children}
             </td>
           ),
