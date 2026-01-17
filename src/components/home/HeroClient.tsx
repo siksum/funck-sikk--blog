@@ -55,7 +55,7 @@ export default function HeroClient({ stats }: HeroClientProps) {
         <div className="text-center">
           {/* Title */}
           <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold text-gray-900 dark:text-white mb-4">
-            Funck Sikk Blog
+            func(sikk)
           </h1>
 
           {/* Subtitle */}

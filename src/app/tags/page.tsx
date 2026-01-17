@@ -2,7 +2,7 @@ import Link from 'next/link';
 import { getAllTags } from '@/lib/posts';
 
 export const metadata = {
-  title: '태그 | Funck Sikk Blog',
+  title: '태그 | func(sikk)',
   description: '블로그 태그 목록',
 };
 

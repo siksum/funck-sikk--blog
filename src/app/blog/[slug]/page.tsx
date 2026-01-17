@@ -18,7 +18,7 @@ export async function generateMetadata({ params }: BlogPostPageProps) {
   }
 
   return {
-    title: `${post.title} | Funck Sikk Blog`,
+    title: `${post.title} | func(sikk)`,
     description: post.description,
   };
 }

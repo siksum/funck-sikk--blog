@@ -16,7 +16,7 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "Funck Sikk Blog",
+  title: "func(sikk)",
   description: "A personal blog about development, technology, and more.",
 };
 

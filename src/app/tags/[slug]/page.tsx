@@ -11,7 +11,7 @@ export async function generateMetadata({ params }: TagPageProps) {
   const tagName = decodeURIComponent(slug);
 
   return {
-    title: `#${tagName} | Funck Sikk Blog`,
+    title: `#${tagName} | func(sikk)`,
     description: `${tagName} 태그가 포함된 포스트 목록`,
   };
 }

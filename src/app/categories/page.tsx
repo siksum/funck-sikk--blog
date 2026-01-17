@@ -2,7 +2,7 @@ import Link from 'next/link';
 import { getAllCategories, getPostsByCategory } from '@/lib/posts';
 
 export const metadata = {
-  title: '카테고리 | Funck Sikk Blog',
+  title: '카테고리 | func(sikk)',
   description: '블로그 카테고리 목록',
 };
 

@@ -1,7 +1,7 @@
 import Link from 'next/link';
 
 export const metadata = {
-  title: 'About | Funck Sikk Blog',
+  title: 'About | func(sikk)',
   description: '블로그 소개 및 운영자 정보',
 };
 
@@ -20,7 +20,7 @@ export default function AboutPage() {
           </div>
           <div className="text-center md:text-left">
             <h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-2">
-              Funck Sikk
+              func(sikk)
             </h2>
             <p className="text-gray-600 dark:text-gray-400 mb-4">
               개발자 | 기술 블로거

@@ -3,7 +3,7 @@ import Sidebar from '@/components/sidebar/Sidebar';
 import { getAllPosts, getRecentPosts, getAllCategories, getAllTags } from '@/lib/posts';
 
 export const metadata = {
-  title: '블로그 | Funck Sikk Blog',
+  title: '블로그 | func(sikk)',
   description: '모든 블로그 포스트',
 };
 

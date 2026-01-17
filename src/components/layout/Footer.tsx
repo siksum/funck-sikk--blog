@@ -8,7 +8,7 @@ export default function Footer() {
           {/* About */}
           <div>
             <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">
-              Funck Sikk Blog
+              func(sikk)
             </h3>
             <p className="text-gray-600 dark:text-gray-400">
               A personal blog about development, technology, and more.
@@ -94,7 +94,7 @@ export default function Footer() {
 
         <div className="mt-8 pt-8 border-t border-gray-200 dark:border-gray-700">
           <p className="text-center text-gray-500 dark:text-gray-400">
-            &copy; {new Date().getFullYear()} Funck Sikk Blog. All rights reserved.
+            &copy; {new Date().getFullYear()} func(sikk). All rights reserved.
           </p>
         </div>
       </div>

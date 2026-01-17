@@ -11,7 +11,7 @@ export async function generateMetadata({ params }: CategoryPageProps) {
   const categoryName = decodeURIComponent(slug);
 
   return {
-    title: `${categoryName} | Funck Sikk Blog`,
+    title: `${categoryName} | func(sikk)`,
     description: `${categoryName} 카테고리의 포스트 목록`,
   };
 }
