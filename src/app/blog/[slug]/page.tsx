@@ -2,6 +2,7 @@ import { notFound } from 'next/navigation';
 import Link from 'next/link';
 import { getPostBySlug, getAllPosts } from '@/lib/posts';
 import MDXContent from '@/components/mdx/MDXContent';
+import CommentSection from '@/components/comments/CommentSection';
 
 interface BlogPostPageProps {
   params: Promise<{ slug: string }>;
@@ -92,6 +93,9 @@ export default async function BlogPostPage({ params }: BlogPostPageProps) {
 
       {/* Content */}
       <MDXContent content={post.content} />
+
+      {/* Comments */}
+      <CommentSection postSlug={slug} />
 
       {/* Footer */}
       <footer className="mt-12 pt-8 border-t border-gray-200 dark:border-gray-700">

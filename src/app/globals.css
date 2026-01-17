@@ -1,5 +1,5 @@
+@import url('https://cdn.jsdelivr.net/npm/font-kopub@1.0/kopubdotum.min.css');
 @import "tailwindcss";
-@import url('https://cdn.jsdelivr.net/gh/niceplugin/KoPubWorld/KoPubWorldDotum.css');
 
 @variant dark (&.dark);
 
@@ -43,7 +43,7 @@
 body {
   background: var(--background);
   color: var(--foreground);
-  font-family: 'KoPubWorldDotum', var(--font-sans), Arial, Helvetica, sans-serif;
+  font-family: 'KoPub Dotum', var(--font-sans), Arial, Helvetica, sans-serif;
 }
 
 /* Smooth transitions for theme changes */
