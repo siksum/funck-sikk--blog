@@ -9,7 +9,7 @@ interface MDXContentProps {
 
 export default function MDXContent({ content }: MDXContentProps) {
   return (
-    <article className="prose prose-lg dark:prose-invert max-w-none">
+    <article className="max-w-none">
       <ReactMarkdown
         rehypePlugins={[rehypeRaw]}
         components={{
