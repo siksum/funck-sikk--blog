@@ -9,42 +9,42 @@ interface MDXContentProps {
 
 export default function MDXContent({ content }: MDXContentProps) {
   return (
-    <article className="max-w-none">
+    <article className="max-w-none" style={{ color: 'var(--foreground)' }}>
       <ReactMarkdown
         rehypePlugins={[rehypeRaw]}
         components={{
           h1: ({ children }) => (
-            <h1 className="text-3xl font-bold text-gray-900 dark:text-white mt-8 mb-4">
+            <h1 className="text-3xl font-bold mt-8 mb-4" style={{ color: 'var(--foreground)' }}>
               {children}
             </h1>
           ),
           h2: ({ children }) => (
-            <h2 className="text-2xl font-bold text-gray-900 dark:text-white mt-8 mb-4">
+            <h2 className="text-2xl font-bold mt-8 mb-4" style={{ color: 'var(--foreground)' }}>
               {children}
             </h2>
           ),
           h3: ({ children }) => (
-            <h3 className="text-xl font-bold text-gray-900 dark:text-white mt-6 mb-3">
+            <h3 className="text-xl font-bold mt-6 mb-3" style={{ color: 'var(--foreground)' }}>
               {children}
             </h3>
           ),
           p: ({ children }) => (
-            <p className="text-gray-700 dark:text-white leading-relaxed mb-4">
+            <p className="leading-relaxed mb-4" style={{ color: 'var(--foreground)' }}>
               {children}
             </p>
           ),
           ul: ({ children }) => (
-            <ul className="list-disc list-inside text-gray-700 dark:text-white mb-4 space-y-2">
+            <ul className="list-disc list-inside mb-4 space-y-2" style={{ color: 'var(--foreground)' }}>
               {children}
             </ul>
           ),
           ol: ({ children }) => (
-            <ol className="list-decimal list-inside text-gray-700 dark:text-white mb-4 space-y-2">
+            <ol className="list-decimal list-inside mb-4 space-y-2" style={{ color: 'var(--foreground)' }}>
               {children}
             </ol>
           ),
           li: ({ children }) => (
-            <li className="text-gray-700 dark:text-white">{children}</li>
+            <li style={{ color: 'var(--foreground)' }}>{children}</li>
           ),
           code: ({ className, children, ...props }) => {
             const isInline = !className;
@@ -70,7 +70,7 @@ export default function MDXContent({ content }: MDXContentProps) {
             </pre>
           ),
           blockquote: ({ children }) => (
-            <blockquote className="border-l-4 border-blue-500 pl-4 italic text-gray-600 dark:text-gray-200 my-4">
+            <blockquote className="border-l-4 border-blue-500 pl-4 italic my-4" style={{ color: 'var(--foreground)', opacity: 0.8 }}>
               {children}
             </blockquote>
           ),
@@ -85,7 +85,7 @@ export default function MDXContent({ content }: MDXContentProps) {
             </a>
           ),
           strong: ({ children }) => (
-            <strong className="font-bold text-gray-900 dark:text-white">
+            <strong className="font-bold" style={{ color: 'var(--foreground)' }}>
               {children}
             </strong>
           ),
@@ -99,7 +99,7 @@ export default function MDXContent({ content }: MDXContentProps) {
             </details>
           ),
           summary: ({ children }) => (
-            <summary className="px-4 py-3 bg-gray-50 dark:bg-gray-800 cursor-pointer font-medium text-gray-900 dark:text-white hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors">
+            <summary className="px-4 py-3 bg-gray-50 dark:bg-gray-800 cursor-pointer font-medium hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors" style={{ color: 'var(--foreground)' }}>
               {children}
             </summary>
           ),
@@ -123,12 +123,12 @@ export default function MDXContent({ content }: MDXContentProps) {
             <tr className="border-b border-gray-300 dark:border-gray-600">{children}</tr>
           ),
           th: ({ children }) => (
-            <th className="px-4 py-2 text-left font-semibold text-gray-900 dark:text-white border border-gray-300 dark:border-gray-600">
+            <th className="px-4 py-2 text-left font-semibold border border-gray-300 dark:border-gray-600" style={{ color: 'var(--foreground)' }}>
               {children}
             </th>
           ),
           td: ({ children }) => (
-            <td className="px-4 py-2 text-gray-700 dark:text-white border border-gray-300 dark:border-gray-600">
+            <td className="px-4 py-2 border border-gray-300 dark:border-gray-600" style={{ color: 'var(--foreground)' }}>
               {children}
             </td>
           ),
