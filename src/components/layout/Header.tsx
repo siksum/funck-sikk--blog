@@ -4,6 +4,7 @@ import { useState } from 'react';
 import Link from 'next/link';
 import { NavItem } from '@/types';
 import ThemeToggle from '@/components/ui/ThemeToggle';
+import SearchModal from '@/components/search/SearchModal';
 
 const navigation: NavItem[] = [
   {
@@ -128,23 +129,7 @@ export default function Header() {
       </div>
 
       {/* Search Modal */}
-      {isSearchOpen && (
-        <div className="fixed inset-0 z-50 bg-black/50" onClick={() => setIsSearchOpen(false)}>
-          <div
-            className="fixed top-20 left-1/2 -translate-x-1/2 w-full max-w-2xl mx-auto px-4"
-            onClick={(e) => e.stopPropagation()}
-          >
-            <div className="bg-white dark:bg-gray-800 rounded-lg shadow-xl p-4">
-              <input
-                type="text"
-                placeholder="Search posts..."
-                className="w-full px-4 py-3 text-lg border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
-                autoFocus
-              />
-            </div>
-          </div>
-        </div>
-      )}
+      <SearchModal isOpen={isSearchOpen} onClose={() => setIsSearchOpen(false)} />
     </header>
   );
 }
