@@ -3,6 +3,8 @@
 import { useState, useRef } from 'react';
 import { useRouter } from 'next/navigation';
 import MDXContent from '@/components/mdx/MDXContent';
+import TableEditor from './TableEditor';
+import DatabaseEditor from './DatabaseEditor';
 
 interface PostEditorProps {
   initialData?: {
@@ -28,6 +30,8 @@ export default function PostEditor({ initialData = {}, isEdit = false }: PostEdi
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const [saving, setSaving] = useState(false);
   const [activeTab, setActiveTab] = useState<'edit' | 'preview' | 'split'>('split');
+  const [showTableEditor, setShowTableEditor] = useState(false);
+  const [showDatabaseEditor, setShowDatabaseEditor] = useState(false);
   const [formData, setFormData] = useState({
     slug: initialData.slug || '',
     title: initialData.title || '',
@@ -84,6 +88,28 @@ export default function PostEditor({ initialData = {}, isEdit = false }: PostEdi
     setTimeout(() => {
       textarea.focus();
       textarea.setSelectionRange(start + prefix.length, start + prefix.length);
+    }, 0);
+  };
+
+  const insertMarkdown = (markdown: string) => {
+    const textarea = textareaRef.current;
+    if (!textarea) {
+      setFormData({ ...formData, content: formData.content + markdown });
+      return;
+    }
+
+    const start = textarea.selectionStart;
+    const newContent =
+      formData.content.substring(0, start) +
+      markdown +
+      formData.content.substring(start);
+
+    setFormData({ ...formData, content: newContent });
+
+    setTimeout(() => {
+      textarea.focus();
+      const newCursorPos = start + markdown.length;
+      textarea.setSelectionRange(newCursorPos, newCursorPos);
     }, 0);
   };
 
@@ -193,6 +219,23 @@ export default function PostEditor({ initialData = {}, isEdit = false }: PostEdi
       ),
       label: '구분선',
       action: () => insertText('\n---\n', ''),
+    },
+  ];
+
+  const specialButtons = [
+    {
+      icon: (
+        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 10h18M3 14h18M3 6h18M3 18h18M9 6v12M15 6v12" />
+        </svg>
+      ),
+      label: '테이블',
+      action: () => setShowTableEditor(true),
+    },
+    {
+      icon: <span className="text-sm">📊</span>,
+      label: '데이터베이스',
+      action: () => setShowDatabaseEditor(true),
     },
   ];
 
@@ -375,6 +418,18 @@ export default function PostEditor({ initialData = {}, isEdit = false }: PostEdi
                   {button.icon}
                 </button>
               ))}
+              <div className="w-px h-6 bg-gray-300 dark:bg-gray-600 mx-1 self-center" />
+              {specialButtons.map((button, index) => (
+                <button
+                  key={`special-${index}`}
+                  type="button"
+                  onClick={button.action}
+                  className="p-2 text-gray-600 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600 rounded transition-colors"
+                  title={button.label}
+                >
+                  {button.icon}
+                </button>
+              ))}
             </div>
 
             <textarea
@@ -423,6 +478,20 @@ export default function PostEditor({ initialData = {}, isEdit = false }: PostEdi
           {saving ? '저장 중...' : isEdit ? '수정하기' : '작성하기'}
         </button>
       </div>
+
+      {/* Table Editor Modal */}
+      <TableEditor
+        isOpen={showTableEditor}
+        onClose={() => setShowTableEditor(false)}
+        onInsert={insertMarkdown}
+      />
+
+      {/* Database Editor Modal */}
+      <DatabaseEditor
+        isOpen={showDatabaseEditor}
+        onClose={() => setShowDatabaseEditor(false)}
+        onInsert={insertMarkdown}
+      />
     </form>
   );
 }
