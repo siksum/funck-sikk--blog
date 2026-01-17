@@ -110,13 +110,14 @@ export default function PostCard({ post, variant = 'default' }: PostCardProps) {
           </p>
 
           {/* Meta */}
-          <div className="flex items-center justify-between text-xs text-gray-500 dark:text-gray-400">
+          <div className="flex flex-col gap-2 text-xs" style={{ color: 'var(--foreground)', opacity: 0.7 }}>
             <time dateTime={post.date}>{formattedDate}</time>
-            <div className="flex items-center gap-2">
+            <div className="flex flex-wrap gap-2">
               {post.tags.slice(0, 2).map((tag) => (
                 <span
                   key={tag}
-                  className="px-2 py-0.5 bg-gray-100 dark:bg-gray-700 rounded"
+                  className="px-2 py-0.5 rounded"
+                  style={{ backgroundColor: 'var(--tag-bg)', color: 'var(--tag-text)' }}
                 >
                   #{tag}
                 </span>
