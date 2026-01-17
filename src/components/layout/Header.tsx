@@ -3,6 +3,7 @@
 import { useState } from 'react';
 import Link from 'next/link';
 import { NavItem } from '@/types';
+import ThemeToggle from '@/components/ui/ThemeToggle';
 
 const navigation: NavItem[] = [
   {
@@ -74,25 +75,8 @@ export default function Header() {
               </svg>
             </button>
 
-            {/* Theme Toggle - placeholder, will be implemented later */}
-            <button
-              className="p-2 text-gray-600 hover:text-gray-900 dark:text-gray-300 dark:hover:text-white transition-colors"
-              aria-label="Toggle theme"
-            >
-              <svg
-                className="w-5 h-5"
-                fill="none"
-                stroke="currentColor"
-                viewBox="0 0 24 24"
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth={2}
-                  d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z"
-                />
-              </svg>
-            </button>
+            {/* Theme Toggle */}
+            <ThemeToggle />
 
             {/* Mobile Menu Button */}
             <button
