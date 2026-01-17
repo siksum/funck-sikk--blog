@@ -5,6 +5,12 @@ import { useRouter } from 'next/navigation';
 import MDXContent from '@/components/mdx/MDXContent';
 import TableEditor from './TableEditor';
 import DatabaseEditor from './DatabaseEditor';
+import CalloutEditor from './CalloutEditor';
+import CodeBlockEditor from './CodeBlockEditor';
+import ToggleEditor from './ToggleEditor';
+import ColumnEditor from './ColumnEditor';
+import MathEditor from './MathEditor';
+import ButtonEditor from './ButtonEditor';
 
 interface PostEditorProps {
   initialData?: {
@@ -32,6 +38,12 @@ export default function PostEditor({ initialData = {}, isEdit = false }: PostEdi
   const [activeTab, setActiveTab] = useState<'edit' | 'preview' | 'split'>('split');
   const [showTableEditor, setShowTableEditor] = useState(false);
   const [showDatabaseEditor, setShowDatabaseEditor] = useState(false);
+  const [showCalloutEditor, setShowCalloutEditor] = useState(false);
+  const [showCodeBlockEditor, setShowCodeBlockEditor] = useState(false);
+  const [showToggleEditor, setShowToggleEditor] = useState(false);
+  const [showColumnEditor, setShowColumnEditor] = useState(false);
+  const [showMathEditor, setShowMathEditor] = useState(false);
+  const [showButtonEditor, setShowButtonEditor] = useState(false);
   const [formData, setFormData] = useState({
     slug: initialData.slug || '',
     title: initialData.title || '',
@@ -236,6 +248,70 @@ export default function PostEditor({ initialData = {}, isEdit = false }: PostEdi
       icon: <span className="text-sm">📊</span>,
       label: '데이터베이스',
       action: () => setShowDatabaseEditor(true),
+    },
+    {
+      icon: (
+        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h7" />
+        </svg>
+      ),
+      label: '목차',
+      action: () => insertMarkdown('\n## 목차\n\n- [섹션 1](#섹션-1)\n- [섹션 2](#섹션-2)\n- [섹션 3](#섹션-3)\n\n'),
+    },
+    {
+      icon: <span className="text-sm font-mono">∑</span>,
+      label: '수학 공식',
+      action: () => setShowMathEditor(true),
+    },
+    {
+      icon: (
+        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 15l-2 5L9 9l11 4-5 2zm0 0l5 5M7.188 2.239l.777 2.897M5.136 7.965l-2.898-.777M13.95 4.05l-2.122 2.122m-5.657 5.656l-2.12 2.122" />
+        </svg>
+      ),
+      label: '버튼',
+      action: () => setShowButtonEditor(true),
+    },
+    {
+      icon: (
+        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+        </svg>
+      ),
+      label: '토글',
+      action: () => setShowToggleEditor(true),
+    },
+    {
+      icon: (
+        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 17V7m0 10a2 2 0 01-2 2H5a2 2 0 01-2-2V7a2 2 0 012-2h2a2 2 0 012 2m0 10a2 2 0 002 2h2a2 2 0 002-2M9 7a2 2 0 012-2h2a2 2 0 012 2m0 10V7m0 10a2 2 0 002 2h2a2 2 0 002-2V7a2 2 0 00-2-2h-2a2 2 0 00-2 2" />
+        </svg>
+      ),
+      label: '열 나누기',
+      action: () => setShowColumnEditor(true),
+    },
+    {
+      icon: (
+        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 20l4-16m4 4l4 4-4 4M6 16l-4-4 4-4" />
+        </svg>
+      ),
+      label: '코드 블록 (고급)',
+      action: () => setShowCodeBlockEditor(true),
+    },
+    {
+      icon: (
+        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+        </svg>
+      ),
+      label: '체크박스',
+      action: () => insertAtLineStart('- [ ] '),
+    },
+    {
+      icon: <span className="text-sm">💡</span>,
+      label: '콜아웃',
+      action: () => setShowCalloutEditor(true),
     },
   ];
 
@@ -490,6 +566,48 @@ export default function PostEditor({ initialData = {}, isEdit = false }: PostEdi
       <DatabaseEditor
         isOpen={showDatabaseEditor}
         onClose={() => setShowDatabaseEditor(false)}
+        onInsert={insertMarkdown}
+      />
+
+      {/* Callout Editor Modal */}
+      <CalloutEditor
+        isOpen={showCalloutEditor}
+        onClose={() => setShowCalloutEditor(false)}
+        onInsert={insertMarkdown}
+      />
+
+      {/* Code Block Editor Modal */}
+      <CodeBlockEditor
+        isOpen={showCodeBlockEditor}
+        onClose={() => setShowCodeBlockEditor(false)}
+        onInsert={insertMarkdown}
+      />
+
+      {/* Toggle Editor Modal */}
+      <ToggleEditor
+        isOpen={showToggleEditor}
+        onClose={() => setShowToggleEditor(false)}
+        onInsert={insertMarkdown}
+      />
+
+      {/* Column Editor Modal */}
+      <ColumnEditor
+        isOpen={showColumnEditor}
+        onClose={() => setShowColumnEditor(false)}
+        onInsert={insertMarkdown}
+      />
+
+      {/* Math Editor Modal */}
+      <MathEditor
+        isOpen={showMathEditor}
+        onClose={() => setShowMathEditor(false)}
+        onInsert={insertMarkdown}
+      />
+
+      {/* Button Editor Modal */}
+      <ButtonEditor
+        isOpen={showButtonEditor}
+        onClose={() => setShowButtonEditor(false)}
         onInsert={insertMarkdown}
       />
     </form>
