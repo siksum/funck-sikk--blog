@@ -1,5 +1,6 @@
 import HeroSection from '@/components/home/HeroSection';
 import PostList from '@/components/post/PostList';
+import SubscribeForm from '@/components/subscribe/SubscribeForm';
 import { getRecentPosts } from '@/lib/posts';
 
 export default function Home() {
@@ -21,6 +22,11 @@ export default function Home() {
           </a>
         </div>
         <PostList posts={recentPosts} />
+
+        {/* Subscribe Section */}
+        <div className="mt-12">
+          <SubscribeForm />
+        </div>
       </div>
     </>
   );
