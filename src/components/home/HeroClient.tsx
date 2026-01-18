@@ -12,6 +12,219 @@ interface HeroClientProps {
   stats: StatItem[];
 }
 
+// Web3-style 3D Mesh Sphere Component
+function MeshSphere() {
+  return (
+    <div
+      className="absolute hidden lg:block"
+      style={{
+        top: '10%',
+        right: '5%',
+        width: '320px',
+        height: '320px',
+        animation: 'floatSphere 8s ease-in-out infinite',
+      }}
+    >
+      {/* Outer glow */}
+      <div
+        className="absolute inset-0 rounded-full"
+        style={{
+          background: 'radial-gradient(circle, var(--neon-pink-glow) 0%, transparent 70%)',
+          filter: 'blur(40px)',
+          animation: 'pulseSphere 4s ease-in-out infinite',
+        }}
+      />
+
+      {/* Main sphere with mesh pattern */}
+      <div
+        className="absolute inset-8 rounded-full overflow-hidden"
+        style={{
+          background: `
+            radial-gradient(circle at 30% 30%, rgba(244, 114, 182, 0.4) 0%, transparent 50%),
+            radial-gradient(circle at 70% 70%, rgba(192, 132, 252, 0.3) 0%, transparent 50%),
+            radial-gradient(circle, rgba(34, 211, 238, 0.1) 0%, transparent 70%)
+          `,
+          boxShadow: `
+            inset -20px -20px 60px rgba(0,0,0,0.3),
+            inset 20px 20px 60px rgba(255,255,255,0.05),
+            0 0 80px var(--neon-pink-glow)
+          `,
+        }}
+      >
+        {/* Mesh grid lines - horizontal */}
+        <svg
+          className="absolute inset-0 w-full h-full"
+          viewBox="0 0 200 200"
+          style={{ opacity: 0.6 }}
+        >
+          {/* Horizontal arcs */}
+          {[20, 40, 60, 80, 100, 120, 140, 160, 180].map((y, i) => (
+            <ellipse
+              key={`h-${i}`}
+              cx="100"
+              cy={y}
+              rx={Math.sqrt(10000 - Math.pow(y - 100, 2)) * 0.95}
+              ry="3"
+              fill="none"
+              stroke="var(--neon-pink)"
+              strokeWidth="0.5"
+              opacity={0.4 + (1 - Math.abs(y - 100) / 100) * 0.4}
+            />
+          ))}
+          {/* Vertical arcs */}
+          {[20, 40, 60, 80, 100, 120, 140, 160, 180].map((x, i) => (
+            <ellipse
+              key={`v-${i}`}
+              cx={x}
+              cy="100"
+              rx="3"
+              ry={Math.sqrt(10000 - Math.pow(x - 100, 2)) * 0.95}
+              fill="none"
+              stroke="var(--neon-cyan)"
+              strokeWidth="0.5"
+              opacity={0.3 + (1 - Math.abs(x - 100) / 100) * 0.4}
+            />
+          ))}
+        </svg>
+
+        {/* Dot particles on sphere surface */}
+        <div className="absolute inset-0">
+          {Array.from({ length: 40 }).map((_, i) => {
+            const angle = (i / 40) * Math.PI * 2;
+            const radius = 35 + Math.random() * 30;
+            const x = 50 + Math.cos(angle + i * 0.3) * radius * Math.sin(i * 0.2 + 1);
+            const y = 50 + Math.sin(angle + i * 0.3) * radius * Math.cos(i * 0.15);
+            const size = 2 + Math.random() * 3;
+            const opacity = 0.3 + Math.random() * 0.5;
+            return (
+              <div
+                key={i}
+                className="absolute rounded-full"
+                style={{
+                  left: `${x}%`,
+                  top: `${y}%`,
+                  width: `${size}px`,
+                  height: `${size}px`,
+                  background: i % 3 === 0 ? 'var(--neon-pink)' : i % 3 === 1 ? 'var(--neon-cyan)' : 'var(--neon-purple)',
+                  opacity,
+                  boxShadow: `0 0 ${size * 2}px currentColor`,
+                  animation: `twinkle ${2 + Math.random() * 3}s ease-in-out infinite`,
+                  animationDelay: `${Math.random() * 2}s`,
+                }}
+              />
+            );
+          })}
+        </div>
+      </div>
+
+      {/* Rotating ring */}
+      <div
+        className="absolute inset-4 rounded-full border border-pink-500/30 dark:border-pink-400/40"
+        style={{
+          animation: 'rotateSphere 20s linear infinite',
+          boxShadow: '0 0 20px var(--neon-pink-glow)',
+        }}
+      />
+      <div
+        className="absolute inset-2 rounded-full border border-cyan-500/20 dark:border-cyan-400/30"
+        style={{
+          animation: 'rotateSphere 25s linear infinite reverse',
+        }}
+      />
+
+      <style jsx>{`
+        @keyframes floatSphere {
+          0%, 100% { transform: translateY(0px) rotate(0deg); }
+          50% { transform: translateY(-20px) rotate(5deg); }
+        }
+        @keyframes pulseSphere {
+          0%, 100% { opacity: 0.5; transform: scale(1); }
+          50% { opacity: 0.8; transform: scale(1.1); }
+        }
+        @keyframes rotateSphere {
+          0% { transform: rotateZ(0deg); }
+          100% { transform: rotateZ(360deg); }
+        }
+        @keyframes twinkle {
+          0%, 100% { opacity: 0.3; transform: scale(1); }
+          50% { opacity: 0.8; transform: scale(1.2); }
+        }
+      `}</style>
+    </div>
+  );
+}
+
+// Secondary smaller sphere
+function SmallMeshSphere() {
+  return (
+    <div
+      className="absolute hidden xl:block"
+      style={{
+        bottom: '15%',
+        left: '8%',
+        width: '180px',
+        height: '180px',
+        animation: 'floatSmall 10s ease-in-out infinite',
+      }}
+    >
+      {/* Glow */}
+      <div
+        className="absolute inset-0 rounded-full"
+        style={{
+          background: 'radial-gradient(circle, var(--neon-cyan-glow) 0%, transparent 70%)',
+          filter: 'blur(30px)',
+        }}
+      />
+
+      {/* Sphere */}
+      <div
+        className="absolute inset-6 rounded-full overflow-hidden"
+        style={{
+          background: `
+            radial-gradient(circle at 30% 30%, rgba(34, 211, 238, 0.4) 0%, transparent 50%),
+            radial-gradient(circle at 70% 70%, rgba(192, 132, 252, 0.2) 0%, transparent 50%)
+          `,
+          boxShadow: `
+            inset -10px -10px 30px rgba(0,0,0,0.3),
+            inset 10px 10px 30px rgba(255,255,255,0.05),
+            0 0 40px var(--neon-cyan-glow)
+          `,
+        }}
+      >
+        {/* Dots */}
+        {Array.from({ length: 20 }).map((_, i) => {
+          const angle = (i / 20) * Math.PI * 2;
+          const radius = 25 + Math.random() * 20;
+          const x = 50 + Math.cos(angle) * radius * Math.sin(i * 0.3 + 1);
+          const y = 50 + Math.sin(angle) * radius;
+          return (
+            <div
+              key={i}
+              className="absolute rounded-full"
+              style={{
+                left: `${x}%`,
+                top: `${y}%`,
+                width: '2px',
+                height: '2px',
+                background: i % 2 === 0 ? 'var(--neon-cyan)' : 'var(--neon-purple)',
+                opacity: 0.4 + Math.random() * 0.4,
+                boxShadow: '0 0 4px currentColor',
+              }}
+            />
+          );
+        })}
+      </div>
+
+      <style jsx>{`
+        @keyframes floatSmall {
+          0%, 100% { transform: translateY(0px) translateX(0px); }
+          50% { transform: translateY(15px) translateX(-10px); }
+        }
+      `}</style>
+    </div>
+  );
+}
+
 function AnimatedCounter({ value, suffix = '' }: { value: number; suffix?: string }) {
   const [count, setCount] = useState(0);
 
@@ -103,6 +316,9 @@ export default function HeroClient({ stats }: HeroClientProps) {
         }}
       />
 
+      {/* 3D Mesh Spheres */}
+      <MeshSphere />
+      <SmallMeshSphere />
 
       <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="text-center">

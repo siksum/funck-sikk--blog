@@ -1,4 +1,4 @@
-@import url('https://cdn.jsdelivr.net/npm/font-kopub@1.0/kopubdotum.min.css');
+/* KoPub Dotum font is loaded via layout.tsx <head> for better performance */
 @import "tailwindcss";
 
 @variant dark (&.dark);
