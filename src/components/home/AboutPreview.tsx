@@ -14,10 +14,11 @@ export default function AboutPreview() {
       <div
         className="relative rounded-2xl py-12 px-8 md:py-14 md:px-10 overflow-hidden transition-all duration-300
           bg-white/80 dark:bg-gray-900/80 backdrop-blur-xl
-          border border-gray-200 dark:border-pink-500/20
-          shadow-lg shadow-gray-200/50 dark:shadow-pink-500/5
-          hover:border-pink-300 dark:hover:border-pink-400/40
-          hover:shadow-xl hover:shadow-pink-200/30 dark:hover:shadow-pink-500/10"
+          border border-gray-200 dark:border-violet-400/30
+          shadow-lg shadow-gray-200/50 dark:shadow-violet-500/10
+          hover:border-violet-300 dark:hover:border-violet-300/50
+          hover:shadow-2xl hover:shadow-violet-200/40 dark:hover:shadow-violet-400/30
+          hover:-translate-y-3"
       >
         {/* Subtle gradient overlay */}
         <div
@@ -28,10 +29,10 @@ export default function AboutPreview() {
         />
 
         {/* Corner accents */}
-        <div className="absolute top-0 left-0 w-5 h-5 border-t-2 border-l-2 border-pink-300 dark:border-pink-400/60 rounded-tl-xl opacity-60" />
-        <div className="absolute top-0 right-0 w-5 h-5 border-t-2 border-r-2 border-cyan-300 dark:border-cyan-400/60 rounded-tr-xl opacity-60" />
-        <div className="absolute bottom-0 left-0 w-5 h-5 border-b-2 border-l-2 border-cyan-300 dark:border-cyan-400/60 rounded-bl-xl opacity-60" />
-        <div className="absolute bottom-0 right-0 w-5 h-5 border-b-2 border-r-2 border-pink-300 dark:border-pink-400/60 rounded-br-xl opacity-60" />
+        <div className="absolute top-0 left-0 w-5 h-5 border-t-2 border-l-2 border-violet-300 dark:border-violet-400 rounded-tl-xl opacity-60 dark:opacity-80" />
+        <div className="absolute top-0 right-0 w-5 h-5 border-t-2 border-r-2 border-indigo-300 dark:border-indigo-400 rounded-tr-xl opacity-60 dark:opacity-80" />
+        <div className="absolute bottom-0 left-0 w-5 h-5 border-b-2 border-l-2 border-indigo-300 dark:border-indigo-400 rounded-bl-xl opacity-60 dark:opacity-80" />
+        <div className="absolute bottom-0 right-0 w-5 h-5 border-b-2 border-r-2 border-violet-300 dark:border-violet-400 rounded-br-xl opacity-60 dark:opacity-80" />
 
         {/* Scan line effect - dark mode only */}
         <div
@@ -44,7 +45,7 @@ export default function AboutPreview() {
         <div className="relative z-10 flex flex-col md:flex-row items-center gap-6 md:gap-10">
           {/* Profile Avatar */}
           <div
-            className="w-24 h-24 md:w-28 md:h-28 rounded-full bg-gradient-to-br from-pink-400 via-rose-400 to-pink-500 dark:from-pink-500 dark:via-rose-500 dark:to-pink-600 flex items-center justify-center text-2xl md:text-3xl font-bold shrink-0 text-white relative"
+            className="w-24 h-24 md:w-28 md:h-28 rounded-full bg-gradient-to-br from-violet-400 via-purple-400 to-violet-500 dark:from-violet-400 dark:via-purple-400 dark:to-violet-500 flex items-center justify-center text-2xl md:text-3xl font-bold shrink-0 text-white relative"
             style={{
               boxShadow: '0 0 30px var(--neon-pink-glow), inset 0 0 20px rgba(255, 255, 255, 0.1)',
             }}
@@ -68,10 +69,10 @@ export default function AboutPreview() {
             <h3 className="text-2xl md:text-3xl font-bold mb-3 text-gray-800 dark:text-white">
               Namryeong Kim
             </h3>
-            <p className="text-gray-600 dark:text-gray-400 text-base mb-2 max-w-xl">
+            <p className="text-gray-600 dark:text-gray-300 text-base mb-2 max-w-xl">
               M.S. Candidate in Convergence Security Engineering.
             </p>
-            <p className="text-gray-600 dark:text-gray-400 text-base mb-4 max-w-xl">
+            <p className="text-gray-600 dark:text-gray-300 text-base mb-4 max-w-xl">
               Web3 Security, AI Security, 그리고 자동화된 취약점 탐지를 연구합니다.
             </p>
             <div className="flex flex-wrap justify-start gap-2">
@@ -79,9 +80,9 @@ export default function AboutPreview() {
                 <span
                   key={tag.name}
                   className={`px-3 py-1 rounded-full text-sm font-medium transition-all hover:scale-105
-                    ${tag.color === 'pink' ? 'bg-pink-100 dark:bg-pink-500/20 text-pink-600 dark:text-pink-400 border border-pink-200 dark:border-pink-500/30' : ''}
-                    ${tag.color === 'cyan' ? 'bg-cyan-100 dark:bg-cyan-500/20 text-cyan-600 dark:text-cyan-400 border border-cyan-200 dark:border-cyan-500/30' : ''}
-                    ${tag.color === 'purple' ? 'bg-purple-100 dark:bg-purple-500/20 text-purple-600 dark:text-purple-400 border border-purple-200 dark:border-purple-500/30' : ''}
+                    ${tag.color === 'pink' ? 'bg-violet-100 dark:bg-violet-500/25 text-violet-600 dark:text-violet-300 border border-violet-200 dark:border-violet-400/40' : ''}
+                    ${tag.color === 'cyan' ? 'bg-indigo-100 dark:bg-indigo-500/25 text-indigo-600 dark:text-indigo-300 border border-indigo-200 dark:border-indigo-400/40' : ''}
+                    ${tag.color === 'purple' ? 'bg-purple-100 dark:bg-purple-500/25 text-purple-600 dark:text-purple-300 border border-purple-200 dark:border-purple-400/40' : ''}
                   `}
                 >
                   {tag.name}
@@ -93,16 +94,16 @@ export default function AboutPreview() {
           {/* Arrow */}
           <div
             className="hidden md:flex items-center justify-center w-12 h-12 rounded-full shrink-0 transition-all
-              bg-pink-100 dark:bg-pink-500/20
-              border border-pink-200 dark:border-pink-500/30
-              group-hover:bg-pink-200 dark:group-hover:bg-pink-500/30
-              group-hover:border-pink-300 dark:group-hover:border-pink-400/50"
+              bg-violet-100 dark:bg-violet-500/25
+              border border-violet-200 dark:border-violet-400/40
+              group-hover:bg-violet-200 dark:group-hover:bg-violet-500/35
+              group-hover:border-violet-300 dark:group-hover:border-violet-300/60"
             style={{
               boxShadow: '0 0 15px var(--neon-pink-glow)',
             }}
           >
             <svg
-              className="w-6 h-6 text-pink-500 dark:text-pink-400 group-hover:translate-x-1 transition-transform"
+              className="w-6 h-6 text-violet-500 dark:text-violet-300 group-hover:translate-x-1 transition-transform"
               fill="none"
               stroke="currentColor"
               viewBox="0 0 24 24"

@@ -40,9 +40,9 @@ function MeshSphere() {
         className="absolute inset-8 rounded-full overflow-hidden"
         style={{
           background: `
-            radial-gradient(circle at 30% 30%, rgba(244, 114, 182, 0.4) 0%, transparent 50%),
+            radial-gradient(circle at 30% 30%, rgba(139, 92, 246, 0.4) 0%, transparent 50%),
             radial-gradient(circle at 70% 70%, rgba(192, 132, 252, 0.3) 0%, transparent 50%),
-            radial-gradient(circle, rgba(34, 211, 238, 0.1) 0%, transparent 70%)
+            radial-gradient(circle, rgba(99, 102, 241, 0.15) 0%, transparent 70%)
           `,
           boxShadow: `
             inset -20px -20px 60px rgba(0,0,0,0.3),
@@ -119,14 +119,14 @@ function MeshSphere() {
 
       {/* Rotating ring */}
       <div
-        className="absolute inset-4 rounded-full border border-pink-500/30 dark:border-pink-400/40"
+        className="absolute inset-4 rounded-full border border-violet-500/30 dark:border-violet-400/40"
         style={{
           animation: 'rotateSphere 20s linear infinite',
           boxShadow: '0 0 20px var(--neon-pink-glow)',
         }}
       />
       <div
-        className="absolute inset-2 rounded-full border border-cyan-500/20 dark:border-cyan-400/30"
+        className="absolute inset-2 rounded-full border border-indigo-500/20 dark:border-indigo-400/30"
         style={{
           animation: 'rotateSphere 25s linear infinite reverse',
         }}
@@ -181,7 +181,7 @@ function SmallMeshSphere() {
         className="absolute inset-6 rounded-full overflow-hidden"
         style={{
           background: `
-            radial-gradient(circle at 30% 30%, rgba(34, 211, 238, 0.4) 0%, transparent 50%),
+            radial-gradient(circle at 30% 30%, rgba(99, 102, 241, 0.4) 0%, transparent 50%),
             radial-gradient(circle at 70% 70%, rgba(192, 132, 252, 0.2) 0%, transparent 50%)
           `,
           boxShadow: `
@@ -254,16 +254,16 @@ function AnimatedCounter({ value, suffix = '' }: { value: number; suffix?: strin
   }, [value]);
 
   return (
-    <span className="text-3xl md:text-4xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-pink-500 via-rose-500 to-pink-400 dark:from-pink-400 dark:via-rose-400 dark:to-pink-500 neon-text-pink">
+    <span className="text-3xl md:text-4xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-violet-500 via-purple-500 to-violet-400 dark:from-violet-300 dark:via-purple-300 dark:to-violet-400 neon-text-pink">
       {count}
-      <span className="text-lg ml-1 text-gray-500 dark:text-gray-400">{suffix}</span>
+      <span className="text-lg ml-1 text-gray-500 dark:text-gray-300">{suffix}</span>
     </span>
   );
 }
 
 export default function HeroClient({ stats }: HeroClientProps) {
   return (
-    <section className="relative py-24 md:py-36 overflow-hidden bg-gradient-to-br from-gray-50 via-pink-50/30 to-cyan-50/20 dark:from-[#0a0a0f] dark:via-[#0d0d14] dark:to-[#0a0a0f]">
+    <section className="relative py-24 md:py-36 overflow-hidden bg-gradient-to-br from-gray-50 via-violet-50/20 to-indigo-50/10 dark:from-[#09090b] dark:via-[#0c0c10] dark:to-[#09090b]">
       {/* Animated gradient mesh background */}
       <div className="absolute inset-0 overflow-hidden pointer-events-none">
         {/* Primary orb - Pink */}
@@ -290,10 +290,10 @@ export default function HeroClient({ stats }: HeroClientProps) {
         />
 
         {/* Floating particles */}
-        <div className="absolute top-[20%] left-[20%] w-2 h-2 rounded-full bg-pink-500 dark:bg-pink-400 animate-bounce opacity-60" style={{ animationDuration: '3s' }} />
-        <div className="absolute top-[30%] right-[25%] w-1.5 h-1.5 rounded-full bg-cyan-500 dark:bg-cyan-400 animate-bounce opacity-50" style={{ animationDuration: '4s', animationDelay: '1s' }} />
+        <div className="absolute top-[20%] left-[20%] w-2 h-2 rounded-full bg-violet-500 dark:bg-violet-400 animate-bounce opacity-60" style={{ animationDuration: '3s' }} />
+        <div className="absolute top-[30%] right-[25%] w-1.5 h-1.5 rounded-full bg-indigo-500 dark:bg-indigo-400 animate-bounce opacity-50" style={{ animationDuration: '4s', animationDelay: '1s' }} />
         <div className="absolute bottom-[35%] left-[35%] w-1 h-1 rounded-full bg-purple-500 dark:bg-purple-400 animate-bounce opacity-40" style={{ animationDuration: '5s', animationDelay: '2s' }} />
-        <div className="absolute top-[60%] right-[15%] w-1.5 h-1.5 rounded-full bg-pink-400 dark:bg-pink-300 animate-bounce opacity-50" style={{ animationDuration: '3.5s', animationDelay: '0.5s' }} />
+        <div className="absolute top-[60%] right-[15%] w-1.5 h-1.5 rounded-full bg-violet-400 dark:bg-violet-300 animate-bounce opacity-50" style={{ animationDuration: '3.5s', animationDelay: '0.5s' }} />
       </div>
 
       {/* Grid pattern */}
@@ -326,14 +326,14 @@ export default function HeroClient({ stats }: HeroClientProps) {
           <div
             className="inline-flex items-center gap-2 px-5 py-2.5 rounded-full mb-10 transition-all
               bg-white/80 dark:bg-gray-900/80 backdrop-blur-xl
-              border border-pink-200 dark:border-pink-500/30
-              shadow-lg shadow-pink-200/30 dark:shadow-pink-500/10
-              hover:border-pink-300 dark:hover:border-pink-400/50"
+              border border-violet-200 dark:border-violet-500/30
+              shadow-lg shadow-violet-200/30 dark:shadow-violet-500/10
+              hover:border-violet-300 dark:hover:border-violet-400/50"
           >
             <span className="relative flex h-2.5 w-2.5">
-              <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-pink-400 opacity-75"></span>
+              <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-violet-400 opacity-75"></span>
               <span
-                className="relative inline-flex rounded-full h-2.5 w-2.5 bg-pink-500"
+                className="relative inline-flex rounded-full h-2.5 w-2.5 bg-violet-500"
                 style={{ boxShadow: '0 0 10px var(--neon-pink-glow)' }}
               ></span>
             </span>
@@ -343,45 +343,45 @@ export default function HeroClient({ stats }: HeroClientProps) {
           {/* Title with neon glow */}
           <h1 className="text-5xl md:text-6xl lg:text-8xl font-black mb-8 tracking-tight">
             <span
-              className="text-transparent bg-clip-text bg-gradient-to-r from-pink-600 via-rose-500 to-pink-500 dark:from-pink-400 dark:via-rose-400 dark:to-pink-500"
+              className="text-transparent bg-clip-text bg-gradient-to-r from-violet-600 via-purple-500 to-violet-500 dark:from-violet-300 dark:via-purple-300 dark:to-violet-400"
               style={{
                 filter: 'drop-shadow(0 0 30px var(--neon-pink-glow))',
               }}
             >
               func
             </span>
-            <span className="text-gray-800 dark:text-gray-300">(</span>
+            <span className="text-gray-800 dark:text-gray-200">(</span>
             <span
-              className="text-transparent bg-clip-text bg-gradient-to-r from-cyan-600 via-pink-500 to-rose-500 dark:from-cyan-400 dark:via-pink-400 dark:to-rose-400"
+              className="text-transparent bg-clip-text bg-gradient-to-r from-indigo-600 via-violet-500 to-purple-500 dark:from-indigo-300 dark:via-violet-300 dark:to-purple-300"
               style={{
                 filter: 'drop-shadow(0 0 30px var(--neon-cyan-glow))',
               }}
             >
               sikk
             </span>
-            <span className="text-gray-800 dark:text-gray-300">)</span>
+            <span className="text-gray-800 dark:text-gray-200">)</span>
           </h1>
 
           {/* Subtitle - terminal style */}
           <div
             className="inline-flex items-center gap-3 px-6 py-3 rounded-lg mb-8
               bg-gray-100/80 dark:bg-gray-900/60 backdrop-blur-sm
-              border border-gray-200 dark:border-pink-500/20
-              shadow-lg dark:shadow-pink-500/5"
+              border border-gray-200 dark:border-violet-500/20
+              shadow-lg dark:shadow-violet-500/5"
           >
-            <span className="text-cyan-600 dark:text-cyan-400 font-mono text-lg">&gt;</span>
+            <span className="text-indigo-600 dark:text-indigo-400 font-mono text-lg">&gt;</span>
             <p className="text-xl md:text-2xl font-mono font-medium text-gray-700 dark:text-gray-200 tracking-wider">
               I LOVE WHAT I DO
-              <span className="animate-pulse text-pink-500 dark:text-pink-400 ml-1">_</span>
+              <span className="animate-pulse text-violet-500 dark:text-violet-400 ml-1">_</span>
             </p>
           </div>
 
           {/* Description */}
-          <p className="max-w-2xl mx-auto text-gray-600 dark:text-gray-400 mb-14 text-lg leading-relaxed">
+          <p className="max-w-2xl mx-auto text-gray-600 dark:text-gray-300 mb-14 text-lg leading-relaxed">
             보안 연구, 취약점 분석, 그리고 더 많은 것들에 대한 기록.
             <br />
             <span
-              className="text-pink-600 dark:text-pink-400 font-semibold"
+              className="text-violet-600 dark:text-violet-300 font-semibold"
               style={{ textShadow: '0 0 20px var(--neon-pink-glow)' }}
             >
               나눔으로 커지는 지식
@@ -393,29 +393,29 @@ export default function HeroClient({ stats }: HeroClientProps) {
           <div
             className="inline-flex items-center gap-8 md:gap-14 px-10 py-8 rounded-2xl relative
               bg-white/70 dark:bg-gray-900/70 backdrop-blur-xl
-              border border-pink-200/50 dark:border-pink-500/30
-              shadow-xl shadow-pink-200/20 dark:shadow-pink-500/10"
+              border border-violet-200/50 dark:border-violet-500/30
+              shadow-xl shadow-violet-200/20 dark:shadow-violet-500/10"
             style={{
               boxShadow: '0 0 40px var(--neon-pink-glow), 0 25px 50px var(--card-shadow)',
             }}
           >
             {/* Corner accents */}
-            <div className="absolute top-0 left-0 w-4 h-4 border-t-2 border-l-2 border-pink-400 dark:border-pink-400 rounded-tl-lg" />
-            <div className="absolute top-0 right-0 w-4 h-4 border-t-2 border-r-2 border-cyan-400 dark:border-cyan-400 rounded-tr-lg" />
-            <div className="absolute bottom-0 left-0 w-4 h-4 border-b-2 border-l-2 border-cyan-400 dark:border-cyan-400 rounded-bl-lg" />
-            <div className="absolute bottom-0 right-0 w-4 h-4 border-b-2 border-r-2 border-pink-400 dark:border-pink-400 rounded-br-lg" />
+            <div className="absolute top-0 left-0 w-4 h-4 border-t-2 border-l-2 border-violet-400 dark:border-violet-400 rounded-tl-lg" />
+            <div className="absolute top-0 right-0 w-4 h-4 border-t-2 border-r-2 border-indigo-400 dark:border-indigo-400 rounded-tr-lg" />
+            <div className="absolute bottom-0 left-0 w-4 h-4 border-b-2 border-l-2 border-indigo-400 dark:border-indigo-400 rounded-bl-lg" />
+            <div className="absolute bottom-0 right-0 w-4 h-4 border-b-2 border-r-2 border-violet-400 dark:border-violet-400 rounded-br-lg" />
 
             {stats.map((stat, index) => (
               <div key={stat.label} className="text-center flex items-center gap-8 md:gap-14">
                 <div>
                   <AnimatedCounter value={stat.value} suffix={stat.suffix} />
-                  <p className="text-xs md:text-sm text-gray-500 dark:text-gray-400 mt-2 font-medium uppercase tracking-widest">
+                  <p className="text-xs md:text-sm text-gray-500 dark:text-gray-300 mt-2 font-medium uppercase tracking-widest">
                     {stat.label}
                   </p>
                 </div>
                 {index < stats.length - 1 && (
                   <div
-                    className="w-px h-14 bg-gradient-to-b from-transparent via-pink-400/50 to-transparent"
+                    className="w-px h-14 bg-gradient-to-b from-transparent via-violet-400/50 to-transparent"
                     style={{ boxShadow: '0 0 10px var(--neon-pink-glow)' }}
                   />
                 )}

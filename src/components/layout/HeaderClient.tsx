@@ -49,11 +49,11 @@ export default function HeaderClient({ posts }: HeaderClientProps) {
           {/* Logo */}
           <Link href="/" className="flex items-center space-x-2 group">
             <span className="text-xl font-bold">
-              <span className="text-transparent bg-clip-text bg-gradient-to-r from-pink-600 to-pink-500 dark:from-pink-400 dark:to-pink-500 group-hover:from-pink-500 group-hover:to-rose-500 transition-all">
+              <span className="text-transparent bg-clip-text bg-gradient-to-r from-violet-600 to-violet-500 dark:from-violet-300 dark:to-violet-400 group-hover:from-violet-500 group-hover:to-purple-500 dark:group-hover:from-violet-200 dark:group-hover:to-purple-300 transition-all">
                 func
               </span>
               <span style={{ color: 'var(--foreground)' }}>(</span>
-              <span className="text-transparent bg-clip-text bg-gradient-to-r from-cyan-600 to-pink-500 dark:from-cyan-400 dark:to-pink-400 group-hover:from-cyan-500 group-hover:to-pink-500 transition-all">
+              <span className="text-transparent bg-clip-text bg-gradient-to-r from-indigo-600 to-violet-500 dark:from-indigo-300 dark:to-violet-300 group-hover:from-indigo-500 group-hover:to-violet-500 dark:group-hover:from-indigo-200 dark:group-hover:to-violet-200 transition-all">
                 sikk
               </span>
               <span style={{ color: 'var(--foreground)' }}>)</span>
@@ -66,11 +66,11 @@ export default function HeaderClient({ posts }: HeaderClientProps) {
               <Link
                 key={item.href}
                 href={item.href}
-                className="relative text-sm font-medium transition-colors hover:text-pink-600 dark:hover:text-pink-400"
+                className="relative text-sm font-medium transition-colors hover:text-violet-600 dark:hover:text-violet-300"
                 style={{ color: 'var(--foreground-muted)' }}
               >
                 {item.label}
-                <span className="absolute -bottom-1 left-0 w-0 h-0.5 bg-gradient-to-r from-pink-500 to-cyan-500 transition-all duration-300 group-hover:w-full hover:w-full" />
+                <span className="absolute -bottom-1 left-0 w-0 h-0.5 bg-gradient-to-r from-violet-500 to-indigo-500 transition-all duration-300 group-hover:w-full hover:w-full" />
               </Link>
             ))}
           </nav>
@@ -80,7 +80,7 @@ export default function HeaderClient({ posts }: HeaderClientProps) {
             {/* Search Button */}
             <button
               onClick={() => setIsSearchOpen(true)}
-              className="p-2 rounded-lg transition-all hover:bg-pink-100 dark:hover:bg-pink-500/10 hover:text-pink-600 dark:hover:text-pink-400"
+              className="p-2 rounded-lg transition-all hover:bg-violet-100 dark:hover:bg-violet-500/10 hover:text-violet-600 dark:hover:text-violet-300"
               style={{ color: 'var(--foreground-muted)' }}
               aria-label="Search"
             >
@@ -107,7 +107,7 @@ export default function HeaderClient({ posts }: HeaderClientProps) {
               <div className="relative">
                 <button
                   onClick={() => setIsUserMenuOpen(!isUserMenuOpen)}
-                  className="flex items-center space-x-2 rounded-full ring-2 ring-transparent hover:ring-pink-400/50 transition-all"
+                  className="flex items-center space-x-2 rounded-full ring-2 ring-transparent hover:ring-violet-400/50 transition-all"
                 >
                   {session.user?.image ? (
                     <img
@@ -116,7 +116,7 @@ export default function HeaderClient({ posts }: HeaderClientProps) {
                       className="w-8 h-8 rounded-full"
                     />
                   ) : (
-                    <div className="w-8 h-8 rounded-full bg-gradient-to-br from-pink-400 to-cyan-400" />
+                    <div className="w-8 h-8 rounded-full bg-gradient-to-br from-violet-400 to-indigo-400" />
                   )}
                 </button>
                 {isUserMenuOpen && (
@@ -136,7 +136,7 @@ export default function HeaderClient({ posts }: HeaderClientProps) {
                     {session.user?.isAdmin && (
                       <Link
                         href="/admin"
-                        className="block px-4 py-2 text-sm transition-colors hover:bg-pink-100 dark:hover:bg-pink-500/10 hover:text-pink-600 dark:hover:text-pink-400"
+                        className="block px-4 py-2 text-sm transition-colors hover:bg-violet-100 dark:hover:bg-violet-500/10 hover:text-violet-600 dark:hover:text-violet-300"
                         style={{ color: 'var(--foreground-muted)' }}
                         onClick={() => setIsUserMenuOpen(false)}
                       >
@@ -148,7 +148,7 @@ export default function HeaderClient({ posts }: HeaderClientProps) {
                         setIsUserMenuOpen(false);
                         signOut();
                       }}
-                      className="block w-full text-left px-4 py-2 text-sm transition-colors hover:bg-pink-100 dark:hover:bg-pink-500/10 hover:text-pink-600 dark:hover:text-pink-400"
+                      className="block w-full text-left px-4 py-2 text-sm transition-colors hover:bg-violet-100 dark:hover:bg-violet-500/10 hover:text-violet-600 dark:hover:text-violet-300"
                       style={{ color: 'var(--foreground-muted)' }}
                     >
                       로그아웃
@@ -159,7 +159,7 @@ export default function HeaderClient({ posts }: HeaderClientProps) {
             ) : (
               <button
                 onClick={() => signIn()}
-                className="text-sm font-medium px-4 py-2 rounded-lg transition-all hover:bg-pink-100 dark:hover:bg-pink-500/10 hover:text-pink-600 dark:hover:text-pink-400"
+                className="text-sm font-medium px-4 py-2 rounded-lg transition-all hover:bg-violet-100 dark:hover:bg-violet-500/10 hover:text-violet-600 dark:hover:text-violet-300"
                 style={{ color: 'var(--foreground-muted)' }}
               >
                 로그인
@@ -169,7 +169,7 @@ export default function HeaderClient({ posts }: HeaderClientProps) {
             {/* Mobile Menu Button */}
             <button
               onClick={() => setIsMenuOpen(!isMenuOpen)}
-              className="md:hidden p-2 rounded-lg transition-all hover:bg-pink-100 dark:hover:bg-pink-500/10 hover:text-pink-600 dark:hover:text-pink-400"
+              className="md:hidden p-2 rounded-lg transition-all hover:bg-violet-100 dark:hover:bg-violet-500/10 hover:text-violet-600 dark:hover:text-violet-300"
               style={{ color: 'var(--foreground-muted)' }}
               aria-label="Toggle menu"
             >
@@ -206,7 +206,7 @@ export default function HeaderClient({ posts }: HeaderClientProps) {
               <Link
                 key={item.href}
                 href={item.href}
-                className="block py-3 px-2 rounded-lg transition-all hover:bg-pink-100 dark:hover:bg-pink-500/10 hover:text-pink-600 dark:hover:text-pink-400"
+                className="block py-3 px-2 rounded-lg transition-all hover:bg-violet-100 dark:hover:bg-violet-500/10 hover:text-violet-600 dark:hover:text-violet-300"
                 style={{ color: 'var(--foreground-muted)' }}
                 onClick={() => setIsMenuOpen(false)}
               >
