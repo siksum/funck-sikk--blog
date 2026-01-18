@@ -23,6 +23,15 @@ export default function AdminPage() {
   const [loading, setLoading] = useState(true);
   const [notifySlug, setNotifySlug] = useState<string | null>(null);
   const [notifyStatus, setNotifyStatus] = useState<'idle' | 'sending' | 'success' | 'error'>('idle');
+  const [selectedCategory, setSelectedCategory] = useState<string>('all');
+
+  // Get unique categories from posts
+  const categories = ['all', ...Array.from(new Set(posts.map(p => p.category)))];
+
+  // Filter posts by selected category
+  const filteredPosts = selectedCategory === 'all'
+    ? posts
+    : posts.filter(p => p.category === selectedCategory);
 
   const fetchData = async () => {
     try {
@@ -130,16 +139,33 @@ export default function AdminPage() {
 
       {/* Posts Table */}
       <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 overflow-hidden">
-        <div className="p-4 border-b border-gray-200 dark:border-gray-700">
+        <div className="p-4 border-b border-gray-200 dark:border-gray-700 flex justify-between items-center">
           <h2 className="text-lg font-semibold" style={{ color: 'var(--foreground)' }}>
             포스트 관리
           </h2>
+          <div className="flex items-center gap-2">
+            <span className="text-sm text-gray-500 dark:text-gray-400">카테고리:</span>
+            <select
+              value={selectedCategory}
+              onChange={(e) => setSelectedCategory(e.target.value)}
+              className="px-3 py-1.5 text-sm bg-gray-100 dark:bg-gray-700 border border-gray-200 dark:border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+              style={{ color: 'var(--foreground)' }}
+            >
+              {categories.map((cat) => (
+                <option key={cat} value={cat}>
+                  {cat === 'all' ? '전체' : cat} {cat !== 'all' && `(${posts.filter(p => p.category === cat).length})`}
+                </option>
+              ))}
+            </select>
+          </div>
         </div>
 
         {loading ? (
           <div className="p-8 text-center text-gray-500">로딩 중...</div>
-        ) : posts.length === 0 ? (
-          <div className="p-8 text-center text-gray-500">포스트가 없습니다.</div>
+        ) : filteredPosts.length === 0 ? (
+          <div className="p-8 text-center text-gray-500">
+            {selectedCategory === 'all' ? '포스트가 없습니다.' : `'${selectedCategory}' 카테고리에 포스트가 없습니다.`}
+          </div>
         ) : (
           <div className="overflow-x-auto">
             <table className="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
@@ -160,7 +186,7 @@ export default function AdminPage() {
                 </tr>
               </thead>
               <tbody className="divide-y divide-gray-200 dark:divide-gray-700">
-                {posts.map((post) => (
+                {filteredPosts.map((post) => (
                   <tr key={post.slug}>
                     <td className="px-6 py-4 whitespace-nowrap">
                       <div className="text-sm font-medium" style={{ color: 'var(--foreground)' }}>
