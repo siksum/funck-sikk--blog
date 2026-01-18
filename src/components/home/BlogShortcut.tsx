@@ -9,7 +9,7 @@ interface BlogShortcutProps {
 export default function BlogShortcut({ postCount, categoryCount, tagCount }: BlogShortcutProps) {
   return (
     <Link href="/blog" className="block group">
-      <div className="bg-gradient-to-r from-pink-50 to-rose-50 dark:from-pink-900/20 dark:to-rose-900/20 rounded-2xl p-8 md:p-12 relative overflow-hidden transition-transform hover:scale-[1.02] border border-pink-100 dark:border-pink-800/30">
+      <div className="bg-gradient-to-r from-pink-50 to-rose-50 dark:from-pink-900/20 dark:to-rose-900/20 rounded-2xl py-12 px-8 md:py-20 md:px-12 relative overflow-hidden transition-transform hover:scale-[1.02] border border-pink-100 dark:border-pink-800/30">
         {/* Background decoration */}
         <div className="absolute top-0 right-0 w-96 h-96 bg-pink-100/50 dark:bg-pink-800/10 rounded-full -translate-y-1/2 translate-x-1/2" />
 
