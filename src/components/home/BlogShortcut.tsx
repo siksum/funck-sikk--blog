@@ -38,34 +38,38 @@ export default function BlogShortcut({ postCount, categoryCount, tagCount }: Blo
   return (
     <Link href="/blog" className="block group">
       <div
-        className="relative bg-gray-900/80 dark:bg-gray-900/90 backdrop-blur-xl rounded-2xl py-12 px-8 md:py-16 md:px-12 overflow-hidden transition-all duration-300 border border-cyan-500/20 hover:border-cyan-400/40"
+        className="relative rounded-2xl py-12 px-8 md:py-14 md:px-10 overflow-hidden transition-all duration-300
+          bg-white/80 dark:bg-gray-900/80 backdrop-blur-xl
+          border border-gray-200 dark:border-cyan-500/20
+          shadow-lg shadow-gray-200/50 dark:shadow-cyan-500/5
+          hover:border-cyan-300 dark:hover:border-cyan-400/40
+          hover:shadow-xl hover:shadow-cyan-200/30 dark:hover:shadow-cyan-500/10"
         style={{
           transform: `perspective(1000px) rotateX(${rotation.x}deg) rotateY(${rotation.y}deg)`,
-          boxShadow: '0 0 40px rgba(6, 182, 212, 0.1), 0 0 80px rgba(236, 72, 153, 0.05), 0 25px 50px rgba(0, 0, 0, 0.3)',
           transformStyle: 'preserve-3d',
         }}
         onMouseMove={handleMouseMove}
         onMouseLeave={handleMouseLeave}
       >
-        {/* Animated gradient background */}
+        {/* Subtle gradient overlay */}
         <div
-          className="absolute inset-0 opacity-30"
+          className="absolute inset-0 opacity-20 dark:opacity-30 pointer-events-none"
           style={{
-            background: 'radial-gradient(ellipse at 80% 20%, rgba(6, 182, 212, 0.2) 0%, transparent 50%), radial-gradient(ellipse at 20% 80%, rgba(236, 72, 153, 0.15) 0%, transparent 50%)',
+            background: 'radial-gradient(ellipse at 80% 20%, var(--neon-cyan-glow) 0%, transparent 50%), radial-gradient(ellipse at 20% 80%, var(--neon-pink-glow) 0%, transparent 50%)',
           }}
         />
 
         {/* Corner accents */}
-        <div className="absolute top-0 left-0 w-6 h-6 border-t-2 border-l-2 border-cyan-400/60 rounded-tl-xl" />
-        <div className="absolute top-0 right-0 w-6 h-6 border-t-2 border-r-2 border-pink-400/60 rounded-tr-xl" />
-        <div className="absolute bottom-0 left-0 w-6 h-6 border-b-2 border-l-2 border-pink-400/60 rounded-bl-xl" />
-        <div className="absolute bottom-0 right-0 w-6 h-6 border-b-2 border-r-2 border-cyan-400/60 rounded-br-xl" />
+        <div className="absolute top-0 left-0 w-5 h-5 border-t-2 border-l-2 border-cyan-300 dark:border-cyan-400/60 rounded-tl-xl opacity-60" />
+        <div className="absolute top-0 right-0 w-5 h-5 border-t-2 border-r-2 border-pink-300 dark:border-pink-400/60 rounded-tr-xl opacity-60" />
+        <div className="absolute bottom-0 left-0 w-5 h-5 border-b-2 border-l-2 border-pink-300 dark:border-pink-400/60 rounded-bl-xl opacity-60" />
+        <div className="absolute bottom-0 right-0 w-5 h-5 border-b-2 border-r-2 border-cyan-300 dark:border-cyan-400/60 rounded-br-xl opacity-60" />
 
-        {/* Animated grid lines */}
+        {/* Grid lines - subtle in light, more visible in dark */}
         <div
-          className="absolute inset-0 pointer-events-none opacity-10"
+          className="absolute inset-0 pointer-events-none opacity-[0.05] dark:opacity-[0.08]"
           style={{
-            backgroundImage: 'linear-gradient(rgba(6, 182, 212, 0.3) 1px, transparent 1px), linear-gradient(90deg, rgba(6, 182, 212, 0.3) 1px, transparent 1px)',
+            backgroundImage: 'linear-gradient(var(--neon-cyan) 1px, transparent 1px), linear-gradient(90deg, var(--neon-cyan) 1px, transparent 1px)',
             backgroundSize: '40px 40px',
           }}
         />
@@ -74,71 +78,65 @@ export default function BlogShortcut({ postCount, categoryCount, tagCount }: Blo
           {/* Content */}
           <div className="text-left" style={{ transform: 'translateZ(10px)' }}>
             <h3 className="text-2xl md:text-3xl font-bold mb-3 flex items-center justify-start gap-3">
-              {/* Neon book icon */}
+              {/* Icon */}
               <div
-                className="w-10 h-10 rounded-lg bg-cyan-500/20 border border-cyan-500/30 flex items-center justify-center"
-                style={{ boxShadow: '0 0 15px rgba(6, 182, 212, 0.3)' }}
+                className="w-10 h-10 rounded-lg flex items-center justify-center
+                  bg-cyan-100 dark:bg-cyan-500/20
+                  border border-cyan-200 dark:border-cyan-500/30"
+                style={{ boxShadow: '0 0 15px var(--neon-cyan-glow)' }}
               >
                 <svg
-                  className="w-6 h-6 text-cyan-400"
+                  className="w-6 h-6 text-cyan-600 dark:text-cyan-400"
                   fill="none"
                   stroke="currentColor"
                   viewBox="0 0 24 24"
-                  style={{ filter: 'drop-shadow(0 0 4px rgba(6, 182, 212, 0.8))' }}
                 >
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 20H5a2 2 0 01-2-2V6a2 2 0 012-2h10a2 2 0 012 2v1m2 13a2 2 0 01-2-2V7m2 13a2 2 0 002-2V9a2 2 0 00-2-2h-2m-4-3H9M7 16h6M7 8h6v4H7V8z" />
                 </svg>
               </div>
-              <span
-                className="text-transparent bg-clip-text bg-gradient-to-r from-cyan-400 via-white to-pink-400"
-                style={{ textShadow: '0 0 30px rgba(6, 182, 212, 0.4)' }}
-              >
+              <span className="text-gray-800 dark:text-transparent dark:bg-clip-text dark:bg-gradient-to-r dark:from-cyan-400 dark:via-white dark:to-pink-400">
                 Blog
               </span>
             </h3>
-            <p className="text-gray-400 text-base mb-6 max-w-md">
+            <p className="text-gray-600 dark:text-gray-400 text-base mb-6 max-w-md">
               개발, 기술, 그리고 더 많은 것들에 대한 기록.
               <br />
               배움의 여정을 함께 나누는 공간입니다.
             </p>
-            <span
-              className="inline-flex items-center gap-2 text-cyan-400 group-hover:text-cyan-300 transition-colors font-medium"
-              style={{ textShadow: '0 0 10px rgba(6, 182, 212, 0.5)' }}
-            >
+            <span className="inline-flex items-center gap-2 text-cyan-600 dark:text-cyan-400 group-hover:text-cyan-700 dark:group-hover:text-cyan-300 transition-colors font-medium">
               모든 글 보기
               <svg
                 className="w-5 h-5 group-hover:translate-x-1 transition-transform"
                 fill="none"
                 stroke="currentColor"
                 viewBox="0 0 24 24"
-                style={{ filter: 'drop-shadow(0 0 4px rgba(6, 182, 212, 0.6))' }}
               >
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 8l4 4m0 0l-4 4m4-4H3" />
               </svg>
             </span>
           </div>
 
-          {/* Stats with neon effect */}
-          <div className="flex gap-6 md:gap-10" style={{ transform: 'translateZ(15px)' }}>
-            {stats.map((stat, index) => (
+          {/* Stats */}
+          <div className="flex gap-4 md:gap-6" style={{ transform: 'translateZ(15px)' }}>
+            {stats.map((stat) => (
               <div
                 key={stat.label}
-                className="text-center px-4 py-3 rounded-xl bg-gray-800/50 border transition-all hover:scale-105"
-                style={{
-                  borderColor: stat.color === 'pink' ? 'rgba(236, 72, 153, 0.3)' : stat.color === 'cyan' ? 'rgba(6, 182, 212, 0.3)' : 'rgba(168, 85, 247, 0.3)',
-                  boxShadow: stat.color === 'pink' ? '0 0 20px rgba(236, 72, 153, 0.1)' : stat.color === 'cyan' ? '0 0 20px rgba(6, 182, 212, 0.1)' : '0 0 20px rgba(168, 85, 247, 0.1)',
-                }}
+                className={`text-center px-4 py-3 rounded-xl transition-all hover:scale-105
+                  ${stat.color === 'pink' ? 'bg-pink-50 dark:bg-pink-500/10 border border-pink-200 dark:border-pink-500/30' : ''}
+                  ${stat.color === 'cyan' ? 'bg-cyan-50 dark:bg-cyan-500/10 border border-cyan-200 dark:border-cyan-500/30' : ''}
+                  ${stat.color === 'purple' ? 'bg-purple-50 dark:bg-purple-500/10 border border-purple-200 dark:border-purple-500/30' : ''}
+                `}
               >
                 <p
-                  className="text-3xl md:text-4xl font-bold"
-                  style={{
-                    color: stat.color === 'pink' ? '#f472b6' : stat.color === 'cyan' ? '#22d3ee' : '#c084fc',
-                    textShadow: stat.color === 'pink' ? '0 0 20px rgba(236, 72, 153, 0.5)' : stat.color === 'cyan' ? '0 0 20px rgba(6, 182, 212, 0.5)' : '0 0 20px rgba(168, 85, 247, 0.5)',
-                  }}
+                  className={`text-3xl md:text-4xl font-bold
+                    ${stat.color === 'pink' ? 'text-pink-600 dark:text-pink-400' : ''}
+                    ${stat.color === 'cyan' ? 'text-cyan-600 dark:text-cyan-400' : ''}
+                    ${stat.color === 'purple' ? 'text-purple-600 dark:text-purple-400' : ''}
+                  `}
                 >
                   {stat.value}
                 </p>
-                <p className="text-gray-400 text-sm mt-1 uppercase tracking-wider">{stat.label}</p>
+                <p className="text-gray-500 dark:text-gray-400 text-sm mt-1 uppercase tracking-wider">{stat.label}</p>
               </div>
             ))}
           </div>

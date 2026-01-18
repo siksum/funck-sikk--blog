@@ -4,10 +4,26 @@
 @variant dark (&.dark);
 
 :root {
-  --background: #ffffff;
+  /* Light mode - Clean with subtle warmth */
+  --background: #fafafa;
+  --background-secondary: #f5f5f5;
   --foreground: #171717;
+  --foreground-muted: #525252;
   --tag-bg: #f3f4f6;
   --tag-text: #374151;
+
+  /* Neon colors - softer for light mode */
+  --neon-pink: #ec4899;
+  --neon-pink-glow: rgba(236, 72, 153, 0.3);
+  --neon-cyan: #06b6d4;
+  --neon-cyan-glow: rgba(6, 182, 212, 0.3);
+  --neon-purple: #a855f7;
+  --neon-purple-glow: rgba(168, 85, 247, 0.3);
+
+  /* Card styles */
+  --card-bg: rgba(255, 255, 255, 0.8);
+  --card-border: rgba(0, 0, 0, 0.1);
+  --card-shadow: rgba(0, 0, 0, 0.1);
 }
 
 @theme inline {
@@ -17,27 +33,47 @@
   --font-mono: var(--font-geist-mono);
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ffffff;
-    --tag-bg: #374151;
-    --tag-text: #ffffff;
-  }
-}
-
 .dark {
-  --background: #0a0a0a;
-  --foreground: #ffffff;
-  --tag-bg: #374151;
-  --tag-text: #ffffff;
+  /* Dark mode - Deep Web3 aesthetic */
+  --background: #0a0a0f;
+  --background-secondary: #0f0f14;
+  --foreground: #fafafa;
+  --foreground-muted: #a1a1aa;
+  --tag-bg: #27272a;
+  --tag-text: #fafafa;
+
+  /* Neon colors - vibrant for dark mode */
+  --neon-pink: #f472b6;
+  --neon-pink-glow: rgba(244, 114, 182, 0.5);
+  --neon-cyan: #22d3ee;
+  --neon-cyan-glow: rgba(34, 211, 238, 0.5);
+  --neon-purple: #c084fc;
+  --neon-purple-glow: rgba(192, 132, 252, 0.5);
+
+  /* Card styles */
+  --card-bg: rgba(15, 15, 20, 0.8);
+  --card-border: rgba(255, 255, 255, 0.1);
+  --card-shadow: rgba(0, 0, 0, 0.5);
 }
 
 .light {
-  --background: #ffffff;
+  --background: #fafafa;
+  --background-secondary: #f5f5f5;
   --foreground: #171717;
+  --foreground-muted: #525252;
   --tag-bg: #f3f4f6;
   --tag-text: #374151;
+
+  --neon-pink: #ec4899;
+  --neon-pink-glow: rgba(236, 72, 153, 0.3);
+  --neon-cyan: #06b6d4;
+  --neon-cyan-glow: rgba(6, 182, 212, 0.3);
+  --neon-purple: #a855f7;
+  --neon-purple-glow: rgba(168, 85, 247, 0.3);
+
+  --card-bg: rgba(255, 255, 255, 0.8);
+  --card-border: rgba(0, 0, 0, 0.1);
+  --card-shadow: rgba(0, 0, 0, 0.1);
 }
 
 body {
@@ -48,10 +84,10 @@ body {
 
 /* Smooth transitions for theme changes */
 * {
-  transition: background-color 0.2s ease, color 0.2s ease, border-color 0.2s ease;
+  transition: background-color 0.3s ease, color 0.2s ease, border-color 0.2s ease, box-shadow 0.3s ease;
 }
 
-/* Custom scrollbar */
+/* Custom scrollbar - Light mode */
 ::-webkit-scrollbar {
   width: 8px;
   height: 8px;
@@ -62,18 +98,59 @@ body {
 }
 
 ::-webkit-scrollbar-thumb {
-  background: #d1d5db;
+  background: linear-gradient(180deg, #ec4899, #06b6d4);
   border-radius: 4px;
 }
 
 ::-webkit-scrollbar-thumb:hover {
-  background: #9ca3af;
+  background: linear-gradient(180deg, #f472b6, #22d3ee);
 }
 
+/* Custom scrollbar - Dark mode */
 .dark ::-webkit-scrollbar-thumb {
-  background: #4b5563;
+  background: linear-gradient(180deg, #f472b6, #22d3ee);
+  box-shadow: 0 0 10px rgba(244, 114, 182, 0.3);
 }
 
 .dark ::-webkit-scrollbar-thumb:hover {
-  background: #6b7280;
+  background: linear-gradient(180deg, #fb7185, #67e8f9);
+  box-shadow: 0 0 15px rgba(244, 114, 182, 0.5);
+}
+
+/* Neon text glow utility */
+.neon-text-pink {
+  text-shadow: 0 0 10px var(--neon-pink-glow), 0 0 20px var(--neon-pink-glow);
+}
+
+.neon-text-cyan {
+  text-shadow: 0 0 10px var(--neon-cyan-glow), 0 0 20px var(--neon-cyan-glow);
+}
+
+/* Neon border glow utility */
+.neon-border-pink {
+  box-shadow: 0 0 20px var(--neon-pink-glow), inset 0 0 20px rgba(236, 72, 153, 0.05);
+}
+
+.neon-border-cyan {
+  box-shadow: 0 0 20px var(--neon-cyan-glow), inset 0 0 20px rgba(6, 182, 212, 0.05);
+}
+
+/* Gradient border effect */
+.gradient-border {
+  position: relative;
+  background: var(--card-bg);
+  backdrop-filter: blur(20px);
+}
+
+.gradient-border::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  padding: 1px;
+  background: linear-gradient(135deg, var(--neon-pink), var(--neon-cyan));
+  -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+  -webkit-mask-composite: xor;
+  mask-composite: exclude;
+  pointer-events: none;
 }
