@@ -42,7 +42,7 @@ export async function sendNewPostNotifications(payload: NotificationPayload) {
     for (const sub of emailSubscribers) {
       try {
         await resend.emails.send({
-          from: 'func(sikk) <noreply@func-sikk.com>',
+          from: 'func(sikk) <noreply@sikk.com>',
           to: sub.email,
           subject: `새 포스트: ${title}`,
           html: `
