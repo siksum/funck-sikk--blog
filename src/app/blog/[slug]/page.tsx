@@ -3,6 +3,7 @@ import Link from 'next/link';
 import { getPostBySlug, getAllPosts } from '@/lib/posts';
 import MDXContent from '@/components/mdx/MDXContent';
 import CommentSection from '@/components/comments/CommentSection';
+import BlogPostWrapper from '@/components/blog/BlogPostWrapper';
 
 interface BlogPostPageProps {
   params: Promise<{ slug: string }>;
@@ -47,7 +48,7 @@ export default async function BlogPostPage({ params }: BlogPostPageProps) {
   });
 
   return (
-    <article className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
+    <BlogPostWrapper>
       {/* Header */}
       <header className="mb-8">
         <div className="flex items-center gap-2 text-sm mb-4" style={{ color: 'var(--foreground)', opacity: 0.7 }}>
@@ -119,6 +120,6 @@ export default async function BlogPostPage({ params }: BlogPostPageProps) {
           블로그 목록으로 돌아가기
         </Link>
       </footer>
-    </article>
+    </BlogPostWrapper>
   );
 }
