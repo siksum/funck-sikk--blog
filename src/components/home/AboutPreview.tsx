@@ -3,10 +3,10 @@ import Link from 'next/link';
 export default function AboutPreview() {
   return (
     <Link href="/about" className="block group">
-      <div className="bg-gradient-to-r from-rose-100 to-pink-100 dark:from-rose-900/30 dark:to-pink-900/30 rounded-2xl p-8 md:p-12 relative overflow-hidden transition-transform hover:scale-[1.02] border border-rose-200 dark:border-rose-800/50">
+      <div className="bg-gradient-to-r from-rose-50 to-pink-50 dark:from-rose-900/20 dark:to-pink-900/20 rounded-2xl p-8 md:p-12 relative overflow-hidden transition-transform hover:scale-[1.02] border border-rose-100 dark:border-rose-800/30">
         {/* Background decoration */}
-        <div className="absolute top-0 right-0 w-64 h-64 bg-rose-200/50 dark:bg-rose-800/20 rounded-full -translate-y-1/2 translate-x-1/2" />
-        <div className="absolute bottom-0 left-0 w-48 h-48 bg-pink-200/30 dark:bg-pink-800/10 rounded-full translate-y-1/2 -translate-x-1/2" />
+        <div className="absolute top-0 right-0 w-64 h-64 bg-rose-100/50 dark:bg-rose-800/10 rounded-full -translate-y-1/2 translate-x-1/2" />
+        <div className="absolute bottom-0 left-0 w-48 h-48 bg-pink-100/30 dark:bg-pink-800/10 rounded-full translate-y-1/2 -translate-x-1/2" />
 
         <div className="relative z-10 flex flex-col md:flex-row items-center gap-6 md:gap-12">
           {/* Profile Avatar */}
@@ -15,23 +15,26 @@ export default function AboutPreview() {
           </div>
 
           {/* Content */}
-          <div className="text-center md:text-left flex-1">
+          <div className="text-left flex-1">
             <h3 className="text-2xl md:text-3xl font-bold mb-3 text-gray-800 dark:text-white">
               Namryeong Kim
             </h3>
-            <p className="text-gray-600 dark:text-gray-300 text-lg mb-4 max-w-xl">
-              M.S. Candidate in Convergence Security Engineering. Web3 Security, AI Security, 그리고 자동화된 취약점 탐지를 연구합니다.
+            <p className="text-gray-600 dark:text-gray-300 text-lg mb-2 max-w-xl">
+              M.S. Candidate in Convergence Security Engineering.
             </p>
-            <div className="flex flex-wrap justify-center md:justify-start gap-2">
-              <span className="px-3 py-1 bg-rose-200/70 dark:bg-rose-800/50 rounded-full text-sm text-rose-700 dark:text-rose-200">Web3 Security</span>
-              <span className="px-3 py-1 bg-rose-200/70 dark:bg-rose-800/50 rounded-full text-sm text-rose-700 dark:text-rose-200">AI Security</span>
-              <span className="px-3 py-1 bg-rose-200/70 dark:bg-rose-800/50 rounded-full text-sm text-rose-700 dark:text-rose-200">Smart Contract</span>
+            <p className="text-gray-600 dark:text-gray-300 text-lg mb-4 max-w-xl">
+              Web3 Security, AI Security, 그리고 자동화된 취약점 탐지를 연구합니다.
+            </p>
+            <div className="flex flex-wrap justify-start gap-2">
+              <span className="px-3 py-1 bg-rose-100 dark:bg-rose-800/30 rounded-full text-sm text-rose-600 dark:text-rose-300">Web3 Security</span>
+              <span className="px-3 py-1 bg-rose-100 dark:bg-rose-800/30 rounded-full text-sm text-rose-600 dark:text-rose-300">AI Security</span>
+              <span className="px-3 py-1 bg-rose-100 dark:bg-rose-800/30 rounded-full text-sm text-rose-600 dark:text-rose-300">Smart Contract</span>
             </div>
           </div>
 
           {/* Arrow */}
-          <div className="hidden md:flex items-center justify-center w-12 h-12 rounded-full bg-rose-200 dark:bg-rose-800/50 group-hover:bg-rose-300 dark:group-hover:bg-rose-700/50 transition-colors shrink-0">
-            <svg className="w-6 h-6 text-rose-600 dark:text-rose-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <div className="hidden md:flex items-center justify-center w-12 h-12 rounded-full bg-rose-100 dark:bg-rose-800/30 group-hover:bg-rose-200 dark:group-hover:bg-rose-700/40 transition-colors shrink-0">
+            <svg className="w-6 h-6 text-rose-500 dark:text-rose-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
             </svg>
           </div>
