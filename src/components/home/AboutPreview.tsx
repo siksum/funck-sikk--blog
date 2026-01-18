@@ -14,10 +14,10 @@ export default function AboutPreview() {
       <div
         className="relative rounded-2xl py-12 px-8 md:py-14 md:px-10 overflow-hidden transition-all duration-300
           bg-white/80 dark:bg-gray-900/80 backdrop-blur-xl
-          border border-gray-200 dark:border-violet-400/30
-          shadow-lg shadow-gray-200/50 dark:shadow-violet-500/10
-          hover:border-violet-300 dark:hover:border-violet-300/50
-          hover:shadow-2xl hover:shadow-violet-200/40 dark:hover:shadow-violet-400/30
+          border border-gray-200 dark:border-violet-400/50
+          shadow-lg shadow-gray-200/50 dark:shadow-[0_0_20px_rgba(167,139,250,0.3)]
+          hover:border-violet-300 dark:hover:border-violet-300/70
+          hover:shadow-2xl hover:shadow-violet-200/40 dark:hover:shadow-[0_0_30px_rgba(167,139,250,0.5)]
           hover:-translate-y-3"
       >
         {/* Subtle gradient overlay */}

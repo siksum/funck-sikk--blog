@@ -61,16 +61,15 @@ export default function HeaderClient({ posts }: HeaderClientProps) {
           </Link>
 
           {/* Desktop Navigation */}
-          <nav className="hidden md:flex items-center space-x-8">
+          <nav className="hidden md:flex items-center space-x-2">
             {navigation.map((item) => (
               <Link
                 key={item.href}
                 href={item.href}
-                className="relative text-sm font-medium transition-colors hover:text-violet-600 dark:hover:text-violet-300"
+                className="px-3 py-2 rounded-lg text-sm font-medium transition-all hover:bg-violet-100 dark:hover:bg-violet-500/10 hover:text-violet-600 dark:hover:text-violet-300"
                 style={{ color: 'var(--foreground-muted)' }}
               >
                 {item.label}
-                <span className="absolute -bottom-1 left-0 w-0 h-0.5 bg-gradient-to-r from-violet-500 to-indigo-500 transition-all duration-300 group-hover:w-full hover:w-full" />
               </Link>
             ))}
           </nav>

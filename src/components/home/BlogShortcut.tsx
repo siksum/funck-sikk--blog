@@ -20,10 +20,10 @@ export default function BlogShortcut({ postCount, categoryCount, tagCount }: Blo
       <div
         className="relative rounded-2xl py-12 px-8 md:py-14 md:px-10 overflow-hidden transition-all duration-300
           bg-white/80 dark:bg-gray-900/80 backdrop-blur-xl
-          border border-gray-200 dark:border-indigo-400/30
-          shadow-lg shadow-gray-200/50 dark:shadow-indigo-500/10
-          hover:border-indigo-300 dark:hover:border-indigo-300/50
-          hover:shadow-2xl hover:shadow-indigo-200/40 dark:hover:shadow-indigo-400/30
+          border border-gray-200 dark:border-indigo-400/50
+          shadow-lg shadow-gray-200/50 dark:shadow-[0_0_20px_rgba(129,140,248,0.3)]
+          hover:border-indigo-300 dark:hover:border-indigo-300/70
+          hover:shadow-2xl hover:shadow-indigo-200/40 dark:hover:shadow-[0_0_30px_rgba(129,140,248,0.5)]
           hover:-translate-y-3"
       >
         {/* Subtle gradient overlay */}
