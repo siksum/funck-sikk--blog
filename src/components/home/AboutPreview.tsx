@@ -11,22 +11,21 @@ export default function AboutPreview() {
         <div className="relative z-10 flex flex-col md:flex-row items-center gap-6 md:gap-12">
           {/* Profile Avatar */}
           <div className="w-24 h-24 md:w-32 md:h-32 rounded-full bg-gradient-to-br from-rose-300 to-pink-300 dark:from-rose-700 dark:to-pink-700 flex items-center justify-center text-3xl md:text-4xl font-bold shrink-0 text-white">
-            FS
+            NK
           </div>
 
           {/* Content */}
           <div className="text-center md:text-left flex-1">
             <h3 className="text-2xl md:text-3xl font-bold mb-3 text-gray-800 dark:text-white">
-              About Me
+              Namryeong Kim
             </h3>
             <p className="text-gray-600 dark:text-gray-300 text-lg mb-4 max-w-xl">
-              개발과 기술에 관심이 많은 블로거입니다. 웹 개발, 프로그래밍, 그리고 다양한 기술 관련 주제들을 다룹니다.
+              M.S. Candidate in Convergence Security Engineering. Web3 Security, AI Security, 그리고 자동화된 취약점 탐지를 연구합니다.
             </p>
             <div className="flex flex-wrap justify-center md:justify-start gap-2">
-              <span className="px-3 py-1 bg-rose-200/70 dark:bg-rose-800/50 rounded-full text-sm text-rose-700 dark:text-rose-200">React</span>
-              <span className="px-3 py-1 bg-rose-200/70 dark:bg-rose-800/50 rounded-full text-sm text-rose-700 dark:text-rose-200">Next.js</span>
-              <span className="px-3 py-1 bg-rose-200/70 dark:bg-rose-800/50 rounded-full text-sm text-rose-700 dark:text-rose-200">TypeScript</span>
-              <span className="px-3 py-1 bg-rose-200/70 dark:bg-rose-800/50 rounded-full text-sm text-rose-700 dark:text-rose-200">Node.js</span>
+              <span className="px-3 py-1 bg-rose-200/70 dark:bg-rose-800/50 rounded-full text-sm text-rose-700 dark:text-rose-200">Web3 Security</span>
+              <span className="px-3 py-1 bg-rose-200/70 dark:bg-rose-800/50 rounded-full text-sm text-rose-700 dark:text-rose-200">AI Security</span>
+              <span className="px-3 py-1 bg-rose-200/70 dark:bg-rose-800/50 rounded-full text-sm text-rose-700 dark:text-rose-200">Smart Contract</span>
             </div>
           </div>
 
