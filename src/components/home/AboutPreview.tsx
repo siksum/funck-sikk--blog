@@ -3,7 +3,7 @@ import Link from 'next/link';
 export default function AboutPreview() {
   return (
     <Link href="/about" className="block group">
-      <div className="bg-gradient-to-r from-rose-50 to-pink-50 dark:from-rose-900/20 dark:to-pink-900/20 rounded-2xl py-12 px-8 md:py-20 md:px-12 relative overflow-hidden transition-transform hover:scale-[1.02] border border-rose-100 dark:border-rose-800/30">
+      <div className="bg-gradient-to-r from-rose-50/70 to-pink-50/70 dark:from-rose-900/30 dark:to-pink-900/30 backdrop-blur-xl rounded-2xl py-12 px-8 md:py-20 md:px-12 relative overflow-hidden transition-all hover:scale-[1.02] hover:shadow-xl border border-white/50 dark:border-white/10 shadow-lg shadow-rose-200/30 dark:shadow-rose-900/20">
         {/* Background decoration */}
         <div className="absolute top-0 right-0 w-64 h-64 bg-rose-100/50 dark:bg-rose-800/10 rounded-full -translate-y-1/2 translate-x-1/2" />
         <div className="absolute bottom-0 left-0 w-48 h-48 bg-pink-100/30 dark:bg-pink-800/10 rounded-full translate-y-1/2 -translate-x-1/2" />
