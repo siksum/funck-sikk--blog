@@ -256,7 +256,7 @@ function AnimatedCounter({ value, suffix = '' }: { value: number; suffix?: strin
   return (
     <span className="text-3xl md:text-4xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-violet-500 via-purple-500 to-violet-400 dark:from-violet-300 dark:via-purple-300 dark:to-violet-400 neon-text-pink">
       {count}
-      <span className="text-lg ml-1 text-gray-500 dark:text-gray-300">{suffix}</span>
+      <span className="text-lg ml-1 text-gray-500 dark:text-gray-200">{suffix}</span>
     </span>
   );
 }
@@ -377,7 +377,7 @@ export default function HeroClient({ stats }: HeroClientProps) {
           </div>
 
           {/* Description */}
-          <p className="max-w-2xl mx-auto text-gray-600 dark:text-gray-300 mb-14 text-lg leading-relaxed">
+          <p className="max-w-2xl mx-auto text-gray-600 dark:text-gray-100 mb-14 text-lg leading-relaxed">
             보안 연구, 취약점 분석, 그리고 더 많은 것들에 대한 기록.
             <br />
             <span
@@ -409,7 +409,7 @@ export default function HeroClient({ stats }: HeroClientProps) {
               <div key={stat.label} className="text-center flex items-center gap-8 md:gap-14">
                 <div>
                   <AnimatedCounter value={stat.value} suffix={stat.suffix} />
-                  <p className="text-xs md:text-sm text-gray-500 dark:text-gray-300 mt-2 font-medium uppercase tracking-widest">
+                  <p className="text-xs md:text-sm text-gray-500 dark:text-gray-200 mt-2 font-medium uppercase tracking-widest">
                     {stat.label}
                   </p>
                 </div>
