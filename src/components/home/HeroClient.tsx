@@ -263,7 +263,7 @@ function AnimatedCounter({ value, suffix = '' }: { value: number; suffix?: strin
 
 export default function HeroClient({ stats }: HeroClientProps) {
   return (
-    <section className="relative py-24 md:py-36 overflow-hidden bg-gradient-to-br from-gray-50 via-violet-50/20 to-indigo-50/10 dark:from-[#09090b] dark:via-[#0c0c10] dark:to-[#09090b]">
+    <section className="relative py-24 md:py-36 overflow-hidden bg-gradient-to-br from-gray-50 via-violet-50/20 to-indigo-50/10 dark:from-[#131318] dark:via-[#18181f] dark:to-[#131318]">
       {/* Animated gradient mesh background */}
       <div className="absolute inset-0 overflow-hidden pointer-events-none">
         {/* Primary orb - Pink */}
@@ -325,7 +325,7 @@ export default function HeroClient({ stats }: HeroClientProps) {
           {/* Badge */}
           <div
             className="inline-flex items-center gap-2 px-5 py-2.5 rounded-full mb-10 transition-all
-              bg-white/80 dark:bg-gray-900/80 backdrop-blur-xl
+              bg-white/80 dark:bg-[#1a1a22]/90 backdrop-blur-xl
               border border-violet-200 dark:border-violet-500/30
               shadow-lg shadow-violet-200/30 dark:shadow-violet-500/10
               hover:border-violet-300 dark:hover:border-violet-400/50"
@@ -365,7 +365,7 @@ export default function HeroClient({ stats }: HeroClientProps) {
           {/* Subtitle - terminal style */}
           <div
             className="inline-flex items-center gap-3 px-6 py-3 rounded-lg mb-8
-              bg-gray-100/80 dark:bg-gray-900/60 backdrop-blur-sm
+              bg-gray-100/80 dark:bg-[#1a1a22]/80 backdrop-blur-sm
               border border-gray-200 dark:border-violet-500/20
               shadow-lg dark:shadow-violet-500/5"
           >
@@ -392,7 +392,7 @@ export default function HeroClient({ stats }: HeroClientProps) {
           {/* Stats card with neon border */}
           <div
             className="inline-flex items-center gap-8 md:gap-14 px-10 py-8 rounded-2xl relative
-              bg-white/70 dark:bg-[#0f0f14]/90 backdrop-blur-xl
+              bg-white/70 dark:bg-[#1a1a22]/90 backdrop-blur-xl
               border border-violet-200/50 dark:border-violet-500/60
               shadow-xl shadow-violet-200/20 dark:shadow-[0_0_30px_rgba(167,139,250,0.4)]"
           >
