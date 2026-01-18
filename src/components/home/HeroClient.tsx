@@ -48,6 +48,252 @@ function AnimatedCounter({ value, suffix = '' }: { value: number; suffix?: strin
   );
 }
 
+// 3D Floating Cube Component
+function FloatingCube() {
+  return (
+    <div
+      className="absolute hidden lg:block"
+      style={{
+        top: '15%',
+        right: '8%',
+        perspective: '1000px',
+        animation: 'float 6s ease-in-out infinite',
+      }}
+    >
+      <div
+        className="w-16 h-16 relative"
+        style={{
+          transformStyle: 'preserve-3d',
+          animation: 'rotateCube 10s linear infinite',
+        }}
+      >
+        {/* Cube faces */}
+        {[
+          { transform: 'translateZ(32px)', bg: 'from-pink-500/40 to-pink-600/40' },
+          { transform: 'rotateY(180deg) translateZ(32px)', bg: 'from-pink-400/30 to-pink-500/30' },
+          { transform: 'rotateY(90deg) translateZ(32px)', bg: 'from-cyan-500/40 to-cyan-600/40' },
+          { transform: 'rotateY(-90deg) translateZ(32px)', bg: 'from-cyan-400/30 to-cyan-500/30' },
+          { transform: 'rotateX(90deg) translateZ(32px)', bg: 'from-purple-500/40 to-purple-600/40' },
+          { transform: 'rotateX(-90deg) translateZ(32px)', bg: 'from-purple-400/30 to-purple-500/30' },
+        ].map((face, i) => (
+          <div
+            key={i}
+            className={`absolute w-16 h-16 bg-gradient-to-br ${face.bg} backdrop-blur-sm border border-white/20 dark:border-white/10`}
+            style={{
+              transform: face.transform,
+              boxShadow: '0 0 20px var(--neon-pink-glow)',
+            }}
+          />
+        ))}
+      </div>
+      <style jsx>{`
+        @keyframes rotateCube {
+          0% { transform: rotateX(0deg) rotateY(0deg); }
+          100% { transform: rotateX(360deg) rotateY(360deg); }
+        }
+        @keyframes float {
+          0%, 100% { transform: translateY(0px); }
+          50% { transform: translateY(-20px); }
+        }
+      `}</style>
+    </div>
+  );
+}
+
+// 3D Floating Ring Component
+function FloatingRing() {
+  return (
+    <div
+      className="absolute hidden lg:block"
+      style={{
+        bottom: '20%',
+        left: '5%',
+        perspective: '1000px',
+        animation: 'floatReverse 7s ease-in-out infinite',
+      }}
+    >
+      <div
+        className="w-20 h-20 rounded-full border-4 border-cyan-400/50 dark:border-cyan-400/70"
+        style={{
+          boxShadow: '0 0 30px var(--neon-cyan-glow), inset 0 0 20px var(--neon-cyan-glow)',
+          animation: 'rotateRing 8s linear infinite',
+          transformStyle: 'preserve-3d',
+        }}
+      />
+      <style jsx>{`
+        @keyframes rotateRing {
+          0% { transform: rotateX(70deg) rotateZ(0deg); }
+          100% { transform: rotateX(70deg) rotateZ(360deg); }
+        }
+        @keyframes floatReverse {
+          0%, 100% { transform: translateY(0px) translateX(0px); }
+          50% { transform: translateY(15px) translateX(10px); }
+        }
+      `}</style>
+    </div>
+  );
+}
+
+// 3D Terminal Mockup Component
+function TerminalMockup() {
+  return (
+    <div
+      className="absolute hidden xl:block"
+      style={{
+        top: '25%',
+        right: '3%',
+        perspective: '1500px',
+        animation: 'floatTerminal 8s ease-in-out infinite',
+      }}
+    >
+      <div
+        className="w-64 rounded-xl overflow-hidden backdrop-blur-xl"
+        style={{
+          transform: 'rotateY(-15deg) rotateX(5deg)',
+          transformStyle: 'preserve-3d',
+          boxShadow: '0 0 40px var(--neon-pink-glow), 0 25px 50px rgba(0,0,0,0.3)',
+        }}
+      >
+        {/* Terminal header */}
+        <div className="bg-gray-800/90 dark:bg-gray-900/90 px-4 py-2 flex items-center gap-2 border-b border-gray-700/50">
+          <div className="w-3 h-3 rounded-full bg-red-500" />
+          <div className="w-3 h-3 rounded-full bg-yellow-500" />
+          <div className="w-3 h-3 rounded-full bg-green-500" />
+          <span className="ml-2 text-xs text-gray-400 font-mono">security.sol</span>
+        </div>
+        {/* Terminal content */}
+        <div className="bg-gray-900/95 dark:bg-black/90 p-4 font-mono text-xs leading-relaxed">
+          <div className="text-purple-400">
+            <span className="text-pink-400">contract</span> Vault {'{'}
+          </div>
+          <div className="pl-4 text-gray-300">
+            <span className="text-cyan-400">mapping</span>(address =&gt; uint)
+          </div>
+          <div className="pl-6 text-gray-400">balances;</div>
+          <div className="text-gray-300 mt-2 pl-4">
+            <span className="text-pink-400">function</span>{' '}
+            <span className="text-cyan-400">withdraw</span>() {'{'}
+          </div>
+          <div className="pl-6 text-yellow-400/80">
+            // <span className="text-pink-300 animate-pulse">vulnerability?</span>
+          </div>
+          <div className="pl-4 text-gray-300">{'}'}</div>
+          <div className="text-purple-400">{'}'}</div>
+        </div>
+      </div>
+      <style jsx>{`
+        @keyframes floatTerminal {
+          0%, 100% { transform: translateY(0px); }
+          50% { transform: translateY(-15px); }
+        }
+      `}</style>
+    </div>
+  );
+}
+
+// 3D Shield Component
+function FloatingShield() {
+  return (
+    <div
+      className="absolute hidden lg:block"
+      style={{
+        top: '60%',
+        left: '8%',
+        perspective: '1000px',
+        animation: 'floatShield 5s ease-in-out infinite',
+      }}
+    >
+      <div
+        className="relative"
+        style={{
+          transform: 'rotateY(20deg)',
+          animation: 'pulseShield 3s ease-in-out infinite',
+        }}
+      >
+        <svg
+          width="48"
+          height="56"
+          viewBox="0 0 24 28"
+          fill="none"
+          className="text-pink-500 dark:text-pink-400"
+          style={{
+            filter: 'drop-shadow(0 0 15px var(--neon-pink-glow))',
+          }}
+        >
+          <path
+            d="M12 2L3 6V12C3 17.55 6.84 22.74 12 24C17.16 22.74 21 17.55 21 12V6L12 2Z"
+            stroke="currentColor"
+            strokeWidth="1.5"
+            fill="currentColor"
+            fillOpacity="0.2"
+          />
+          <path
+            d="M9 12L11 14L15 10"
+            stroke="currentColor"
+            strokeWidth="2"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+          />
+        </svg>
+      </div>
+      <style jsx>{`
+        @keyframes floatShield {
+          0%, 100% { transform: translateY(0px) rotate(0deg); }
+          50% { transform: translateY(-10px) rotate(5deg); }
+        }
+        @keyframes pulseShield {
+          0%, 100% { opacity: 0.8; }
+          50% { opacity: 1; }
+        }
+      `}</style>
+    </div>
+  );
+}
+
+// Floating Hexagon Component
+function FloatingHexagon() {
+  return (
+    <div
+      className="absolute hidden md:block"
+      style={{
+        bottom: '30%',
+        right: '12%',
+        animation: 'floatHex 6s ease-in-out infinite',
+      }}
+    >
+      <svg
+        width="40"
+        height="44"
+        viewBox="0 0 40 44"
+        fill="none"
+        className="text-purple-500/60 dark:text-purple-400/60"
+        style={{
+          filter: 'drop-shadow(0 0 10px var(--neon-purple-glow))',
+          animation: 'rotateHex 12s linear infinite',
+        }}
+      >
+        <path
+          d="M20 2L37 12V32L20 42L3 32V12L20 2Z"
+          stroke="currentColor"
+          strokeWidth="2"
+          fill="currentColor"
+          fillOpacity="0.1"
+        />
+      </svg>
+      <style jsx>{`
+        @keyframes floatHex {
+          0%, 100% { transform: translateY(0px); }
+          50% { transform: translateY(-12px); }
+        }
+        @keyframes rotateHex {
+          0% { transform: rotate(0deg); }
+          100% { transform: rotate(360deg); }
+        }
+      `}</style>
+    </div>
+  );
+}
+
 export default function HeroClient({ stats }: HeroClientProps) {
   return (
     <section className="relative py-24 md:py-36 overflow-hidden bg-gradient-to-br from-gray-50 via-pink-50/30 to-cyan-50/20 dark:from-[#0a0a0f] dark:via-[#0d0d14] dark:to-[#0a0a0f]">
@@ -102,6 +348,13 @@ export default function HeroClient({ stats }: HeroClientProps) {
           backgroundImage: 'repeating-linear-gradient(0deg, transparent, transparent 2px, rgba(255,255,255,0.03) 2px, rgba(255,255,255,0.03) 4px)',
         }}
       />
+
+      {/* 3D Mockup Elements */}
+      <FloatingCube />
+      <FloatingRing />
+      <TerminalMockup />
+      <FloatingShield />
+      <FloatingHexagon />
 
       <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="text-center">
