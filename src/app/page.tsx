@@ -1,7 +1,7 @@
 import HeroSection from '@/components/home/HeroSection';
 import AboutPreview from '@/components/home/AboutPreview';
 import BlogShortcut from '@/components/home/BlogShortcut';
-import SubscribeForm from '@/components/subscribe/SubscribeForm';
+// import SubscribeForm from '@/components/subscribe/SubscribeForm';
 import { getAllPosts, getAllCategories, getAllTags } from '@/lib/posts';
 
 export default function Home() {
@@ -23,10 +23,11 @@ export default function Home() {
           tagCount={tags.length}
         />
 
-        {/* Subscribe Section */}
+        {/* Subscribe Section - 임시 비활성화
         <div className="mt-4">
           <SubscribeForm />
         </div>
+        */}
       </div>
     </>
   );
