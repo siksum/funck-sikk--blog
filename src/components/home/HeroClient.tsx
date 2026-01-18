@@ -263,7 +263,10 @@ function AnimatedCounter({ value, suffix = '' }: { value: number; suffix?: strin
 
 export default function HeroClient({ stats }: HeroClientProps) {
   return (
-    <section className="relative py-24 md:py-36 overflow-hidden bg-gradient-to-br from-gray-50 via-violet-50/20 to-indigo-50/10 dark:from-[#131318] dark:via-[#18181f] dark:to-[#131318]">
+    <section
+      className="relative py-24 md:py-36 overflow-hidden"
+      style={{ background: 'var(--background)' }}
+    >
       {/* Animated gradient mesh background */}
       <div className="absolute inset-0 overflow-hidden pointer-events-none">
         {/* Primary orb - Pink */}
