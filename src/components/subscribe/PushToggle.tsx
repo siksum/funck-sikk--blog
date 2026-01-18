@@ -5,6 +5,19 @@ import { usePushSubscription } from '@/hooks/usePushSubscription';
 export default function PushToggle() {
   const { isSubscribed, isSupported, isLoading, subscribe, unsubscribe } = usePushSubscription();
 
+  // 로딩 중일 때는 스켈레톤 표시
+  if (isLoading) {
+    return (
+      <div className="flex items-center justify-between animate-pulse">
+        <div>
+          <div className="h-4 w-28 bg-gray-200 dark:bg-gray-700 rounded mb-1"></div>
+          <div className="h-3 w-36 bg-gray-200 dark:bg-gray-700 rounded"></div>
+        </div>
+        <div className="w-12 h-6 bg-gray-200 dark:bg-gray-700 rounded-full"></div>
+      </div>
+    );
+  }
+
   if (!isSupported) {
     return (
       <p className="text-sm" style={{ color: 'var(--foreground)', opacity: 0.5 }}>
