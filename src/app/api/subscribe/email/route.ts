@@ -24,7 +24,7 @@ export async function POST(request: NextRequest) {
     if (process.env.RESEND_API_KEY) {
       const resend = new Resend(process.env.RESEND_API_KEY);
       await resend.emails.send({
-        from: 'blog@resend.dev',
+        from: 'func(sikk) <noreply@func-sikk.com>',
         to: email,
         subject: '구독 확인 - func(sikk)',
         html: `
