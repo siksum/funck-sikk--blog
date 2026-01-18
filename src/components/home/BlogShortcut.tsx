@@ -1,7 +1,6 @@
 'use client';
 
 import Link from 'next/link';
-import { useState } from 'react';
 
 interface BlogShortcutProps {
   postCount: number;
@@ -10,25 +9,6 @@ interface BlogShortcutProps {
 }
 
 export default function BlogShortcut({ postCount, categoryCount, tagCount }: BlogShortcutProps) {
-  const [rotation, setRotation] = useState({ x: 0, y: 0 });
-
-  const handleMouseMove = (e: React.MouseEvent<HTMLDivElement>) => {
-    const rect = e.currentTarget.getBoundingClientRect();
-    const x = e.clientX - rect.left;
-    const y = e.clientY - rect.top;
-    const centerX = rect.width / 2;
-    const centerY = rect.height / 2;
-
-    const rotateX = (y - centerY) / 25;
-    const rotateY = (centerX - x) / 25;
-
-    setRotation({ x: rotateX, y: rotateY });
-  };
-
-  const handleMouseLeave = () => {
-    setRotation({ x: 0, y: 0 });
-  };
-
   const stats = [
     { value: postCount, label: '포스트', color: 'pink' },
     { value: categoryCount, label: '카테고리', color: 'cyan' },
@@ -44,12 +24,6 @@ export default function BlogShortcut({ postCount, categoryCount, tagCount }: Blo
           shadow-lg shadow-gray-200/50 dark:shadow-cyan-500/5
           hover:border-cyan-300 dark:hover:border-cyan-400/40
           hover:shadow-xl hover:shadow-cyan-200/30 dark:hover:shadow-cyan-500/10"
-        style={{
-          transform: `perspective(1000px) rotateX(${rotation.x}deg) rotateY(${rotation.y}deg)`,
-          transformStyle: 'preserve-3d',
-        }}
-        onMouseMove={handleMouseMove}
-        onMouseLeave={handleMouseLeave}
       >
         {/* Subtle gradient overlay */}
         <div
@@ -76,7 +50,7 @@ export default function BlogShortcut({ postCount, categoryCount, tagCount }: Blo
 
         <div className="relative z-10 flex flex-col md:flex-row items-start justify-between gap-8">
           {/* Content */}
-          <div className="text-left" style={{ transform: 'translateZ(10px)' }}>
+          <div className="text-left">
             <h3 className="text-2xl md:text-3xl font-bold mb-3 flex items-center justify-start gap-3">
               {/* Icon */}
               <div
@@ -117,7 +91,7 @@ export default function BlogShortcut({ postCount, categoryCount, tagCount }: Blo
           </div>
 
           {/* Stats */}
-          <div className="flex gap-4 md:gap-6" style={{ transform: 'translateZ(15px)' }}>
+          <div className="flex gap-4 md:gap-6">
             {stats.map((stat) => (
               <div
                 key={stat.label}

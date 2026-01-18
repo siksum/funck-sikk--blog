@@ -1,28 +1,8 @@
 'use client';
 
 import Link from 'next/link';
-import { useState } from 'react';
 
 export default function AboutPreview() {
-  const [rotation, setRotation] = useState({ x: 0, y: 0 });
-
-  const handleMouseMove = (e: React.MouseEvent<HTMLDivElement>) => {
-    const rect = e.currentTarget.getBoundingClientRect();
-    const x = e.clientX - rect.left;
-    const y = e.clientY - rect.top;
-    const centerX = rect.width / 2;
-    const centerY = rect.height / 2;
-
-    const rotateX = (y - centerY) / 25;
-    const rotateY = (centerX - x) / 25;
-
-    setRotation({ x: rotateX, y: rotateY });
-  };
-
-  const handleMouseLeave = () => {
-    setRotation({ x: 0, y: 0 });
-  };
-
   const tags = [
     { name: 'Web3 Security', color: 'pink' },
     { name: 'AI Security', color: 'cyan' },
@@ -38,12 +18,6 @@ export default function AboutPreview() {
           shadow-lg shadow-gray-200/50 dark:shadow-pink-500/5
           hover:border-pink-300 dark:hover:border-pink-400/40
           hover:shadow-xl hover:shadow-pink-200/30 dark:hover:shadow-pink-500/10"
-        style={{
-          transform: `perspective(1000px) rotateX(${rotation.x}deg) rotateY(${rotation.y}deg)`,
-          transformStyle: 'preserve-3d',
-        }}
-        onMouseMove={handleMouseMove}
-        onMouseLeave={handleMouseLeave}
       >
         {/* Subtle gradient overlay */}
         <div
@@ -73,7 +47,6 @@ export default function AboutPreview() {
             className="w-24 h-24 md:w-28 md:h-28 rounded-full bg-gradient-to-br from-pink-400 via-rose-400 to-pink-500 dark:from-pink-500 dark:via-rose-500 dark:to-pink-600 flex items-center justify-center text-2xl md:text-3xl font-bold shrink-0 text-white relative"
             style={{
               boxShadow: '0 0 30px var(--neon-pink-glow), inset 0 0 20px rgba(255, 255, 255, 0.1)',
-              transform: 'translateZ(20px)',
             }}
           >
             {/* Rotating ring - dark mode only */}
@@ -91,7 +64,7 @@ export default function AboutPreview() {
           </div>
 
           {/* Content */}
-          <div className="text-left flex-1" style={{ transform: 'translateZ(10px)' }}>
+          <div className="text-left flex-1">
             <h3 className="text-2xl md:text-3xl font-bold mb-3 text-gray-800 dark:text-white">
               Namryeong Kim
             </h3>
@@ -126,7 +99,6 @@ export default function AboutPreview() {
               group-hover:border-pink-300 dark:group-hover:border-pink-400/50"
             style={{
               boxShadow: '0 0 15px var(--neon-pink-glow)',
-              transform: 'translateZ(15px)',
             }}
           >
             <svg
