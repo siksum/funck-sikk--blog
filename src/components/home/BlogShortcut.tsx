@@ -19,11 +19,11 @@ export default function BlogShortcut({ postCount, categoryCount, tagCount }: Blo
     <Link href="/blog" className="block group">
       <div
         className="relative rounded-2xl py-12 px-8 md:py-14 md:px-10 overflow-hidden transition-all duration-300
-          bg-white/80 dark:bg-gray-900/80 backdrop-blur-xl
-          border border-gray-200 dark:border-indigo-400/50
-          shadow-lg shadow-gray-200/50 dark:shadow-[0_0_20px_rgba(129,140,248,0.3)]
-          hover:border-indigo-300 dark:hover:border-indigo-300/70
-          hover:shadow-2xl hover:shadow-indigo-200/40 dark:hover:shadow-[0_0_30px_rgba(129,140,248,0.5)]
+          bg-white/80 dark:bg-[#0f0f14]/90 backdrop-blur-xl
+          border border-gray-200 dark:border-indigo-500/60
+          shadow-lg shadow-gray-200/50 dark:shadow-[0_0_25px_rgba(129,140,248,0.4),_inset_0_0_30px_rgba(129,140,248,0.05)]
+          hover:border-indigo-300 dark:hover:border-indigo-400/80
+          hover:shadow-2xl hover:shadow-indigo-200/40 dark:hover:shadow-[0_0_40px_rgba(129,140,248,0.6)]
           hover:-translate-y-3"
       >
         {/* Subtle gradient overlay */}
@@ -73,7 +73,7 @@ export default function BlogShortcut({ postCount, categoryCount, tagCount }: Blo
                 Blog
               </span>
             </h3>
-            <p className="text-gray-600 dark:text-gray-300 text-base mb-6 max-w-md">
+            <p className="text-gray-600 dark:text-gray-200 text-base mb-6 max-w-md">
               개발, 기술, 그리고 더 많은 것들에 대한 기록.
               <br />
               배움의 여정을 함께 나누는 공간입니다.
@@ -97,9 +97,9 @@ export default function BlogShortcut({ postCount, categoryCount, tagCount }: Blo
               <div
                 key={stat.label}
                 className={`text-center px-4 py-3 rounded-xl transition-all hover:scale-105
-                  ${stat.color === 'pink' ? 'bg-violet-50 dark:bg-violet-500/20 border border-violet-200 dark:border-violet-400/40' : ''}
-                  ${stat.color === 'cyan' ? 'bg-indigo-50 dark:bg-indigo-500/20 border border-indigo-200 dark:border-indigo-400/40' : ''}
-                  ${stat.color === 'purple' ? 'bg-purple-50 dark:bg-purple-500/20 border border-purple-200 dark:border-purple-400/40' : ''}
+                  ${stat.color === 'pink' ? 'bg-violet-50 dark:bg-violet-950/50 border border-violet-200 dark:border-violet-500/50' : ''}
+                  ${stat.color === 'cyan' ? 'bg-indigo-50 dark:bg-indigo-950/50 border border-indigo-200 dark:border-indigo-500/50' : ''}
+                  ${stat.color === 'purple' ? 'bg-purple-50 dark:bg-purple-950/50 border border-purple-200 dark:border-purple-500/50' : ''}
                 `}
               >
                 <p
@@ -111,7 +111,7 @@ export default function BlogShortcut({ postCount, categoryCount, tagCount }: Blo
                 >
                   {stat.value}
                 </p>
-                <p className="text-gray-500 dark:text-gray-300 text-sm mt-1 uppercase tracking-wider">{stat.label}</p>
+                <p className="text-gray-500 dark:text-gray-200 text-sm mt-1 uppercase tracking-wider">{stat.label}</p>
               </div>
             ))}
           </div>

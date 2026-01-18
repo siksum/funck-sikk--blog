@@ -392,12 +392,9 @@ export default function HeroClient({ stats }: HeroClientProps) {
           {/* Stats card with neon border */}
           <div
             className="inline-flex items-center gap-8 md:gap-14 px-10 py-8 rounded-2xl relative
-              bg-white/70 dark:bg-gray-900/70 backdrop-blur-xl
-              border border-violet-200/50 dark:border-violet-500/30
-              shadow-xl shadow-violet-200/20 dark:shadow-violet-500/10"
-            style={{
-              boxShadow: '0 0 40px var(--neon-pink-glow), 0 25px 50px var(--card-shadow)',
-            }}
+              bg-white/70 dark:bg-[#0f0f14]/90 backdrop-blur-xl
+              border border-violet-200/50 dark:border-violet-500/60
+              shadow-xl shadow-violet-200/20 dark:shadow-[0_0_30px_rgba(167,139,250,0.4)]"
           >
             {/* Corner accents */}
             <div className="absolute top-0 left-0 w-4 h-4 border-t-2 border-l-2 border-violet-400 dark:border-violet-400 rounded-tl-lg" />

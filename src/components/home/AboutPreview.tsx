@@ -13,11 +13,11 @@ export default function AboutPreview() {
     <Link href="/about" className="block group">
       <div
         className="relative rounded-2xl py-12 px-8 md:py-14 md:px-10 overflow-hidden transition-all duration-300
-          bg-white/80 dark:bg-gray-900/80 backdrop-blur-xl
-          border border-gray-200 dark:border-violet-400/50
-          shadow-lg shadow-gray-200/50 dark:shadow-[0_0_20px_rgba(167,139,250,0.3)]
-          hover:border-violet-300 dark:hover:border-violet-300/70
-          hover:shadow-2xl hover:shadow-violet-200/40 dark:hover:shadow-[0_0_30px_rgba(167,139,250,0.5)]
+          bg-white/80 dark:bg-[#0f0f14]/90 backdrop-blur-xl
+          border border-gray-200 dark:border-violet-500/60
+          shadow-lg shadow-gray-200/50 dark:shadow-[0_0_25px_rgba(167,139,250,0.4),_inset_0_0_30px_rgba(167,139,250,0.05)]
+          hover:border-violet-300 dark:hover:border-violet-400/80
+          hover:shadow-2xl hover:shadow-violet-200/40 dark:hover:shadow-[0_0_40px_rgba(167,139,250,0.6)]
           hover:-translate-y-3"
       >
         {/* Subtle gradient overlay */}
@@ -69,10 +69,10 @@ export default function AboutPreview() {
             <h3 className="text-2xl md:text-3xl font-bold mb-3 text-gray-800 dark:text-white">
               Namryeong Kim
             </h3>
-            <p className="text-gray-600 dark:text-gray-300 text-base mb-2 max-w-xl">
+            <p className="text-gray-600 dark:text-gray-200 text-base mb-2 max-w-xl">
               M.S. Candidate in Convergence Security Engineering.
             </p>
-            <p className="text-gray-600 dark:text-gray-300 text-base mb-4 max-w-xl">
+            <p className="text-gray-600 dark:text-gray-200 text-base mb-4 max-w-xl">
               Web3 Security, AI Security, 그리고 자동화된 취약점 탐지를 연구합니다.
             </p>
             <div className="flex flex-wrap justify-start gap-2">

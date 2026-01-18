@@ -66,7 +66,7 @@ export default function HeaderClient({ posts }: HeaderClientProps) {
               <Link
                 key={item.href}
                 href={item.href}
-                className="px-3 py-2 rounded-lg text-sm font-medium transition-all hover:bg-violet-100 dark:hover:bg-violet-500/10 hover:text-violet-600 dark:hover:text-violet-300"
+                className="px-3 py-2 rounded-lg text-sm font-medium transition-all hover:bg-violet-100 dark:hover:bg-violet-500/20 hover:text-gray-900 dark:hover:text-white"
                 style={{ color: 'var(--foreground-muted)' }}
               >
                 {item.label}
@@ -79,7 +79,7 @@ export default function HeaderClient({ posts }: HeaderClientProps) {
             {/* Search Button */}
             <button
               onClick={() => setIsSearchOpen(true)}
-              className="p-2 rounded-lg transition-all hover:bg-violet-100 dark:hover:bg-violet-500/10 hover:text-violet-600 dark:hover:text-violet-300"
+              className="p-2 rounded-lg transition-all hover:bg-violet-100 dark:hover:bg-violet-500/20 hover:text-gray-900 dark:hover:text-white"
               style={{ color: 'var(--foreground-muted)' }}
               aria-label="Search"
             >
@@ -135,7 +135,7 @@ export default function HeaderClient({ posts }: HeaderClientProps) {
                     {session.user?.isAdmin && (
                       <Link
                         href="/admin"
-                        className="block px-4 py-2 text-sm transition-colors hover:bg-violet-100 dark:hover:bg-violet-500/10 hover:text-violet-600 dark:hover:text-violet-300"
+                        className="block px-4 py-2 text-sm transition-colors hover:bg-violet-100 dark:hover:bg-violet-500/20 hover:text-gray-900 dark:hover:text-white"
                         style={{ color: 'var(--foreground-muted)' }}
                         onClick={() => setIsUserMenuOpen(false)}
                       >
@@ -147,7 +147,7 @@ export default function HeaderClient({ posts }: HeaderClientProps) {
                         setIsUserMenuOpen(false);
                         signOut();
                       }}
-                      className="block w-full text-left px-4 py-2 text-sm transition-colors hover:bg-violet-100 dark:hover:bg-violet-500/10 hover:text-violet-600 dark:hover:text-violet-300"
+                      className="block w-full text-left px-4 py-2 text-sm transition-colors hover:bg-violet-100 dark:hover:bg-violet-500/20 hover:text-gray-900 dark:hover:text-white"
                       style={{ color: 'var(--foreground-muted)' }}
                     >
                       로그아웃
@@ -158,7 +158,7 @@ export default function HeaderClient({ posts }: HeaderClientProps) {
             ) : (
               <button
                 onClick={() => signIn()}
-                className="text-sm font-medium px-4 py-2 rounded-lg transition-all hover:bg-violet-100 dark:hover:bg-violet-500/10 hover:text-violet-600 dark:hover:text-violet-300"
+                className="text-sm font-medium px-4 py-2 rounded-lg transition-all hover:bg-violet-100 dark:hover:bg-violet-500/20 hover:text-gray-900 dark:hover:text-white"
                 style={{ color: 'var(--foreground-muted)' }}
               >
                 로그인
@@ -168,7 +168,7 @@ export default function HeaderClient({ posts }: HeaderClientProps) {
             {/* Mobile Menu Button */}
             <button
               onClick={() => setIsMenuOpen(!isMenuOpen)}
-              className="md:hidden p-2 rounded-lg transition-all hover:bg-violet-100 dark:hover:bg-violet-500/10 hover:text-violet-600 dark:hover:text-violet-300"
+              className="md:hidden p-2 rounded-lg transition-all hover:bg-violet-100 dark:hover:bg-violet-500/20 hover:text-gray-900 dark:hover:text-white"
               style={{ color: 'var(--foreground-muted)' }}
               aria-label="Toggle menu"
             >
@@ -205,7 +205,7 @@ export default function HeaderClient({ posts }: HeaderClientProps) {
               <Link
                 key={item.href}
                 href={item.href}
-                className="block py-3 px-2 rounded-lg transition-all hover:bg-violet-100 dark:hover:bg-violet-500/10 hover:text-violet-600 dark:hover:text-violet-300"
+                className="block py-3 px-2 rounded-lg transition-all hover:bg-violet-100 dark:hover:bg-violet-500/20 hover:text-gray-900 dark:hover:text-white"
                 style={{ color: 'var(--foreground-muted)' }}
                 onClick={() => setIsMenuOpen(false)}
               >
