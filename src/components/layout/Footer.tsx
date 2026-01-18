@@ -2,15 +2,22 @@ import Link from 'next/link';
 
 export default function Footer() {
   return (
-    <footer className="bg-gray-100 dark:bg-gray-800 border-t border-gray-200 dark:border-gray-700">
+    <footer className="bg-gray-100 dark:bg-[#131318] border-t border-gray-200 dark:border-violet-500/20">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
         <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
           {/* About */}
           <div>
-            <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">
-              func(sikk)
+            <h3 className="text-lg font-semibold mb-4">
+              <span className="text-transparent bg-clip-text bg-gradient-to-r from-violet-600 to-violet-500 dark:from-violet-300 dark:to-violet-400">
+                func
+              </span>
+              <span className="text-gray-900 dark:text-gray-200">(</span>
+              <span className="text-transparent bg-clip-text bg-gradient-to-r from-indigo-600 to-violet-500 dark:from-indigo-300 dark:to-violet-300">
+                sikk
+              </span>
+              <span className="text-gray-900 dark:text-gray-200">)</span>
             </h3>
-            <p className="text-gray-600 dark:text-gray-400">
+            <p className="text-gray-600 dark:text-gray-300">
               A personal blog about development, technology, and more.
             </p>
           </div>
@@ -24,7 +31,7 @@ export default function Footer() {
               <li>
                 <Link
                   href="/blog"
-                  className="text-gray-600 hover:text-gray-900 dark:text-gray-400 dark:hover:text-white transition-colors"
+                  className="text-gray-600 hover:text-violet-600 dark:text-gray-300 dark:hover:text-violet-300 transition-colors"
                 >
                   Blog
                 </Link>
@@ -32,7 +39,7 @@ export default function Footer() {
               <li>
                 <Link
                   href="/categories"
-                  className="text-gray-600 hover:text-gray-900 dark:text-gray-400 dark:hover:text-white transition-colors"
+                  className="text-gray-600 hover:text-violet-600 dark:text-gray-300 dark:hover:text-violet-300 transition-colors"
                 >
                   Categories
                 </Link>
@@ -40,7 +47,7 @@ export default function Footer() {
               <li>
                 <Link
                   href="/tags"
-                  className="text-gray-600 hover:text-gray-900 dark:text-gray-400 dark:hover:text-white transition-colors"
+                  className="text-gray-600 hover:text-violet-600 dark:text-gray-300 dark:hover:text-violet-300 transition-colors"
                 >
                   Tags
                 </Link>
@@ -48,7 +55,7 @@ export default function Footer() {
               <li>
                 <Link
                   href="/about"
-                  className="text-gray-600 hover:text-gray-900 dark:text-gray-400 dark:hover:text-white transition-colors"
+                  className="text-gray-600 hover:text-violet-600 dark:text-gray-300 dark:hover:text-violet-300 transition-colors"
                 >
                   About
                 </Link>
@@ -66,7 +73,7 @@ export default function Footer() {
                 href="https://github.com"
                 target="_blank"
                 rel="noopener noreferrer"
-                className="text-gray-600 hover:text-gray-900 dark:text-gray-400 dark:hover:text-white transition-colors"
+                className="text-gray-600 hover:text-violet-600 dark:text-gray-300 dark:hover:text-violet-300 transition-colors"
                 aria-label="GitHub"
               >
                 <svg className="w-6 h-6" fill="currentColor" viewBox="0 0 24 24">
@@ -81,7 +88,7 @@ export default function Footer() {
                 href="https://twitter.com"
                 target="_blank"
                 rel="noopener noreferrer"
-                className="text-gray-600 hover:text-gray-900 dark:text-gray-400 dark:hover:text-white transition-colors"
+                className="text-gray-600 hover:text-violet-600 dark:text-gray-300 dark:hover:text-violet-300 transition-colors"
                 aria-label="Twitter"
               >
                 <svg className="w-6 h-6" fill="currentColor" viewBox="0 0 24 24">
@@ -92,7 +99,7 @@ export default function Footer() {
           </div>
         </div>
 
-        <div className="mt-8 pt-8 border-t border-gray-200 dark:border-gray-700">
+        <div className="mt-8 pt-8 border-t border-gray-200 dark:border-violet-500/20">
           <p className="text-center text-gray-500 dark:text-gray-400">
             &copy; {new Date().getFullYear()} func(sikk). All rights reserved.
           </p>

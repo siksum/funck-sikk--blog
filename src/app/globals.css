@@ -41,9 +41,9 @@
 }
 
 .dark {
-  /* Dark mode - Deep and elegant */
-  --background: #09090b;
-  --background-secondary: #0f0f12;
+  /* Dark mode - Softer dark, not pure black */
+  --background: #131318;
+  --background-secondary: #1a1a22;
   --foreground: #fafafa;
   --foreground-muted: #d4d4d8;
   --tag-bg: #27272a;
