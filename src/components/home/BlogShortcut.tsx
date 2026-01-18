@@ -19,12 +19,13 @@ export default function BlogShortcut({ postCount, categoryCount, tagCount }: Blo
     <Link href="/blog" className="block group">
       <div
         className="relative rounded-2xl py-12 px-8 md:py-14 md:px-10 overflow-hidden transition-all duration-300
-          bg-white/80 dark:bg-[#1a1a22]/90 backdrop-blur-xl
+          backdrop-blur-xl
           border border-gray-200 dark:border-indigo-500/60
           shadow-lg shadow-gray-200/50 dark:shadow-[0_0_25px_rgba(129,140,248,0.4),_inset_0_0_30px_rgba(129,140,248,0.05)]
           hover:border-indigo-300 dark:hover:border-indigo-400/80
           hover:shadow-2xl hover:shadow-indigo-200/40 dark:hover:shadow-[0_0_40px_rgba(129,140,248,0.6)]
           hover:-translate-y-3"
+        style={{ background: 'var(--card-bg)' }}
       >
         {/* Subtle gradient overlay */}
         <div

@@ -325,10 +325,11 @@ export default function HeroClient({ stats }: HeroClientProps) {
           {/* Badge */}
           <div
             className="inline-flex items-center gap-2 px-5 py-2.5 rounded-full mb-10 transition-all
-              bg-white/80 dark:bg-[#1a1a22]/90 backdrop-blur-xl
+              backdrop-blur-xl
               border border-violet-200 dark:border-violet-500/30
               shadow-lg shadow-violet-200/30 dark:shadow-violet-500/10
               hover:border-violet-300 dark:hover:border-violet-400/50"
+            style={{ background: 'var(--card-bg)' }}
           >
             <span className="relative flex h-2.5 w-2.5">
               <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-violet-400 opacity-75"></span>
@@ -365,9 +366,10 @@ export default function HeroClient({ stats }: HeroClientProps) {
           {/* Subtitle - terminal style */}
           <div
             className="inline-flex items-center gap-3 px-6 py-3 rounded-lg mb-8
-              bg-gray-100/80 dark:bg-[#1a1a22]/80 backdrop-blur-sm
+              backdrop-blur-sm
               border border-gray-200 dark:border-violet-500/20
               shadow-lg dark:shadow-violet-500/5"
+            style={{ background: 'var(--card-bg)' }}
           >
             <span className="text-indigo-600 dark:text-indigo-400 font-mono text-lg">&gt;</span>
             <p className="text-xl md:text-2xl font-mono font-medium text-gray-700 dark:text-gray-200 tracking-wider">
@@ -392,9 +394,10 @@ export default function HeroClient({ stats }: HeroClientProps) {
           {/* Stats card with neon border */}
           <div
             className="inline-flex items-center gap-8 md:gap-14 px-10 py-8 rounded-2xl relative
-              bg-white/70 dark:bg-[#1a1a22]/90 backdrop-blur-xl
+              backdrop-blur-xl
               border border-violet-200/50 dark:border-violet-500/60
               shadow-xl shadow-violet-200/20 dark:shadow-[0_0_30px_rgba(167,139,250,0.4)]"
+            style={{ background: 'var(--card-bg)' }}
           >
             {/* Corner accents */}
             <div className="absolute top-0 left-0 w-4 h-4 border-t-2 border-l-2 border-violet-400 dark:border-violet-400 rounded-tl-lg" />

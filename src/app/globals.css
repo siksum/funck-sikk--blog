@@ -57,8 +57,8 @@
   --neon-purple: #d8b4fe;
   --neon-purple-glow: rgba(216, 180, 254, 0.5);
 
-  /* Card styles */
-  --card-bg: rgba(15, 15, 18, 0.9);
+  /* Card styles - softer dark */
+  --card-bg: rgba(26, 26, 34, 0.9);
   --card-border: rgba(255, 255, 255, 0.12);
   --card-shadow: rgba(0, 0, 0, 0.4);
 }
