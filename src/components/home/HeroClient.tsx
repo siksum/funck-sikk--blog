@@ -256,7 +256,7 @@ function AnimatedCounter({ value, suffix = '' }: { value: number; suffix?: strin
   return (
     <span className="text-3xl md:text-4xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-violet-500 via-purple-500 to-violet-400 dark:from-violet-300 dark:via-purple-300 dark:to-violet-400 neon-text-pink">
       {count}
-      <span className="text-lg ml-1 text-gray-500 dark:text-gray-200">{suffix}</span>
+      <span className="text-lg ml-1" style={{ color: 'var(--foreground-muted)' }}>{suffix}</span>
     </span>
   );
 }
@@ -341,7 +341,7 @@ export default function HeroClient({ stats }: HeroClientProps) {
                 style={{ boxShadow: '0 0 10px var(--neon-pink-glow)' }}
               ></span>
             </span>
-            <span className="text-sm font-medium text-gray-700 dark:text-gray-200">Web3 Security Researcher</span>
+            <span className="text-sm font-medium" style={{ color: 'var(--foreground-muted)' }}>Web3 Security Researcher</span>
           </div>
 
           {/* Title with neon glow */}
@@ -354,7 +354,7 @@ export default function HeroClient({ stats }: HeroClientProps) {
             >
               func
             </span>
-            <span className="text-gray-800 dark:text-gray-200">(</span>
+            <span style={{ color: 'var(--foreground)' }}>(</span>
             <span
               className="text-transparent bg-clip-text bg-gradient-to-r from-indigo-600 via-violet-500 to-purple-500 dark:from-indigo-300 dark:via-violet-300 dark:to-purple-300"
               style={{
@@ -363,7 +363,7 @@ export default function HeroClient({ stats }: HeroClientProps) {
             >
               sikk
             </span>
-            <span className="text-gray-800 dark:text-gray-200">)</span>
+            <span style={{ color: 'var(--foreground)' }}>)</span>
           </h1>
 
           {/* Subtitle - terminal style */}
@@ -374,15 +374,15 @@ export default function HeroClient({ stats }: HeroClientProps) {
               shadow-lg dark:shadow-violet-500/5"
             style={{ background: 'var(--card-bg)' }}
           >
-            <span className="text-indigo-600 dark:text-indigo-400 font-mono text-lg">&gt;</span>
-            <p className="text-xl md:text-2xl font-mono font-medium text-gray-700 dark:text-gray-200 tracking-wider">
+            <span className="font-mono text-lg" style={{ color: 'var(--neon-cyan)' }}>&gt;</span>
+            <p className="text-xl md:text-2xl font-mono font-medium tracking-wider" style={{ color: 'var(--foreground)' }}>
               I LOVE WHAT I DO
-              <span className="animate-pulse text-violet-500 dark:text-violet-400 ml-1">_</span>
+              <span className="animate-pulse ml-1" style={{ color: 'var(--neon-pink)' }}>_</span>
             </p>
           </div>
 
           {/* Description */}
-          <p className="max-w-2xl mx-auto text-gray-600 dark:text-gray-100 mb-14 text-lg leading-relaxed">
+          <p className="max-w-2xl mx-auto mb-14 text-lg leading-relaxed" style={{ color: 'var(--foreground-muted)' }}>
             보안 연구, 취약점 분석, 그리고 더 많은 것들에 대한 기록.
             <br />
             <span
@@ -412,7 +412,7 @@ export default function HeroClient({ stats }: HeroClientProps) {
               <div key={stat.label} className="text-center flex items-center gap-8 md:gap-14">
                 <div>
                   <AnimatedCounter value={stat.value} suffix={stat.suffix} />
-                  <p className="text-xs md:text-sm text-gray-500 dark:text-gray-200 mt-2 font-medium uppercase tracking-widest">
+                  <p className="text-xs md:text-sm mt-2 font-medium uppercase tracking-widest" style={{ color: 'var(--foreground-muted)' }}>
                     {stat.label}
                   </p>
                 </div>

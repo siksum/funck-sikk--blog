@@ -67,13 +67,13 @@ export default function AboutPreview() {
 
           {/* Content */}
           <div className="text-left flex-1">
-            <h3 className="text-2xl md:text-3xl font-bold mb-3 text-gray-800 dark:text-white">
+            <h3 className="text-2xl md:text-3xl font-bold mb-3" style={{ color: 'var(--foreground)' }}>
               Namryeong Kim
             </h3>
-            <p className="text-gray-600 dark:text-gray-200 text-base mb-2 max-w-xl">
+            <p className="text-base mb-2 max-w-xl" style={{ color: 'var(--foreground-muted)' }}>
               M.S. Candidate in Convergence Security Engineering.
             </p>
-            <p className="text-gray-600 dark:text-gray-200 text-base mb-4 max-w-xl">
+            <p className="text-base mb-4 max-w-xl" style={{ color: 'var(--foreground-muted)' }}>
               Web3 Security, AI Security, 그리고 자동화된 취약점 탐지를 연구합니다.
             </p>
             <div className="flex flex-wrap justify-start gap-2">

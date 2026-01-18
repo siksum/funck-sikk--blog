@@ -70,11 +70,11 @@ export default function BlogShortcut({ postCount, categoryCount, tagCount }: Blo
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 20H5a2 2 0 01-2-2V6a2 2 0 012-2h10a2 2 0 012 2v1m2 13a2 2 0 01-2-2V7m2 13a2 2 0 002-2V9a2 2 0 00-2-2h-2m-4-3H9M7 16h6M7 8h6v4H7V8z" />
                 </svg>
               </div>
-              <span className="text-gray-800 dark:text-transparent dark:bg-clip-text dark:bg-gradient-to-r dark:from-indigo-300 dark:via-white dark:to-violet-300">
+              <span style={{ color: 'var(--foreground)' }}>
                 Blog
               </span>
             </h3>
-            <p className="text-gray-600 dark:text-gray-200 text-base mb-6 max-w-md">
+            <p className="text-base mb-6 max-w-md" style={{ color: 'var(--foreground-muted)' }}>
               개발, 기술, 그리고 더 많은 것들에 대한 기록.
               <br />
               배움의 여정을 함께 나누는 공간입니다.
@@ -112,7 +112,7 @@ export default function BlogShortcut({ postCount, categoryCount, tagCount }: Blo
                 >
                   {stat.value}
                 </p>
-                <p className="text-gray-500 dark:text-gray-200 text-sm mt-1 uppercase tracking-wider">{stat.label}</p>
+                <p className="text-sm mt-1 uppercase tracking-wider" style={{ color: 'var(--foreground-muted)' }}>{stat.label}</p>
               </div>
             ))}
           </div>
