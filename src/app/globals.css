@@ -251,3 +251,12 @@ code, pre, .font-mono {
 .footer-link:hover {
   color: var(--neon-pink);
 }
+
+/* Blog page background */
+.blog-page-bg {
+  background: linear-gradient(to bottom right, #ede9fe, rgba(238, 242, 255, 0.8), #e0e7ff);
+}
+
+.dark .blog-page-bg {
+  background: var(--background);
+}
