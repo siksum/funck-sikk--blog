@@ -108,6 +108,29 @@ export default function PostsManagementPage() {
     });
   }, [dbCategories, postCountMap]);
 
+  // Group categories by section for sidebar display
+  const categoriesBySection = useMemo(() => {
+    const grouped: { section: DBSection | null; categories: typeof sidebarCategories }[] = [];
+
+    // Group categories by section
+    dbSections.forEach((section) => {
+      const sectionCategories = sidebarCategories.filter(
+        (cat) => cat.sectionId === section.id
+      );
+      if (sectionCategories.length > 0) {
+        grouped.push({ section, categories: sectionCategories });
+      }
+    });
+
+    // Add categories without section
+    const uncategorized = sidebarCategories.filter((cat) => !cat.sectionId);
+    if (uncategorized.length > 0) {
+      grouped.push({ section: null, categories: uncategorized });
+    }
+
+    return grouped;
+  }, [sidebarCategories, dbSections]);
+
   const toggleCategory = (category: string) => {
     setExpandedCategories((prev) => {
       const next = new Set(prev);
@@ -552,57 +575,68 @@ export default function PostsManagementPage() {
                 </span>
               </button>
 
-              {sidebarCategories.map((category) => (
-                <div key={category.id}>
-                  <button
-                    onClick={() => {
-                      toggleCategory(category.name);
-                      setSelectedCategory(category.name);
-                      setSelectedSubcategory(null);
-                    }}
-                    className={`w-full flex items-center justify-between py-2 text-sm transition-colors ${
-                      selectedCategory === category.name && !selectedSubcategory
-                        ? 'text-violet-600 dark:text-violet-400 font-medium'
-                        : 'text-gray-900 dark:text-white hover:text-violet-600 dark:hover:text-violet-400'
-                    }`}
-                  >
-                    <span className="flex items-center gap-2">
-                      {category.children.length > 0 && (
-                        <span className={`text-gray-400 text-xs transition-transform ${expandedCategories.has(category.name) ? '' : '-rotate-90'}`}>
-                          ∨
-                        </span>
-                      )}
-                      {category.name}
-                    </span>
-                    <span className="text-xs text-gray-400 dark:text-gray-500">
-                      {category.postCount}
-                    </span>
-                  </button>
+              {/* Categories grouped by section */}
+              {categoriesBySection.map(({ section, categories }) => (
+                <div key={section?.id || 'uncategorized'} className="mt-3">
+                  {/* Section header */}
+                  <div className="text-xs font-semibold text-indigo-600 dark:text-indigo-400 uppercase tracking-wider mb-2 pb-1 border-b border-indigo-200 dark:border-indigo-800">
+                    {section?.title || '미분류'}
+                  </div>
 
-                  {/* Subcategories */}
-                  {expandedCategories.has(category.name) && category.children.length > 0 && (
-                    <div className="ml-6 space-y-1">
-                      {category.children.map((sub) => (
-                        <button
-                          key={sub.id}
-                          onClick={() => {
-                            setSelectedCategory(category.name);
-                            setSelectedSubcategory(sub.name);
-                          }}
-                          className={`w-full flex items-center justify-between py-1.5 text-sm transition-colors ${
-                            selectedCategory === category.name && selectedSubcategory === sub.name
-                              ? 'text-violet-600 dark:text-violet-400 font-medium'
-                              : 'text-gray-500 dark:text-gray-400 hover:text-violet-600 dark:hover:text-violet-400'
-                          }`}
-                        >
-                          <span>{sub.name}</span>
-                          <span className="text-xs text-gray-400 dark:text-gray-500">
-                            {sub.postCount}
-                          </span>
-                        </button>
-                      ))}
+                  {/* Categories in this section */}
+                  {categories.map((category) => (
+                    <div key={category.id}>
+                      <button
+                        onClick={() => {
+                          toggleCategory(category.name);
+                          setSelectedCategory(category.name);
+                          setSelectedSubcategory(null);
+                        }}
+                        className={`w-full flex items-center justify-between py-2 text-sm transition-colors ${
+                          selectedCategory === category.name && !selectedSubcategory
+                            ? 'text-violet-600 dark:text-violet-400 font-medium'
+                            : 'text-gray-900 dark:text-white hover:text-violet-600 dark:hover:text-violet-400'
+                        }`}
+                      >
+                        <span className="flex items-center gap-2">
+                          {category.children.length > 0 && (
+                            <span className={`text-gray-400 text-xs transition-transform ${expandedCategories.has(category.name) ? '' : '-rotate-90'}`}>
+                              ∨
+                            </span>
+                          )}
+                          {category.name}
+                        </span>
+                        <span className="text-xs text-gray-400 dark:text-gray-500">
+                          {category.postCount}
+                        </span>
+                      </button>
+
+                      {/* Subcategories */}
+                      {expandedCategories.has(category.name) && category.children.length > 0 && (
+                        <div className="ml-6 space-y-1">
+                          {category.children.map((sub) => (
+                            <button
+                              key={sub.id}
+                              onClick={() => {
+                                setSelectedCategory(category.name);
+                                setSelectedSubcategory(sub.name);
+                              }}
+                              className={`w-full flex items-center justify-between py-1.5 text-sm transition-colors ${
+                                selectedCategory === category.name && selectedSubcategory === sub.name
+                                  ? 'text-violet-600 dark:text-violet-400 font-medium'
+                                  : 'text-gray-500 dark:text-gray-400 hover:text-violet-600 dark:hover:text-violet-400'
+                              }`}
+                            >
+                              <span>{sub.name}</span>
+                              <span className="text-xs text-gray-400 dark:text-gray-500">
+                                {sub.postCount}
+                              </span>
+                            </button>
+                          ))}
+                        </div>
+                      )}
                     </div>
-                  )}
+                  ))}
                 </div>
               ))}
             </div>
