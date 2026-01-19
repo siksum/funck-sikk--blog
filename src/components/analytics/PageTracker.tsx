@@ -6,9 +6,14 @@ import { useSession } from 'next-auth/react';
 
 export default function PageTracker() {
   const pathname = usePathname();
-  const { data: session } = useSession();
+  const { data: session, status } = useSession();
 
   useEffect(() => {
+    // Wait for session to load before tracking
+    if (status === 'loading') {
+      return;
+    }
+
     // Skip tracking for admin users
     if (session?.user?.isAdmin) {
       return;
@@ -28,7 +33,7 @@ export default function PageTracker() {
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ path: pathname, slug }),
     }).catch(console.error);
-  }, [pathname, session]);
+  }, [pathname, session, status]);
 
   return null;
 }
