@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
 import { Post, Category } from '@/types';
 import CategoryCard from '@/components/category/CategoryCard';
 import Sidebar from '@/components/sidebar/Sidebar';
@@ -19,6 +19,30 @@ interface BlogPageContentProps {
   tags: { name: string; count: number }[];
 }
 
+interface SectionConfig {
+  title: string;
+  description: string;
+  categoryNames: string[];
+}
+
+const SECTION_CONFIG: SectionConfig[] = [
+  {
+    title: 'Web2 Security',
+    description: '전통적인 웹 보안 및 시스템 해킹',
+    categoryNames: ['Wargame', 'Web Development'],
+  },
+  {
+    title: 'Web3 Security',
+    description: '블록체인 및 스마트 컨트랙트 보안',
+    categoryNames: ['Programming'],
+  },
+  {
+    title: 'TIL',
+    description: 'Today I Learned - 오늘 배운 것들',
+    categoryNames: ['1'],
+  },
+];
+
 export default function BlogPageContent({
   rootCategoriesWithTags,
   recentPosts,
@@ -26,6 +50,62 @@ export default function BlogPageContent({
   tags,
 }: BlogPageContentProps) {
   const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
+
+  const groupedCategories = useMemo(() => {
+    const result: { section: SectionConfig; categories: CategoryWithTags[] }[] = [];
+    const usedCategories = new Set<string>();
+
+    for (const section of SECTION_CONFIG) {
+      const sectionCategories = rootCategoriesWithTags.filter(
+        (cat) => section.categoryNames.includes(cat.name)
+      );
+      sectionCategories.forEach((cat) => usedCategories.add(cat.name));
+      result.push({ section, categories: sectionCategories });
+    }
+
+    return result;
+  }, [rootCategoriesWithTags]);
+
+  const renderCategoryCards = (sectionCategories: CategoryWithTags[]) => {
+    if (sectionCategories.length === 0) {
+      return (
+        <p className="text-sm" style={{ color: 'var(--foreground-muted)' }}>
+          아직 등록된 카테고리가 없습니다.
+        </p>
+      );
+    }
+
+    if (viewMode === 'list') {
+      return (
+        <div className="space-y-3">
+          {sectionCategories.map((category) => (
+            <CategoryCard
+              key={category.name}
+              name={category.name}
+              count={category.count}
+              tags={category.tags}
+              slugPath={category.slugPath}
+              variant="list"
+            />
+          ))}
+        </div>
+      );
+    }
+
+    return (
+      <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-5">
+        {sectionCategories.map((category) => (
+          <CategoryCard
+            key={category.name}
+            name={category.name}
+            count={category.count}
+            tags={category.tags}
+            slugPath={category.slugPath}
+          />
+        ))}
+      </div>
+    );
+  };
 
   return (
     <div className="min-h-screen py-12">
@@ -105,53 +185,21 @@ export default function BlogPageContent({
             />
           </div>
 
-          {/* Main Content - Category Cards */}
-          <div className="lg:col-span-3 lg:order-last">
-            {rootCategoriesWithTags.length === 0 ? (
-              <div className="text-center py-12">
-                <svg
-                  className="w-16 h-16 mx-auto mb-4 text-violet-400 dark:text-violet-500"
-                  fill="none"
-                  stroke="currentColor"
-                  viewBox="0 0 24 24"
-                >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth={2}
-                    d="M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A2 2 0 013 12V7a4 4 0 014-4z"
-                  />
-                </svg>
-                <p style={{ color: 'var(--foreground-muted)' }}>
-                  아직 등록된 카테고리가 없습니다.
-                </p>
-              </div>
-            ) : viewMode === 'list' ? (
-              <div className="space-y-3">
-                {rootCategoriesWithTags.map((category) => (
-                  <CategoryCard
-                    key={category.name}
-                    name={category.name}
-                    count={category.count}
-                    tags={category.tags}
-                    slugPath={category.slugPath}
-                    variant="list"
-                  />
-                ))}
-              </div>
-            ) : (
-              <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-5">
-                {rootCategoriesWithTags.map((category) => (
-                  <CategoryCard
-                    key={category.name}
-                    name={category.name}
-                    count={category.count}
-                    tags={category.tags}
-                    slugPath={category.slugPath}
-                  />
-                ))}
-              </div>
-            )}
+          {/* Main Content - Category Sections */}
+          <div className="lg:col-span-3 lg:order-last space-y-16">
+            {groupedCategories.map(({ section, categories: sectionCategories }) => (
+              <section key={section.title}>
+                <div className="mb-8 pb-4 border-b-2 border-violet-300 dark:border-violet-500">
+                  <h2 className="text-3xl md:text-4xl font-extrabold mb-2 text-transparent bg-clip-text bg-gradient-to-r from-violet-600 to-indigo-500 dark:from-violet-300 dark:to-indigo-400">
+                    {section.title}
+                  </h2>
+                  <p className="text-sm" style={{ color: 'var(--foreground-muted)' }}>
+                    {section.description}
+                  </p>
+                </div>
+                {renderCategoryCards(sectionCategories)}
+              </section>
+            ))}
           </div>
         </div>
       </div>

@@ -83,7 +83,7 @@ function CategoryTreeItem({
         </Link>
       </div>
       {hasChildren && isExpanded && (
-        <ul className="ml-4 space-y-1">
+        <ul className="ml-4 subcategory-divider">
           {category.children!.map((child) => (
             <li key={child.slug}>
               <CategoryTreeItem
@@ -118,9 +118,9 @@ export default function Sidebar({
         <h3 className="text-lg font-semibold mb-4 sidebar-title">
           카테고리
         </h3>
-        <ul className="space-y-2 divide-y">
-          {categories.slice(0, 8).map((category, index) => (
-            <li key={category.slug} className={index > 0 ? 'pt-2' : ''}>
+        <ul className="sidebar-divider-heart">
+          {categories.slice(0, 8).map((category) => (
+            <li key={category.slug}>
               <CategoryTreeItem
                 category={category}
                 currentCategorySlugPath={currentCategorySlugPath}
@@ -168,7 +168,7 @@ export default function Sidebar({
         </div>
 
         {/* Tab Content */}
-        <div className="divide-y">
+        <div className="sidebar-divider-simple">
           {(activeTab === 'recent' ? recentPosts : popularPosts).map((post) => (
             <PostCard key={post.slug} post={post} variant="compact" />
           ))}

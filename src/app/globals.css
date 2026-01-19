@@ -325,13 +325,92 @@ code, pre, .font-mono {
   border-color: rgba(139, 92, 246, 0.4);
 }
 
-/* Sidebar divider colors - override Tailwind divide-y */
-.divide-y > * + * {
-  --tw-divide-opacity: 1;
-  border-color: rgb(139 92 246 / var(--tw-divide-opacity));
+/* Sidebar divider - decorative heart design (for categories) */
+.sidebar-divider-heart > * {
+  position: relative;
+  border-top: 1px solid rgb(139 92 246) !important;
+  padding-top: 0.75rem !important;
+  padding-bottom: 0.5rem !important;
 }
 
-.dark .divide-y > * + * {
-  --tw-divide-opacity: 1;
-  border-color: rgb(255 255 255 / var(--tw-divide-opacity)) !important;
+.sidebar-divider-heart > *::before {
+  content: '💜';
+  position: absolute;
+  top: -0.6rem;
+  left: 50%;
+  transform: translateX(-50%);
+  font-size: 0.7rem;
+  background: var(--card-bg);
+  padding: 0 0.25rem;
+}
+
+.sidebar-divider-heart > *:first-child {
+  border-top: 1px solid rgb(139 92 246) !important;
+}
+
+.dark .sidebar-divider-heart > * {
+  border-top: 1px solid rgb(255 255 255) !important;
+}
+
+.dark .sidebar-divider-heart > *::before {
+  content: '🤍';
+}
+
+.dark .sidebar-divider-heart > *:first-child {
+  border-top: 1px solid rgb(255 255 255) !important;
+}
+
+/* Sidebar divider - simple line (for posts) */
+.sidebar-divider-simple > * {
+  border-top: 1px solid rgb(139 92 246) !important;
+  padding-top: 0.75rem !important;
+  padding-bottom: 0.5rem !important;
+}
+
+.sidebar-divider-simple > *:first-child {
+  border-top: 1px solid rgb(139 92 246) !important;
+}
+
+.dark .sidebar-divider-simple > * {
+  border-top: 1px solid rgb(255 255 255) !important;
+}
+
+.dark .sidebar-divider-simple > *:first-child {
+  border-top: 1px solid rgb(255 255 255) !important;
+}
+
+/* Subcategory divider - lighter gray with indent */
+.subcategory-divider > * {
+  border-top: 1px solid rgb(209 213 219) !important;
+  padding-top: 0.5rem !important;
+  padding-bottom: 0.25rem !important;
+  margin-left: 0.5rem !important;
+}
+
+.subcategory-divider > *:first-child {
+  border-top: 1px solid rgb(209 213 219) !important;
+}
+
+.dark .subcategory-divider > * {
+  border-top: 1px solid rgb(75 85 99) !important;
+}
+
+.dark .subcategory-divider > *:first-child {
+  border-top: 1px solid rgb(75 85 99) !important;
+}
+
+/* Fade-in animation */
+@keyframes fade-in {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.animate-fade-in {
+  animation: fade-in 0.3s ease-out;
 }

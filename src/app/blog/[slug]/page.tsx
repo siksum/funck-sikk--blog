@@ -1,9 +1,40 @@
 import { notFound } from 'next/navigation';
 import Link from 'next/link';
-import { getPostBySlug, getAllPosts } from '@/lib/posts';
+import { getPostBySlug, getAllPosts, getRelatedPosts, getAdjacentPosts, getRootCategories } from '@/lib/posts';
 import MDXContent from '@/components/mdx/MDXContent';
 import CommentSection from '@/components/comments/CommentSection';
-import BlogPostWrapper from '@/components/blog/BlogPostWrapper';
+import ReadingProgressBar from '@/components/blog/ReadingProgressBar';
+import PostNavigation from '@/components/blog/PostNavigation';
+import FloatingActions from '@/components/blog/FloatingActions';
+import SocialShareButtons from '@/components/blog/SocialShareButtons';
+import EmojiReactions from '@/components/blog/EmojiReactions';
+import AuthorCard from '@/components/blog/AuthorCard';
+import NewsletterCTA from '@/components/blog/NewsletterCTA';
+import KeyboardNavigation from '@/components/blog/KeyboardNavigation';
+import HighlightShare from '@/components/blog/HighlightShare';
+import DifficultyBadge from '@/components/blog/DifficultyBadge';
+import BlogPostLayout from '@/components/blog/BlogPostLayout';
+
+function calculateReadingTime(content: string): number {
+  const wordsPerMinute = 200;
+  const words = content.trim().split(/\s+/).length;
+  return Math.ceil(words / wordsPerMinute);
+}
+
+// Estimate difficulty based on content length and tags
+function estimateDifficulty(content: string, tags: string[]): 'beginner' | 'intermediate' | 'advanced' {
+  const words = content.trim().split(/\s+/).length;
+  const advancedTags = ['exploit', 'pwn', 'reverse', 'advanced', 'deep-dive'];
+  const beginnerTags = ['tutorial', 'beginner', 'intro', 'basic', '입문'];
+
+  if (tags.some((tag) => advancedTags.includes(tag.toLowerCase())) || words > 3000) {
+    return 'advanced';
+  }
+  if (tags.some((tag) => beginnerTags.includes(tag.toLowerCase())) || words < 1000) {
+    return 'beginner';
+  }
+  return 'intermediate';
+}
 
 interface BlogPostPageProps {
   params: Promise<{ slug: string }>;
@@ -47,79 +78,137 @@ export default async function BlogPostPage({ params }: BlogPostPageProps) {
     day: 'numeric',
   });
 
+  const readingTime = calculateReadingTime(post.content);
+  const relatedPosts = getRelatedPosts(slug, 3);
+  const { prevPost, nextPost } = getAdjacentPosts(slug);
+  const difficulty = estimateDifficulty(post.content, post.tags);
+  const categories = getRootCategories();
+
   return (
-    <BlogPostWrapper>
-      {/* Header */}
-      <header className="mb-8">
-        <div className="flex items-center gap-2 text-sm mb-4" style={{ color: 'var(--foreground)', opacity: 0.7 }}>
-          <Link href="/blog" className="hover:text-blue-500">
-            Blog
-          </Link>
-          <span>/</span>
-          <Link
-            href={`/categories/${encodeURIComponent(post.category)}`}
-            className="hover:text-blue-500"
-          >
-            {post.category}
-          </Link>
-        </div>
-
-        <h1 className="text-3xl md:text-4xl font-bold mb-4" style={{ color: 'var(--foreground)' }}>
-          {post.title}
-        </h1>
-
-        <p className="text-lg mb-6" style={{ color: 'var(--foreground)', opacity: 0.8 }}>
-          {post.description}
-        </p>
-
-        <div className="flex flex-wrap items-center gap-4 text-sm" style={{ color: 'var(--foreground)', opacity: 0.7 }}>
-          <time dateTime={post.date}>{formattedDate}</time>
-          <div className="flex flex-wrap gap-2">
-            {post.tags.map((tag) => (
-              <Link
-                key={tag}
-                href={`/tags/${encodeURIComponent(tag)}`}
-                className="px-2 py-1 rounded transition-colors"
-                style={{ backgroundColor: 'var(--tag-bg)', color: 'var(--tag-text)' }}
-              >
-                #{tag}
-              </Link>
-            ))}
+    <>
+      <ReadingProgressBar readingTime={readingTime} />
+      <HighlightShare />
+      <BlogPostLayout
+        content={post.content}
+        tags={post.tags}
+        category={post.category}
+        relatedPosts={relatedPosts}
+        categories={categories}
+        currentCategorySlugPath={post.categorySlugPath}
+      >
+        {/* Header */}
+        <header className="mb-8">
+          <div className="flex items-center text-sm mb-4" style={{ color: 'var(--foreground)', opacity: 0.7 }}>
+            <Link href="/blog" className="hover:text-violet-600 dark:hover:text-violet-400 transition-colors">
+              Blog
+            </Link>
+            <span className="mx-2">/</span>
+            <Link
+              href={`/categories/${encodeURIComponent(post.category)}`}
+              className="hover:text-violet-600 dark:hover:text-violet-400 transition-colors"
+            >
+              {post.category}
+            </Link>
           </div>
+
+          <div className="flex items-center gap-3 mb-4">
+            <DifficultyBadge level={difficulty} />
+          </div>
+
+          <h1 className="text-3xl md:text-4xl font-bold mb-4" style={{ color: 'var(--foreground)' }}>
+            {post.title}
+          </h1>
+
+          <p className="text-lg mb-6" style={{ color: 'var(--foreground)', opacity: 0.8 }}>
+            {post.description}
+          </p>
+
+          <div className="flex flex-wrap items-center gap-4 text-sm mb-6" style={{ color: 'var(--foreground)', opacity: 0.7 }}>
+            <time dateTime={post.date}>{formattedDate}</time>
+            <span className="flex items-center gap-1">
+              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+              </svg>
+              {readingTime}분 읽기
+            </span>
+            <div className="flex flex-wrap gap-2 lg:hidden">
+              {post.tags.map((tag) => (
+                <Link
+                  key={tag}
+                  href={`/tags/${encodeURIComponent(tag)}`}
+                  className="px-2 py-1 rounded transition-colors hover:scale-105"
+                  style={{ backgroundColor: 'var(--tag-bg)', color: 'var(--tag-text)' }}
+                >
+                  #{tag}
+                </Link>
+              ))}
+            </div>
+          </div>
+        </header>
+
+        {/* Violet Divider */}
+        <hr className="mb-8 border-t-2 border-violet-400 dark:border-violet-500" />
+
+        {/* Content */}
+        <MDXContent content={post.content} />
+
+        {/* Violet Divider before comments */}
+        <hr className="my-8 border-t-2 border-violet-400 dark:border-violet-500" />
+
+        {/* Comments with Reactions */}
+        <CommentSection
+          postSlug={slug}
+          reactionsContent={
+            <div className="text-center">
+              <p className="text-sm mb-4" style={{ color: 'var(--foreground-muted)' }}>
+                이 글이 마음에 드셨다면 반응이나 댓글을 남겨주세요!
+              </p>
+              <EmojiReactions postSlug={slug} />
+            </div>
+          }
+        />
+
+        {/* Share Buttons */}
+        <div className="mt-8 flex items-center justify-center gap-3">
+          <span className="text-xs" style={{ color: 'var(--foreground-muted)' }}>공유</span>
+          <div className="h-px w-8" style={{ backgroundColor: 'var(--card-border)' }} />
+          <SocialShareButtons title={post.title} />
         </div>
-      </header>
 
-      {/* Divider */}
-      <hr className="mb-8 border-t" style={{ borderColor: 'var(--card-border)' }} />
+        {/* Post Navigation */}
+        <PostNavigation prevPost={prevPost} nextPost={nextPost} />
 
-      {/* Content */}
-      <MDXContent content={post.content} />
+        {/* Author Card */}
+        <AuthorCard />
 
-      {/* Comments */}
-      <CommentSection postSlug={slug} />
+        {/* Newsletter CTA */}
+        <NewsletterCTA />
 
-      {/* Footer */}
-      <footer className="mt-12 pt-8 border-t" style={{ borderColor: 'var(--card-border)' }}>
-        <Link
-          href="/blog"
-          className="inline-flex items-center text-blue-600 dark:text-blue-400 hover:underline"
-        >
-          <svg
-            className="w-4 h-4 mr-2"
-            fill="none"
-            stroke="currentColor"
-            viewBox="0 0 24 24"
+        {/* Footer */}
+        <footer className="mt-12 pt-8 border-t" style={{ borderColor: 'var(--card-border)' }}>
+          <Link
+            href="/blog"
+            className="inline-flex items-center text-violet-600 dark:text-violet-400 hover:underline"
           >
-            <path
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              strokeWidth={2}
-              d="M10 19l-7-7m0 0l7-7m-7 7h18"
-            />
-          </svg>
-          블로그 목록으로 돌아가기
-        </Link>
-      </footer>
-    </BlogPostWrapper>
+            <svg
+              className="w-4 h-4 mr-2"
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth={2}
+                d="M10 19l-7-7m0 0l7-7m-7 7h18"
+              />
+            </svg>
+            블로그 목록으로 돌아가기
+          </Link>
+        </footer>
+      </BlogPostLayout>
+      <FloatingActions />
+      <KeyboardNavigation prevPost={prevPost} nextPost={nextPost} />
+    </>
   );
 }

@@ -85,7 +85,7 @@ export default function CommentItem({
             {!isReply && currentUserId && (
               <button
                 onClick={() => setShowReplyForm(!showReplyForm)}
-                className="text-sm text-blue-600 dark:text-blue-400 hover:underline"
+                className="text-sm text-violet-600 dark:text-violet-400 hover:underline"
               >
                 답글
               </button>
@@ -106,23 +106,31 @@ export default function CommentItem({
                 value={replyContent}
                 onChange={(e) => setReplyContent(e.target.value)}
                 placeholder="답글을 작성하세요..."
-                className="w-full p-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 resize-none focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm"
-                style={{ color: 'var(--foreground)' }}
+                className="w-full p-2 rounded-lg resize-none focus:outline-none focus:ring-2 focus:ring-violet-500 text-sm border"
+                style={{
+                  color: 'var(--foreground)',
+                  background: 'var(--card-bg)',
+                  borderColor: 'var(--card-border)'
+                }}
                 rows={2}
               />
               <div className="flex justify-end gap-2 mt-2">
                 <button
                   type="button"
                   onClick={() => setShowReplyForm(false)}
-                  className="px-3 py-1 text-sm border border-gray-300 dark:border-gray-600 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors"
-                  style={{ color: 'var(--foreground)' }}
+                  className="px-3 py-1 text-sm rounded-lg border transition-colors hover:border-violet-500"
+                  style={{
+                    color: 'var(--foreground)',
+                    background: 'var(--card-bg)',
+                    borderColor: 'var(--card-border)'
+                  }}
                 >
                   취소
                 </button>
                 <button
                   type="submit"
                   disabled={!replyContent.trim() || submitting}
-                  className="px-3 py-1 text-sm bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                  className="px-3 py-1 text-sm bg-violet-600 text-white rounded-lg hover:bg-violet-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
                 >
                   {submitting ? '작성 중...' : '답글 작성'}
                 </button>

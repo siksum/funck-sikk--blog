@@ -21,9 +21,10 @@ interface Comment {
 
 interface CommentSectionProps {
   postSlug: string;
+  reactionsContent?: React.ReactNode;
 }
 
-export default function CommentSection({ postSlug }: CommentSectionProps) {
+export default function CommentSection({ postSlug, reactionsContent }: CommentSectionProps) {
   const { data: session } = useSession();
   const [comments, setComments] = useState<Comment[]>([]);
   const [content, setContent] = useState('');
@@ -99,10 +100,16 @@ export default function CommentSection({ postSlug }: CommentSectionProps) {
   };
 
   return (
-    <div className="mt-12 pt-8 border-t border-gray-200 dark:border-gray-700">
+    <div className="pt-4">
       <h2 className="text-xl font-bold mb-6" style={{ color: 'var(--foreground)' }}>
         댓글 {comments.length > 0 && `(${comments.length})`}
       </h2>
+
+      {reactionsContent && (
+        <div className="mb-8">
+          {reactionsContent}
+        </div>
+      )}
 
       {session ? (
         <form onSubmit={handleSubmit} className="mb-8">
@@ -119,15 +126,19 @@ export default function CommentSection({ postSlug }: CommentSectionProps) {
                 value={content}
                 onChange={(e) => setContent(e.target.value)}
                 placeholder="댓글을 작성하세요..."
-                className="w-full p-3 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 resize-none focus:outline-none focus:ring-2 focus:ring-blue-500"
-                style={{ color: 'var(--foreground)' }}
+                className="w-full p-3 rounded-lg resize-none focus:outline-none focus:ring-2 focus:ring-violet-500 border"
+                style={{
+                  color: 'var(--foreground)',
+                  background: 'var(--card-bg)',
+                  borderColor: 'var(--card-border)'
+                }}
                 rows={3}
               />
               <div className="flex justify-end mt-2">
                 <button
                   type="submit"
                   disabled={!content.trim() || submitting}
-                  className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                  className="px-4 py-2 bg-violet-600 text-white rounded-lg hover:bg-violet-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
                 >
                   {submitting ? '작성 중...' : '댓글 작성'}
                 </button>
@@ -136,7 +147,10 @@ export default function CommentSection({ postSlug }: CommentSectionProps) {
           </div>
         </form>
       ) : (
-        <div className="mb-8 p-6 bg-gray-50 dark:bg-gray-800 rounded-lg text-center">
+        <div
+          className="mb-8 p-6 rounded-lg text-center border"
+          style={{ background: 'var(--card-bg)', borderColor: 'var(--card-border)' }}
+        >
           <p className="mb-4" style={{ color: 'var(--foreground)', opacity: 0.7 }}>
             댓글을 작성하려면 로그인하세요
           </p>
