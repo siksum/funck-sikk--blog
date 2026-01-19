@@ -16,7 +16,9 @@ export default function BlogPage() {
   return (
     <div
       className="min-h-screen py-12"
-      style={{ background: 'var(--background)' }}
+      style={{
+        background: 'linear-gradient(135deg, var(--violet-50) 0%, var(--background) 50%, var(--indigo-50) 100%)',
+      }}
     >
       <div className="w-full px-4 sm:px-6 lg:px-12 xl:px-16">
         {/* Page Header */}
