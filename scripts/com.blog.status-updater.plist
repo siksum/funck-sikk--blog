@@ -1,0 +1,33 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+    <key>Label</key>
+    <string>com.blog.status-updater</string>
+
+    <key>ProgramArguments</key>
+    <array>
+        <string>/Users/sikk/conductor/workspaces/funck-sikk--blog/berlin/scripts/mac-status-updater.sh</string>
+    </array>
+
+    <key>EnvironmentVariables</key>
+    <dict>
+        <key>BLOG_URL</key>
+        <string>https://funck-sikk-blog.vercel.app</string>
+        <key>STATUS_SECRET</key>
+        <string>04d6715235e1e96365be55d0629c65570610c93bdd23d91420f17b027f694067</string>
+    </dict>
+
+    <key>StartInterval</key>
+    <integer>30</integer>
+
+    <key>RunAtLoad</key>
+    <true/>
+
+    <key>StandardOutPath</key>
+    <string>/tmp/blog-status-updater.log</string>
+
+    <key>StandardErrorPath</key>
+    <string>/tmp/blog-status-updater.error.log</string>
+</dict>
+</plist>
