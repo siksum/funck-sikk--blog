@@ -16,6 +16,7 @@ export async function GET() {
       children: {
         orderBy: { order: 'asc' },
       },
+      section: true,
     },
     where: {
       parentId: null,
@@ -36,7 +37,7 @@ export async function POST(request: NextRequest) {
   }
 
   const body = await request.json();
-  const { name, parentId } = body;
+  const { name, parentId, sectionId } = body;
 
   if (!name) {
     return NextResponse.json({ error: 'Name is required' }, { status: 400 });
@@ -65,10 +66,12 @@ export async function POST(request: NextRequest) {
       name,
       slug,
       parentId: parentId || null,
+      sectionId: sectionId || null,
       order: (maxOrder._max.order || 0) + 1,
     },
     include: {
       children: true,
+      section: true,
     },
   });
 

@@ -12,20 +12,30 @@ interface CategoryWithTags {
   slugPath: string[];
 }
 
+interface DBCategory {
+  id: string;
+  name: string;
+  slug: string;
+}
+
+interface DBSection {
+  id: string;
+  title: string;
+  description: string | null;
+  order: number;
+  categories: DBCategory[];
+}
+
 interface BlogPageContentProps {
   rootCategoriesWithTags: CategoryWithTags[];
   recentPosts: Post[];
   categories: Category[];
   tags: { name: string; count: number }[];
+  sections: DBSection[];
 }
 
-interface SectionConfig {
-  title: string;
-  description: string;
-  categoryNames: string[];
-}
-
-const SECTION_CONFIG: SectionConfig[] = [
+// Fallback config for when no sections are configured in DB
+const FALLBACK_SECTION_CONFIG = [
   {
     title: 'Web2 Security',
     description: '전통적인 웹 보안 및 시스템 해킹',
@@ -48,23 +58,39 @@ export default function BlogPageContent({
   recentPosts,
   categories,
   tags,
+  sections,
 }: BlogPageContentProps) {
   const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
 
   const groupedCategories = useMemo(() => {
-    const result: { section: SectionConfig; categories: CategoryWithTags[] }[] = [];
-    const usedCategories = new Set<string>();
+    // If we have DB sections with categories assigned, use them
+    if (sections && sections.length > 0) {
+      return sections.map((section) => {
+        // Get category names from DB section
+        const categoryNames = section.categories.map((c) => c.name);
+        // Find matching categories from posts
+        const sectionCategories = rootCategoriesWithTags.filter(
+          (cat) => categoryNames.includes(cat.name)
+        );
+        return {
+          section: {
+            title: section.title,
+            description: section.description || '',
+            categoryNames,
+          },
+          categories: sectionCategories,
+        };
+      });
+    }
 
-    for (const section of SECTION_CONFIG) {
+    // Fallback to hardcoded config if no DB sections
+    return FALLBACK_SECTION_CONFIG.map((section) => {
       const sectionCategories = rootCategoriesWithTags.filter(
         (cat) => section.categoryNames.includes(cat.name)
       );
-      sectionCategories.forEach((cat) => usedCategories.add(cat.name));
-      result.push({ section, categories: sectionCategories });
-    }
-
-    return result;
-  }, [rootCategoriesWithTags]);
+      return { section, categories: sectionCategories };
+    });
+  }, [rootCategoriesWithTags, sections]);
 
   const renderCategoryCards = (sectionCategories: CategoryWithTags[]) => {
     if (sectionCategories.length === 0) {
