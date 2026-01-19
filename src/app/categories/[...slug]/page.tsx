@@ -60,7 +60,7 @@ export default async function CategoryPage({ params }: CategoryPageProps) {
   const tags = getAllTags();
 
   return (
-    <div className="min-h-screen blog-page-bg">
+    <div className="min-h-screen">
       <div className="w-full px-4 sm:px-6 lg:px-12 xl:px-16 py-12">
         {/* Breadcrumb */}
         <nav className="mb-6">

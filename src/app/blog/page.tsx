@@ -14,7 +14,7 @@ export default function BlogPage() {
   const rootCategoriesWithTags = getRootCategoriesWithTags();
 
   return (
-    <div className="min-h-screen py-12 blog-page-bg">
+    <div className="min-h-screen py-12">
       <div className="w-full px-4 sm:px-6 lg:px-12 xl:px-16">
         {/* Page Header */}
         <div className="mb-10">
