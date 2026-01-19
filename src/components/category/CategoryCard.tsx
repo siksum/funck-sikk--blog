@@ -5,6 +5,7 @@ interface CategoryCardProps {
   count: number;
   tags: string[];
   slugPath?: string[];
+  variant?: 'card' | 'list';
 }
 
 // Category icons mapping
@@ -83,7 +84,7 @@ const defaultColors = {
 // All categories use the same violet theme
 const categoryColors: Record<string, typeof defaultColors> = {};
 
-export default function CategoryCard({ name, count, tags, slugPath }: CategoryCardProps) {
+export default function CategoryCard({ name, count, tags, slugPath, variant = 'card' }: CategoryCardProps) {
   const icon = categoryIcons[name] || defaultIcon;
   const colors = categoryColors[name] || defaultColors;
 
@@ -91,6 +92,71 @@ export default function CategoryCard({ name, count, tags, slugPath }: CategoryCa
     ? `/categories/${slugPath.join('/')}`
     : `/categories/${encodeURIComponent(name)}`;
 
+  // List variant
+  if (variant === 'list') {
+    return (
+      <Link href={href} className="block group">
+        <article
+          className={`relative rounded-xl overflow-hidden transition-all duration-300
+            border ${colors.neonBorder} category-card
+            hover:border-violet-400 dark:hover:border-violet-400`}
+        >
+          <div className="relative p-4 flex items-center gap-4">
+            {/* Icon */}
+            <div
+              className={`w-10 h-10 rounded-lg flex items-center justify-center text-white flex-shrink-0
+                ${colors.iconBg} shadow-md group-hover:scale-105 transition-transform`}
+            >
+              {icon}
+            </div>
+
+            {/* Title and Count */}
+            <div className="flex-1 min-w-0">
+              <h3
+                className="text-sm font-semibold group-hover:text-violet-600 dark:group-hover:text-violet-400 transition-colors line-clamp-1"
+                style={{ color: 'var(--foreground)' }}
+              >
+                {name}
+              </h3>
+              <p className="text-xs" style={{ color: 'var(--foreground-muted)' }}>
+                {count}개의 포스트
+              </p>
+            </div>
+
+            {/* Tags - condensed */}
+            <div className="hidden sm:flex items-center gap-1.5 flex-shrink-0">
+              {tags.slice(0, 3).map((tag) => (
+                <span
+                  key={tag}
+                  className="px-2 py-0.5 text-xs rounded-full border border-violet-200 dark:border-violet-500/50
+                    bg-violet-50 dark:bg-zinc-800 text-gray-700 dark:text-zinc-200"
+                >
+                  #{tag}
+                </span>
+              ))}
+              {tags.length > 3 && (
+                <span className="text-xs text-gray-500 dark:text-zinc-400">
+                  +{tags.length - 3}
+                </span>
+              )}
+            </div>
+
+            {/* Arrow */}
+            <svg
+              className="w-5 h-5 text-gray-400 group-hover:text-violet-500 transition-colors flex-shrink-0"
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+            >
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+            </svg>
+          </div>
+        </article>
+      </Link>
+    );
+  }
+
+  // Card variant (default)
   return (
     <Link href={href} className="block group h-full">
       <article

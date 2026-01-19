@@ -34,9 +34,8 @@ export default function BlogPostWrapper({ children }: BlogPostWrapperProps) {
       <div className="flex justify-end mb-4">
         <button
           onClick={toggleWidth}
-          className="flex items-center gap-2 px-3 py-1.5 text-sm rounded-lg bg-gray-100 dark:bg-gray-800 hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors"
+          className="flex items-center gap-2 px-3 py-1.5 text-sm rounded-lg bg-gray-100 text-gray-700 dark:bg-gray-800 dark:text-gray-200 hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors"
           title={isWide ? '좁게 보기' : '넓게 보기'}
-          style={{ color: 'var(--foreground)' }}
         >
           {mounted && (
             <>

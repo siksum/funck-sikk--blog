@@ -25,7 +25,7 @@ export default function TagsPage() {
         태그
       </h1>
 
-      <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 p-8">
+      <div className="rounded-xl shadow-sm border p-8" style={{ background: 'var(--card-bg)', borderColor: 'var(--card-border)' }}>
         <div className="flex flex-wrap gap-4 justify-center">
           {tags.map((tag) => (
             <Link
