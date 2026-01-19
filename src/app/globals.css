@@ -12,7 +12,7 @@
 
 :root {
   /* Light mode - Clean and professional */
-  --background: #ECF2FF;
+  --background: #EDE9FE;
   --background-secondary: #f5f5f5;
   --foreground: #171717;
   --foreground-muted: #525252;
@@ -118,7 +118,7 @@
 }
 
 .light {
-  --background: #ECF2FF;
+  --background: #EDE9FE;
   --background-secondary: #f5f5f5;
   --foreground: #171717;
   --foreground-muted: #525252;
