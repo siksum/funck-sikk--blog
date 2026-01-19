@@ -14,6 +14,26 @@ interface TopPost {
   count: number;
 }
 
+interface RecentVisitor {
+  path: string;
+  slug: string | null;
+  referer: string;
+  rawReferer: string | null;
+  browser: string;
+  device: string;
+  createdAt: string;
+}
+
+interface RefererStat {
+  source: string;
+  count: number;
+}
+
+interface TopPage {
+  path: string;
+  count: number;
+}
+
 interface Stats {
   today: number;
   yesterday: number;
@@ -24,6 +44,9 @@ interface Stats {
   weekly: DataPoint[];
   monthly: DataPoint[];
   topPosts: TopPost[];
+  recentVisitors: RecentVisitor[];
+  referers: RefererStat[];
+  topPages: TopPage[];
 }
 
 type ViewMode = 'daily' | 'weekly' | 'monthly';
@@ -40,7 +63,6 @@ export default function AdminPage() {
   const fetchStats = async () => {
     setLoading(true);
     try {
-      let url = '/api/analytics/stats';
       const params = new URLSearchParams();
 
       if (rangeOption === 'custom' && customStart && customEnd) {
@@ -50,7 +72,7 @@ export default function AdminPage() {
         params.set('range', rangeOption);
       }
 
-      const res = await fetch(`${url}?${params.toString()}`);
+      const res = await fetch(`/api/analytics/stats?${params.toString()}`);
       if (res.ok) {
         const data = await res.json();
         setStats(data);
@@ -96,6 +118,53 @@ export default function AdminPage() {
       return <span className="text-red-500 text-sm ml-2">{percent}%</span>;
     }
     return null;
+  };
+
+  const formatTime = (dateStr: string) => {
+    const date = new Date(dateStr);
+    const now = new Date();
+    const diff = now.getTime() - date.getTime();
+    const minutes = Math.floor(diff / 60000);
+    const hours = Math.floor(minutes / 60);
+    const days = Math.floor(hours / 24);
+
+    if (minutes < 1) return '방금 전';
+    if (minutes < 60) return `${minutes}분 전`;
+    if (hours < 24) return `${hours}시간 전`;
+    if (days < 7) return `${days}일 전`;
+    return date.toLocaleDateString('ko-KR');
+  };
+
+  const getBrowserIcon = (browser: string) => {
+    switch (browser) {
+      case 'Chrome': return '🌐';
+      case 'Safari': return '🧭';
+      case 'Firefox': return '🦊';
+      case 'Edge': return '🔷';
+      default: return '��';
+    }
+  };
+
+  const getDeviceIcon = (device: string) => {
+    switch (device) {
+      case 'Mobile': return '📱';
+      case 'Tablet': return '📲';
+      default: return '💻';
+    }
+  };
+
+  const getRefererIcon = (source: string) => {
+    switch (source) {
+      case 'Google': return '🔍';
+      case 'Naver': return '🇳';
+      case 'Daum': return '🇩';
+      case 'GitHub': return '🐙';
+      case 'Twitter/X': return '🐦';
+      case 'Facebook': return '📘';
+      case 'LinkedIn': return '💼';
+      case 'Direct': return '🔗';
+      default: return '🌐';
+    }
   };
 
   return (
@@ -226,8 +295,75 @@ export default function AdminPage() {
         )}
       </div>
 
+      {/* Two Column Layout for Referers and Top Pages */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-8">
+        {/* Referer Stats */}
+        <div className="bg-white dark:bg-gray-800 p-6 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700">
+          <h2 className="text-lg font-semibold mb-4" style={{ color: 'var(--foreground)' }}>
+            유입 경로
+          </h2>
+          {loading ? (
+            <div className="text-center text-gray-500 py-8">로딩 중...</div>
+          ) : stats?.referers && stats.referers.length > 0 ? (
+            <div className="space-y-3">
+              {stats.referers.map((ref, index) => (
+                <div
+                  key={index}
+                  className="flex items-center justify-between p-3 bg-gray-50 dark:bg-gray-700/50 rounded-lg"
+                >
+                  <div className="flex items-center gap-3">
+                    <span className="text-lg">{getRefererIcon(ref.source)}</span>
+                    <span className="text-sm" style={{ color: 'var(--foreground)' }}>
+                      {ref.source}
+                    </span>
+                  </div>
+                  <span className="text-sm text-gray-500 dark:text-gray-400">
+                    {ref.count}회
+                  </span>
+                </div>
+              ))}
+            </div>
+          ) : (
+            <div className="text-center text-gray-500 py-8">아직 데이터가 없습니다</div>
+          )}
+        </div>
+
+        {/* Top Pages */}
+        <div className="bg-white dark:bg-gray-800 p-6 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700">
+          <h2 className="text-lg font-semibold mb-4" style={{ color: 'var(--foreground)' }}>
+            인기 페이지
+          </h2>
+          {loading ? (
+            <div className="text-center text-gray-500 py-8">로딩 중...</div>
+          ) : stats?.topPages && stats.topPages.length > 0 ? (
+            <div className="space-y-3">
+              {stats.topPages.map((page, index) => (
+                <div
+                  key={index}
+                  className="flex items-center justify-between p-3 bg-gray-50 dark:bg-gray-700/50 rounded-lg"
+                >
+                  <div className="flex items-center gap-3">
+                    <span className="w-6 h-6 flex items-center justify-center text-sm font-medium bg-violet-100 dark:bg-violet-900/30 text-violet-600 dark:text-violet-400 rounded">
+                      {index + 1}
+                    </span>
+                    <span className="text-sm truncate max-w-[200px]" style={{ color: 'var(--foreground)' }}>
+                      {page.path}
+                    </span>
+                  </div>
+                  <span className="text-sm text-gray-500 dark:text-gray-400">
+                    {page.count}회
+                  </span>
+                </div>
+              ))}
+            </div>
+          ) : (
+            <div className="text-center text-gray-500 py-8">아직 데이터가 없습니다</div>
+          )}
+        </div>
+      </div>
+
       {/* Top Posts */}
-      <div className="bg-white dark:bg-gray-800 p-6 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700">
+      <div className="bg-white dark:bg-gray-800 p-6 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 mb-8">
         <h2 className="text-lg font-semibold mb-4" style={{ color: 'var(--foreground)' }}>
           인기 포스트
         </h2>
@@ -257,6 +393,67 @@ export default function AdminPage() {
                 </span>
               </div>
             ))}
+          </div>
+        ) : (
+          <div className="text-center text-gray-500 py-8">아직 데이터가 없습니다</div>
+        )}
+      </div>
+
+      {/* Recent Visitors */}
+      <div className="bg-white dark:bg-gray-800 p-6 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700">
+        <h2 className="text-lg font-semibold mb-4" style={{ color: 'var(--foreground)' }}>
+          최근 방문자
+        </h2>
+        {loading ? (
+          <div className="text-center text-gray-500 py-8">로딩 중...</div>
+        ) : stats?.recentVisitors && stats.recentVisitors.length > 0 ? (
+          <div className="overflow-x-auto">
+            <table className="w-full text-sm">
+              <thead>
+                <tr className="border-b border-gray-200 dark:border-gray-700">
+                  <th className="text-left py-3 px-2 font-medium text-gray-500 dark:text-gray-400">시간</th>
+                  <th className="text-left py-3 px-2 font-medium text-gray-500 dark:text-gray-400">페이지</th>
+                  <th className="text-left py-3 px-2 font-medium text-gray-500 dark:text-gray-400">유입</th>
+                  <th className="text-left py-3 px-2 font-medium text-gray-500 dark:text-gray-400">브라우저</th>
+                  <th className="text-left py-3 px-2 font-medium text-gray-500 dark:text-gray-400">기기</th>
+                </tr>
+              </thead>
+              <tbody>
+                {stats.recentVisitors.map((visitor, index) => (
+                  <tr
+                    key={index}
+                    className="border-b border-gray-100 dark:border-gray-700/50 hover:bg-gray-50 dark:hover:bg-gray-700/30"
+                  >
+                    <td className="py-3 px-2 text-gray-500 dark:text-gray-400 whitespace-nowrap">
+                      {formatTime(visitor.createdAt)}
+                    </td>
+                    <td className="py-3 px-2" style={{ color: 'var(--foreground)' }}>
+                      <span className="truncate max-w-[200px] block" title={visitor.path}>
+                        {visitor.path}
+                      </span>
+                    </td>
+                    <td className="py-3 px-2">
+                      <span
+                        className="inline-flex items-center gap-1 text-gray-600 dark:text-gray-300"
+                        title={visitor.rawReferer || 'Direct'}
+                      >
+                        {getRefererIcon(visitor.referer)} {visitor.referer}
+                      </span>
+                    </td>
+                    <td className="py-3 px-2">
+                      <span className="inline-flex items-center gap-1 text-gray-600 dark:text-gray-300">
+                        {getBrowserIcon(visitor.browser)} {visitor.browser}
+                      </span>
+                    </td>
+                    <td className="py-3 px-2">
+                      <span className="inline-flex items-center gap-1 text-gray-600 dark:text-gray-300">
+                        {getDeviceIcon(visitor.device)} {visitor.device}
+                      </span>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
           </div>
         ) : (
           <div className="text-center text-gray-500 py-8">아직 데이터가 없습니다</div>

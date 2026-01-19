@@ -13,8 +13,8 @@ interface AdminSidebarProps {
 
 const menuItems = [
   { href: '/admin', label: '대시보드', icon: '📊' },
+  { href: '/admin/posts', label: '포스트 관리', icon: '📝' },
   { href: '/admin/new', label: '새 포스트', icon: '✏️' },
-  { href: '/admin/analytics', label: '방문자 통계', icon: '📈' },
   { href: '/admin/comments', label: '댓글 관리', icon: '💬' },
   { href: '/admin/subscribers', label: '구독자 관리', icon: '📧' },
 ];

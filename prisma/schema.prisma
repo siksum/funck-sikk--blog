@@ -129,3 +129,19 @@ model OwnerStatus {
   isOnline  Boolean  @default(false)
   updatedAt DateTime @updatedAt
 }
+
+// ============ CATEGORIES ============
+
+model Category {
+  id        String     @id @default(cuid())
+  name      String
+  slug      String     @unique
+  parentId  String?
+  parent    Category?  @relation("CategoryChildren", fields: [parentId], references: [id])
+  children  Category[] @relation("CategoryChildren")
+  order     Int        @default(0)
+  createdAt DateTime   @default(now())
+  updatedAt DateTime   @updatedAt
+
+  @@index([parentId])
+}

@@ -131,13 +131,22 @@ export default function HeaderClient({ posts }: HeaderClientProps) {
                       <p className="text-xs" style={{ color: 'var(--foreground-muted)' }}>{session.user?.email}</p>
                     </div>
                     {session.user?.isAdmin && (
-                      <Link
-                        href="/admin"
-                        className="nav-link block px-4 py-2 text-sm transition-colors hover:bg-violet-100 dark:hover:bg-violet-500/20"
-                        onClick={() => setIsUserMenuOpen(false)}
-                      >
-                        관리자 페이지
-                      </Link>
+                      <>
+                        <Link
+                          href="/admin/new"
+                          className="nav-link block px-4 py-2 text-sm transition-colors hover:bg-violet-100 dark:hover:bg-violet-500/20"
+                          onClick={() => setIsUserMenuOpen(false)}
+                        >
+                          새 포스트
+                        </Link>
+                        <Link
+                          href="/admin"
+                          className="nav-link block px-4 py-2 text-sm transition-colors hover:bg-violet-100 dark:hover:bg-violet-500/20"
+                          onClick={() => setIsUserMenuOpen(false)}
+                        >
+                          관리자 페이지
+                        </Link>
+                      </>
                     )}
                     <button
                       onClick={() => {

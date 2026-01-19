@@ -1,6 +1,7 @@
 // Re-export from mdx for backwards compatibility
 export {
   getAllPosts,
+  getPublicPosts,
   getPostBySlug,
   getRecentPosts,
   getPostsByCategory,
