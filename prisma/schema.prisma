@@ -69,14 +69,16 @@ model DailyVisit {
 }
 
 model PageView {
-  id        String   @id @default(cuid())
-  path      String
-  slug      String?
-  userAgent String?
-  referer   String?
-  createdAt DateTime @default(now())
-  date      DateTime
+  id          String   @id @default(cuid())
+  path        String
+  slug        String?
+  visitorHash String?  // Hash of IP + User Agent for deduplication (optional for legacy data)
+  userAgent   String?
+  referer     String?
+  createdAt   DateTime @default(now())
+  date        DateTime
 
+  @@unique([visitorHash, path, date]) // Prevent duplicate views per visitor per page per day
   @@index([date])
   @@index([slug])
 }
