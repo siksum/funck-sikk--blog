@@ -1120,6 +1120,32 @@ export default function PostsManagementPage() {
                 블로그 페이지의 섹션(Web2 Security, Web3 Security, TIL 등)을 관리합니다. 카테고리를 섹션에 배치하여 블로그 페이지에 표시할 수 있습니다.
               </p>
 
+              {/* Seed default sections button */}
+              {dbSections.length === 0 && (
+                <div className="mb-6 p-4 bg-indigo-50 dark:bg-indigo-900/20 rounded-lg border border-indigo-200 dark:border-indigo-800">
+                  <p className="text-sm text-indigo-700 dark:text-indigo-300 mb-3">
+                    아직 섹션이 없습니다. 기본 섹션을 생성하시겠습니까?
+                  </p>
+                  <button
+                    onClick={async () => {
+                      try {
+                        const res = await fetch('/api/admin/sections/seed', { method: 'POST' });
+                        if (res.ok) {
+                          fetchSections();
+                        } else {
+                          console.error('Failed to seed sections');
+                        }
+                      } catch (error) {
+                        console.error('Failed to seed sections:', error);
+                      }
+                    }}
+                    className="w-full px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors text-sm font-medium"
+                  >
+                    기본 섹션 생성 (Web2, Web3, TIL)
+                  </button>
+                </div>
+              )}
+
               {/* Add new section */}
               <div className="mb-6">
                 <label className="block text-sm font-medium mb-2 text-gray-900 dark:text-white">
