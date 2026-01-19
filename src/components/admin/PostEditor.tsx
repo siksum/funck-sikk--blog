@@ -54,6 +54,18 @@ export default function PostEditor({ initialData = {}, isEdit = false }: PostEdi
   const [showMathEditor, setShowMathEditor] = useState(false);
   const [showButtonEditor, setShowButtonEditor] = useState(false);
   const [categories, setCategories] = useState<DBCategory[]>([]);
+
+  // Parse initial category into parent and sub
+  const parseCategory = (category: string) => {
+    if (!category) return { parent: '', sub: '' };
+    const parts = category.split('/');
+    return { parent: parts[0], sub: parts[1] || '' };
+  };
+
+  const initialCategoryParsed = parseCategory(initialData.category || '');
+  const [selectedParentCategory, setSelectedParentCategory] = useState(initialCategoryParsed.parent);
+  const [selectedSubCategory, setSelectedSubCategory] = useState(initialCategoryParsed.sub);
+
   const [formData, setFormData] = useState({
     slug: initialData.slug || '',
     title: initialData.title || '',
@@ -63,6 +75,20 @@ export default function PostEditor({ initialData = {}, isEdit = false }: PostEdi
     content: initialData.content || '',
     date: initialData.date || '',
   });
+
+  // Update formData.category when parent or sub category changes
+  useEffect(() => {
+    const newCategory = selectedSubCategory
+      ? `${selectedParentCategory}/${selectedSubCategory}`
+      : selectedParentCategory;
+    setFormData(prev => ({ ...prev, category: newCategory }));
+  }, [selectedParentCategory, selectedSubCategory]);
+
+  // Get subcategories for selected parent
+  const getSubcategories = () => {
+    const parent = categories.find(c => c.name === selectedParentCategory);
+    return parent?.children || [];
+  };
 
   // Fetch categories from database
   useEffect(() => {
@@ -83,17 +109,6 @@ export default function PostEditor({ initialData = {}, isEdit = false }: PostEdi
     fetchCategories();
   }, []);
 
-  // Build flat list of category options with path format
-  const getCategoryOptions = () => {
-    const options: { value: string; label: string }[] = [];
-    categories.forEach((parent) => {
-      options.push({ value: parent.name, label: parent.name });
-      parent.children?.forEach((child) => {
-        options.push({ value: `${parent.name}/${child.name}`, label: `${parent.name}/${child.name}` });
-      });
-    });
-    return options;
-  };
 
   const insertText = (before: string, after: string = '') => {
     const textarea = textareaRef.current;
@@ -414,23 +429,51 @@ export default function PostEditor({ initialData = {}, isEdit = false }: PostEdi
           />
         </div>
 
-        {/* Category */}
+        {/* Category - Two-step selection */}
         <div>
           <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
             카테고리
           </label>
-          <select
-            value={formData.category}
-            onChange={(e) => setFormData({ ...formData, category: e.target.value })}
-            className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
-          >
-            <option value="">카테고리 선택</option>
-            {getCategoryOptions().map((option) => (
-              <option key={option.value} value={option.value}>
-                {option.label}
-              </option>
-            ))}
-          </select>
+          <div className="flex gap-2">
+            {/* Parent Category */}
+            <select
+              value={selectedParentCategory}
+              onChange={(e) => {
+                setSelectedParentCategory(e.target.value);
+                setSelectedSubCategory(''); // Reset subcategory when parent changes
+              }}
+              className="flex-1 px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
+            >
+              <option value="">상위 카테고리</option>
+              {categories.map((cat) => (
+                <option key={cat.id} value={cat.name}>
+                  {cat.name}
+                </option>
+              ))}
+            </select>
+
+            {/* Subcategory - only show if parent has children */}
+            {selectedParentCategory && getSubcategories().length > 0 && (
+              <select
+                value={selectedSubCategory}
+                onChange={(e) => setSelectedSubCategory(e.target.value)}
+                className="flex-1 px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
+              >
+                <option value="">하위 카테고리 (선택)</option>
+                {getSubcategories().map((sub) => (
+                  <option key={sub.id} value={sub.name}>
+                    {sub.name}
+                  </option>
+                ))}
+              </select>
+            )}
+          </div>
+          {/* Show selected category path */}
+          {formData.category && (
+            <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">
+              선택됨: {formData.category}
+            </p>
+          )}
         </div>
       </div>
 
