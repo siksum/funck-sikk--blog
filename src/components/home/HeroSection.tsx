@@ -1,11 +1,15 @@
 import { getAllPosts } from '@/lib/posts';
 import { prisma } from '@/lib/db';
 import HeroClient from './HeroClient';
+import { unstable_noStore as noStore } from 'next/cache';
 
 // Blog start date
 const BLOG_START_DATE = new Date('2026-01-16');
 
 export default async function HeroSection() {
+  // Disable caching to always show fresh visitor count
+  noStore();
+
   const posts = getAllPosts();
 
   // Get total unique visitors from DailyVisit (not page views)

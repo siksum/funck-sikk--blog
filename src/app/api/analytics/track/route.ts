@@ -22,6 +22,48 @@ function getClientIP(request: NextRequest): string {
   return 'unknown';
 }
 
+// Check if user agent is a bot/crawler
+function isBot(userAgent: string): boolean {
+  const botPatterns = [
+    /bot/i,
+    /crawler/i,
+    /spider/i,
+    /crawling/i,
+    /googlebot/i,
+    /bingbot/i,
+    /yandex/i,
+    /baidu/i,
+    /duckduckbot/i,
+    /slurp/i,
+    /facebookexternalhit/i,
+    /linkedinbot/i,
+    /twitterbot/i,
+    /whatsapp/i,
+    /telegram/i,
+    /discord/i,
+    /slack/i,
+    /preview/i,
+    /headless/i,
+    /phantom/i,
+    /selenium/i,
+    /puppeteer/i,
+    /playwright/i,
+    /curl/i,
+    /wget/i,
+    /python-requests/i,
+    /axios/i,
+    /node-fetch/i,
+    /go-http-client/i,
+    /java/i,
+    /apache-httpclient/i,
+    /okhttp/i,
+    /postman/i,
+    /insomnia/i,
+  ];
+
+  return botPatterns.some(pattern => pattern.test(userAgent));
+}
+
 export async function POST(request: NextRequest) {
   try {
     // Server-side filter: Skip admin users
@@ -38,6 +80,11 @@ export async function POST(request: NextRequest) {
     }
 
     const userAgent = request.headers.get('user-agent') || '';
+
+    // Server-side filter: Skip bots and crawlers
+    if (isBot(userAgent)) {
+      return NextResponse.json({ success: true, skipped: 'bot' });
+    }
     const referer = request.headers.get('referer') || '';
     const clientIP = getClientIP(request);
     const visitorHash = generateVisitorHash(clientIP, userAgent);
