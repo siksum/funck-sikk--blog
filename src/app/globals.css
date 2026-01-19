@@ -51,6 +51,38 @@
   --font-mono: var(--font-geist-mono);
 }
 
+@media (prefers-color-scheme: dark) {
+  :root {
+    --background: #131318;
+    --background-secondary: #1a1a22;
+    --foreground: #f5f5f5;
+    --foreground-muted: #e4e4e7;
+    --tag-bg: #27272a;
+    --tag-text: #fafafa;
+
+    --neon-pink: #c4b5fd;
+    --neon-pink-glow: rgba(196, 181, 253, 0.5);
+    --neon-cyan: #a5b4fc;
+    --neon-cyan-glow: rgba(165, 180, 252, 0.5);
+    --neon-purple: #d8b4fe;
+    --neon-purple-glow: rgba(216, 180, 254, 0.5);
+
+    --card-bg: rgba(26, 26, 34, 0.9);
+    --card-border: rgba(255, 255, 255, 0.12);
+    --card-shadow: rgba(0, 0, 0, 0.4);
+
+    --stat-pink-bg: rgba(124, 58, 237, 0.15);
+    --stat-pink-border: rgba(167, 139, 250, 0.4);
+    --stat-pink-text: #c4b5fd;
+    --stat-cyan-bg: rgba(99, 102, 241, 0.15);
+    --stat-cyan-border: rgba(129, 140, 248, 0.4);
+    --stat-cyan-text: #a5b4fc;
+    --stat-purple-bg: rgba(147, 51, 234, 0.15);
+    --stat-purple-border: rgba(192, 132, 252, 0.4);
+    --stat-purple-text: #d8b4fe;
+  }
+}
+
 .dark {
   /* Dark mode - Softer dark, not pure black */
   --background: #131318;
