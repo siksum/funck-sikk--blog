@@ -36,7 +36,7 @@ function CategoryTreeItem({
   const href = `/categories/${category.slugPath.join('/')}`;
 
   return (
-    <li>
+    <>
       <div className="flex items-center">
         {hasChildren ? (
           <button
@@ -85,16 +85,17 @@ function CategoryTreeItem({
       {hasChildren && isExpanded && (
         <ul className="ml-4 space-y-1">
           {category.children!.map((child) => (
-            <CategoryTreeItem
-              key={child.slug}
-              category={child}
-              depth={depth + 1}
-              currentCategorySlugPath={currentCategorySlugPath}
-            />
+            <li key={child.slug}>
+              <CategoryTreeItem
+                category={child}
+                depth={depth + 1}
+                currentCategorySlugPath={currentCategorySlugPath}
+              />
+            </li>
           ))}
         </ul>
       )}
-    </li>
+    </>
   );
 }
 
@@ -111,19 +112,20 @@ export default function Sidebar({
     <aside className="space-y-8">
       {/* Categories - First */}
       <div
-        className="rounded-2xl backdrop-blur-xl border border-gray-200 dark:border-violet-500/30 p-5"
-        style={{ background: 'var(--card-bg)' }}
+        className="rounded-2xl backdrop-blur-xl border p-5"
+        style={{ background: 'var(--card-bg)', borderColor: 'var(--card-border)' }}
       >
         <h3 className="text-lg font-semibold mb-4 sidebar-title">
           카테고리
         </h3>
-        <ul className="space-y-2">
-          {categories.slice(0, 8).map((category) => (
-            <CategoryTreeItem
-              key={category.slug}
-              category={category}
-              currentCategorySlugPath={currentCategorySlugPath}
-            />
+        <ul className="space-y-2 divide-y">
+          {categories.slice(0, 8).map((category, index) => (
+            <li key={category.slug} className={index > 0 ? 'pt-2' : ''}>
+              <CategoryTreeItem
+                category={category}
+                currentCategorySlugPath={currentCategorySlugPath}
+              />
+            </li>
           ))}
         </ul>
         {categories.length > 8 && (
@@ -138,8 +140,8 @@ export default function Sidebar({
 
       {/* Posts Tabs - Recent/Popular */}
       <div
-        className="rounded-2xl overflow-hidden backdrop-blur-xl border border-gray-200 dark:border-violet-500/30"
-        style={{ background: 'var(--card-bg)' }}
+        className="rounded-2xl overflow-hidden backdrop-blur-xl border"
+        style={{ background: 'var(--card-bg)', borderColor: 'var(--card-border)' }}
       >
         {/* Tab Headers */}
         <div className="flex border-b" style={{ borderColor: 'var(--card-border)' }}>
@@ -147,7 +149,7 @@ export default function Sidebar({
             onClick={() => setActiveTab('recent')}
             className={`flex-1 py-3 px-4 text-sm font-medium transition-colors ${
               activeTab === 'recent'
-                ? 'text-violet-600 dark:text-violet-400 border-b-2 border-violet-600 dark:border-violet-400 -mb-px'
+                ? 'text-violet-400 dark:text-violet-300 border-b-2 border-violet-400 dark:border-violet-300 -mb-px'
                 : 'sidebar-text'
             }`}
           >
@@ -157,7 +159,7 @@ export default function Sidebar({
             onClick={() => setActiveTab('popular')}
             className={`flex-1 py-3 px-4 text-sm font-medium transition-colors ${
               activeTab === 'popular'
-                ? 'text-violet-600 dark:text-violet-400 border-b-2 border-violet-600 dark:border-violet-400 -mb-px'
+                ? 'text-violet-400 dark:text-violet-300 border-b-2 border-violet-400 dark:border-violet-300 -mb-px'
                 : 'sidebar-text'
             }`}
           >
@@ -166,7 +168,7 @@ export default function Sidebar({
         </div>
 
         {/* Tab Content */}
-        <div className="divide-y" style={{ borderColor: 'var(--card-border)' }}>
+        <div className="divide-y">
           {(activeTab === 'recent' ? recentPosts : popularPosts).map((post) => (
             <PostCard key={post.slug} post={post} variant="compact" />
           ))}
@@ -181,8 +183,8 @@ export default function Sidebar({
 
       {/* Tags Cloud - Last */}
       <div
-        className="rounded-2xl backdrop-blur-xl border border-gray-200 dark:border-violet-500/30 p-5"
-        style={{ background: 'var(--card-bg)' }}
+        className="rounded-2xl backdrop-blur-xl border p-5"
+        style={{ background: 'var(--card-bg)', borderColor: 'var(--card-border)' }}
       >
         <h3 className="text-lg font-semibold mb-4 sidebar-title">
           태그

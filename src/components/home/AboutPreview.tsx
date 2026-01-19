@@ -16,7 +16,7 @@ export default function AboutPreview() {
           backdrop-blur-xl
           border border-gray-200 dark:border-violet-500/60
           shadow-lg shadow-gray-200/50 dark:shadow-[0_0_25px_rgba(167,139,250,0.4),_inset_0_0_30px_rgba(167,139,250,0.05)]
-          hover:border-violet-300 dark:hover:border-violet-400/80
+          hover:border-2 hover:border-violet-500/70 dark:hover:border-violet-400/80
           hover:shadow-2xl hover:shadow-violet-200/40 dark:hover:shadow-[0_0_40px_rgba(167,139,250,0.6)]
           hover:-translate-y-3"
         style={{ background: 'var(--card-bg)' }}

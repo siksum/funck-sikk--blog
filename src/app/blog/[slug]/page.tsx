@@ -90,7 +90,7 @@ export default async function BlogPostPage({ params }: BlogPostPageProps) {
       </header>
 
       {/* Divider */}
-      <hr className="border-gray-200 dark:border-gray-700 mb-8" />
+      <hr className="mb-8 border-t" style={{ borderColor: 'var(--card-border)' }} />
 
       {/* Content */}
       <MDXContent content={post.content} />
@@ -99,7 +99,7 @@ export default async function BlogPostPage({ params }: BlogPostPageProps) {
       <CommentSection postSlug={slug} />
 
       {/* Footer */}
-      <footer className="mt-12 pt-8 border-t border-gray-200 dark:border-gray-700">
+      <footer className="mt-12 pt-8 border-t" style={{ borderColor: 'var(--card-border)' }}>
         <Link
           href="/blog"
           className="inline-flex items-center text-blue-600 dark:text-blue-400 hover:underline"

@@ -143,7 +143,7 @@ export default function GithubGrass({ postDates }: GithubGrassProps) {
 
   return (
     <div
-      className="rounded-2xl overflow-hidden backdrop-blur-xl border border-gray-200 dark:border-violet-500/30 p-6"
+      className="rounded-2xl overflow-hidden backdrop-blur-xl border border-gray-200 dark:border-violet-500/30 p-6 transition-all duration-300 hover:border-2 hover:border-violet-500/70 dark:hover:border-violet-400/80"
       style={{ background: 'var(--card-bg)' }}
     >
       {/* Header */}
