@@ -76,9 +76,10 @@ const defaultIcon = (
 // Unified violet theme for all categories
 const defaultColors = {
   iconBg: 'bg-violet-500',
-  pastelBg: 'bg-gradient-to-br from-violet-50 to-indigo-100 dark:from-violet-900/30 dark:to-indigo-800/30',
-  neonBorder: 'border-violet-300 dark:border-violet-500',
-  neonGlow: 'hover:shadow-[0_0_20px_rgba(139,92,246,0.3)] dark:hover:shadow-[0_0_25px_rgba(167,139,250,0.5)]',
+  pastelBg: 'bg-gradient-to-br from-violet-50 to-indigo-100',
+  darkBg: 'dark:bg-[#1a1a24]',
+  neonBorder: 'border-violet-300 dark:border-violet-500/60',
+  neonGlow: 'hover:shadow-[0_0_20px_rgba(139,92,246,0.3)] dark:hover:shadow-[0_0_20px_rgba(139,92,246,0.4)]',
 };
 
 // All categories use the same violet theme
@@ -96,7 +97,7 @@ export default function CategoryCard({ name, count, tags, slugPath }: CategoryCa
     <Link href={href} className="block group h-full">
       <article
         className={`relative rounded-xl overflow-hidden transition-all duration-300 h-full flex flex-col
-          border-2 ${colors.neonBorder} ${colors.pastelBg} ${colors.neonGlow}
+          border-2 ${colors.neonBorder} ${colors.pastelBg} ${colors.darkBg} ${colors.neonGlow}
           hover:-translate-y-1`}
       >
         {/* Content with Icon */}
@@ -127,17 +128,16 @@ export default function CategoryCard({ name, count, tags, slugPath }: CategoryCa
             {tags.slice(0, 4).map((tag) => (
               <span
                 key={tag}
-                className="px-2 py-0.5 text-xs rounded-full border border-violet-200 dark:border-violet-500/40
-                  transition-colors group-hover:border-violet-300 dark:group-hover:border-violet-400 h-fit"
-                style={{ background: 'var(--tag-bg)', color: 'var(--tag-text)' }}
+                className="px-2 py-0.5 text-xs rounded-full border border-violet-200 dark:border-violet-500/50
+                  transition-colors group-hover:border-violet-300 dark:group-hover:border-violet-400 h-fit
+                  bg-violet-50 dark:bg-zinc-800 text-gray-700 dark:text-zinc-200"
               >
                 #{tag}
               </span>
             ))}
             {tags.length > 4 && (
               <span
-                className="px-2 py-0.5 text-xs rounded-full h-fit"
-                style={{ color: 'var(--foreground-muted)' }}
+                className="px-2 py-0.5 text-xs rounded-full h-fit text-gray-500 dark:text-zinc-400"
               >
                 +{tags.length - 4}
               </span>

@@ -51,6 +51,7 @@ export default async function CategoryPage({ params }: CategoryPageProps) {
   const allPosts = getPostsByCategoryPath(slugPath, true);
 
   return (
+    <div className="min-h-screen blog-page-bg">
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
       {/* Breadcrumb */}
       <nav className="mb-6">
@@ -156,6 +157,7 @@ export default async function CategoryPage({ params }: CategoryPageProps) {
           이 카테고리에 포스트가 없습니다.
         </p>
       )}
+    </div>
     </div>
   );
 }
