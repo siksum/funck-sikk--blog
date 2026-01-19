@@ -50,7 +50,7 @@ export async function GET(request: NextRequest) {
     }
   }
 
-  const [todayCount, dailyData, weeklyData, monthlyData, topPosts, totalViews, yesterdayCount, recentVisitors, refererStats, topPages] = await Promise.all([
+  const [todayCount, dailyData, weeklyData, monthlyData, topPosts, totalVisitorsResult, yesterdayCount, recentVisitors, refererStats, topPages] = await Promise.all([
     prisma.dailyVisit.findUnique({ where: { date: today } }),
     prisma.dailyVisit.findMany({
       where: { date: { gte: fromDate, lt: toDate } },
@@ -83,7 +83,8 @@ export async function GET(request: NextRequest) {
       orderBy: { _count: { slug: 'desc' } },
       take: 10,
     }),
-    prisma.pageView.count(),
+    // Total unique visitors (sum of DailyVisit counts)
+    prisma.dailyVisit.aggregate({ _sum: { count: true } }),
     prisma.dailyVisit.findUnique({
       where: {
         date: new Date(new Date(today).setDate(today.getDate() - 1)),
@@ -173,7 +174,7 @@ export async function GET(request: NextRequest) {
     yesterday: yesterdayCount?.count || 0,
     thisWeek: thisWeekTotal,
     thisMonth: thisMonthTotal,
-    totalViews,
+    totalViews: totalVisitorsResult._sum.count || 0,
     daily: dailyData.map(d => ({ date: d.date, count: d.count })),
     weekly: weeklyData.map(w => ({ date: w.week_start, count: Number(w.total) })),
     monthly: monthlyData.map(m => ({ date: m.month_start, count: Number(m.total) })),
