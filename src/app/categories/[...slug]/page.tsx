@@ -9,9 +9,31 @@ import {
   getAllTags,
   getRootCategories,
 } from '@/lib/posts';
+import { prisma } from '@/lib/db';
 
 interface CategoryPageProps {
   params: Promise<{ slug: string[] }>;
+}
+
+// Revalidate sections every 60 seconds
+export const revalidate = 60;
+
+async function getSections() {
+  try {
+    const sections = await prisma.section.findMany({
+      include: {
+        categories: {
+          where: { parentId: null },
+          orderBy: { order: 'asc' },
+        },
+      },
+      orderBy: { order: 'asc' },
+    });
+    return sections;
+  } catch (error) {
+    console.error('Failed to fetch sections:', error);
+    return [];
+  }
 }
 
 export async function generateMetadata({ params }: CategoryPageProps) {
@@ -55,6 +77,7 @@ export default async function CategoryPage({ params }: CategoryPageProps) {
   const recentPosts = getRecentPosts(5);
   const categories = getRootCategories();
   const tags = getAllTags();
+  const sections = await getSections();
 
   return (
     <CategoryPageContent
@@ -69,6 +92,7 @@ export default async function CategoryPage({ params }: CategoryPageProps) {
       recentPosts={recentPosts}
       categories={categories}
       tags={tags}
+      sections={sections}
     />
   );
 }
