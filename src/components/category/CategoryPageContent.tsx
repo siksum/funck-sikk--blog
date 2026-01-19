@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect } from 'react';
 import Link from 'next/link';
 import { Post, Category } from '@/types';
 import CategoryCard from '@/components/category/CategoryCard';
@@ -41,6 +41,23 @@ export default function CategoryPageContent({
   const [searchTerm, setSearchTerm] = useState('');
   const [sortBy, setSortBy] = useState<'date' | 'title'>('date');
   const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('desc');
+  const [commentCounts, setCommentCounts] = useState<Record<string, number>>({});
+
+  // Fetch comment counts
+  useEffect(() => {
+    const fetchCommentCounts = async () => {
+      try {
+        const res = await fetch('/api/comments/counts');
+        if (res.ok) {
+          const data = await res.json();
+          setCommentCounts(data);
+        }
+      } catch (error) {
+        console.error('Failed to fetch comment counts:', error);
+      }
+    };
+    fetchCommentCounts();
+  }, []);
 
   // Filter and sort posts
   const filteredAndSortedPosts = useMemo(() => {
@@ -364,13 +381,13 @@ export default function CategoryPageContent({
                 ) : viewMode === 'list' ? (
                   <div className="space-y-3">
                     {filteredAndSortedPosts.map((post) => (
-                      <PostCard key={post.slug} post={post} variant="list" />
+                      <PostCard key={post.slug} post={post} variant="list" commentCount={commentCounts[post.slug] || 0} />
                     ))}
                   </div>
                 ) : (
                   <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
                     {filteredAndSortedPosts.map((post) => (
-                      <PostCard key={post.slug} post={post} />
+                      <PostCard key={post.slug} post={post} commentCount={commentCounts[post.slug] || 0} />
                     ))}
                   </div>
                 )}

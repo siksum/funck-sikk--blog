@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Post } from '@/types';
 import PostCard from '@/components/post/PostCard';
 
@@ -18,6 +18,23 @@ export default function CategoryPostsSection({
   childCategoryCount,
 }: CategoryPostsSectionProps) {
   const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
+  const [commentCounts, setCommentCounts] = useState<Record<string, number>>({});
+
+  // Fetch comment counts
+  useEffect(() => {
+    const fetchCommentCounts = async () => {
+      try {
+        const res = await fetch('/api/comments/counts');
+        if (res.ok) {
+          const data = await res.json();
+          setCommentCounts(data);
+        }
+      } catch (error) {
+        console.error('Failed to fetch comment counts:', error);
+      }
+    };
+    fetchCommentCounts();
+  }, []);
 
   return (
     <>
@@ -89,13 +106,13 @@ export default function CategoryPostsSection({
         viewMode === 'list' ? (
           <div className="space-y-3">
             {posts.map((post) => (
-              <PostCard key={post.slug} post={post} variant="list" />
+              <PostCard key={post.slug} post={post} variant="list" commentCount={commentCounts[post.slug] || 0} />
             ))}
           </div>
         ) : (
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
             {posts.map((post) => (
-              <PostCard key={post.slug} post={post} />
+              <PostCard key={post.slug} post={post} commentCount={commentCounts[post.slug] || 0} />
             ))}
           </div>
         )
