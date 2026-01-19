@@ -44,7 +44,7 @@ export default function HeaderClient({ posts }: HeaderClientProps) {
         borderColor: 'var(--card-border)',
       }}
     >
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+      <div className="w-full px-4 sm:px-6 lg:px-12 xl:px-16">
         <div className="flex justify-between items-center h-16">
           {/* Logo */}
           <Link href="/" className="flex items-center space-x-2 group">
@@ -66,8 +66,7 @@ export default function HeaderClient({ posts }: HeaderClientProps) {
               <Link
                 key={item.href}
                 href={item.href}
-                className="px-3 py-2 rounded-lg text-sm font-medium transition-all hover:bg-violet-100 dark:hover:bg-violet-500/20 hover:text-gray-900 dark:hover:text-gray-900"
-                style={{ color: 'var(--foreground-muted)' }}
+                className="nav-link px-3 py-2 rounded-lg text-sm font-medium transition-all hover:bg-violet-100 dark:hover:bg-violet-500/20"
               >
                 {item.label}
               </Link>
@@ -79,8 +78,7 @@ export default function HeaderClient({ posts }: HeaderClientProps) {
             {/* Search Button */}
             <button
               onClick={() => setIsSearchOpen(true)}
-              className="p-2 rounded-lg transition-all hover:bg-violet-100 dark:hover:bg-violet-500/20 hover:text-gray-900 dark:hover:text-gray-900"
-              style={{ color: 'var(--foreground-muted)' }}
+              className="nav-link p-2 rounded-lg transition-all hover:bg-violet-100 dark:hover:bg-violet-500/20"
               aria-label="Search"
             >
               <svg
@@ -135,8 +133,7 @@ export default function HeaderClient({ posts }: HeaderClientProps) {
                     {session.user?.isAdmin && (
                       <Link
                         href="/admin"
-                        className="block px-4 py-2 text-sm transition-colors hover:bg-violet-100 dark:hover:bg-violet-500/20 hover:text-gray-900 dark:hover:text-gray-900"
-                        style={{ color: 'var(--foreground-muted)' }}
+                        className="nav-link block px-4 py-2 text-sm transition-colors hover:bg-violet-100 dark:hover:bg-violet-500/20"
                         onClick={() => setIsUserMenuOpen(false)}
                       >
                         관리자 페이지
@@ -147,8 +144,7 @@ export default function HeaderClient({ posts }: HeaderClientProps) {
                         setIsUserMenuOpen(false);
                         signOut();
                       }}
-                      className="block w-full text-left px-4 py-2 text-sm transition-colors hover:bg-violet-100 dark:hover:bg-violet-500/20 hover:text-gray-900 dark:hover:text-gray-900"
-                      style={{ color: 'var(--foreground-muted)' }}
+                      className="nav-link block w-full text-left px-4 py-2 text-sm transition-colors hover:bg-violet-100 dark:hover:bg-violet-500/20"
                     >
                       로그아웃
                     </button>
@@ -158,8 +154,7 @@ export default function HeaderClient({ posts }: HeaderClientProps) {
             ) : (
               <button
                 onClick={() => signIn()}
-                className="text-sm font-medium px-4 py-2 rounded-lg transition-all hover:bg-violet-100 dark:hover:bg-violet-500/20 hover:text-gray-900 dark:hover:text-gray-900"
-                style={{ color: 'var(--foreground-muted)' }}
+                className="nav-link text-sm font-medium px-4 py-2 rounded-lg transition-all hover:bg-violet-100 dark:hover:bg-violet-500/20"
               >
                 로그인
               </button>
@@ -168,8 +163,7 @@ export default function HeaderClient({ posts }: HeaderClientProps) {
             {/* Mobile Menu Button */}
             <button
               onClick={() => setIsMenuOpen(!isMenuOpen)}
-              className="md:hidden p-2 rounded-lg transition-all hover:bg-violet-100 dark:hover:bg-violet-500/20 hover:text-gray-900 dark:hover:text-gray-900"
-              style={{ color: 'var(--foreground-muted)' }}
+              className="nav-link md:hidden p-2 rounded-lg transition-all hover:bg-violet-100 dark:hover:bg-violet-500/20"
               aria-label="Toggle menu"
             >
               <svg
@@ -205,8 +199,7 @@ export default function HeaderClient({ posts }: HeaderClientProps) {
               <Link
                 key={item.href}
                 href={item.href}
-                className="block py-3 px-2 rounded-lg transition-all hover:bg-violet-100 dark:hover:bg-violet-500/20 hover:text-gray-900 dark:hover:text-gray-900"
-                style={{ color: 'var(--foreground-muted)' }}
+                className="nav-link block py-3 px-2 rounded-lg transition-all hover:bg-violet-100 dark:hover:bg-violet-500/20"
                 onClick={() => setIsMenuOpen(false)}
               >
                 {item.label}

@@ -97,18 +97,29 @@ export default function BlogShortcut({ postCount, categoryCount, tagCount }: Blo
             {stats.map((stat) => (
               <div
                 key={stat.label}
-                className={`text-center px-4 py-3 rounded-xl transition-all hover:scale-105
-                  ${stat.color === 'pink' ? 'bg-violet-50 dark:bg-violet-950/50 border border-violet-200 dark:border-violet-500/50' : ''}
-                  ${stat.color === 'cyan' ? 'bg-indigo-50 dark:bg-indigo-950/50 border border-indigo-200 dark:border-indigo-500/50' : ''}
-                  ${stat.color === 'purple' ? 'bg-purple-50 dark:bg-purple-950/50 border border-purple-200 dark:border-purple-500/50' : ''}
-                `}
+                className="text-center px-4 py-3 rounded-xl transition-all hover:scale-105 border"
+                style={{
+                  background: stat.color === 'pink'
+                    ? 'var(--stat-pink-bg)'
+                    : stat.color === 'cyan'
+                    ? 'var(--stat-cyan-bg)'
+                    : 'var(--stat-purple-bg)',
+                  borderColor: stat.color === 'pink'
+                    ? 'var(--stat-pink-border)'
+                    : stat.color === 'cyan'
+                    ? 'var(--stat-cyan-border)'
+                    : 'var(--stat-purple-border)',
+                }}
               >
                 <p
-                  className={`text-3xl md:text-4xl font-bold
-                    ${stat.color === 'pink' ? 'text-violet-600 dark:text-violet-300' : ''}
-                    ${stat.color === 'cyan' ? 'text-indigo-600 dark:text-indigo-300' : ''}
-                    ${stat.color === 'purple' ? 'text-purple-600 dark:text-purple-300' : ''}
-                  `}
+                  className="text-3xl md:text-4xl font-bold"
+                  style={{
+                    color: stat.color === 'pink'
+                      ? 'var(--stat-pink-text)'
+                      : stat.color === 'cyan'
+                      ? 'var(--stat-cyan-text)'
+                      : 'var(--stat-purple-text)',
+                  }}
                 >
                   {stat.value}
                 </p>

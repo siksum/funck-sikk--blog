@@ -6,7 +6,7 @@ export default function Footer() {
       className="border-t border-gray-200 dark:border-violet-500/20"
       style={{ background: 'var(--background)' }}
     >
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
+      <div className="w-full px-4 sm:px-6 lg:px-12 xl:px-16 py-12">
         <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
           {/* About */}
           <div>
@@ -14,27 +14,27 @@ export default function Footer() {
               <span className="text-transparent bg-clip-text bg-gradient-to-r from-violet-600 to-violet-500 dark:from-violet-300 dark:to-violet-400">
                 func
               </span>
-              <span className="text-gray-900 dark:text-gray-200">(</span>
+              <span style={{ color: 'var(--foreground)' }}>(</span>
               <span className="text-transparent bg-clip-text bg-gradient-to-r from-indigo-600 to-violet-500 dark:from-indigo-300 dark:to-violet-300">
                 sikk
               </span>
-              <span className="text-gray-900 dark:text-gray-200">)</span>
+              <span style={{ color: 'var(--foreground)' }}>)</span>
             </h3>
-            <p className="text-gray-600 dark:text-gray-300">
+            <p style={{ color: 'var(--foreground-muted)' }}>
               A personal blog about development, technology, and more.
             </p>
           </div>
 
           {/* Links */}
           <div>
-            <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">
+            <h3 className="text-lg font-semibold mb-4" style={{ color: 'var(--foreground)' }}>
               Links
             </h3>
             <ul className="space-y-2">
               <li>
                 <Link
                   href="/blog"
-                  className="text-gray-600 hover:text-violet-600 dark:text-gray-300 dark:hover:text-violet-300 transition-colors"
+                  className="footer-link transition-colors"
                 >
                   Blog
                 </Link>
@@ -42,7 +42,7 @@ export default function Footer() {
               <li>
                 <Link
                   href="/categories"
-                  className="text-gray-600 hover:text-violet-600 dark:text-gray-300 dark:hover:text-violet-300 transition-colors"
+                  className="footer-link transition-colors"
                 >
                   Categories
                 </Link>
@@ -50,7 +50,7 @@ export default function Footer() {
               <li>
                 <Link
                   href="/tags"
-                  className="text-gray-600 hover:text-violet-600 dark:text-gray-300 dark:hover:text-violet-300 transition-colors"
+                  className="footer-link transition-colors"
                 >
                   Tags
                 </Link>
@@ -58,7 +58,7 @@ export default function Footer() {
               <li>
                 <Link
                   href="/about"
-                  className="text-gray-600 hover:text-violet-600 dark:text-gray-300 dark:hover:text-violet-300 transition-colors"
+                  className="footer-link transition-colors"
                 >
                   About
                 </Link>
@@ -68,7 +68,7 @@ export default function Footer() {
 
           {/* Social */}
           <div>
-            <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">
+            <h3 className="text-lg font-semibold mb-4" style={{ color: 'var(--foreground)' }}>
               Connect
             </h3>
             <div className="flex space-x-4">
@@ -76,7 +76,7 @@ export default function Footer() {
                 href="https://github.com"
                 target="_blank"
                 rel="noopener noreferrer"
-                className="text-gray-600 hover:text-violet-600 dark:text-gray-300 dark:hover:text-violet-300 transition-colors"
+                className="footer-link transition-colors"
                 aria-label="GitHub"
               >
                 <svg className="w-6 h-6" fill="currentColor" viewBox="0 0 24 24">
@@ -91,7 +91,7 @@ export default function Footer() {
                 href="https://twitter.com"
                 target="_blank"
                 rel="noopener noreferrer"
-                className="text-gray-600 hover:text-violet-600 dark:text-gray-300 dark:hover:text-violet-300 transition-colors"
+                className="footer-link transition-colors"
                 aria-label="Twitter"
               >
                 <svg className="w-6 h-6" fill="currentColor" viewBox="0 0 24 24">
@@ -102,8 +102,8 @@ export default function Footer() {
           </div>
         </div>
 
-        <div className="mt-8 pt-8 border-t border-gray-200 dark:border-violet-500/20">
-          <p className="text-center text-gray-500 dark:text-gray-400">
+        <div className="mt-8 pt-8 border-t" style={{ borderColor: 'var(--card-border)' }}>
+          <p className="text-center" style={{ color: 'var(--foreground-muted)' }}>
             &copy; {new Date().getFullYear()} func(sikk). All rights reserved.
           </p>
         </div>
