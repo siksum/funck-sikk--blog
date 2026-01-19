@@ -226,18 +226,76 @@ export default function AdminPage() {
     );
   };
 
+  const handleClearAnalytics = async () => {
+    if (!confirm('모든 방문자 로그를 삭제하시겠습니까? 이 작업은 되돌릴 수 없습니다.')) {
+      return;
+    }
+
+    try {
+      const res = await fetch('/api/analytics/clear', { method: 'DELETE' });
+      if (res.ok) {
+        const data = await res.json();
+        alert(`삭제 완료: PageViews ${data.deleted.pageViews}개, DailyVisits ${data.deleted.dailyVisits}개`);
+        fetchStats();
+      } else {
+        alert('삭제 실패');
+      }
+    } catch (error) {
+      console.error('Failed to clear analytics:', error);
+      alert('삭제 중 오류가 발생했습니다.');
+    }
+  };
+
+  const handleClearAdminPaths = async () => {
+    if (!confirm('/admin 경로의 방문 로그만 삭제하시겠습니까?')) {
+      return;
+    }
+
+    try {
+      const res = await fetch('/api/analytics/clear', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ clearAdminPaths: true }),
+      });
+      if (res.ok) {
+        const data = await res.json();
+        alert(`삭제 완료: PageViews ${data.deleted.pageViews}개`);
+        fetchStats();
+      } else {
+        alert('삭제 실패');
+      }
+    } catch (error) {
+      console.error('Failed to clear admin paths:', error);
+      alert('삭제 중 오류가 발생했습니다.');
+    }
+  };
+
   return (
     <div>
       <div className="flex justify-between items-center mb-8">
         <h1 className="text-2xl font-bold text-gray-900 dark:text-white">
           대시보드
         </h1>
-        <Link
-          href="/admin/posts"
-          className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
-        >
-          포스트 관리
-        </Link>
+        <div className="flex gap-2">
+          <button
+            onClick={handleClearAdminPaths}
+            className="px-4 py-2 bg-orange-500 text-white rounded-lg hover:bg-orange-600 transition-colors text-sm"
+          >
+            Admin 로그 삭제
+          </button>
+          <button
+            onClick={handleClearAnalytics}
+            className="px-4 py-2 bg-red-500 text-white rounded-lg hover:bg-red-600 transition-colors text-sm"
+          >
+            전체 로그 삭제
+          </button>
+          <Link
+            href="/admin/posts"
+            className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+          >
+            포스트 관리
+          </Link>
+        </div>
       </div>
 
       {/* Stats Cards */}

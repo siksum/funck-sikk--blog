@@ -14,6 +14,11 @@ export default function PageTracker() {
       return;
     }
 
+    // Skip tracking for admin paths
+    if (pathname.startsWith('/admin')) {
+      return;
+    }
+
     const slug = pathname.startsWith('/blog/')
       ? pathname.replace('/blog/', '')
       : null;
