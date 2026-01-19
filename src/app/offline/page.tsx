@@ -1,7 +1,4 @@
-export const metadata = {
-  title: '오프라인 | func(sikk)',
-  description: '인터넷 연결이 필요합니다.',
-};
+'use client';
 
 export default function OfflinePage() {
   return (
