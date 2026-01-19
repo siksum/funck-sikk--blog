@@ -34,9 +34,19 @@ export default function BlogPage() {
           </p>
         </div>
 
-        <div className="lg:grid lg:grid-cols-3 lg:gap-8">
+        <div className="lg:grid lg:grid-cols-4 lg:gap-8">
+          {/* Sidebar - Left */}
+          <div className="mb-8 lg:mb-0 lg:col-span-1 lg:order-first">
+            <Sidebar
+              recentPosts={recentPosts}
+              popularPosts={recentPosts}
+              categories={categories}
+              tags={tags}
+            />
+          </div>
+
           {/* Main Content - Category Cards */}
-          <div className="lg:col-span-2">
+          <div className="lg:col-span-3 lg:order-last">
             {rootCategoriesWithTags.length === 0 ? (
               <div className="text-center py-12">
                 <svg
@@ -57,7 +67,7 @@ export default function BlogPage() {
                 </p>
               </div>
             ) : (
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-5">
                 {rootCategoriesWithTags.map((category) => (
                   <CategoryCard
                     key={category.name}
@@ -69,16 +79,6 @@ export default function BlogPage() {
                 ))}
               </div>
             )}
-          </div>
-
-          {/* Sidebar */}
-          <div className="mt-8 lg:mt-0">
-            <Sidebar
-              recentPosts={recentPosts}
-              popularPosts={recentPosts}
-              categories={categories}
-              tags={tags}
-            />
           </div>
         </div>
       </div>

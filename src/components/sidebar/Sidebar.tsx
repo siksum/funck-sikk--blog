@@ -92,7 +92,30 @@ export default function Sidebar({
 
   return (
     <aside className="space-y-8">
-      {/* Posts Tabs */}
+      {/* Categories - First */}
+      <div
+        className="rounded-2xl backdrop-blur-xl border border-gray-200 dark:border-violet-500/30 p-5"
+        style={{ background: 'var(--card-bg)' }}
+      >
+        <h3 className="text-lg font-semibold mb-4" style={{ color: 'var(--foreground)' }}>
+          카테고리
+        </h3>
+        <ul className="space-y-2">
+          {categories.slice(0, 8).map((category) => (
+            <CategoryTreeItem key={category.slug} category={category} />
+          ))}
+        </ul>
+        {categories.length > 8 && (
+          <Link
+            href="/blog"
+            className="block mt-4 text-center text-sm text-violet-600 dark:text-violet-400 hover:underline"
+          >
+            전체 보기 →
+          </Link>
+        )}
+      </div>
+
+      {/* Posts Tabs - Recent/Popular */}
       <div
         className="rounded-2xl overflow-hidden backdrop-blur-xl border border-gray-200 dark:border-violet-500/30"
         style={{ background: 'var(--card-bg)' }}
@@ -137,30 +160,7 @@ export default function Sidebar({
         </div>
       </div>
 
-      {/* Categories */}
-      <div
-        className="rounded-2xl backdrop-blur-xl border border-gray-200 dark:border-violet-500/30 p-5"
-        style={{ background: 'var(--card-bg)' }}
-      >
-        <h3 className="text-lg font-semibold mb-4" style={{ color: 'var(--foreground)' }}>
-          카테고리
-        </h3>
-        <ul className="space-y-2">
-          {categories.slice(0, 8).map((category) => (
-            <CategoryTreeItem key={category.slug} category={category} />
-          ))}
-        </ul>
-        {categories.length > 8 && (
-          <Link
-            href="/blog"
-            className="block mt-4 text-center text-sm text-violet-600 dark:text-violet-400 hover:underline"
-          >
-            전체 보기 →
-          </Link>
-        )}
-      </div>
-
-      {/* Tags Cloud */}
+      {/* Tags Cloud - Last */}
       <div
         className="rounded-2xl backdrop-blur-xl border border-gray-200 dark:border-violet-500/30 p-5"
         style={{ background: 'var(--card-bg)' }}
