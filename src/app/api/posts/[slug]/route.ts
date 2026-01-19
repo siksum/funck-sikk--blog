@@ -35,7 +35,7 @@ export async function PUT(
   try {
     const { slug } = await params;
     const body = await request.json();
-    const { title, description, category, tags, content, date } = body;
+    const { title, description, category, tags, content, date, isPublic } = body;
 
     const filePath = path.join(postsDirectory, `${slug}.mdx`);
 
@@ -49,6 +49,7 @@ export async function PUT(
       date: date || new Date().toISOString().split('T')[0],
       category: category || 'Uncategorized',
       tags: tags || [],
+      isPublic: isPublic !== false, // Default to true
     };
 
     const fileContent = matter.stringify(content || '', frontmatter);

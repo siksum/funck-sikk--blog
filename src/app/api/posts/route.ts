@@ -35,7 +35,7 @@ export async function GET() {
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
-    const { slug, title, description, category, tags, content } = body;
+    const { slug, title, description, category, tags, content, isPublic } = body;
 
     if (!slug || !title) {
       return NextResponse.json({ error: 'Slug and title are required' }, { status: 400 });
@@ -58,6 +58,7 @@ export async function POST(request: NextRequest) {
       date,
       category: category || 'Uncategorized',
       tags: tags || [],
+      isPublic: isPublic !== false, // Default to true
     };
 
     const fileContent = matter.stringify(content || '', frontmatter);

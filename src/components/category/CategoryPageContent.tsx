@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
 import Link from 'next/link';
 import { Post, Category } from '@/types';
 import CategoryCard from '@/components/category/CategoryCard';
@@ -38,6 +38,45 @@ export default function CategoryPageContent({
   tags,
 }: CategoryPageContentProps) {
   const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
+  const [searchTerm, setSearchTerm] = useState('');
+  const [sortBy, setSortBy] = useState<'date' | 'title'>('date');
+  const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('desc');
+
+  // Filter and sort posts
+  const filteredAndSortedPosts = useMemo(() => {
+    let filtered = directPosts;
+
+    // Filter by search term
+    if (searchTerm) {
+      const term = searchTerm.toLowerCase();
+      filtered = filtered.filter(
+        (post) =>
+          post.title.toLowerCase().includes(term) ||
+          post.description?.toLowerCase().includes(term) ||
+          post.tags.some((tag) => tag.toLowerCase().includes(term))
+      );
+    }
+
+    // Sort
+    return [...filtered].sort((a, b) => {
+      let comparison = 0;
+      if (sortBy === 'date') {
+        comparison = new Date(a.date).getTime() - new Date(b.date).getTime();
+      } else {
+        comparison = a.title.localeCompare(b.title, 'ko');
+      }
+      return sortOrder === 'asc' ? comparison : -comparison;
+    });
+  }, [directPosts, searchTerm, sortBy, sortOrder]);
+
+  const handleSortChange = (newSortBy: 'date' | 'title') => {
+    if (sortBy === newSortBy) {
+      setSortOrder(sortOrder === 'asc' ? 'desc' : 'asc');
+    } else {
+      setSortBy(newSortBy);
+      setSortOrder(newSortBy === 'date' ? 'desc' : 'asc');
+    }
+  };
 
   return (
     <div className="min-h-screen">
@@ -196,7 +235,9 @@ export default function CategoryPageContent({
                       {category.name} 포스트
                     </h2>
                     <p className="text-sm" style={{ color: 'var(--foreground-muted)' }}>
-                      {directPosts.length}개의 포스트
+                      {searchTerm
+                        ? `${filteredAndSortedPosts.length}개 검색됨 (전체 ${directPosts.length}개)`
+                        : `${directPosts.length}개의 포스트`}
                     </p>
                   </div>
                   {/* View Toggle */}
@@ -244,15 +285,91 @@ export default function CategoryPageContent({
                     </button>
                   </div>
                 </div>
-                {viewMode === 'list' ? (
+
+                {/* Search and Sort Controls */}
+                <div className="flex flex-col sm:flex-row gap-3 mb-6">
+                  {/* Search Input */}
+                  <div className="flex-1 relative">
+                    <input
+                      type="text"
+                      placeholder="제목, 설명, 태그로 검색..."
+                      value={searchTerm}
+                      onChange={(e) => setSearchTerm(e.target.value)}
+                      className="w-full px-4 py-2 pl-10 text-sm rounded-lg border transition-colors focus:outline-none focus:ring-2 focus:ring-violet-500"
+                      style={{
+                        background: 'var(--card-bg)',
+                        borderColor: 'var(--card-border)',
+                        color: 'var(--foreground)',
+                      }}
+                    />
+                    <svg
+                      className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4"
+                      style={{ color: 'var(--foreground-muted)' }}
+                      fill="none"
+                      stroke="currentColor"
+                      viewBox="0 0 24 24"
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth={2}
+                        d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"
+                      />
+                    </svg>
+                  </div>
+
+                  {/* Sort Buttons */}
+                  <div
+                    className="inline-flex rounded-lg p-1 border"
+                    style={{ background: 'var(--card-bg)', borderColor: 'var(--card-border)' }}
+                  >
+                    <button
+                      onClick={() => handleSortChange('date')}
+                      className={`px-3 py-1.5 text-sm rounded-md transition-colors flex items-center gap-1 ${
+                        sortBy === 'date'
+                          ? 'bg-violet-100 dark:bg-violet-500/20 text-violet-600 dark:text-violet-400'
+                          : 'hover:bg-gray-100 dark:hover:bg-violet-500/10'
+                      }`}
+                      style={{ color: sortBy === 'date' ? undefined : 'var(--foreground-muted)' }}
+                    >
+                      날짜
+                      {sortBy === 'date' && (
+                        <span className="text-violet-500">{sortOrder === 'asc' ? '↑' : '↓'}</span>
+                      )}
+                    </button>
+                    <button
+                      onClick={() => handleSortChange('title')}
+                      className={`px-3 py-1.5 text-sm rounded-md transition-colors flex items-center gap-1 ${
+                        sortBy === 'title'
+                          ? 'bg-violet-100 dark:bg-violet-500/20 text-violet-600 dark:text-violet-400'
+                          : 'hover:bg-gray-100 dark:hover:bg-violet-500/10'
+                      }`}
+                      style={{ color: sortBy === 'title' ? undefined : 'var(--foreground-muted)' }}
+                    >
+                      제목
+                      {sortBy === 'title' && (
+                        <span className="text-violet-500">{sortOrder === 'asc' ? '↑' : '↓'}</span>
+                      )}
+                    </button>
+                  </div>
+                </div>
+
+                {filteredAndSortedPosts.length === 0 ? (
+                  <p
+                    className="text-center py-12"
+                    style={{ color: 'var(--foreground-muted)' }}
+                  >
+                    검색 결과가 없습니다.
+                  </p>
+                ) : viewMode === 'list' ? (
                   <div className="space-y-3">
-                    {directPosts.map((post) => (
+                    {filteredAndSortedPosts.map((post) => (
                       <PostCard key={post.slug} post={post} variant="list" />
                     ))}
                   </div>
                 ) : (
                   <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-                    {directPosts.map((post) => (
+                    {filteredAndSortedPosts.map((post) => (
                       <PostCard key={post.slug} post={post} />
                     ))}
                   </div>

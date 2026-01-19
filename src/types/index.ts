@@ -15,6 +15,7 @@ export interface Post {
   tags: string[];
   thumbnail?: string;
   content: string;
+  isPublic: boolean;
 }
 
 export interface Category {

@@ -51,17 +51,23 @@ export function getPostBySlug(slug: string): Post | null {
     tags: data.tags || [],
     thumbnail: data.thumbnail,
     content,
+    isPublic: data.isPublic !== false, // Default to true if not specified
   };
 }
 
-export function getAllPosts(): Post[] {
+export function getAllPosts(includePrivate: boolean = false): Post[] {
   const slugs = getPostSlugs();
   const posts = slugs
     .map((slug) => getPostBySlug(slug.replace(/\.mdx$/, '')))
     .filter((post): post is Post => post !== null)
+    .filter((post) => includePrivate || post.isPublic)
     .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
 
   return posts;
+}
+
+export function getPublicPosts(): Post[] {
+  return getAllPosts(false);
 }
 
 export function getRecentPosts(count: number = 5): Post[] {
@@ -134,22 +140,24 @@ export function getRootCategoriesWithTags(): {
   const rootCategories = getRootCategories();
   const posts = getAllPosts();
 
-  return rootCategories.map((cat) => {
-    const categoryPosts = posts.filter((post) =>
-      post.categorySlugPath[0] === cat.slug
-    );
-    const tagSet = new Set<string>();
-    categoryPosts.forEach((post) => {
-      post.tags.forEach((tag) => tagSet.add(tag));
-    });
+  return rootCategories
+    .map((cat) => {
+      const categoryPosts = posts.filter((post) =>
+        post.categorySlugPath[0] === cat.slug
+      );
+      const tagSet = new Set<string>();
+      categoryPosts.forEach((post) => {
+        post.tags.forEach((tag) => tagSet.add(tag));
+      });
 
-    return {
-      name: cat.name,
-      count: cat.count,
-      tags: Array.from(tagSet),
-      slugPath: cat.slugPath,
-    };
-  });
+      return {
+        name: cat.name,
+        count: cat.count,
+        tags: Array.from(tagSet),
+        slugPath: cat.slugPath,
+      };
+    })
+    .sort((a, b) => a.name.localeCompare(b.name, 'ko'));
 }
 
 export function buildCategoryTree(): CategoryTreeNode {
@@ -268,14 +276,16 @@ export function getChildCategories(slugPath: string[]): Category[] {
   const category = getCategoryBySlugPath(slugPath);
   if (!category) return [];
 
-  return Object.values(category.children).map((child) => ({
-    name: child.name,
-    slug: child.slug,
-    count: child.count,
-    path: child.path,
-    slugPath: child.slugPath,
-    depth: slugPath.length,
-  }));
+  return Object.values(category.children)
+    .map((child) => ({
+      name: child.name,
+      slug: child.slug,
+      count: child.count,
+      path: child.path,
+      slugPath: child.slugPath,
+      depth: slugPath.length,
+    }))
+    .sort((a, b) => a.name.localeCompare(b.name, 'ko'));
 }
 
 export function getChildCategoriesWithTags(slugPath: string[]): {
@@ -287,22 +297,24 @@ export function getChildCategoriesWithTags(slugPath: string[]): {
   const childCategories = getChildCategories(slugPath);
   const posts = getAllPosts();
 
-  return childCategories.map((cat) => {
-    const categoryPosts = posts.filter((post) =>
-      cat.slugPath.every((slug, index) => post.categorySlugPath[index] === slug)
-    );
-    const tagSet = new Set<string>();
-    categoryPosts.forEach((post) => {
-      post.tags.forEach((tag) => tagSet.add(tag));
-    });
+  return childCategories
+    .map((cat) => {
+      const categoryPosts = posts.filter((post) =>
+        cat.slugPath.every((slug, index) => post.categorySlugPath[index] === slug)
+      );
+      const tagSet = new Set<string>();
+      categoryPosts.forEach((post) => {
+        post.tags.forEach((tag) => tagSet.add(tag));
+      });
 
-    return {
-      name: cat.name,
-      count: cat.count,
-      tags: Array.from(tagSet),
-      slugPath: cat.slugPath,
-    };
-  });
+      return {
+        name: cat.name,
+        count: cat.count,
+        tags: Array.from(tagSet),
+        slugPath: cat.slugPath,
+      };
+    })
+    .sort((a, b) => a.name.localeCompare(b.name, 'ko'));
 }
 
 export function getRootCategories(): Category[] {
@@ -317,17 +329,19 @@ export function getRootCategories(): Category[] {
       depth: 0,
       children:
         Object.values(child.children).length > 0
-          ? Object.values(child.children).map((c) => ({
-              name: c.name,
-              slug: c.slug,
-              count: c.count,
-              path: c.path,
-              slugPath: c.slugPath,
-              depth: 1,
-            }))
+          ? Object.values(child.children)
+              .map((c) => ({
+                name: c.name,
+                slug: c.slug,
+                count: c.count,
+                path: c.path,
+                slugPath: c.slugPath,
+                depth: 1,
+              }))
+              .sort((a, b) => a.name.localeCompare(b.name, 'ko'))
           : undefined,
     }))
-    .sort((a, b) => b.count - a.count);
+    .sort((a, b) => a.name.localeCompare(b.name, 'ko'));
 }
 
 export function getRelatedPosts(slug: string, count: number = 3): Post[] {

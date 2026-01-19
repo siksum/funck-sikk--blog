@@ -50,7 +50,7 @@ export async function GET(request: NextRequest) {
     }
   }
 
-  const [todayCount, dailyData, weeklyData, monthlyData, topPosts, totalViews, yesterdayCount] = await Promise.all([
+  const [todayCount, dailyData, weeklyData, monthlyData, topPosts, totalViews, yesterdayCount, recentVisitors, refererStats, topPages] = await Promise.all([
     prisma.dailyVisit.findUnique({ where: { date: today } }),
     prisma.dailyVisit.findMany({
       where: { date: { gte: fromDate, lt: toDate } },
@@ -89,6 +89,35 @@ export async function GET(request: NextRequest) {
         date: new Date(new Date(today).setDate(today.getDate() - 1)),
       },
     }),
+    // Recent visitors (last 50)
+    prisma.pageView.findMany({
+      where: { date: { gte: fromDate, lt: toDate } },
+      orderBy: { createdAt: 'desc' },
+      take: 50,
+      select: {
+        path: true,
+        slug: true,
+        userAgent: true,
+        referer: true,
+        createdAt: true,
+      },
+    }),
+    // Referer breakdown
+    prisma.pageView.groupBy({
+      by: ['referer'],
+      where: { date: { gte: fromDate, lt: toDate } },
+      _count: { referer: true },
+      orderBy: { _count: { referer: 'desc' } },
+      take: 10,
+    }),
+    // Top pages (all paths, not just blog)
+    prisma.pageView.groupBy({
+      by: ['path'],
+      where: { date: { gte: fromDate, lt: toDate } },
+      _count: { path: true },
+      orderBy: { _count: { path: 'desc' } },
+      take: 10,
+    }),
   ]);
 
   // Calculate this week's total
@@ -102,6 +131,43 @@ export async function GET(request: NextRequest) {
   const thisMonthData = dailyData.filter(d => new Date(d.date) >= startOfMonth);
   const thisMonthTotal = thisMonthData.reduce((sum, d) => sum + d.count, 0);
 
+  // Parse user agent to get browser/device info
+  const parseUserAgent = (ua: string | null) => {
+    if (!ua) return { browser: 'Unknown', device: 'Unknown' };
+
+    let browser = 'Other';
+    let device = 'Desktop';
+
+    if (ua.includes('Mobile')) device = 'Mobile';
+    else if (ua.includes('Tablet')) device = 'Tablet';
+
+    if (ua.includes('Chrome') && !ua.includes('Edg')) browser = 'Chrome';
+    else if (ua.includes('Safari') && !ua.includes('Chrome')) browser = 'Safari';
+    else if (ua.includes('Firefox')) browser = 'Firefox';
+    else if (ua.includes('Edg')) browser = 'Edge';
+    else if (ua.includes('MSIE') || ua.includes('Trident')) browser = 'IE';
+
+    return { browser, device };
+  };
+
+  // Parse referer to get domain
+  const parseReferer = (ref: string | null) => {
+    if (!ref) return 'Direct';
+    try {
+      const url = new URL(ref);
+      if (url.hostname.includes('google')) return 'Google';
+      if (url.hostname.includes('naver')) return 'Naver';
+      if (url.hostname.includes('daum')) return 'Daum';
+      if (url.hostname.includes('github')) return 'GitHub';
+      if (url.hostname.includes('twitter') || url.hostname.includes('x.com')) return 'Twitter/X';
+      if (url.hostname.includes('facebook')) return 'Facebook';
+      if (url.hostname.includes('linkedin')) return 'LinkedIn';
+      return url.hostname;
+    } catch {
+      return 'Direct';
+    }
+  };
+
   return NextResponse.json({
     today: todayCount?.count || 0,
     yesterday: yesterdayCount?.count || 0,
@@ -112,5 +178,21 @@ export async function GET(request: NextRequest) {
     weekly: weeklyData.map(w => ({ date: w.week_start, count: Number(w.total) })),
     monthly: monthlyData.map(m => ({ date: m.month_start, count: Number(m.total) })),
     topPosts: topPosts.map((p) => ({ slug: p.slug, count: p._count.slug })),
+    recentVisitors: recentVisitors.map(v => ({
+      path: v.path,
+      slug: v.slug,
+      referer: parseReferer(v.referer),
+      rawReferer: v.referer,
+      ...parseUserAgent(v.userAgent),
+      createdAt: v.createdAt,
+    })),
+    referers: refererStats.map(r => ({
+      source: parseReferer(r.referer),
+      count: r._count.referer,
+    })),
+    topPages: topPages.map(p => ({
+      path: p.path,
+      count: p._count.path,
+    })),
   });
 }
