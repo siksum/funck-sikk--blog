@@ -9,7 +9,8 @@
     "start": "next start",
     "lint": "eslint",
     "deploy": "git add -A && git commit -m 'deploy' --allow-empty && git push origin HEAD:main",
-    "db:seed": "npx tsx prisma/seed.ts"
+    "db:seed": "npx tsx prisma/seed.ts",
+    "generate-icons": "node scripts/generate-icons.js"
   },
   "prisma": {
     "seed": "npx tsx prisma/seed.ts"
@@ -50,6 +51,7 @@
     "@types/web-push": "^3.6.4",
     "eslint": "^9",
     "eslint-config-next": "16.1.3",
+    "sharp": "^0.34.5",
     "tailwindcss": "^4",
     "tsx": "^4.19.0",
     "typescript": "^5"
