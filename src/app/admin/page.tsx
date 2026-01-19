@@ -268,7 +268,7 @@ export default function AdminPage() {
         </div>
 
         <div className="bg-white dark:bg-gray-800 p-6 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700">
-          <p className="text-sm text-gray-500 dark:text-gray-400">전체 페이지뷰</p>
+          <p className="text-sm text-gray-500 dark:text-gray-400">전체 방문자</p>
           <p className="text-3xl font-bold mt-2 text-gray-900 dark:text-white">
             {loading ? '-' : stats?.totalViews?.toLocaleString() ?? 0}
           </p>
