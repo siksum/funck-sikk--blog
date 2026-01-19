@@ -41,22 +41,6 @@ export default function Footer() {
               </li>
               <li>
                 <Link
-                  href="/categories"
-                  className="footer-link transition-colors"
-                >
-                  Categories
-                </Link>
-              </li>
-              <li>
-                <Link
-                  href="/tags"
-                  className="footer-link transition-colors"
-                >
-                  Tags
-                </Link>
-              </li>
-              <li>
-                <Link
                   href="/about"
                   className="footer-link transition-colors"
                 >

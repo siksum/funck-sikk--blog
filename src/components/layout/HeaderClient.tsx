@@ -13,14 +13,6 @@ const navigation: NavItem[] = [
     href: '/blog',
   },
   {
-    label: 'Categories',
-    href: '/categories',
-  },
-  {
-    label: 'Tags',
-    href: '/tags',
-  },
-  {
     label: 'About',
     href: '/about',
   },
