@@ -798,32 +798,44 @@ export default function PostsManagementPage() {
                   새 카테고리 추가
                 </label>
                 <div className="space-y-2">
+                  {/* Section selection first */}
+                  <select
+                    value={newCategorySectionId}
+                    onChange={(e) => {
+                      setNewCategorySectionId(e.target.value);
+                      // Clear parent if selecting a section (root category)
+                      if (e.target.value) {
+                        setNewCategoryParentId('');
+                      }
+                    }}
+                    className="w-full px-3 py-2 text-sm border border-indigo-200 dark:border-indigo-700 rounded-lg bg-white dark:bg-gray-900 focus:outline-none focus:ring-2 focus:ring-indigo-500 text-gray-900 dark:text-white"
+                  >
+                    <option value="">블로그 섹션 선택 (선택 안함)</option>
+                    {dbSections.map((section) => (
+                      <option key={section.id} value={section.id}>
+                        {section.title} 섹션에 표시
+                      </option>
+                    ))}
+                  </select>
+                  {/* Parent category selection */}
                   <select
                     value={newCategoryParentId}
-                    onChange={(e) => setNewCategoryParentId(e.target.value)}
+                    onChange={(e) => {
+                      setNewCategoryParentId(e.target.value);
+                      // Clear section if selecting a parent (subcategory)
+                      if (e.target.value) {
+                        setNewCategorySectionId('');
+                      }
+                    }}
                     className="w-full px-3 py-2 text-sm border border-gray-200 dark:border-gray-700 rounded-lg bg-white dark:bg-gray-900 focus:outline-none focus:ring-2 focus:ring-violet-500 text-gray-900 dark:text-white"
                   >
                     <option value="">상위 카테고리 (없음 - 최상위)</option>
                     {dbCategories.map((cat) => (
                       <option key={cat.id} value={cat.id}>
-                        {cat.name}의 하위 카테고리로 추가
+                        └ {cat.name}의 하위 카테고리로 추가
                       </option>
                     ))}
                   </select>
-                  {!newCategoryParentId && (
-                    <select
-                      value={newCategorySectionId}
-                      onChange={(e) => setNewCategorySectionId(e.target.value)}
-                      className="w-full px-3 py-2 text-sm border border-gray-200 dark:border-gray-700 rounded-lg bg-white dark:bg-gray-900 focus:outline-none focus:ring-2 focus:ring-violet-500 text-gray-900 dark:text-white"
-                    >
-                      <option value="">블로그 섹션 선택 (선택 안함)</option>
-                      {dbSections.map((section) => (
-                        <option key={section.id} value={section.id}>
-                          {section.title} 섹션에 표시
-                        </option>
-                      ))}
-                    </select>
-                  )}
                   <div className="flex gap-2">
                     <input
                       type="text"
@@ -849,14 +861,14 @@ export default function PostsManagementPage() {
                       </button>
                     )}
                   </div>
+                  {newCategorySectionId && !newCategoryParentId && (
+                    <p className="text-xs text-indigo-600 dark:text-indigo-400">
+                      → "{dbSections.find(s => s.id === newCategorySectionId)?.title}" 섹션에 표시됩니다
+                    </p>
+                  )}
                   {newCategoryParentId && (
                     <p className="text-xs text-violet-600 dark:text-violet-400">
                       → "{dbCategories.find(c => c.id === newCategoryParentId)?.name}" 아래에 추가됩니다
-                    </p>
-                  )}
-                  {!newCategoryParentId && newCategorySectionId && (
-                    <p className="text-xs text-indigo-600 dark:text-indigo-400">
-                      → "{dbSections.find(s => s.id === newCategorySectionId)?.title}" 섹션에 표시됩니다
                     </p>
                   )}
                 </div>
@@ -988,28 +1000,36 @@ export default function PostsManagementPage() {
                       {/* Subcategories */}
                       {category.children.length > 0 && (
                         <div className="border-t border-gray-200 dark:border-gray-700">
-                          {category.children.map((sub) => (
+                          {category.children.map((sub, index) => (
                             <div
                               key={sub.id}
-                              className="flex items-center justify-between p-3 pl-8 border-b last:border-b-0 border-gray-100 dark:border-gray-700/50"
+                              className="flex items-center justify-between p-3 pl-6 border-b last:border-b-0 border-gray-100 dark:border-gray-700/50"
                             >
                               {editingCategory?.id === sub.id ? (
-                                <input
-                                  type="text"
-                                  value={editingName}
-                                  onChange={(e) => setEditingName(e.target.value)}
-                                  className="flex-1 px-2 py-1 text-sm border border-violet-300 rounded bg-white dark:bg-gray-800 focus:outline-none focus:ring-2 focus:ring-violet-500 text-gray-900 dark:text-white"
-                                  onKeyDown={(e) => {
-                                    if (e.key === 'Enter') handleUpdateCategory();
-                                    if (e.key === 'Escape') {
-                                      setEditingCategory(null);
-                                      setEditingName('');
-                                    }
-                                  }}
-                                  autoFocus
-                                />
+                                <div className="flex items-center flex-1">
+                                  <span className="text-gray-400 dark:text-gray-500 mr-2">
+                                    {index === category.children.length - 1 ? '└' : '├'}
+                                  </span>
+                                  <input
+                                    type="text"
+                                    value={editingName}
+                                    onChange={(e) => setEditingName(e.target.value)}
+                                    className="flex-1 px-2 py-1 text-sm border border-violet-300 rounded bg-white dark:bg-gray-800 focus:outline-none focus:ring-2 focus:ring-violet-500 text-gray-900 dark:text-white"
+                                    onKeyDown={(e) => {
+                                      if (e.key === 'Enter') handleUpdateCategory();
+                                      if (e.key === 'Escape') {
+                                        setEditingCategory(null);
+                                        setEditingName('');
+                                      }
+                                    }}
+                                    autoFocus
+                                  />
+                                </div>
                               ) : (
-                                <span className="text-sm text-gray-900 dark:text-white">
+                                <span className="text-sm text-gray-900 dark:text-white flex items-center">
+                                  <span className="text-gray-400 dark:text-gray-500 mr-2">
+                                    {index === category.children.length - 1 ? '└' : '├'}
+                                  </span>
                                   {sub.name}
                                 </span>
                               )}
