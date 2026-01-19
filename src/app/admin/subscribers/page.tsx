@@ -49,7 +49,7 @@ export default function AdminSubscribersPage() {
 
   return (
     <div>
-      <h1 className="text-2xl font-bold mb-6" style={{ color: 'var(--foreground)' }}>
+      <h1 className="text-2xl font-bold mb-6 text-gray-900 dark:text-white">
         구독자 관리
       </h1>
 
@@ -57,20 +57,20 @@ export default function AdminSubscribersPage() {
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
         <div className="bg-white dark:bg-gray-800 p-6 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700">
           <p className="text-sm text-gray-500 dark:text-gray-400">이메일 구독자</p>
-          <p className="text-3xl font-bold mt-2" style={{ color: 'var(--foreground)' }}>
+          <p className="text-3xl font-bold mt-2 text-gray-900 dark:text-white">
             {verifiedCount}
           </p>
           <p className="text-xs text-gray-400 mt-1">인증 완료</p>
         </div>
         <div className="bg-white dark:bg-gray-800 p-6 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700">
           <p className="text-sm text-gray-500 dark:text-gray-400">인증 대기</p>
-          <p className="text-3xl font-bold mt-2" style={{ color: 'var(--foreground)' }}>
+          <p className="text-3xl font-bold mt-2 text-gray-900 dark:text-white">
             {data.email.length - verifiedCount}
           </p>
         </div>
         <div className="bg-white dark:bg-gray-800 p-6 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700">
           <p className="text-sm text-gray-500 dark:text-gray-400">푸시 구독자</p>
-          <p className="text-3xl font-bold mt-2" style={{ color: 'var(--foreground)' }}>
+          <p className="text-3xl font-bold mt-2 text-gray-900 dark:text-white">
             {data.pushCount}
           </p>
         </div>
@@ -79,7 +79,7 @@ export default function AdminSubscribersPage() {
       {/* Email Subscribers List */}
       <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 overflow-hidden">
         <div className="p-4 border-b border-gray-200 dark:border-gray-700">
-          <h2 className="text-lg font-semibold" style={{ color: 'var(--foreground)' }}>
+          <h2 className="text-lg font-semibold text-gray-900 dark:text-white">
             이메일 구독자 목록
           </h2>
         </div>
@@ -107,7 +107,7 @@ export default function AdminSubscribersPage() {
               <tbody className="divide-y divide-gray-200 dark:divide-gray-700">
                 {data.email.map((sub) => (
                   <tr key={sub.id}>
-                    <td className="px-4 py-3 text-sm" style={{ color: 'var(--foreground)' }}>
+                    <td className="px-4 py-3 text-sm text-gray-900 dark:text-white">
                       {sub.email}
                     </td>
                     <td className="px-4 py-3">

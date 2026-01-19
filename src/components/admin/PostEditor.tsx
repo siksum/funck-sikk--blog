@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useRef } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import MDXContent from '@/components/mdx/MDXContent';
 import TableEditor from './TableEditor';
@@ -11,6 +11,15 @@ import ToggleEditor from './ToggleEditor';
 import ColumnEditor from './ColumnEditor';
 import MathEditor from './MathEditor';
 import ButtonEditor from './ButtonEditor';
+
+interface DBCategory {
+  id: string;
+  name: string;
+  slug: string;
+  parentId: string | null;
+  order: number;
+  children: DBCategory[];
+}
 
 interface PostEditorProps {
   initialData?: {
@@ -44,6 +53,7 @@ export default function PostEditor({ initialData = {}, isEdit = false }: PostEdi
   const [showColumnEditor, setShowColumnEditor] = useState(false);
   const [showMathEditor, setShowMathEditor] = useState(false);
   const [showButtonEditor, setShowButtonEditor] = useState(false);
+  const [categories, setCategories] = useState<DBCategory[]>([]);
   const [formData, setFormData] = useState({
     slug: initialData.slug || '',
     title: initialData.title || '',
@@ -53,6 +63,37 @@ export default function PostEditor({ initialData = {}, isEdit = false }: PostEdi
     content: initialData.content || '',
     date: initialData.date || '',
   });
+
+  // Fetch categories from database
+  useEffect(() => {
+    const fetchCategories = async () => {
+      try {
+        // First sync categories from MDX
+        await fetch('/api/admin/categories/sync', { method: 'POST' });
+        // Then fetch
+        const res = await fetch('/api/admin/categories');
+        if (res.ok) {
+          const data = await res.json();
+          setCategories(data);
+        }
+      } catch (error) {
+        console.error('Failed to fetch categories:', error);
+      }
+    };
+    fetchCategories();
+  }, []);
+
+  // Build flat list of category options with path format
+  const getCategoryOptions = () => {
+    const options: { value: string; label: string }[] = [];
+    categories.forEach((parent) => {
+      options.push({ value: parent.name, label: parent.name });
+      parent.children?.forEach((child) => {
+        options.push({ value: `${parent.name}/${child.name}`, label: `${parent.name}/${child.name}` });
+      });
+    });
+    return options;
+  };
 
   const insertText = (before: string, after: string = '') => {
     const textarea = textareaRef.current;
@@ -378,13 +419,18 @@ export default function PostEditor({ initialData = {}, isEdit = false }: PostEdi
           <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
             카테고리
           </label>
-          <input
-            type="text"
+          <select
             value={formData.category}
             onChange={(e) => setFormData({ ...formData, category: e.target.value })}
             className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
-            placeholder="카테고리"
-          />
+          >
+            <option value="">카테고리 선택</option>
+            {getCategoryOptions().map((option) => (
+              <option key={option.value} value={option.value}>
+                {option.label}
+              </option>
+            ))}
+          </select>
         </div>
       </div>
 

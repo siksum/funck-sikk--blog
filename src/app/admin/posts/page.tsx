@@ -168,9 +168,13 @@ export default function PostsManagementPage() {
     fetchPosts();
   }, []);
 
-  // Fetch categories from database
+  // Fetch categories from database (sync from MDX first)
   const fetchCategories = async () => {
     try {
+      // First, sync categories from MDX files to database
+      await fetch('/api/admin/categories/sync', { method: 'POST' });
+
+      // Then fetch the updated categories
       const res = await fetch('/api/admin/categories');
       const data = await res.json();
       setDbCategories(data);
@@ -338,7 +342,7 @@ export default function PostsManagementPage() {
     <div>
       {/* Header */}
       <div className="flex justify-between items-center mb-6">
-        <h1 className="text-2xl font-bold" style={{ color: 'var(--foreground)' }}>
+        <h1 className="text-2xl font-bold text-gray-900 dark:text-white">
           포스트 관리
         </h1>
         <div className="flex gap-2">
@@ -364,24 +368,21 @@ export default function PostsManagementPage() {
           placeholder="제목, 슬러그, 태그로 검색..."
           value={searchTerm}
           onChange={(e) => setSearchTerm(e.target.value)}
-          className="flex-1 px-4 py-2 text-sm bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-violet-500"
-          style={{ color: 'var(--foreground)' }}
+          className="flex-1 px-4 py-2 text-sm bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-violet-500 text-gray-900 dark:text-white"
         />
         <div className="flex items-center gap-2">
           <input
             type="date"
             value={startDate}
             onChange={(e) => setStartDate(e.target.value)}
-            className="px-3 py-2 text-sm bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-violet-500"
-            style={{ color: 'var(--foreground)' }}
+            className="px-3 py-2 text-sm bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-violet-500 text-gray-900 dark:text-white"
           />
-          <span style={{ color: 'var(--foreground-muted)' }}>~</span>
+          <span className="text-gray-500 dark:text-gray-400">~</span>
           <input
             type="date"
             value={endDate}
             onChange={(e) => setEndDate(e.target.value)}
-            className="px-3 py-2 text-sm bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-violet-500"
-            style={{ color: 'var(--foreground)' }}
+            className="px-3 py-2 text-sm bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-violet-500 text-gray-900 dark:text-white"
           />
           {(startDate || endDate) && (
             <button
@@ -401,7 +402,7 @@ export default function PostsManagementPage() {
         {/* Category Sidebar */}
         <div className="w-56 flex-shrink-0">
           <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-violet-200 dark:border-violet-800/50 p-5">
-            <h2 className="text-base font-semibold mb-4" style={{ color: 'var(--foreground)' }}>
+            <h2 className="text-base font-semibold mb-4 text-gray-900 dark:text-white">
               카테고리
             </h2>
 
@@ -416,9 +417,8 @@ export default function PostsManagementPage() {
                 className={`w-full flex items-center justify-between py-2 text-sm transition-colors ${
                   selectedCategory === 'all'
                     ? 'text-violet-600 dark:text-violet-400 font-medium'
-                    : 'hover:text-violet-600 dark:hover:text-violet-400'
+                    : 'text-gray-900 dark:text-white hover:text-violet-600 dark:hover:text-violet-400'
                 }`}
-                style={{ color: selectedCategory === 'all' ? undefined : 'var(--foreground)' }}
               >
                 <span>전체보기</span>
                 <span className="text-xs text-gray-400 dark:text-gray-500">
@@ -437,9 +437,8 @@ export default function PostsManagementPage() {
                     className={`w-full flex items-center justify-between py-2 text-sm transition-colors ${
                       selectedCategory === category.name && !selectedSubcategory
                         ? 'text-violet-600 dark:text-violet-400 font-medium'
-                        : 'hover:text-violet-600 dark:hover:text-violet-400'
+                        : 'text-gray-900 dark:text-white hover:text-violet-600 dark:hover:text-violet-400'
                     }`}
-                    style={{ color: selectedCategory === category.name && !selectedSubcategory ? undefined : 'var(--foreground)' }}
                   >
                     <span className="flex items-center gap-2">
                       {category.subcategories.length > 0 && (
@@ -549,7 +548,7 @@ export default function PostsManagementPage() {
                     {filteredPosts.map((post) => (
                       <tr key={post.slug} className="hover:bg-gray-50 dark:hover:bg-gray-700/50">
                         <td className="px-6 py-4">
-                          <div className="text-sm font-medium" style={{ color: 'var(--foreground)' }}>
+                          <div className="text-sm font-medium text-gray-900 dark:text-white">
                             {post.title}
                           </div>
                           <div className="text-xs text-gray-500 dark:text-gray-400 mt-1">
@@ -652,7 +651,7 @@ export default function PostsManagementPage() {
           <div className="bg-white dark:bg-gray-800 rounded-xl shadow-xl w-full max-w-lg mx-4 max-h-[80vh] overflow-hidden flex flex-col">
             {/* Modal Header */}
             <div className="flex justify-between items-center p-4 border-b border-gray-200 dark:border-gray-700">
-              <h3 className="text-lg font-semibold" style={{ color: 'var(--foreground)' }}>
+              <h3 className="text-lg font-semibold text-gray-900 dark:text-white">
                 카테고리 관리
               </h3>
               <button
@@ -669,15 +668,14 @@ export default function PostsManagementPage() {
             <div className="flex-1 overflow-y-auto p-4">
               {/* Add new category */}
               <div className="mb-6">
-                <label className="block text-sm font-medium mb-2" style={{ color: 'var(--foreground)' }}>
+                <label className="block text-sm font-medium mb-2 text-gray-900 dark:text-white">
                   새 카테고리 추가
                 </label>
                 <div className="space-y-2">
                   <select
                     value={newCategoryParentId}
                     onChange={(e) => setNewCategoryParentId(e.target.value)}
-                    className="w-full px-3 py-2 text-sm border border-gray-200 dark:border-gray-700 rounded-lg bg-white dark:bg-gray-900 focus:outline-none focus:ring-2 focus:ring-violet-500"
-                    style={{ color: 'var(--foreground)' }}
+                    className="w-full px-3 py-2 text-sm border border-gray-200 dark:border-gray-700 rounded-lg bg-white dark:bg-gray-900 focus:outline-none focus:ring-2 focus:ring-violet-500 text-gray-900 dark:text-white"
                   >
                     <option value="">상위 카테고리 (없음 - 최상위)</option>
                     {dbCategories.map((cat) => (
@@ -692,8 +690,7 @@ export default function PostsManagementPage() {
                       value={newCategoryName}
                       onChange={(e) => setNewCategoryName(e.target.value)}
                       placeholder={newCategoryParentId ? '하위 카테고리 이름' : '카테고리 이름'}
-                      className="flex-1 px-3 py-2 text-sm border border-gray-200 dark:border-gray-700 rounded-lg bg-white dark:bg-gray-900 focus:outline-none focus:ring-2 focus:ring-violet-500"
-                      style={{ color: 'var(--foreground)' }}
+                      className="flex-1 px-3 py-2 text-sm border border-gray-200 dark:border-gray-700 rounded-lg bg-white dark:bg-gray-900 focus:outline-none focus:ring-2 focus:ring-violet-500 text-gray-900 dark:text-white"
                       onKeyDown={(e) => e.key === 'Enter' && handleCreateCategory(false)}
                     />
                     <button
@@ -734,8 +731,7 @@ export default function PostsManagementPage() {
                             type="text"
                             value={editingName}
                             onChange={(e) => setEditingName(e.target.value)}
-                            className="flex-1 px-2 py-1 text-sm border border-violet-300 rounded bg-white dark:bg-gray-800 focus:outline-none focus:ring-2 focus:ring-violet-500"
-                            style={{ color: 'var(--foreground)' }}
+                            className="flex-1 px-2 py-1 text-sm border border-violet-300 rounded bg-white dark:bg-gray-800 focus:outline-none focus:ring-2 focus:ring-violet-500 text-gray-900 dark:text-white"
                             onKeyDown={(e) => {
                               if (e.key === 'Enter') handleUpdateCategory();
                               if (e.key === 'Escape') {
@@ -746,7 +742,7 @@ export default function PostsManagementPage() {
                             autoFocus
                           />
                         ) : (
-                          <span className="font-medium" style={{ color: 'var(--foreground)' }}>
+                          <span className="font-medium text-gray-900 dark:text-white">
                             {category.name}
                           </span>
                         )}
@@ -806,8 +802,7 @@ export default function PostsManagementPage() {
                               value={newSubcategoryName}
                               onChange={(e) => setNewSubcategoryName(e.target.value)}
                               placeholder="하위 카테고리 이름"
-                              className="flex-1 px-3 py-2 text-sm border border-gray-200 dark:border-gray-700 rounded-lg bg-white dark:bg-gray-900 focus:outline-none focus:ring-2 focus:ring-violet-500"
-                              style={{ color: 'var(--foreground)' }}
+                              className="flex-1 px-3 py-2 text-sm border border-gray-200 dark:border-gray-700 rounded-lg bg-white dark:bg-gray-900 focus:outline-none focus:ring-2 focus:ring-violet-500 text-gray-900 dark:text-white"
                               onKeyDown={(e) => e.key === 'Enter' && handleCreateSubcategory(category.id)}
                               autoFocus
                             />
@@ -834,8 +829,7 @@ export default function PostsManagementPage() {
                                   type="text"
                                   value={editingName}
                                   onChange={(e) => setEditingName(e.target.value)}
-                                  className="flex-1 px-2 py-1 text-sm border border-violet-300 rounded bg-white dark:bg-gray-800 focus:outline-none focus:ring-2 focus:ring-violet-500"
-                                  style={{ color: 'var(--foreground)' }}
+                                  className="flex-1 px-2 py-1 text-sm border border-violet-300 rounded bg-white dark:bg-gray-800 focus:outline-none focus:ring-2 focus:ring-violet-500 text-gray-900 dark:text-white"
                                   onKeyDown={(e) => {
                                     if (e.key === 'Enter') handleUpdateCategory();
                                     if (e.key === 'Escape') {
@@ -846,7 +840,7 @@ export default function PostsManagementPage() {
                                   autoFocus
                                 />
                               ) : (
-                                <span className="text-sm" style={{ color: 'var(--foreground)' }}>
+                                <span className="text-sm text-gray-900 dark:text-white">
                                   {sub.name}
                                 </span>
                               )}
