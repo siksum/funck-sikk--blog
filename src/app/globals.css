@@ -152,6 +152,14 @@ html, body {
   color: var(--foreground);
 }
 
+/* Hero section background */
+.hero-bg {
+  background: #ffffff;
+}
+.dark .hero-bg {
+  background: #131318;
+}
+
 html, body, * {
   font-family: 'JoseonGulim', Arial, Helvetica, sans-serif !important;
 }

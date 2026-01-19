@@ -264,7 +264,7 @@ function AnimatedCounter({ value, suffix = '' }: { value: number; suffix?: strin
 export default function HeroClient({ stats }: HeroClientProps) {
   return (
     <section
-      className="relative py-24 md:py-36 overflow-hidden bg-white dark:bg-[#131318]"
+      className="relative py-24 md:py-36 overflow-hidden hero-bg"
     >
       {/* Animated gradient mesh background */}
       <div className="absolute inset-0 overflow-hidden pointer-events-none">
