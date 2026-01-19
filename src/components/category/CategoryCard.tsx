@@ -76,8 +76,6 @@ const defaultIcon = (
 // Unified violet theme for all categories
 const defaultColors = {
   iconBg: 'bg-violet-500',
-  pastelBg: 'bg-gradient-to-br from-violet-50 to-indigo-100',
-  darkBg: 'dark:bg-[#1a1a24]',
   neonBorder: 'border-violet-300 dark:border-violet-500/60',
   neonGlow: 'hover:shadow-[0_0_20px_rgba(139,92,246,0.3)] dark:hover:shadow-[0_0_20px_rgba(139,92,246,0.4)]',
 };
@@ -97,7 +95,7 @@ export default function CategoryCard({ name, count, tags, slugPath }: CategoryCa
     <Link href={href} className="block group h-full">
       <article
         className={`relative rounded-xl overflow-hidden transition-all duration-300 h-full flex flex-col
-          border-2 ${colors.neonBorder} ${colors.pastelBg} ${colors.darkBg} ${colors.neonGlow}
+          border-2 ${colors.neonBorder} ${colors.neonGlow} category-card
           hover:-translate-y-1`}
       >
         {/* Content with Icon */}

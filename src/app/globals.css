@@ -260,3 +260,12 @@ code, pre, .font-mono {
 .dark .blog-page-bg {
   background: var(--background);
 }
+
+/* Category card dark mode */
+.category-card {
+  background: linear-gradient(to bottom right, #f5f3ff, #eef2ff);
+}
+
+.dark .category-card {
+  background: #1a1a24;
+}
