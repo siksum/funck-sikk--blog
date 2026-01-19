@@ -269,3 +269,50 @@ code, pre, .font-mono {
 .dark .category-card {
   background: #1a1a24;
 }
+
+/* Sidebar text colors */
+.sidebar-title {
+  color: #111827;
+}
+
+.dark .sidebar-title {
+  color: #f4f4f5;
+}
+
+.sidebar-text {
+  color: #374151;
+}
+
+.dark .sidebar-text {
+  color: #e4e4e7;
+}
+
+.sidebar-text-muted {
+  color: #6b7280;
+}
+
+.dark .sidebar-text-muted {
+  color: #a1a1aa;
+}
+
+.sidebar-badge {
+  background: #f3f4f6;
+  color: #4b5563;
+}
+
+.dark .sidebar-badge {
+  background: #3f3f46;
+  color: #e4e4e7;
+}
+
+.sidebar-tag {
+  background: #f3f4f6;
+  color: #374151;
+  border-color: #ddd6fe;
+}
+
+.dark .sidebar-tag {
+  background: #3f3f46;
+  color: #e4e4e7;
+  border-color: rgba(139, 92, 246, 0.4);
+}

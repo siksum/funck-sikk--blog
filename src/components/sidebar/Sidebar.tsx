@@ -33,7 +33,7 @@ function CategoryTreeItem({
             aria-label={isExpanded ? '접기' : '펼치기'}
           >
             <svg
-              className={`w-3 h-3 transition-transform text-gray-600 dark:text-zinc-300 ${isExpanded ? 'rotate-90' : ''}`}
+              className={`w-3 h-3 transition-transform sidebar-text-muted ${isExpanded ? 'rotate-90' : ''}`}
               fill="none"
               stroke="currentColor"
               viewBox="0 0 24 24"
@@ -51,13 +51,13 @@ function CategoryTreeItem({
         )}
         <Link
           href={href}
-          className="flex-1 flex items-center justify-between py-1 transition-colors text-gray-700 dark:text-zinc-200 hover:text-violet-600 dark:hover:text-violet-400"
+          className="flex-1 flex items-center justify-between py-1 transition-colors sidebar-text hover:text-violet-600 dark:hover:text-violet-400"
           style={{
             paddingLeft: `${depth * 0.5}rem`,
           }}
         >
           <span>{category.name}</span>
-          <span className="text-xs px-2 py-0.5 rounded-full bg-gray-100 dark:bg-zinc-700 text-gray-600 dark:text-zinc-200">
+          <span className="text-xs px-2 py-0.5 rounded-full sidebar-badge">
             {category.count}
           </span>
         </Link>
@@ -92,7 +92,7 @@ export default function Sidebar({
         className="rounded-2xl backdrop-blur-xl border border-gray-200 dark:border-violet-500/30 p-5"
         style={{ background: 'var(--card-bg)' }}
       >
-        <h3 className="text-lg font-semibold mb-4 text-gray-900 dark:text-zinc-100">
+        <h3 className="text-lg font-semibold mb-4 sidebar-title">
           카테고리
         </h3>
         <ul className="space-y-2">
@@ -122,7 +122,7 @@ export default function Sidebar({
             className={`flex-1 py-3 px-4 text-sm font-medium transition-colors ${
               activeTab === 'recent'
                 ? 'text-violet-600 dark:text-violet-400 border-b-2 border-violet-600 dark:border-violet-400 -mb-px'
-                : 'text-gray-700 dark:text-zinc-300'
+                : 'sidebar-text'
             }`}
           >
             최신 글
@@ -132,7 +132,7 @@ export default function Sidebar({
             className={`flex-1 py-3 px-4 text-sm font-medium transition-colors ${
               activeTab === 'popular'
                 ? 'text-violet-600 dark:text-violet-400 border-b-2 border-violet-600 dark:border-violet-400 -mb-px'
-                : 'text-gray-700 dark:text-zinc-300'
+                : 'sidebar-text'
             }`}
           >
             인기 글
@@ -146,7 +146,7 @@ export default function Sidebar({
           ))}
           {(activeTab === 'recent' ? recentPosts : popularPosts).length ===
             0 && (
-            <p className="p-4 text-center text-sm text-gray-600 dark:text-zinc-400">
+            <p className="p-4 text-center text-sm sidebar-text-muted">
               포스트가 없습니다.
             </p>
           )}
@@ -158,7 +158,7 @@ export default function Sidebar({
         className="rounded-2xl backdrop-blur-xl border border-gray-200 dark:border-violet-500/30 p-5"
         style={{ background: 'var(--card-bg)' }}
       >
-        <h3 className="text-lg font-semibold mb-4 text-gray-900 dark:text-zinc-100">
+        <h3 className="text-lg font-semibold mb-4 sidebar-title">
           태그
         </h3>
         <div className="flex flex-wrap gap-2">
@@ -166,7 +166,7 @@ export default function Sidebar({
             <Link
               key={tag.name}
               href={`/tags/${encodeURIComponent(tag.name)}`}
-              className="px-3 py-1 text-sm rounded-full transition-all hover:scale-105 border border-violet-200 dark:border-violet-500/40 hover:border-violet-400 dark:hover:border-violet-400 bg-gray-100 dark:bg-zinc-700 text-gray-700 dark:text-zinc-100"
+              className="px-3 py-1 text-sm rounded-full transition-all hover:scale-105 border hover:border-violet-400 sidebar-tag"
             >
               #{tag.name}
             </Link>
