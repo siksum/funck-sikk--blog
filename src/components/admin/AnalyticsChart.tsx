@@ -86,7 +86,7 @@ export default function AnalyticsChart({ data, viewMode }: AnalyticsChartProps) 
                 x={padding.left - 10}
                 y={y + 4}
                 textAnchor="end"
-                className="text-xs fill-gray-500"
+                className="text-xs fill-gray-500 dark:fill-gray-400"
                 style={{ fontSize: '10px' }}
               >
                 {label}
@@ -163,7 +163,7 @@ export default function AnalyticsChart({ data, viewMode }: AnalyticsChartProps) 
               x={x}
               y={chartHeight - 10}
               textAnchor="middle"
-              className="text-xs fill-gray-500"
+              className="text-xs fill-gray-500 dark:fill-gray-400"
               style={{ fontSize: '10px' }}
             >
               {formatDate(point.date)}
