@@ -10,16 +10,28 @@ interface SidebarProps {
   popularPosts: Post[];
   categories: Category[];
   tags: { name: string; count: number }[];
+  currentCategorySlugPath?: string[];
 }
 
 function CategoryTreeItem({
   category,
   depth = 0,
+  currentCategorySlugPath,
 }: {
   category: Category;
   depth?: number;
+  currentCategorySlugPath?: string[];
 }) {
-  const [isExpanded, setIsExpanded] = useState(depth === 0);
+  // Check if this category or any of its children is the current category
+  const isCurrentCategory = currentCategorySlugPath &&
+    category.slugPath.join('/') === currentCategorySlugPath.join('/');
+
+  const isParentOfCurrent = currentCategorySlugPath &&
+    currentCategorySlugPath.length > category.slugPath.length &&
+    category.slugPath.every((slug, i) => slug === currentCategorySlugPath[i]);
+
+  // Auto-expand if this is a parent of the current category
+  const [isExpanded, setIsExpanded] = useState(depth === 0 || isParentOfCurrent);
   const hasChildren = category.children && category.children.length > 0;
   const href = `/categories/${category.slugPath.join('/')}`;
 
@@ -51,13 +63,21 @@ function CategoryTreeItem({
         )}
         <Link
           href={href}
-          className="flex-1 flex items-center justify-between py-1 transition-colors sidebar-text hover:text-violet-600 dark:hover:text-violet-400"
+          className={`flex-1 flex items-center justify-between py-1 transition-colors ${
+            isCurrentCategory
+              ? 'text-violet-600 dark:text-violet-400 font-semibold'
+              : 'sidebar-text hover:text-violet-600 dark:hover:text-violet-400'
+          }`}
           style={{
             paddingLeft: `${depth * 0.5}rem`,
           }}
         >
           <span>{category.name}</span>
-          <span className="text-xs px-2 py-0.5 rounded-full sidebar-badge">
+          <span className={`text-xs px-2 py-0.5 rounded-full ${
+            isCurrentCategory
+              ? 'bg-violet-100 dark:bg-violet-500/30 text-violet-700 dark:text-violet-300'
+              : 'sidebar-badge'
+          }`}>
             {category.count}
           </span>
         </Link>
@@ -69,6 +89,7 @@ function CategoryTreeItem({
               key={child.slug}
               category={child}
               depth={depth + 1}
+              currentCategorySlugPath={currentCategorySlugPath}
             />
           ))}
         </ul>
@@ -82,6 +103,7 @@ export default function Sidebar({
   popularPosts,
   categories,
   tags,
+  currentCategorySlugPath,
 }: SidebarProps) {
   const [activeTab, setActiveTab] = useState<'recent' | 'popular'>('recent');
 
@@ -97,7 +119,11 @@ export default function Sidebar({
         </h3>
         <ul className="space-y-2">
           {categories.slice(0, 8).map((category) => (
-            <CategoryTreeItem key={category.slug} category={category} />
+            <CategoryTreeItem
+              key={category.slug}
+              category={category}
+              currentCategorySlugPath={currentCategorySlugPath}
+            />
           ))}
         </ul>
         {categories.length > 8 && (
