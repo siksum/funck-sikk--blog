@@ -14,6 +14,14 @@ interface ChildCategory {
   slugPath: string[];
 }
 
+interface DBSection {
+  id: string;
+  title: string;
+  description: string | null;
+  order: number;
+  categories: { id: string; name: string; slug: string }[];
+}
+
 interface CategoryPageContentProps {
   category: {
     name: string;
@@ -26,6 +34,7 @@ interface CategoryPageContentProps {
   recentPosts: Post[];
   categories: Category[];
   tags: { name: string; count: number }[];
+  sections?: DBSection[];
 }
 
 export default function CategoryPageContent({
@@ -36,6 +45,7 @@ export default function CategoryPageContent({
   recentPosts,
   categories,
   tags,
+  sections,
 }: CategoryPageContentProps) {
   const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
   const [searchTerm, setSearchTerm] = useState('');
@@ -152,6 +162,7 @@ export default function CategoryPageContent({
               categories={categories}
               tags={tags}
               currentCategorySlugPath={category.slugPath}
+              sections={sections}
             />
           </div>
 

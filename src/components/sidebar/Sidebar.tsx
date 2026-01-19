@@ -163,7 +163,7 @@ export default function Sidebar({
                   {section.title}
                 </div>
               )}
-              <ul className="sidebar-divider-heart">
+              <ul className="space-y-1">
                 {sectionCategories.map((category) => (
                   <li key={category.slug}>
                     <CategoryTreeItem
