@@ -7,4 +7,6 @@ export {
   getPostsByTag,
   getAllCategories,
   getAllTags,
+  getTagsByCategory,
+  getCategoriesWithTags,
 } from './mdx';

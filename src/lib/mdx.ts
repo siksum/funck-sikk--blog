@@ -86,3 +86,22 @@ export function getAllTags(): { name: string; count: number }[] {
     .map(([name, count]) => ({ name, count }))
     .sort((a, b) => b.count - a.count);
 }
+
+export function getTagsByCategory(category: string): string[] {
+  const posts = getPostsByCategory(category);
+  const tagSet = new Set<string>();
+
+  posts.forEach((post) => {
+    post.tags.forEach((tag) => tagSet.add(tag));
+  });
+
+  return Array.from(tagSet);
+}
+
+export function getCategoriesWithTags(): { name: string; count: number; tags: string[] }[] {
+  const categories = getAllCategories();
+  return categories.map((cat) => ({
+    ...cat,
+    tags: getTagsByCategory(cat.name),
+  }));
+}
