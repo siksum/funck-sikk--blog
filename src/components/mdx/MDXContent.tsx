@@ -3,8 +3,16 @@
 import { useState } from 'react';
 import ReactMarkdown from 'react-markdown';
 import rehypeRaw from 'rehype-raw';
+import remarkGfm from 'remark-gfm';
+import remarkMath from 'remark-math';
+import rehypeKatex from 'rehype-katex';
 import CodeBlock from './CodeBlock';
 import ImageLightbox from './ImageLightbox';
+import Callout from './Callout';
+import YouTube from './YouTube';
+import { CodeTabs, Tab } from './CodeTabs';
+import Mermaid from './Mermaid';
+import 'katex/dist/katex.min.css';
 
 interface MDXContentProps {
   content: string;
@@ -48,6 +56,36 @@ function AnchorLinkButton({ id }: { id: string }) {
   );
 }
 
+// Parse code block meta string to extract title and highlight lines
+function parseCodeMeta(metaString: string | undefined): { title?: string; highlightLines?: string } {
+  if (!metaString) return {};
+
+  const result: { title?: string; highlightLines?: string } = {};
+
+  // Match title="..." or title='...'
+  const titleMatch = metaString.match(/title=["']([^"']+)["']/);
+  if (titleMatch) {
+    result.title = titleMatch[1];
+  }
+
+  // Match {1,3-5,7} pattern for highlight lines
+  const highlightMatch = metaString.match(/\{([0-9,\-\s]+)\}/);
+  if (highlightMatch) {
+    result.highlightLines = highlightMatch[1];
+  }
+
+  return result;
+}
+
+// Export custom components for use in MDX files
+export const mdxComponents = {
+  Callout,
+  YouTube,
+  CodeTabs,
+  Tab,
+  Mermaid,
+};
+
 export default function MDXContent({ content }: MDXContentProps) {
   const [lightboxImage, setLightboxImage] = useState<{ src: string; alt: string } | null>(null);
 
@@ -55,7 +93,8 @@ export default function MDXContent({ content }: MDXContentProps) {
     <>
       <article className="max-w-none" style={{ color: 'var(--foreground)' }}>
         <ReactMarkdown
-          rehypePlugins={[rehypeRaw]}
+          remarkPlugins={[remarkGfm, remarkMath]}
+          rehypePlugins={[rehypeRaw, rehypeKatex]}
           components={{
             h1: ({ children }) => {
               const id = generateId(String(children));
@@ -102,7 +141,7 @@ export default function MDXContent({ content }: MDXContentProps) {
             li: ({ children }) => (
               <li style={{ color: 'var(--foreground)' }}>{children}</li>
             ),
-            code: ({ className, children }) => {
+            code: ({ className, children, node, ...props }) => {
               const isInline = !className;
               if (isInline) {
                 return (
@@ -111,8 +150,19 @@ export default function MDXContent({ content }: MDXContentProps) {
                   </code>
                 );
               }
+
+              // Check for mermaid code blocks
+              if (className === 'language-mermaid') {
+                const code = String(children).replace(/\n$/, '');
+                return <Mermaid chart={code} />;
+              }
+
+              // Extract meta from data attributes if available
+              const meta = (props as Record<string, unknown>)['data-meta'] as string | undefined;
+              const { title, highlightLines } = parseCodeMeta(meta);
+
               return (
-                <CodeBlock className={className}>
+                <CodeBlock className={className} title={title} highlightLines={highlightLines}>
                   {children}
                 </CodeBlock>
               );
@@ -149,6 +199,11 @@ export default function MDXContent({ content }: MDXContentProps) {
                 {children}
               </strong>
             ),
+            del: ({ children }) => (
+              <del className="line-through text-gray-500 dark:text-gray-400">
+                {children}
+              </del>
+            ),
             details: ({ children, ...props }) => (
               <details
                 className="my-4 border border-violet-200 dark:border-violet-500/30 rounded-lg overflow-hidden"
@@ -162,11 +217,18 @@ export default function MDXContent({ content }: MDXContentProps) {
                 {children}
               </summary>
             ),
-            div: ({ className, children, ...props }) => (
-              <div className={className} {...props}>
-                {children}
-              </div>
-            ),
+            div: ({ className, children, ...props }) => {
+              // Check for callout classes
+              if (className?.startsWith('callout-')) {
+                const type = className.replace('callout-', '') as 'info' | 'warning' | 'tip' | 'danger' | 'note';
+                return <Callout type={type}>{children}</Callout>;
+              }
+              return (
+                <div className={className} {...props}>
+                  {children}
+                </div>
+              );
+            },
             table: ({ children }) => (
               <div className="overflow-x-auto my-4">
                 <table className="min-w-full border-collapse border border-violet-200 dark:border-violet-500/30">
@@ -222,6 +284,30 @@ export default function MDXContent({ content }: MDXContentProps) {
                   />
                 </button>
               );
+            },
+            // Keyboard key styling
+            kbd: ({ children }) => (
+              <kbd className="px-2 py-1 text-sm font-mono bg-gray-100 dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded shadow-sm" style={{ color: 'var(--foreground)' }}>
+                {children}
+              </kbd>
+            ),
+            // Footnotes styling
+            sup: ({ children, ...props }) => (
+              <sup className="text-violet-600 dark:text-violet-400 text-xs" {...props}>
+                {children}
+              </sup>
+            ),
+            // Footnote section styling
+            section: ({ className, children, ...props }) => {
+              if (className?.includes('footnotes')) {
+                return (
+                  <section className="mt-8 pt-8 border-t border-gray-200 dark:border-gray-700" {...props}>
+                    <h2 className="text-lg font-semibold mb-4" style={{ color: 'var(--foreground)' }}>각주</h2>
+                    <div className="text-sm text-gray-600 dark:text-gray-400">{children}</div>
+                  </section>
+                );
+              }
+              return <section className={className} {...props}>{children}</section>;
             },
           }}
         >

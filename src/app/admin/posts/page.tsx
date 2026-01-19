@@ -50,6 +50,7 @@ export default function PostsManagementPage() {
   const [showCategoryModal, setShowCategoryModal] = useState(false);
   const [dbCategories, setDbCategories] = useState<DBCategory[]>([]);
   const [newCategoryName, setNewCategoryName] = useState('');
+  const [newCategoryParentId, setNewCategoryParentId] = useState<string>('');
   const [newSubcategoryName, setNewSubcategoryName] = useState('');
   const [selectedParentId, setSelectedParentId] = useState<string | null>(null);
   const [editingCategory, setEditingCategory] = useState<DBCategory | null>(null);
@@ -185,17 +186,30 @@ export default function PostsManagementPage() {
   }, [showCategoryModal]);
 
   // Create new category
-  const handleCreateCategory = async () => {
+  const handleCreateCategory = async (autoSelectAsParent: boolean = false) => {
     if (!newCategoryName.trim()) return;
 
     try {
       const res = await fetch('/api/admin/categories', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ name: newCategoryName.trim() }),
+        body: JSON.stringify({
+          name: newCategoryName.trim(),
+          parentId: newCategoryParentId || null,
+        }),
       });
       if (res.ok) {
+        const createdCategory = await res.json();
         setNewCategoryName('');
+
+        // If creating a top-level category and autoSelectAsParent is true,
+        // set it as the parent for the next category
+        if (autoSelectAsParent && !newCategoryParentId) {
+          setNewCategoryParentId(createdCategory.id);
+        } else {
+          setNewCategoryParentId('');
+        }
+
         fetchCategories();
       }
     } catch (error) {
@@ -658,22 +672,51 @@ export default function PostsManagementPage() {
                 <label className="block text-sm font-medium mb-2" style={{ color: 'var(--foreground)' }}>
                   새 카테고리 추가
                 </label>
-                <div className="flex gap-2">
-                  <input
-                    type="text"
-                    value={newCategoryName}
-                    onChange={(e) => setNewCategoryName(e.target.value)}
-                    placeholder="카테고리 이름"
-                    className="flex-1 px-3 py-2 text-sm border border-gray-200 dark:border-gray-700 rounded-lg bg-white dark:bg-gray-900 focus:outline-none focus:ring-2 focus:ring-violet-500"
+                <div className="space-y-2">
+                  <select
+                    value={newCategoryParentId}
+                    onChange={(e) => setNewCategoryParentId(e.target.value)}
+                    className="w-full px-3 py-2 text-sm border border-gray-200 dark:border-gray-700 rounded-lg bg-white dark:bg-gray-900 focus:outline-none focus:ring-2 focus:ring-violet-500"
                     style={{ color: 'var(--foreground)' }}
-                    onKeyDown={(e) => e.key === 'Enter' && handleCreateCategory()}
-                  />
-                  <button
-                    onClick={handleCreateCategory}
-                    className="px-4 py-2 bg-violet-600 text-white rounded-lg hover:bg-violet-700 transition-colors text-sm"
                   >
-                    추가
-                  </button>
+                    <option value="">상위 카테고리 (없음 - 최상위)</option>
+                    {dbCategories.map((cat) => (
+                      <option key={cat.id} value={cat.id}>
+                        {cat.name}의 하위 카테고리로 추가
+                      </option>
+                    ))}
+                  </select>
+                  <div className="flex gap-2">
+                    <input
+                      type="text"
+                      value={newCategoryName}
+                      onChange={(e) => setNewCategoryName(e.target.value)}
+                      placeholder={newCategoryParentId ? '하위 카테고리 이름' : '카테고리 이름'}
+                      className="flex-1 px-3 py-2 text-sm border border-gray-200 dark:border-gray-700 rounded-lg bg-white dark:bg-gray-900 focus:outline-none focus:ring-2 focus:ring-violet-500"
+                      style={{ color: 'var(--foreground)' }}
+                      onKeyDown={(e) => e.key === 'Enter' && handleCreateCategory(false)}
+                    />
+                    <button
+                      onClick={() => handleCreateCategory(false)}
+                      className="px-4 py-2 bg-violet-600 text-white rounded-lg hover:bg-violet-700 transition-colors text-sm whitespace-nowrap"
+                    >
+                      {newCategoryParentId ? '하위 추가' : '추가'}
+                    </button>
+                    {!newCategoryParentId && (
+                      <button
+                        onClick={() => handleCreateCategory(true)}
+                        className="px-3 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors text-sm whitespace-nowrap"
+                        title="추가 후 이 카테고리의 하위 카테고리를 계속 추가"
+                      >
+                        + 하위
+                      </button>
+                    )}
+                  </div>
+                  {newCategoryParentId && (
+                    <p className="text-xs text-violet-600 dark:text-violet-400">
+                      → "{dbCategories.find(c => c.id === newCategoryParentId)?.name}" 아래에 추가됩니다
+                    </p>
+                  )}
                 </div>
               </div>
 

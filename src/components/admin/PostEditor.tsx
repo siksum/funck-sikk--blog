@@ -530,9 +530,48 @@ export default function PostEditor({ initialData = {}, isEdit = false }: PostEdi
             <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
               미리보기
             </label>
-            <div className="h-[500px] px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-lg bg-gray-50 dark:bg-gray-900 overflow-y-auto">
-              {formData.content ? (
-                <MDXContent content={formData.content} />
+            <div className="h-[500px] border border-gray-300 dark:border-gray-600 rounded-lg bg-gray-50 dark:bg-gray-900 overflow-y-auto">
+              {formData.content || formData.title ? (
+                <div className="p-6">
+                  {/* Post Header Preview */}
+                  <header className="mb-6 pb-6 border-b-2 border-violet-400 dark:border-violet-500">
+                    {formData.category && (
+                      <div className="flex items-center text-sm mb-3" style={{ color: 'var(--foreground)', opacity: 0.7 }}>
+                        <span>Blog</span>
+                        <span className="mx-2">/</span>
+                        <span className="text-violet-600 dark:text-violet-400">{formData.category}</span>
+                      </div>
+                    )}
+                    {formData.title && (
+                      <h1 className="text-2xl md:text-3xl font-bold mb-3" style={{ color: 'var(--foreground)' }}>
+                        {formData.title}
+                      </h1>
+                    )}
+                    {formData.description && (
+                      <p className="text-base mb-4" style={{ color: 'var(--foreground)', opacity: 0.8 }}>
+                        {formData.description}
+                      </p>
+                    )}
+                    <div className="flex flex-wrap items-center gap-3 text-sm" style={{ color: 'var(--foreground)', opacity: 0.7 }}>
+                      <time>{formData.date || new Date().toLocaleDateString('ko-KR')}</time>
+                      {formData.tags && (
+                        <div className="flex flex-wrap gap-2">
+                          {formData.tags.split(',').filter(Boolean).map((tag, i) => (
+                            <span
+                              key={i}
+                              className="px-2 py-0.5 rounded text-xs"
+                              style={{ backgroundColor: 'var(--tag-bg)', color: 'var(--tag-text)' }}
+                            >
+                              #{tag.trim()}
+                            </span>
+                          ))}
+                        </div>
+                      )}
+                    </div>
+                  </header>
+                  {/* Content Preview */}
+                  <MDXContent content={formData.content} />
+                </div>
               ) : (
                 <p className="text-gray-400 dark:text-gray-500 text-center mt-20">
                   내용을 입력하면 미리보기가 표시됩니다.
