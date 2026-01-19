@@ -74,36 +74,35 @@ export default function HeaderStatus() {
   if (loading) {
     return (
       <div className="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-gray-100 dark:bg-gray-800/50">
-        <div className="w-4 h-4 rounded bg-gray-300 dark:bg-gray-600 animate-pulse" />
-        <div className="w-20 h-3 rounded bg-gray-300 dark:bg-gray-600 animate-pulse" />
         <div className="w-2 h-2 rounded-full bg-gray-300 dark:bg-gray-600 animate-pulse" />
+        <div className="w-24 h-3 rounded bg-gray-300 dark:bg-gray-600 animate-pulse" />
       </div>
     );
   }
 
   return (
     <div className="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-gray-100 dark:bg-gray-800/50">
-      {/* Icon */}
-      <span className="text-base">{getAppIcon(status?.app || null)}</span>
-
-      {/* Status text */}
-      <div className="flex items-center gap-1.5 text-xs">
-        <span style={{ color: 'var(--foreground-muted)' }}>주인장:</span>
-        {status?.app ? (
-          <span className="text-violet-600 dark:text-violet-400 font-medium">
-            {status.app}
-          </span>
-        ) : (
-          <span style={{ color: 'var(--foreground-muted)' }}>자리 비움</span>
-        )}
-      </div>
-
-      {/* Online indicator */}
+      {/* Online indicator - at front */}
       <div
-        className={`w-2 h-2 rounded-full ${
+        className={`w-2 h-2 rounded-full flex-shrink-0 ${
           isOnline ? 'bg-green-500' : 'bg-gray-400'
         }`}
       />
+
+      {/* Status text */}
+      <div className="flex items-center gap-1 text-xs whitespace-nowrap">
+        <span style={{ color: 'var(--foreground-muted)' }}>주인장은 지금</span>
+        {status?.app ? (
+          <>
+            <span className="text-violet-600 dark:text-violet-400 font-medium">
+              {status.app}
+            </span>
+            <span style={{ color: 'var(--foreground-muted)' }}>하는 중</span>
+          </>
+        ) : (
+          <span style={{ color: 'var(--foreground-muted)' }}>자리 비움 💤</span>
+        )}
+      </div>
     </div>
   );
 }

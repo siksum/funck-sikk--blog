@@ -68,11 +68,6 @@ export default function HeaderClient({ posts }: HeaderClientProps) {
 
           {/* Actions */}
           <div className="flex items-center space-x-3">
-            {/* Owner Status */}
-            <div className="hidden sm:block">
-              <HeaderStatus />
-            </div>
-
             {/* Search Button */}
             <button
               onClick={() => setIsSearchOpen(true)}
@@ -96,6 +91,11 @@ export default function HeaderClient({ posts }: HeaderClientProps) {
 
             {/* Theme Toggle */}
             <ThemeToggle />
+
+            {/* Owner Status */}
+            <div className="hidden sm:block">
+              <HeaderStatus />
+            </div>
 
             {/* User Menu */}
             {status === 'loading' ? (
