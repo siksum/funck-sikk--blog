@@ -15,7 +15,7 @@ export default function BlogPage() {
 
   return (
     <div
-      className="min-h-screen py-12 bg-gradient-to-br from-violet-50/50 via-white to-indigo-50/50 dark:from-violet-950/20 dark:via-[#131318] dark:to-indigo-950/20"
+      className="min-h-screen py-12 bg-gradient-to-br from-violet-100 via-violet-50/80 to-indigo-100 dark:from-violet-950/20 dark:via-[#131318] dark:to-indigo-950/20"
     >
       <div className="w-full px-4 sm:px-6 lg:px-12 xl:px-16">
         {/* Page Header */}
