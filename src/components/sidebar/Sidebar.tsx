@@ -159,7 +159,7 @@ export default function Sidebar({
           {categoriesBySection.map(({ section, categories: sectionCategories }) => (
             <div key={section?.id || 'uncategorized'}>
               {section && (
-                <div className="text-xs font-semibold text-indigo-600 dark:text-indigo-400 uppercase tracking-wider mb-2 pb-1 border-b border-indigo-200 dark:border-indigo-800">
+                <div className="text-xs font-semibold text-indigo-600 dark:text-indigo-400 uppercase tracking-wider mb-2 pb-1 border-b border-indigo-200 dark:border-indigo-400">
                   {section.title}
                 </div>
               )}
