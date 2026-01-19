@@ -247,7 +247,7 @@ export default function AdminPage() {
   };
 
   const handleClearAdminPaths = async () => {
-    if (!confirm('/admin 경로의 방문 로그만 삭제하시겠습니까?')) {
+    if (!confirm('/admin 경로의 방문 로그를 삭제하고 방문자 수를 재계산하시겠습니까?')) {
       return;
     }
 
@@ -255,11 +255,11 @@ export default function AdminPage() {
       const res = await fetch('/api/analytics/clear', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ clearAdminPaths: true }),
+        body: JSON.stringify({ clearAdminPaths: true, recalculateDailyVisits: true }),
       });
       if (res.ok) {
         const data = await res.json();
-        alert(`삭제 완료: PageViews ${data.deleted.pageViews}개`);
+        alert(`삭제 완료: PageViews ${data.deleted.pageViews}개\n방문자 수가 재계산되었습니다.`);
         fetchStats();
       } else {
         alert('삭제 실패');

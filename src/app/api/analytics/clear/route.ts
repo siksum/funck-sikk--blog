@@ -42,7 +42,7 @@ export async function POST(request: Request) {
 
   try {
     const body = await request.json();
-    const { clearAdminPaths, clearBeforeDate } = body;
+    const { clearAdminPaths, clearBeforeDate, recalculateDailyVisits } = body;
 
     let deletedPageViews = 0;
     let deletedDailyVisits = 0;
@@ -81,12 +81,35 @@ export async function POST(request: Request) {
       deletedDailyVisits += dailyVisitResult.count;
     }
 
+    // Recalculate DailyVisit counts based on actual PageViews
+    if (recalculateDailyVisits) {
+      // Get all page views grouped by date
+      const pageViewsByDate = await prisma.pageView.groupBy({
+        by: ['date'],
+        _count: { id: true },
+      });
+
+      // Delete all existing daily visits
+      await prisma.dailyVisit.deleteMany({});
+
+      // Recreate daily visits with correct counts
+      for (const pv of pageViewsByDate) {
+        await prisma.dailyVisit.create({
+          data: {
+            date: pv.date,
+            count: pv._count.id,
+          },
+        });
+      }
+    }
+
     return NextResponse.json({
       success: true,
       deleted: {
         pageViews: deletedPageViews,
         dailyVisits: deletedDailyVisits,
       },
+      recalculated: recalculateDailyVisits || false,
     });
   } catch (error) {
     console.error('Failed to clear analytics:', error);

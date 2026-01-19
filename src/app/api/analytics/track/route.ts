@@ -4,6 +4,12 @@ import { prisma } from '@/lib/db';
 export async function POST(request: NextRequest) {
   try {
     const { path, slug } = await request.json();
+
+    // Server-side filter: Skip admin paths
+    if (path?.startsWith('/admin')) {
+      return NextResponse.json({ success: true, skipped: true });
+    }
+
     const userAgent = request.headers.get('user-agent') || '';
     const referer = request.headers.get('referer') || '';
 
