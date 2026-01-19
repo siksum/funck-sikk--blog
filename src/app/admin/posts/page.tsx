@@ -908,12 +908,29 @@ export default function PostsManagementPage() {
                 </div>
               </div>
 
-              {/* Category list */}
+              {/* Category list - filtered by selected section */}
               <div className="space-y-2">
+                {newCategorySectionId && (
+                  <div className="flex items-center justify-between mb-2 px-2 py-1 bg-indigo-50 dark:bg-indigo-900/20 rounded">
+                    <span className="text-xs text-indigo-600 dark:text-indigo-400">
+                      "{dbSections.find(s => s.id === newCategorySectionId)?.title}" 섹션의 카테고리만 표시 중
+                    </span>
+                    <button
+                      onClick={() => setNewCategorySectionId('')}
+                      className="text-xs text-indigo-500 hover:text-indigo-700 dark:hover:text-indigo-300"
+                    >
+                      전체 보기
+                    </button>
+                  </div>
+                )}
                 {dbCategories.length === 0 ? (
                   <p className="text-center text-gray-500 py-4">카테고리가 없습니다.</p>
+                ) : dbCategories.filter((cat) => !newCategorySectionId || cat.sectionId === newCategorySectionId).length === 0 ? (
+                  <p className="text-center text-gray-500 py-4">이 섹션에 카테고리가 없습니다.</p>
                 ) : (
-                  dbCategories.map((category) => (
+                  dbCategories
+                    .filter((cat) => !newCategorySectionId || cat.sectionId === newCategorySectionId)
+                    .map((category) => (
                     <div key={category.id} className="border border-gray-200 dark:border-gray-700 rounded-lg overflow-hidden">
                       {/* Parent category */}
                       <div className="flex items-center justify-between p-3 bg-gray-50 dark:bg-gray-700/50">
