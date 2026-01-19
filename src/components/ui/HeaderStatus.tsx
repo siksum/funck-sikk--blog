@@ -91,16 +91,16 @@ export default function HeaderStatus() {
 
       {/* Status text */}
       <div className="flex items-center gap-1 text-xs whitespace-nowrap">
-        <span style={{ color: 'var(--foreground-muted)' }}>주인장은 지금</span>
+        <span className="text-gray-700 dark:text-gray-300">주인장은 지금</span>
         {status?.app ? (
           <>
             <span className="text-violet-600 dark:text-violet-400 font-medium">
               {status.app}
             </span>
-            <span style={{ color: 'var(--foreground-muted)' }}>하는 중</span>
+            <span className="text-gray-700 dark:text-gray-300">하는 중</span>
           </>
         ) : (
-          <span style={{ color: 'var(--foreground-muted)' }}>자리 비움 💤</span>
+          <span className="text-gray-700 dark:text-gray-300">자리 비움 💤</span>
         )}
       </div>
     </div>

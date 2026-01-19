@@ -33,11 +33,10 @@ function CategoryTreeItem({
             aria-label={isExpanded ? '접기' : '펼치기'}
           >
             <svg
-              className={`w-3 h-3 transition-transform ${isExpanded ? 'rotate-90' : ''}`}
+              className={`w-3 h-3 transition-transform text-gray-600 dark:text-gray-400 ${isExpanded ? 'rotate-90' : ''}`}
               fill="none"
               stroke="currentColor"
               viewBox="0 0 24 24"
-              style={{ color: 'var(--foreground-muted)' }}
             >
               <path
                 strokeLinecap="round"
@@ -52,17 +51,13 @@ function CategoryTreeItem({
         )}
         <Link
           href={href}
-          className="flex-1 flex items-center justify-between py-1 transition-colors hover:text-violet-600 dark:hover:text-violet-400"
+          className="flex-1 flex items-center justify-between py-1 transition-colors text-gray-700 dark:text-gray-300 hover:text-violet-600 dark:hover:text-violet-400"
           style={{
-            color: 'var(--foreground-muted)',
             paddingLeft: `${depth * 0.5}rem`,
           }}
         >
           <span>{category.name}</span>
-          <span
-            className="text-xs px-2 py-0.5 rounded-full"
-            style={{ background: 'var(--tag-bg)', color: 'var(--tag-text)' }}
-          >
+          <span className="text-xs px-2 py-0.5 rounded-full bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-400">
             {category.count}
           </span>
         </Link>
@@ -97,7 +92,7 @@ export default function Sidebar({
         className="rounded-2xl backdrop-blur-xl border border-gray-200 dark:border-violet-500/30 p-5"
         style={{ background: 'var(--card-bg)' }}
       >
-        <h3 className="text-lg font-semibold mb-4" style={{ color: 'var(--foreground)' }}>
+        <h3 className="text-lg font-semibold mb-4 text-gray-900 dark:text-gray-100">
           카테고리
         </h3>
         <ul className="space-y-2">
@@ -127,9 +122,8 @@ export default function Sidebar({
             className={`flex-1 py-3 px-4 text-sm font-medium transition-colors ${
               activeTab === 'recent'
                 ? 'text-violet-600 dark:text-violet-400 border-b-2 border-violet-600 dark:border-violet-400 -mb-px'
-                : ''
+                : 'text-gray-700 dark:text-gray-300'
             }`}
-            style={activeTab !== 'recent' ? { color: 'var(--foreground-muted)' } : undefined}
           >
             최신 글
           </button>
@@ -138,9 +132,8 @@ export default function Sidebar({
             className={`flex-1 py-3 px-4 text-sm font-medium transition-colors ${
               activeTab === 'popular'
                 ? 'text-violet-600 dark:text-violet-400 border-b-2 border-violet-600 dark:border-violet-400 -mb-px'
-                : ''
+                : 'text-gray-700 dark:text-gray-300'
             }`}
-            style={activeTab !== 'popular' ? { color: 'var(--foreground-muted)' } : undefined}
           >
             인기 글
           </button>
@@ -153,7 +146,7 @@ export default function Sidebar({
           ))}
           {(activeTab === 'recent' ? recentPosts : popularPosts).length ===
             0 && (
-            <p className="p-4 text-center text-sm" style={{ color: 'var(--foreground-muted)' }}>
+            <p className="p-4 text-center text-sm text-gray-600 dark:text-gray-400">
               포스트가 없습니다.
             </p>
           )}
@@ -165,7 +158,7 @@ export default function Sidebar({
         className="rounded-2xl backdrop-blur-xl border border-gray-200 dark:border-violet-500/30 p-5"
         style={{ background: 'var(--card-bg)' }}
       >
-        <h3 className="text-lg font-semibold mb-4" style={{ color: 'var(--foreground)' }}>
+        <h3 className="text-lg font-semibold mb-4 text-gray-900 dark:text-gray-100">
           태그
         </h3>
         <div className="flex flex-wrap gap-2">
@@ -173,8 +166,7 @@ export default function Sidebar({
             <Link
               key={tag.name}
               href={`/tags/${encodeURIComponent(tag.name)}`}
-              className="px-3 py-1 text-sm rounded-full transition-all hover:scale-105 border border-violet-200 dark:border-violet-500/40 hover:border-violet-400 dark:hover:border-violet-400"
-              style={{ background: 'var(--tag-bg)', color: 'var(--tag-text)' }}
+              className="px-3 py-1 text-sm rounded-full transition-all hover:scale-105 border border-violet-200 dark:border-violet-500/40 hover:border-violet-400 dark:hover:border-violet-400 bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300"
             >
               #{tag.name}
             </Link>
