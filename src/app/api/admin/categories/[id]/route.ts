@@ -16,7 +16,7 @@ export async function PUT(
 
   const { id } = await params;
   const body = await request.json();
-  const { name, parentId, order } = body;
+  const { name, parentId, order, sectionId } = body;
 
   // Check if category exists
   const existing = await prisma.category.findUnique({ where: { id } });
@@ -46,10 +46,12 @@ export async function PUT(
     data: {
       ...(name && { name, slug }),
       ...(parentId !== undefined && { parentId: parentId || null }),
+      ...(sectionId !== undefined && { sectionId: sectionId || null }),
       ...(order !== undefined && { order }),
     },
     include: {
       children: true,
+      section: true,
     },
   });
 

@@ -130,6 +130,18 @@ model OwnerStatus {
   updatedAt DateTime @updatedAt
 }
 
+// ============ SECTIONS ============
+
+model Section {
+  id          String     @id @default(cuid())
+  title       String
+  description String?
+  order       Int        @default(0)
+  categories  Category[]
+  createdAt   DateTime   @default(now())
+  updatedAt   DateTime   @updatedAt
+}
+
 // ============ CATEGORIES ============
 
 model Category {
@@ -139,9 +151,12 @@ model Category {
   parentId  String?
   parent    Category?  @relation("CategoryChildren", fields: [parentId], references: [id])
   children  Category[] @relation("CategoryChildren")
+  sectionId String?
+  section   Section?   @relation(fields: [sectionId], references: [id])
   order     Int        @default(0)
   createdAt DateTime   @default(now())
   updatedAt DateTime   @updatedAt
 
   @@index([parentId])
+  @@index([sectionId])
 }

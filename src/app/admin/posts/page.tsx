@@ -13,11 +13,21 @@ interface Post {
   isPublic?: boolean;
 }
 
+interface DBSection {
+  id: string;
+  title: string;
+  description: string | null;
+  order: number;
+  categories: DBCategory[];
+}
+
 interface DBCategory {
   id: string;
   name: string;
   slug: string;
   parentId: string | null;
+  sectionId: string | null;
+  section: DBSection | null;
   order: number;
   children: DBCategory[];
 }
@@ -45,10 +55,20 @@ export default function PostsManagementPage() {
   const [dbCategories, setDbCategories] = useState<DBCategory[]>([]);
   const [newCategoryName, setNewCategoryName] = useState('');
   const [newCategoryParentId, setNewCategoryParentId] = useState<string>('');
+  const [newCategorySectionId, setNewCategorySectionId] = useState<string>('');
   const [newSubcategoryName, setNewSubcategoryName] = useState('');
   const [selectedParentId, setSelectedParentId] = useState<string | null>(null);
   const [editingCategory, setEditingCategory] = useState<DBCategory | null>(null);
   const [editingName, setEditingName] = useState('');
+
+  // Section management state
+  const [dbSections, setDbSections] = useState<DBSection[]>([]);
+  const [showSectionModal, setShowSectionModal] = useState(false);
+  const [newSectionTitle, setNewSectionTitle] = useState('');
+  const [newSectionDescription, setNewSectionDescription] = useState('');
+  const [editingSection, setEditingSection] = useState<DBSection | null>(null);
+  const [editingSectionTitle, setEditingSectionTitle] = useState('');
+  const [editingSectionDescription, setEditingSectionDescription] = useState('');
 
   // Build post count map from posts
   const postCountMap = useMemo(() => {
@@ -177,17 +197,37 @@ export default function PostsManagementPage() {
     }
   };
 
-  // Fetch categories on mount
+  // Fetch sections from database
+  const fetchSections = async () => {
+    try {
+      const res = await fetch('/api/admin/sections');
+      const data = await res.json();
+      setDbSections(data);
+    } catch (error) {
+      console.error('Failed to fetch sections:', error);
+    }
+  };
+
+  // Fetch categories and sections on mount
   useEffect(() => {
     fetchCategories();
+    fetchSections();
   }, []);
 
   // Also refresh when modal closes (in case categories were updated)
   useEffect(() => {
     if (!showCategoryModal) {
       fetchCategories();
+      fetchSections();
     }
   }, [showCategoryModal]);
+
+  // Also refresh when section modal closes
+  useEffect(() => {
+    if (!showSectionModal) {
+      fetchSections();
+    }
+  }, [showSectionModal]);
 
   // Create new category
   const handleCreateCategory = async (autoSelectAsParent: boolean = false) => {
@@ -200,6 +240,7 @@ export default function PostsManagementPage() {
         body: JSON.stringify({
           name: newCategoryName.trim(),
           parentId: newCategoryParentId || null,
+          sectionId: newCategorySectionId || null,
         }),
       });
       if (res.ok) {
@@ -275,6 +316,85 @@ export default function PostsManagementPage() {
     }
   };
 
+  // Create new section
+  const handleCreateSection = async () => {
+    if (!newSectionTitle.trim()) return;
+
+    try {
+      const res = await fetch('/api/admin/sections', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          title: newSectionTitle.trim(),
+          description: newSectionDescription.trim() || null,
+        }),
+      });
+      if (res.ok) {
+        setNewSectionTitle('');
+        setNewSectionDescription('');
+        fetchSections();
+      }
+    } catch (error) {
+      console.error('Failed to create section:', error);
+    }
+  };
+
+  // Update section
+  const handleUpdateSection = async () => {
+    if (!editingSection || !editingSectionTitle.trim()) return;
+
+    try {
+      const res = await fetch(`/api/admin/sections/${editingSection.id}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          title: editingSectionTitle.trim(),
+          description: editingSectionDescription.trim() || null,
+        }),
+      });
+      if (res.ok) {
+        setEditingSection(null);
+        setEditingSectionTitle('');
+        setEditingSectionDescription('');
+        fetchSections();
+      }
+    } catch (error) {
+      console.error('Failed to update section:', error);
+    }
+  };
+
+  // Delete section
+  const handleDeleteSection = async (id: string, title: string) => {
+    if (!confirm(`"${title}" 섹션을 삭제하시겠습니까? 카테고리는 삭제되지 않고 섹션 연결만 해제됩니다.`)) return;
+
+    try {
+      const res = await fetch(`/api/admin/sections/${id}`, { method: 'DELETE' });
+      if (res.ok) {
+        fetchSections();
+        fetchCategories();
+      }
+    } catch (error) {
+      console.error('Failed to delete section:', error);
+    }
+  };
+
+  // Update category section
+  const handleUpdateCategorySection = async (categoryId: string, sectionId: string | null) => {
+    try {
+      const res = await fetch(`/api/admin/categories/${categoryId}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ sectionId }),
+      });
+      if (res.ok) {
+        fetchCategories();
+        fetchSections();
+      }
+    } catch (error) {
+      console.error('Failed to update category section:', error);
+    }
+  };
+
   const handleDelete = async (slug: string) => {
     if (!confirm('정말 삭제하시겠습니까?')) return;
 
@@ -346,6 +466,12 @@ export default function PostsManagementPage() {
           포스트 관리
         </h1>
         <div className="flex gap-2">
+          <button
+            onClick={() => setShowSectionModal(true)}
+            className="px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors"
+          >
+            섹션 관리
+          </button>
           <button
             onClick={() => setShowCategoryModal(true)}
             className="px-4 py-2 bg-violet-600 text-white rounded-lg hover:bg-violet-700 transition-colors"
@@ -684,6 +810,20 @@ export default function PostsManagementPage() {
                       </option>
                     ))}
                   </select>
+                  {!newCategoryParentId && (
+                    <select
+                      value={newCategorySectionId}
+                      onChange={(e) => setNewCategorySectionId(e.target.value)}
+                      className="w-full px-3 py-2 text-sm border border-gray-200 dark:border-gray-700 rounded-lg bg-white dark:bg-gray-900 focus:outline-none focus:ring-2 focus:ring-violet-500 text-gray-900 dark:text-white"
+                    >
+                      <option value="">블로그 섹션 선택 (선택 안함)</option>
+                      {dbSections.map((section) => (
+                        <option key={section.id} value={section.id}>
+                          {section.title} 섹션에 표시
+                        </option>
+                      ))}
+                    </select>
+                  )}
                   <div className="flex gap-2">
                     <input
                       type="text"
@@ -714,6 +854,11 @@ export default function PostsManagementPage() {
                       → "{dbCategories.find(c => c.id === newCategoryParentId)?.name}" 아래에 추가됩니다
                     </p>
                   )}
+                  {!newCategoryParentId && newCategorySectionId && (
+                    <p className="text-xs text-indigo-600 dark:text-indigo-400">
+                      → "{dbSections.find(s => s.id === newCategorySectionId)?.title}" 섹션에 표시됩니다
+                    </p>
+                  )}
                 </div>
               </div>
 
@@ -726,27 +871,51 @@ export default function PostsManagementPage() {
                     <div key={category.id} className="border border-gray-200 dark:border-gray-700 rounded-lg overflow-hidden">
                       {/* Parent category */}
                       <div className="flex items-center justify-between p-3 bg-gray-50 dark:bg-gray-700/50">
-                        {editingCategory?.id === category.id ? (
-                          <input
-                            type="text"
-                            value={editingName}
-                            onChange={(e) => setEditingName(e.target.value)}
-                            className="flex-1 px-2 py-1 text-sm border border-violet-300 rounded bg-white dark:bg-gray-800 focus:outline-none focus:ring-2 focus:ring-violet-500 text-gray-900 dark:text-white"
-                            onKeyDown={(e) => {
-                              if (e.key === 'Enter') handleUpdateCategory();
-                              if (e.key === 'Escape') {
-                                setEditingCategory(null);
-                                setEditingName('');
-                              }
-                            }}
-                            autoFocus
-                          />
-                        ) : (
-                          <span className="font-medium text-gray-900 dark:text-white">
-                            {category.name}
-                          </span>
-                        )}
-                        <div className="flex gap-1">
+                        <div className="flex-1 min-w-0">
+                          {editingCategory?.id === category.id ? (
+                            <input
+                              type="text"
+                              value={editingName}
+                              onChange={(e) => setEditingName(e.target.value)}
+                              className="w-full px-2 py-1 text-sm border border-violet-300 rounded bg-white dark:bg-gray-800 focus:outline-none focus:ring-2 focus:ring-violet-500 text-gray-900 dark:text-white"
+                              onKeyDown={(e) => {
+                                if (e.key === 'Enter') handleUpdateCategory();
+                                if (e.key === 'Escape') {
+                                  setEditingCategory(null);
+                                  setEditingName('');
+                                }
+                              }}
+                              autoFocus
+                            />
+                          ) : (
+                            <div className="flex items-center gap-2">
+                              <span className="font-medium text-gray-900 dark:text-white">
+                                {category.name}
+                              </span>
+                              {category.sectionId && (
+                                <span className="px-1.5 py-0.5 text-xs bg-indigo-100 dark:bg-indigo-900/30 text-indigo-600 dark:text-indigo-400 rounded">
+                                  {dbSections.find(s => s.id === category.sectionId)?.title}
+                                </span>
+                              )}
+                            </div>
+                          )}
+                          {/* Section selector */}
+                          {editingCategory?.id !== category.id && (
+                            <select
+                              value={category.sectionId || ''}
+                              onChange={(e) => handleUpdateCategorySection(category.id, e.target.value || null)}
+                              className="mt-1 w-full px-2 py-1 text-xs border border-gray-200 dark:border-gray-600 rounded bg-white dark:bg-gray-800 focus:outline-none focus:ring-1 focus:ring-indigo-500 text-gray-700 dark:text-gray-300"
+                            >
+                              <option value="">섹션 미지정</option>
+                              {dbSections.map((section) => (
+                                <option key={section.id} value={section.id}>
+                                  {section.title}
+                                </option>
+                              ))}
+                            </select>
+                          )}
+                        </div>
+                        <div className="flex gap-1 ml-2 flex-shrink-0">
                           {editingCategory?.id === category.id ? (
                             <>
                               <button
@@ -897,6 +1066,162 @@ export default function PostsManagementPage() {
             <div className="p-4 border-t border-gray-200 dark:border-gray-700">
               <button
                 onClick={() => setShowCategoryModal(false)}
+                className="w-full px-4 py-2 bg-gray-200 dark:bg-gray-700 text-gray-800 dark:text-gray-200 rounded-lg hover:bg-gray-300 dark:hover:bg-gray-600 transition-colors"
+              >
+                닫기
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Section Management Modal */}
+      {showSectionModal && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
+          <div className="bg-white dark:bg-gray-800 rounded-xl shadow-xl w-full max-w-lg mx-4 max-h-[80vh] overflow-hidden flex flex-col">
+            {/* Modal Header */}
+            <div className="flex justify-between items-center p-4 border-b border-gray-200 dark:border-gray-700">
+              <h3 className="text-lg font-semibold text-gray-900 dark:text-white">
+                블로그 섹션 관리
+              </h3>
+              <button
+                onClick={() => setShowSectionModal(false)}
+                className="p-1 hover:bg-gray-100 dark:hover:bg-gray-700 rounded"
+              >
+                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                </svg>
+              </button>
+            </div>
+
+            {/* Modal Body */}
+            <div className="flex-1 overflow-y-auto p-4">
+              <p className="text-sm text-gray-500 dark:text-gray-400 mb-4">
+                블로그 페이지의 섹션(Web2 Security, Web3 Security, TIL 등)을 관리합니다. 카테고리를 섹션에 배치하여 블로그 페이지에 표시할 수 있습니다.
+              </p>
+
+              {/* Add new section */}
+              <div className="mb-6">
+                <label className="block text-sm font-medium mb-2 text-gray-900 dark:text-white">
+                  새 섹션 추가
+                </label>
+                <div className="space-y-2">
+                  <input
+                    type="text"
+                    value={newSectionTitle}
+                    onChange={(e) => setNewSectionTitle(e.target.value)}
+                    placeholder="섹션 제목 (예: Web2 Security)"
+                    className="w-full px-3 py-2 text-sm border border-gray-200 dark:border-gray-700 rounded-lg bg-white dark:bg-gray-900 focus:outline-none focus:ring-2 focus:ring-indigo-500 text-gray-900 dark:text-white"
+                    onKeyDown={(e) => e.key === 'Enter' && handleCreateSection()}
+                  />
+                  <input
+                    type="text"
+                    value={newSectionDescription}
+                    onChange={(e) => setNewSectionDescription(e.target.value)}
+                    placeholder="섹션 설명 (선택)"
+                    className="w-full px-3 py-2 text-sm border border-gray-200 dark:border-gray-700 rounded-lg bg-white dark:bg-gray-900 focus:outline-none focus:ring-2 focus:ring-indigo-500 text-gray-900 dark:text-white"
+                    onKeyDown={(e) => e.key === 'Enter' && handleCreateSection()}
+                  />
+                  <button
+                    onClick={handleCreateSection}
+                    className="w-full px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors text-sm"
+                  >
+                    섹션 추가
+                  </button>
+                </div>
+              </div>
+
+              {/* Section list */}
+              <div className="space-y-2">
+                <h4 className="text-sm font-medium text-gray-900 dark:text-white mb-2">
+                  현재 섹션 목록
+                </h4>
+                {dbSections.length === 0 ? (
+                  <p className="text-center text-gray-500 py-4">섹션이 없습니다.</p>
+                ) : (
+                  dbSections.map((section) => (
+                    <div key={section.id} className="border border-gray-200 dark:border-gray-700 rounded-lg p-3">
+                      {editingSection?.id === section.id ? (
+                        <div className="space-y-2">
+                          <input
+                            type="text"
+                            value={editingSectionTitle}
+                            onChange={(e) => setEditingSectionTitle(e.target.value)}
+                            className="w-full px-2 py-1 text-sm border border-indigo-300 rounded bg-white dark:bg-gray-800 focus:outline-none focus:ring-2 focus:ring-indigo-500 text-gray-900 dark:text-white"
+                            placeholder="섹션 제목"
+                            autoFocus
+                          />
+                          <input
+                            type="text"
+                            value={editingSectionDescription}
+                            onChange={(e) => setEditingSectionDescription(e.target.value)}
+                            className="w-full px-2 py-1 text-sm border border-indigo-300 rounded bg-white dark:bg-gray-800 focus:outline-none focus:ring-2 focus:ring-indigo-500 text-gray-900 dark:text-white"
+                            placeholder="섹션 설명 (선택)"
+                          />
+                          <div className="flex gap-2">
+                            <button
+                              onClick={handleUpdateSection}
+                              className="px-3 py-1 text-xs bg-green-600 text-white rounded hover:bg-green-700"
+                            >
+                              저장
+                            </button>
+                            <button
+                              onClick={() => {
+                                setEditingSection(null);
+                                setEditingSectionTitle('');
+                                setEditingSectionDescription('');
+                              }}
+                              className="px-3 py-1 text-xs bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-300 rounded hover:bg-gray-300 dark:hover:bg-gray-600"
+                            >
+                              취소
+                            </button>
+                          </div>
+                        </div>
+                      ) : (
+                        <div className="flex items-start justify-between">
+                          <div>
+                            <h5 className="font-medium text-gray-900 dark:text-white">
+                              {section.title}
+                            </h5>
+                            {section.description && (
+                              <p className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">
+                                {section.description}
+                              </p>
+                            )}
+                            <p className="text-xs text-indigo-600 dark:text-indigo-400 mt-1">
+                              {section.categories?.length || 0}개의 카테고리
+                            </p>
+                          </div>
+                          <div className="flex gap-1">
+                            <button
+                              onClick={() => {
+                                setEditingSection(section);
+                                setEditingSectionTitle(section.title);
+                                setEditingSectionDescription(section.description || '');
+                              }}
+                              className="px-2 py-1 text-xs text-blue-600 hover:bg-blue-50 dark:hover:bg-blue-900/20 rounded"
+                            >
+                              수정
+                            </button>
+                            <button
+                              onClick={() => handleDeleteSection(section.id, section.title)}
+                              className="px-2 py-1 text-xs text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20 rounded"
+                            >
+                              삭제
+                            </button>
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                  ))
+                )}
+              </div>
+            </div>
+
+            {/* Modal Footer */}
+            <div className="p-4 border-t border-gray-200 dark:border-gray-700">
+              <button
+                onClick={() => setShowSectionModal(false)}
                 className="w-full px-4 py-2 bg-gray-200 dark:bg-gray-700 text-gray-800 dark:text-gray-200 rounded-lg hover:bg-gray-300 dark:hover:bg-gray-600 transition-colors"
               >
                 닫기
