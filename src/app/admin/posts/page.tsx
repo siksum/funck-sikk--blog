@@ -13,12 +13,6 @@ interface Post {
   isPublic?: boolean;
 }
 
-interface CategoryGroup {
-  name: string;
-  count: number;
-  subcategories: { name: string; count: number }[];
-}
-
 interface DBCategory {
   id: string;
   name: string;
@@ -56,39 +50,43 @@ export default function PostsManagementPage() {
   const [editingCategory, setEditingCategory] = useState<DBCategory | null>(null);
   const [editingName, setEditingName] = useState('');
 
-  // Build category tree from "Category/Subcategory" format
-  const categoryTree = useMemo(() => {
-    const tree: CategoryGroup[] = [];
-    const categoryMap = new Map<string, { count: number; subs: Map<string, number> }>();
+  // Build post count map from posts
+  const postCountMap = useMemo(() => {
+    const countMap = new Map<string, { total: number; subs: Map<string, number> }>();
 
     posts.forEach((post) => {
       const parts = post.category.split('/');
       const mainCategory = parts[0];
       const subCategory = parts[1] || null;
 
-      if (!categoryMap.has(mainCategory)) {
-        categoryMap.set(mainCategory, { count: 0, subs: new Map() });
+      if (!countMap.has(mainCategory)) {
+        countMap.set(mainCategory, { total: 0, subs: new Map() });
       }
-      const cat = categoryMap.get(mainCategory)!;
-      cat.count++;
+      const cat = countMap.get(mainCategory)!;
+      cat.total++;
 
       if (subCategory) {
         cat.subs.set(subCategory, (cat.subs.get(subCategory) || 0) + 1);
       }
     });
 
-    categoryMap.forEach((value, key) => {
-      tree.push({
-        name: key,
-        count: value.count,
-        subcategories: Array.from(value.subs.entries())
-          .map(([name, count]) => ({ name, count }))
-          .sort((a, b) => b.count - a.count),
-      });
-    });
-
-    return tree.sort((a, b) => b.count - a.count);
+    return countMap;
   }, [posts]);
+
+  // Merge DB categories with post counts
+  const sidebarCategories = useMemo(() => {
+    return dbCategories.map((cat) => {
+      const postData = postCountMap.get(cat.name);
+      return {
+        ...cat,
+        postCount: postData?.total || 0,
+        children: cat.children.map((sub) => ({
+          ...sub,
+          postCount: postData?.subs.get(sub.name) || 0,
+        })),
+      };
+    });
+  }, [dbCategories, postCountMap]);
 
   const toggleCategory = (category: string) => {
     setExpandedCategories((prev) => {
@@ -168,13 +166,9 @@ export default function PostsManagementPage() {
     fetchPosts();
   }, []);
 
-  // Fetch categories from database (sync from MDX first)
+  // Fetch categories from database
   const fetchCategories = async () => {
     try {
-      // First, sync categories from MDX files to database
-      await fetch('/api/admin/categories/sync', { method: 'POST' });
-
-      // Then fetch the updated categories
       const res = await fetch('/api/admin/categories');
       const data = await res.json();
       setDbCategories(data);
@@ -183,8 +177,14 @@ export default function PostsManagementPage() {
     }
   };
 
+  // Fetch categories on mount
   useEffect(() => {
-    if (showCategoryModal) {
+    fetchCategories();
+  }, []);
+
+  // Also refresh when modal closes (in case categories were updated)
+  useEffect(() => {
+    if (!showCategoryModal) {
       fetchCategories();
     }
   }, [showCategoryModal]);
@@ -426,8 +426,8 @@ export default function PostsManagementPage() {
                 </span>
               </button>
 
-              {categoryTree.map((category) => (
-                <div key={category.name}>
+              {sidebarCategories.map((category) => (
+                <div key={category.id}>
                   <button
                     onClick={() => {
                       toggleCategory(category.name);
@@ -441,7 +441,7 @@ export default function PostsManagementPage() {
                     }`}
                   >
                     <span className="flex items-center gap-2">
-                      {category.subcategories.length > 0 && (
+                      {category.children.length > 0 && (
                         <span className={`text-gray-400 text-xs transition-transform ${expandedCategories.has(category.name) ? '' : '-rotate-90'}`}>
                           ∨
                         </span>
@@ -449,16 +449,16 @@ export default function PostsManagementPage() {
                       {category.name}
                     </span>
                     <span className="text-xs text-gray-400 dark:text-gray-500">
-                      {category.count}
+                      {category.postCount}
                     </span>
                   </button>
 
                   {/* Subcategories */}
-                  {expandedCategories.has(category.name) && category.subcategories.length > 0 && (
+                  {expandedCategories.has(category.name) && category.children.length > 0 && (
                     <div className="ml-6 space-y-1">
-                      {category.subcategories.map((sub) => (
+                      {category.children.map((sub) => (
                         <button
-                          key={sub.name}
+                          key={sub.id}
                           onClick={() => {
                             setSelectedCategory(category.name);
                             setSelectedSubcategory(sub.name);
@@ -471,7 +471,7 @@ export default function PostsManagementPage() {
                         >
                           <span>{sub.name}</span>
                           <span className="text-xs text-gray-400 dark:text-gray-500">
-                            {sub.count}
+                            {sub.postCount}
                           </span>
                         </button>
                       ))}
