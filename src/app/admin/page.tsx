@@ -208,8 +208,7 @@ export default function AdminPage() {
         <button
           onClick={() => onPageChange(currentPage - 1)}
           disabled={currentPage === 1}
-          className="px-3 py-1 text-sm rounded-md bg-gray-100 dark:bg-gray-700 disabled:opacity-50 disabled:cursor-not-allowed hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors"
-          style={{ color: 'var(--foreground)' }}
+          className="px-3 py-1 text-sm rounded-md bg-gray-100 dark:bg-gray-700 disabled:opacity-50 disabled:cursor-not-allowed hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors text-gray-900 dark:text-white"
         >
           이전
         </button>
@@ -219,8 +218,7 @@ export default function AdminPage() {
         <button
           onClick={() => onPageChange(currentPage + 1)}
           disabled={currentPage === totalPages}
-          className="px-3 py-1 text-sm rounded-md bg-gray-100 dark:bg-gray-700 disabled:opacity-50 disabled:cursor-not-allowed hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors"
-          style={{ color: 'var(--foreground)' }}
+          className="px-3 py-1 text-sm rounded-md bg-gray-100 dark:bg-gray-700 disabled:opacity-50 disabled:cursor-not-allowed hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors text-gray-900 dark:text-white"
         >
           다음
         </button>
@@ -231,7 +229,7 @@ export default function AdminPage() {
   return (
     <div>
       <div className="flex justify-between items-center mb-8">
-        <h1 className="text-2xl font-bold" style={{ color: 'var(--foreground)' }}>
+        <h1 className="text-2xl font-bold text-gray-900 dark:text-white">
           대시보드
         </h1>
         <Link
@@ -247,7 +245,7 @@ export default function AdminPage() {
         <div className="bg-white dark:bg-gray-800 p-6 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700">
           <p className="text-sm text-gray-500 dark:text-gray-400">오늘 방문자</p>
           <div className="flex items-baseline">
-            <p className="text-3xl font-bold mt-2" style={{ color: 'var(--foreground)' }}>
+            <p className="text-3xl font-bold mt-2 text-gray-900 dark:text-white">
               {loading ? '-' : stats?.today ?? 0}
             </p>
             {stats && getTrendIndicator(stats.today, stats.yesterday)}
@@ -257,21 +255,21 @@ export default function AdminPage() {
 
         <div className="bg-white dark:bg-gray-800 p-6 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700">
           <p className="text-sm text-gray-500 dark:text-gray-400">이번 주</p>
-          <p className="text-3xl font-bold mt-2" style={{ color: 'var(--foreground)' }}>
+          <p className="text-3xl font-bold mt-2 text-gray-900 dark:text-white">
             {loading ? '-' : stats?.thisWeek ?? 0}
           </p>
         </div>
 
         <div className="bg-white dark:bg-gray-800 p-6 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700">
           <p className="text-sm text-gray-500 dark:text-gray-400">이번 달</p>
-          <p className="text-3xl font-bold mt-2" style={{ color: 'var(--foreground)' }}>
+          <p className="text-3xl font-bold mt-2 text-gray-900 dark:text-white">
             {loading ? '-' : stats?.thisMonth ?? 0}
           </p>
         </div>
 
         <div className="bg-white dark:bg-gray-800 p-6 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700">
           <p className="text-sm text-gray-500 dark:text-gray-400">전체 페이지뷰</p>
-          <p className="text-3xl font-bold mt-2" style={{ color: 'var(--foreground)' }}>
+          <p className="text-3xl font-bold mt-2 text-gray-900 dark:text-white">
             {loading ? '-' : stats?.totalViews?.toLocaleString() ?? 0}
           </p>
         </div>
@@ -280,7 +278,7 @@ export default function AdminPage() {
       {/* Chart Section */}
       <div className="bg-white dark:bg-gray-800 p-6 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 mb-8">
         <div className="flex flex-col md:flex-row md:justify-between md:items-center gap-4 mb-6">
-          <h2 className="text-lg font-semibold" style={{ color: 'var(--foreground)' }}>
+          <h2 className="text-lg font-semibold text-gray-900 dark:text-white">
             방문자 추이
           </h2>
 
@@ -291,12 +289,11 @@ export default function AdminPage() {
                 <button
                   key={mode}
                   onClick={() => setViewMode(mode)}
-                  className={`px-3 py-1 text-sm rounded-md transition-colors ${
+                  className={`px-3 py-1 text-sm rounded-md transition-colors text-gray-900 dark:text-white ${
                     viewMode === mode
                       ? 'bg-white dark:bg-gray-600 shadow-sm'
                       : 'hover:bg-gray-200 dark:hover:bg-gray-600'
                   }`}
-                  style={{ color: 'var(--foreground)' }}
                 >
                   {mode === 'daily' ? '일별' : mode === 'weekly' ? '주별' : '월별'}
                 </button>
@@ -307,8 +304,7 @@ export default function AdminPage() {
             <select
               value={rangeOption}
               onChange={(e) => setRangeOption(e.target.value as RangeOption)}
-              className="px-3 py-1.5 text-sm bg-gray-100 dark:bg-gray-700 border border-gray-200 dark:border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-              style={{ color: 'var(--foreground)' }}
+              className="px-3 py-1.5 text-sm bg-gray-100 dark:bg-gray-700 border border-gray-200 dark:border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-900 dark:text-white"
             >
               <option value="7days">최근 7일</option>
               <option value="30days">최근 30일</option>
@@ -326,16 +322,14 @@ export default function AdminPage() {
               type="date"
               value={customStart}
               onChange={(e) => setCustomStart(e.target.value)}
-              className="px-3 py-1.5 text-sm bg-white dark:bg-gray-700 border border-gray-200 dark:border-gray-600 rounded-lg"
-              style={{ color: 'var(--foreground)' }}
+              className="px-3 py-1.5 text-sm bg-white dark:bg-gray-700 border border-gray-200 dark:border-gray-600 rounded-lg text-gray-900 dark:text-white"
             />
             <span className="text-gray-500">~</span>
             <input
               type="date"
               value={customEnd}
               onChange={(e) => setCustomEnd(e.target.value)}
-              className="px-3 py-1.5 text-sm bg-white dark:bg-gray-700 border border-gray-200 dark:border-gray-600 rounded-lg"
-              style={{ color: 'var(--foreground)' }}
+              className="px-3 py-1.5 text-sm bg-white dark:bg-gray-700 border border-gray-200 dark:border-gray-600 rounded-lg text-gray-900 dark:text-white"
             />
             <button
               onClick={handleCustomRangeApply}
@@ -360,7 +354,7 @@ export default function AdminPage() {
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-8">
         {/* Referer Stats */}
         <div className="bg-white dark:bg-gray-800 p-6 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700">
-          <h2 className="text-lg font-semibold mb-4" style={{ color: 'var(--foreground)' }}>
+          <h2 className="text-lg font-semibold mb-4 text-gray-900 dark:text-white">
             유입 경로
             {stats?.referers && stats.referers.length > 0 && (
               <span className="text-sm font-normal text-gray-500 ml-2">({stats.referers.length}개)</span>
@@ -378,7 +372,7 @@ export default function AdminPage() {
                   >
                     <div className="flex items-center gap-3">
                       <span className="text-lg">{getRefererIcon(ref.source)}</span>
-                      <span className="text-sm" style={{ color: 'var(--foreground)' }}>
+                      <span className="text-sm text-gray-900 dark:text-white">
                         {ref.source}
                       </span>
                     </div>
@@ -401,7 +395,7 @@ export default function AdminPage() {
 
         {/* Top Pages */}
         <div className="bg-white dark:bg-gray-800 p-6 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700">
-          <h2 className="text-lg font-semibold mb-4" style={{ color: 'var(--foreground)' }}>
+          <h2 className="text-lg font-semibold mb-4 text-gray-900 dark:text-white">
             인기 페이지
             {stats?.topPages && stats.topPages.length > 0 && (
               <span className="text-sm font-normal text-gray-500 ml-2">({stats.topPages.length}개)</span>
@@ -421,7 +415,7 @@ export default function AdminPage() {
                       <span className="w-6 h-6 flex items-center justify-center text-sm font-medium bg-violet-100 dark:bg-violet-900/30 text-violet-600 dark:text-violet-400 rounded">
                         {(topPagesPage - 1) * ITEMS_PER_PAGE.topPages + index + 1}
                       </span>
-                      <span className="text-sm truncate max-w-[200px]" style={{ color: 'var(--foreground)' }}>
+                      <span className="text-sm truncate max-w-[200px] text-gray-900 dark:text-white">
                         {page.path}
                       </span>
                     </div>
@@ -445,7 +439,7 @@ export default function AdminPage() {
 
       {/* Top Posts */}
       <div className="bg-white dark:bg-gray-800 p-6 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 mb-8">
-        <h2 className="text-lg font-semibold mb-4" style={{ color: 'var(--foreground)' }}>
+        <h2 className="text-lg font-semibold mb-4 text-gray-900 dark:text-white">
           인기 포스트
           {stats?.topPosts && stats.topPosts.length > 0 && (
             <span className="text-sm font-normal text-gray-500 ml-2">({stats.topPosts.length}개)</span>
@@ -467,8 +461,7 @@ export default function AdminPage() {
                     </span>
                     <Link
                       href={`/blog/${post.slug}`}
-                      className="text-sm hover:text-blue-600 dark:hover:text-blue-400 transition-colors"
-                      style={{ color: 'var(--foreground)' }}
+                      className="text-sm hover:text-blue-600 dark:hover:text-blue-400 transition-colors text-gray-900 dark:text-white"
                     >
                       {post.slug}
                     </Link>
@@ -492,7 +485,7 @@ export default function AdminPage() {
 
       {/* Recent Visitors */}
       <div className="bg-white dark:bg-gray-800 p-6 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700">
-        <h2 className="text-lg font-semibold mb-4" style={{ color: 'var(--foreground)' }}>
+        <h2 className="text-lg font-semibold mb-4 text-gray-900 dark:text-white">
           최근 방문자
           {stats?.recentVisitors && stats.recentVisitors.length > 0 && (
             <span className="text-sm font-normal text-gray-500 ml-2">({stats.recentVisitors.length}개)</span>
@@ -522,7 +515,7 @@ export default function AdminPage() {
                       <td className="py-3 px-2 text-gray-500 dark:text-gray-400 whitespace-nowrap">
                         {formatTime(visitor.createdAt)}
                       </td>
-                      <td className="py-3 px-2" style={{ color: 'var(--foreground)' }}>
+                      <td className="py-3 px-2 text-gray-900 dark:text-white">
                         <span className="truncate max-w-[200px] block" title={visitor.path}>
                           {visitor.path}
                         </span>
