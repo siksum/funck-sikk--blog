@@ -14,6 +14,7 @@ import KeyboardNavigation from '@/components/blog/KeyboardNavigation';
 import HighlightShare from '@/components/blog/HighlightShare';
 import DifficultyBadge from '@/components/blog/DifficultyBadge';
 import BlogPostLayout from '@/components/blog/BlogPostLayout';
+import { auth } from '@/lib/auth';
 
 function calculateReadingTime(content: string): number {
   const wordsPerMinute = 200;
@@ -72,6 +73,20 @@ export default async function BlogPostPage({ params }: BlogPostPageProps) {
     notFound();
   }
 
+  // Check if post is private
+  const isPrivate = !post.isPublic;
+  let isAdmin = false;
+
+  if (isPrivate) {
+    const session = await auth();
+    isAdmin = session?.user?.isAdmin || false;
+
+    // If post is private and user is not admin, show 404
+    if (!isAdmin) {
+      notFound();
+    }
+  }
+
   const formattedDate = new Date(post.date).toLocaleDateString('ko-KR', {
     year: 'numeric',
     month: 'long',
@@ -113,6 +128,11 @@ export default async function BlogPostPage({ params }: BlogPostPageProps) {
 
           <div className="flex items-center gap-3 mb-4">
             <DifficultyBadge level={difficulty} />
+            {isPrivate && (
+              <span className="px-3 py-1 text-xs font-semibold bg-yellow-100 dark:bg-yellow-900/30 text-yellow-800 dark:text-yellow-300 rounded-full border border-yellow-300 dark:border-yellow-700">
+                비공개 미리보기
+              </span>
+            )}
           </div>
 
           <h1 className="text-3xl md:text-4xl font-bold mb-4" style={{ color: 'var(--foreground)' }}>
