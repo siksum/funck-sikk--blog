@@ -12,11 +12,11 @@ interface HeroClientProps {
   stats: StatItem[];
 }
 
-// Web3-style 3D Mesh Sphere Component - only visible in dark mode
+// Web3-style 3D Mesh Sphere Component
 function MeshSphere() {
   return (
     <div
-      className="absolute hidden dark:lg:block"
+      className="absolute hidden lg:block"
       style={{
         top: '10%',
         right: '5%',
@@ -154,11 +154,11 @@ function MeshSphere() {
   );
 }
 
-// Secondary smaller sphere - only visible in dark mode
+// Secondary smaller sphere
 function SmallMeshSphere() {
   return (
     <div
-      className="absolute hidden dark:xl:block"
+      className="absolute hidden xl:block"
       style={{
         bottom: '15%',
         left: '8%',
@@ -264,20 +264,21 @@ function AnimatedCounter({ value, suffix = '' }: { value: number; suffix?: strin
 export default function HeroClient({ stats }: HeroClientProps) {
   return (
     <section
-      className="relative py-24 md:py-36 overflow-hidden bg-white dark:bg-[#131318]"
+      className="relative py-24 md:py-36 overflow-hidden"
+      style={{ background: 'var(--background)' }}
     >
-      {/* Animated gradient mesh background - only visible in dark mode */}
+      {/* Animated gradient mesh background */}
       <div className="absolute inset-0 overflow-hidden pointer-events-none">
         {/* Primary orb - Pink */}
         <div
-          className="absolute top-10 right-[10%] w-[500px] h-[500px] rounded-full blur-[120px] animate-pulse opacity-0 dark:opacity-50"
+          className="absolute top-10 right-[10%] w-[500px] h-[500px] rounded-full blur-[120px] animate-pulse opacity-40 dark:opacity-50"
           style={{
             background: 'radial-gradient(circle, var(--neon-pink) 0%, transparent 70%)',
           }}
         />
         {/* Secondary orb - Cyan */}
         <div
-          className="absolute -bottom-20 left-[5%] w-[400px] h-[400px] rounded-full blur-[100px] animate-pulse opacity-0 dark:opacity-40"
+          className="absolute -bottom-20 left-[5%] w-[400px] h-[400px] rounded-full blur-[100px] animate-pulse opacity-30 dark:opacity-40"
           style={{
             background: 'radial-gradient(circle, var(--neon-cyan) 0%, transparent 70%)',
             animationDelay: '1s',
@@ -285,22 +286,22 @@ export default function HeroClient({ stats }: HeroClientProps) {
         />
         {/* Tertiary orb - Purple */}
         <div
-          className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[600px] rounded-full blur-[150px] opacity-0 dark:opacity-30"
+          className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[600px] rounded-full blur-[150px] opacity-20 dark:opacity-30"
           style={{
             background: 'radial-gradient(circle, var(--neon-purple) 0%, transparent 60%)',
           }}
         />
 
-        {/* Floating particles - only in dark mode */}
-        <div className="absolute top-[20%] left-[20%] w-2 h-2 rounded-full bg-violet-500 dark:bg-violet-400 animate-bounce opacity-0 dark:opacity-60" style={{ animationDuration: '3s' }} />
-        <div className="absolute top-[30%] right-[25%] w-1.5 h-1.5 rounded-full bg-indigo-500 dark:bg-indigo-400 animate-bounce opacity-0 dark:opacity-50" style={{ animationDuration: '4s', animationDelay: '1s' }} />
-        <div className="absolute bottom-[35%] left-[35%] w-1 h-1 rounded-full bg-purple-500 dark:bg-purple-400 animate-bounce opacity-0 dark:opacity-40" style={{ animationDuration: '5s', animationDelay: '2s' }} />
-        <div className="absolute top-[60%] right-[15%] w-1.5 h-1.5 rounded-full bg-violet-400 dark:bg-violet-300 animate-bounce opacity-0 dark:opacity-50" style={{ animationDuration: '3.5s', animationDelay: '0.5s' }} />
+        {/* Floating particles */}
+        <div className="absolute top-[20%] left-[20%] w-2 h-2 rounded-full bg-violet-500 dark:bg-violet-400 animate-bounce opacity-60" style={{ animationDuration: '3s' }} />
+        <div className="absolute top-[30%] right-[25%] w-1.5 h-1.5 rounded-full bg-indigo-500 dark:bg-indigo-400 animate-bounce opacity-50" style={{ animationDuration: '4s', animationDelay: '1s' }} />
+        <div className="absolute bottom-[35%] left-[35%] w-1 h-1 rounded-full bg-purple-500 dark:bg-purple-400 animate-bounce opacity-40" style={{ animationDuration: '5s', animationDelay: '2s' }} />
+        <div className="absolute top-[60%] right-[15%] w-1.5 h-1.5 rounded-full bg-violet-400 dark:bg-violet-300 animate-bounce opacity-50" style={{ animationDuration: '3.5s', animationDelay: '0.5s' }} />
       </div>
 
-      {/* Grid pattern - only in dark mode */}
+      {/* Grid pattern */}
       <div
-        className="absolute inset-0 pointer-events-none opacity-0 dark:opacity-[0.08]"
+        className="absolute inset-0 pointer-events-none opacity-[0.15] dark:opacity-[0.08]"
         style={{
           backgroundImage: `
             linear-gradient(var(--neon-pink) 1px, transparent 1px),
