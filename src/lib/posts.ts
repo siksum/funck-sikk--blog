@@ -9,10 +9,12 @@ export {
   getAllTags,
   getTagsByCategory,
   getCategoriesWithTags,
+  getRootCategoriesWithTags,
   buildCategoryTree,
   getCategoryBySlugPath,
   getAllCategoriesHierarchical,
   getPostsByCategoryPath,
   getChildCategories,
+  getChildCategoriesWithTags,
   getRootCategories,
 } from './mdx';

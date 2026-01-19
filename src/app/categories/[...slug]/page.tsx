@@ -5,9 +5,8 @@ import CategoryCard from '@/components/category/CategoryCard';
 import {
   getCategoryBySlugPath,
   getPostsByCategoryPath,
-  getChildCategories,
+  getChildCategoriesWithTags,
   getAllCategoriesHierarchical,
-  getTagsByCategory,
 } from '@/lib/posts';
 
 interface CategoryPageProps {
@@ -47,7 +46,7 @@ export default async function CategoryPage({ params }: CategoryPageProps) {
     notFound();
   }
 
-  const childCategories = getChildCategories(slugPath);
+  const childCategories = getChildCategoriesWithTags(slugPath);
   const directPosts = getPostsByCategoryPath(slugPath, false);
   const allPosts = getPostsByCategoryPath(slugPath, true);
 
@@ -120,13 +119,13 @@ export default async function CategoryPage({ params }: CategoryPageProps) {
           >
             하위 카테고리
           </h2>
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             {childCategories.map((child) => (
               <CategoryCard
-                key={child.slug}
+                key={child.name}
                 name={child.name}
                 count={child.count}
-                tags={[]}
+                tags={child.tags}
                 slugPath={child.slugPath}
               />
             ))}

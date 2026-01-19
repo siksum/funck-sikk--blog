@@ -125,6 +125,33 @@ export function getCategoriesWithTags(): { name: string; count: number; tags: st
   }));
 }
 
+export function getRootCategoriesWithTags(): {
+  name: string;
+  count: number;
+  tags: string[];
+  slugPath: string[];
+}[] {
+  const rootCategories = getRootCategories();
+  const posts = getAllPosts();
+
+  return rootCategories.map((cat) => {
+    const categoryPosts = posts.filter((post) =>
+      post.categorySlugPath[0] === cat.slug
+    );
+    const tagSet = new Set<string>();
+    categoryPosts.forEach((post) => {
+      post.tags.forEach((tag) => tagSet.add(tag));
+    });
+
+    return {
+      name: cat.name,
+      count: cat.count,
+      tags: Array.from(tagSet),
+      slugPath: cat.slugPath,
+    };
+  });
+}
+
 export function buildCategoryTree(): CategoryTreeNode {
   const posts = getAllPosts();
   const root: CategoryTreeNode = {
@@ -249,6 +276,33 @@ export function getChildCategories(slugPath: string[]): Category[] {
     slugPath: child.slugPath,
     depth: slugPath.length,
   }));
+}
+
+export function getChildCategoriesWithTags(slugPath: string[]): {
+  name: string;
+  count: number;
+  tags: string[];
+  slugPath: string[];
+}[] {
+  const childCategories = getChildCategories(slugPath);
+  const posts = getAllPosts();
+
+  return childCategories.map((cat) => {
+    const categoryPosts = posts.filter((post) =>
+      cat.slugPath.every((slug, index) => post.categorySlugPath[index] === slug)
+    );
+    const tagSet = new Set<string>();
+    categoryPosts.forEach((post) => {
+      post.tags.forEach((tag) => tagSet.add(tag));
+    });
+
+    return {
+      name: cat.name,
+      count: cat.count,
+      tags: Array.from(tagSet),
+      slugPath: cat.slugPath,
+    };
+  });
 }
 
 export function getRootCategories(): Category[] {

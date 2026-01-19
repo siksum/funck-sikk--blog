@@ -1,6 +1,6 @@
 import CategoryCard from '@/components/category/CategoryCard';
 import Sidebar from '@/components/sidebar/Sidebar';
-import { getRecentPosts, getAllTags, getCategoriesWithTags, getRootCategories } from '@/lib/posts';
+import { getRecentPosts, getAllTags, getRootCategoriesWithTags, getRootCategories } from '@/lib/posts';
 
 export const metadata = {
   title: '블로그 | func(sikk)',
@@ -11,7 +11,7 @@ export default function BlogPage() {
   const recentPosts = getRecentPosts(5);
   const categories = getRootCategories();
   const tags = getAllTags();
-  const categoriesWithTags = getCategoriesWithTags();
+  const rootCategoriesWithTags = getRootCategoriesWithTags();
 
   return (
     <div
@@ -37,7 +37,7 @@ export default function BlogPage() {
         <div className="lg:grid lg:grid-cols-3 lg:gap-8">
           {/* Main Content - Category Cards */}
           <div className="lg:col-span-2">
-            {categoriesWithTags.length === 0 ? (
+            {rootCategoriesWithTags.length === 0 ? (
               <div className="text-center py-12">
                 <svg
                   className="w-16 h-16 mx-auto mb-4 text-violet-400 dark:text-violet-500"
@@ -58,12 +58,13 @@ export default function BlogPage() {
               </div>
             ) : (
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                {categoriesWithTags.map((category) => (
+                {rootCategoriesWithTags.map((category) => (
                   <CategoryCard
                     key={category.name}
                     name={category.name}
                     count={category.count}
                     tags={category.tags}
+                    slugPath={category.slugPath}
                   />
                 ))}
               </div>
