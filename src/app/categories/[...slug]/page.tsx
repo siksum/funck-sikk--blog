@@ -162,7 +162,7 @@ export default async function CategoryPage({ params }: CategoryPageProps) {
                     {category.name} 포스트
                   </h2>
                 )}
-                <PostList posts={directPosts} />
+                <PostList posts={directPosts} showViewToggle={false} />
               </section>
             )}
 
