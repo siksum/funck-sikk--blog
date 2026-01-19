@@ -75,49 +75,50 @@ export default function CategoryCard({ name, count, tags, slugPath }: CategoryCa
     : `/categories/${encodeURIComponent(name)}`;
 
   return (
-    <Link href={href} className="block group">
+    <Link href={href} className="block group h-full">
       <article
-        className="relative rounded-2xl overflow-hidden transition-all duration-300 backdrop-blur-xl
+        className="relative rounded-xl overflow-hidden transition-all duration-300 backdrop-blur-xl h-full flex flex-col
           border border-gray-200 dark:border-violet-500/30
           hover:border-violet-300 dark:hover:border-violet-400/60
-          hover:shadow-xl hover:shadow-violet-200/30 dark:hover:shadow-[0_0_30px_rgba(167,139,250,0.3)]
-          hover:-translate-y-2"
+          hover:shadow-lg hover:shadow-violet-200/20 dark:hover:shadow-[0_0_20px_rgba(167,139,250,0.2)]
+          hover:-translate-y-1"
         style={{ background: 'var(--card-bg)' }}
       >
-        {/* Gradient overlay */}
+        {/* Icon Header - matches PostCard thumbnail height */}
         <div
-          className={`absolute inset-0 opacity-10 dark:opacity-20 pointer-events-none bg-gradient-to-br ${colors.bg}`}
-        />
+          className="relative w-full h-36 overflow-hidden flex items-center justify-center"
+          style={{ background: 'linear-gradient(135deg, var(--violet-100) 0%, var(--indigo-100) 100%)' }}
+        >
+          <div
+            className={`w-16 h-16 rounded-xl flex items-center justify-center text-white
+              ${colors.iconBg} shadow-lg group-hover:scale-110 transition-transform`}
+          >
+            {icon}
+          </div>
+        </div>
 
-        <div className="relative p-6">
-          {/* Icon and Title Row */}
-          <div className="flex items-center gap-4 mb-4">
-            <div
-              className={`w-14 h-14 rounded-xl flex items-center justify-center text-white
-                ${colors.iconBg} shadow-lg group-hover:scale-110 transition-transform`}
+        {/* Content */}
+        <div className="relative p-4 flex-1 flex flex-col">
+          {/* Title and Count */}
+          <div className="mb-3">
+            <h3
+              className="text-base font-semibold group-hover:text-violet-600 dark:group-hover:text-violet-400 transition-colors line-clamp-1"
+              style={{ color: 'var(--foreground)' }}
             >
-              {icon}
-            </div>
-            <div className="flex-1">
-              <h3
-                className="text-xl font-bold group-hover:text-violet-600 dark:group-hover:text-violet-400 transition-colors"
-                style={{ color: 'var(--foreground)' }}
-              >
-                {name}
-              </h3>
-              <p className="text-sm" style={{ color: 'var(--foreground-muted)' }}>
-                {count}개의 포스트
-              </p>
-            </div>
+              {name}
+            </h3>
+            <p className="text-xs mt-0.5" style={{ color: 'var(--foreground-muted)' }}>
+              {count}개의 포스트
+            </p>
           </div>
 
-          {/* Tags */}
-          <div className="flex flex-wrap gap-2">
+          {/* Tags - fixed height area */}
+          <div className="flex flex-wrap gap-1.5 min-h-[52px]">
             {tags.slice(0, 4).map((tag) => (
               <span
                 key={tag}
-                className="px-2.5 py-1 text-xs rounded-full border border-violet-200 dark:border-violet-500/40
-                  transition-colors group-hover:border-violet-300 dark:group-hover:border-violet-400"
+                className="px-2 py-0.5 text-xs rounded-full border border-violet-200 dark:border-violet-500/40
+                  transition-colors group-hover:border-violet-300 dark:group-hover:border-violet-400 h-fit"
                 style={{ background: 'var(--tag-bg)', color: 'var(--tag-text)' }}
               >
                 #{tag}
@@ -125,25 +126,13 @@ export default function CategoryCard({ name, count, tags, slugPath }: CategoryCa
             ))}
             {tags.length > 4 && (
               <span
-                className="px-2.5 py-1 text-xs rounded-full"
+                className="px-2 py-0.5 text-xs rounded-full h-fit"
                 style={{ color: 'var(--foreground-muted)' }}
               >
                 +{tags.length - 4}
               </span>
             )}
           </div>
-        </div>
-
-        {/* Hover arrow indicator */}
-        <div className="absolute bottom-4 right-4 opacity-0 group-hover:opacity-100 transition-opacity">
-          <svg
-            className="w-5 h-5 text-violet-500 dark:text-violet-400"
-            fill="none"
-            stroke="currentColor"
-            viewBox="0 0 24 24"
-          >
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 8l4 4m0 0l-4 4m4-4H3" />
-          </svg>
         </div>
       </article>
     </Link>
