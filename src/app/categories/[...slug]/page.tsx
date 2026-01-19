@@ -60,10 +60,10 @@ export default async function CategoryPage({ params }: CategoryPageProps) {
         >
           <li>
             <Link
-              href="/categories"
+              href="/blog"
               className="hover:text-violet-600 dark:hover:text-violet-400 transition-colors"
             >
-              카테고리
+              Blog
             </Link>
           </li>
           {category.path.map((name, index) => (

@@ -152,7 +152,7 @@ export default function Sidebar({
         </ul>
         {categories.length > 8 && (
           <Link
-            href="/categories"
+            href="/blog"
             className="block mt-4 text-center text-sm text-violet-600 dark:text-violet-400 hover:underline"
           >
             전체 보기 →
