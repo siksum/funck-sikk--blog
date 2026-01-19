@@ -3,6 +3,7 @@ import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
 import Header from "@/components/layout/Header";
 import Footer from "@/components/layout/Footer";
+import MainContent from "@/components/layout/MainContent";
 import ThemeProvider from "@/components/ThemeProvider";
 import SessionProvider from "@/components/providers/SessionProvider";
 import PageTracker from "@/components/analytics/PageTracker";
@@ -37,7 +38,7 @@ export default function RootLayout({
           <ThemeProvider>
             <PageTracker />
             <Header />
-            <main className="flex-1">{children}</main>
+            <MainContent>{children}</MainContent>
             <Footer />
           </ThemeProvider>
         </SessionProvider>
