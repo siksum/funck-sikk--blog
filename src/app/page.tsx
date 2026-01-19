@@ -1,6 +1,7 @@
 import HeroSection from '@/components/home/HeroSection';
 import AboutPreview from '@/components/home/AboutPreview';
 import BlogShortcut from '@/components/home/BlogShortcut';
+import GithubGrass from '@/components/home/GithubGrass';
 // import SubscribeForm from '@/components/subscribe/SubscribeForm';
 import { getAllPosts, getAllCategories, getAllTags } from '@/lib/posts';
 
@@ -8,6 +9,9 @@ export default function Home() {
   const posts = getAllPosts();
   const categories = getAllCategories();
   const tags = getAllTags();
+
+  // Extract post dates for GithubGrass
+  const postDates = posts.map((post) => post.date);
 
   return (
     <>
@@ -22,6 +26,9 @@ export default function Home() {
           categoryCount={categories.length}
           tagCount={tags.length}
         />
+
+        {/* GitHub Grass */}
+        <GithubGrass postDates={postDates} />
 
         {/* Subscribe Section - 임시 비활성화
         <div className="mt-4">

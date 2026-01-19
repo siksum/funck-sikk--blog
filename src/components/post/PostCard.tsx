@@ -1,17 +1,50 @@
+'use client';
+
 import Link from 'next/link';
 import { Post } from '@/types';
 
 interface PostCardProps {
   post: Post;
   variant?: 'default' | 'compact' | 'list';
+  commentCount?: number;
 }
 
-export default function PostCard({ post, variant = 'default' }: PostCardProps) {
+export default function PostCard({ post, variant = 'default', commentCount = 0 }: PostCardProps) {
   const formattedDate = new Date(post.date).toLocaleDateString('ko-KR', {
     year: 'numeric',
     month: 'long',
     day: 'numeric',
   });
+
+  const handleShare = async (e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+
+    const url = `${window.location.origin}/blog/${post.slug}`;
+
+    if (navigator.share) {
+      try {
+        await navigator.share({
+          title: post.title,
+          text: post.description,
+          url: url,
+        });
+      } catch {
+        await copyToClipboard(url);
+      }
+    } else {
+      await copyToClipboard(url);
+    }
+  };
+
+  const copyToClipboard = async (text: string) => {
+    try {
+      await navigator.clipboard.writeText(text);
+      alert('링크가 복사되었습니다!');
+    } catch (err) {
+      console.error('Failed to copy:', err);
+    }
+  };
 
   if (variant === 'compact') {
     return (
@@ -122,12 +155,43 @@ export default function PostCard({ post, variant = 'default' }: PostCardProps) {
             </p>
 
             {/* Meta */}
-            <div className="flex items-center gap-3 text-xs" style={{ color: 'var(--foreground-muted)' }}>
-              <time dateTime={post.date}>{formattedDate}</time>
-              <div className="flex gap-1">
-                {post.tags.slice(0, 2).map((tag) => (
-                  <span key={tag}>#{tag}</span>
-                ))}
+            <div className="flex items-center justify-between text-xs" style={{ color: 'var(--foreground-muted)' }}>
+              <div className="flex items-center gap-3">
+                <time dateTime={post.date}>{formattedDate}</time>
+                <div className="flex gap-1">
+                  {post.tags.slice(0, 2).map((tag) => (
+                    <span key={tag}>#{tag}</span>
+                  ))}
+                </div>
+              </div>
+              <div className="flex items-center gap-2">
+                {/* Comment Count */}
+                <span className="flex items-center gap-1">
+                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={2}
+                      d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"
+                    />
+                  </svg>
+                  {commentCount}
+                </span>
+                {/* Share Button */}
+                <button
+                  onClick={handleShare}
+                  className="p-1 hover:text-violet-600 dark:hover:text-violet-400 transition-colors"
+                  aria-label="공유하기"
+                >
+                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={2}
+                      d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"
+                    />
+                  </svg>
+                </button>
               </div>
             </div>
           </div>
@@ -227,7 +291,38 @@ export default function PostCard({ post, variant = 'default' }: PostCardProps) {
 
           {/* Meta */}
           <div className="flex flex-col gap-1.5 text-xs" style={{ color: 'var(--foreground-muted)' }}>
-            <time dateTime={post.date}>{formattedDate}</time>
+            <div className="flex items-center justify-between">
+              <time dateTime={post.date}>{formattedDate}</time>
+              <div className="flex items-center gap-2">
+                {/* Comment Count */}
+                <span className="flex items-center gap-1">
+                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={2}
+                      d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"
+                    />
+                  </svg>
+                  {commentCount}
+                </span>
+                {/* Share Button */}
+                <button
+                  onClick={handleShare}
+                  className="p-1 hover:text-violet-600 dark:hover:text-violet-400 transition-colors"
+                  aria-label="공유하기"
+                >
+                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={2}
+                      d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"
+                    />
+                  </svg>
+                </button>
+              </div>
+            </div>
             <div className="flex flex-wrap gap-1.5">
               {post.tags.slice(0, 3).map((tag) => (
                 <span
