@@ -137,12 +137,6 @@ export default async function CategoryPage({ params }: CategoryPageProps) {
             {/* Child Categories */}
             {childCategories.length > 0 && (
               <section className="mb-12">
-                <h2
-                  className="text-xl font-semibold mb-4"
-                  style={{ color: 'var(--foreground)' }}
-                >
-                  하위 카테고리
-                </h2>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                   {childCategories.map((child) => (
                     <CategoryCard
