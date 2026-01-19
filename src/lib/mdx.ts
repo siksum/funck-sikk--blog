@@ -329,3 +329,61 @@ export function getRootCategories(): Category[] {
     }))
     .sort((a, b) => b.count - a.count);
 }
+
+export function getRelatedPosts(slug: string, count: number = 3): Post[] {
+  const currentPost = getPostBySlug(slug);
+  if (!currentPost) return [];
+
+  const allPosts = getAllPosts().filter((post) => post.slug !== slug);
+
+  const scoredPosts = allPosts.map((post) => {
+    let score = 0;
+
+    // Same category gets highest score
+    if (post.category === currentPost.category) {
+      score += 10;
+    }
+
+    // Shared tags increase score
+    const sharedTags = post.tags.filter((tag) => currentPost.tags.includes(tag));
+    score += sharedTags.length * 3;
+
+    // Same root category gets some score
+    if (post.categorySlugPath[0] === currentPost.categorySlugPath[0]) {
+      score += 2;
+    }
+
+    return { post, score };
+  });
+
+  return scoredPosts
+    .sort((a, b) => b.score - a.score)
+    .slice(0, count)
+    .map((item) => item.post);
+}
+
+export function getAdjacentPosts(slug: string): {
+  prevPost: Post | null;
+  nextPost: Post | null;
+} {
+  const currentPost = getPostBySlug(slug);
+  if (!currentPost) {
+    return { prevPost: null, nextPost: null };
+  }
+
+  // Filter posts to only include those in the same category
+  const categoryPosts = getAllPosts().filter(
+    (post) => post.category === currentPost.category
+  );
+
+  const currentIndex = categoryPosts.findIndex((post) => post.slug === slug);
+
+  if (currentIndex === -1) {
+    return { prevPost: null, nextPost: null };
+  }
+
+  const prevPost = currentIndex < categoryPosts.length - 1 ? categoryPosts[currentIndex + 1] : null;
+  const nextPost = currentIndex > 0 ? categoryPosts[currentIndex - 1] : null;
+
+  return { prevPost, nextPost };
+}

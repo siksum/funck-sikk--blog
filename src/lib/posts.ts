@@ -17,4 +17,6 @@ export {
   getChildCategories,
   getChildCategoriesWithTags,
   getRootCategories,
+  getRelatedPosts,
+  getAdjacentPosts,
 } from './mdx';
