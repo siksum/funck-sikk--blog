@@ -120,7 +120,7 @@ export default async function CategoryPage({ params }: CategoryPageProps) {
           </p>
         </div>
 
-        <div className="lg:grid lg:grid-cols-4 lg:gap-8">
+        <div className="lg:grid lg:grid-cols-4 lg:gap-8 lg:items-start">
           {/* Sidebar - Left */}
           <div className="mb-8 lg:mb-0 lg:col-span-1 lg:order-first">
             <Sidebar
