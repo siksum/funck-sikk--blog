@@ -42,13 +42,35 @@ export default function PostCard({ post, variant = 'default' }: PostCardProps) {
       style={{ background: 'var(--card-bg)' }}
     >
       <Link href={`/blog/${post.slug}`} className="block p-5">
-        {/* Category */}
-        <span
-          className="inline-block px-3 py-1 text-xs font-medium rounded-full mb-3 border border-violet-200 dark:border-violet-500/40"
-          style={{ backgroundColor: 'var(--tag-bg)', color: 'var(--tag-text)' }}
-        >
-          {post.category}
-        </span>
+        {/* Category Breadcrumb */}
+        <div className="flex items-center gap-1 mb-3 flex-wrap">
+          {post.categoryPath.map((name, index) => (
+            <span key={index} className="flex items-center">
+              {index > 0 && (
+                <svg
+                  className="w-3 h-3 mx-1"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                  style={{ color: 'var(--foreground-muted)' }}
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M9 5l7 7-7 7"
+                  />
+                </svg>
+              )}
+              <span
+                className="px-2 py-0.5 text-xs font-medium rounded-full border border-violet-200 dark:border-violet-500/40"
+                style={{ backgroundColor: 'var(--tag-bg)', color: 'var(--tag-text)' }}
+              >
+                {name}
+              </span>
+            </span>
+          ))}
+        </div>
 
         {/* Title */}
         <h2

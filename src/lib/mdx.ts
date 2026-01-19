@@ -1,9 +1,23 @@
 import fs from 'fs';
 import path from 'path';
 import matter from 'gray-matter';
-import { Post } from '@/types';
+import { Post, Category, CategoryTreeNode } from '@/types';
 
 const postsDirectory = path.join(process.cwd(), 'content/posts');
+
+function slugify(text: string): string {
+  return text
+    .toLowerCase()
+    .trim()
+    .replace(/[^\w\s-]/g, '')
+    .replace(/[\s_-]+/g, '-')
+    .replace(/^-+|-+$/g, '');
+}
+
+function parseCategoryPath(category: string): string[] {
+  if (!category) return [];
+  return category.split('/').map((s) => s.trim()).filter(Boolean);
+}
 
 export function getPostSlugs(): string[] {
   if (!fs.existsSync(postsDirectory)) {
@@ -23,12 +37,17 @@ export function getPostBySlug(slug: string): Post | null {
   const fileContents = fs.readFileSync(fullPath, 'utf8');
   const { data, content } = matter(fileContents);
 
+  const categoryPath = parseCategoryPath(data.category || '');
+  const categorySlugPath = categoryPath.map(slugify);
+
   return {
     slug: realSlug,
     title: data.title || '',
     description: data.description || '',
     date: data.date || '',
     category: data.category || '',
+    categoryPath,
+    categorySlugPath,
     tags: data.tags || [],
     thumbnail: data.thumbnail,
     content,
@@ -104,4 +123,155 @@ export function getCategoriesWithTags(): { name: string; count: number; tags: st
     ...cat,
     tags: getTagsByCategory(cat.name),
   }));
+}
+
+export function buildCategoryTree(): CategoryTreeNode {
+  const posts = getAllPosts();
+  const root: CategoryTreeNode = {
+    name: 'root',
+    slug: '',
+    count: 0,
+    directCount: 0,
+    children: {},
+    path: [],
+    slugPath: [],
+  };
+
+  posts.forEach((post) => {
+    const pathSegments = post.categoryPath;
+    let current = root;
+
+    pathSegments.forEach((segment, index) => {
+      const segmentSlug = slugify(segment);
+      const currentPath = pathSegments.slice(0, index + 1);
+      const currentSlugPath = currentPath.map(slugify);
+
+      if (!current.children[segmentSlug]) {
+        current.children[segmentSlug] = {
+          name: segment,
+          slug: segmentSlug,
+          count: 0,
+          directCount: 0,
+          children: {},
+          path: currentPath,
+          slugPath: currentSlugPath,
+        };
+      }
+
+      current.children[segmentSlug].count++;
+
+      if (index === pathSegments.length - 1) {
+        current.children[segmentSlug].directCount++;
+      }
+
+      current = current.children[segmentSlug];
+    });
+  });
+
+  return root;
+}
+
+export function getCategoryBySlugPath(slugPath: string[]): CategoryTreeNode | null {
+  const tree = buildCategoryTree();
+  let current = tree;
+
+  for (const slug of slugPath) {
+    if (!current.children[slug]) {
+      return null;
+    }
+    current = current.children[slug];
+  }
+
+  return current;
+}
+
+export function getAllCategoriesHierarchical(): Category[] {
+  const tree = buildCategoryTree();
+  const categories: Category[] = [];
+
+  function traverse(node: CategoryTreeNode, depth: number = 0) {
+    Object.values(node.children).forEach((child) => {
+      const childCategories = Object.values(child.children);
+      categories.push({
+        name: child.name,
+        slug: child.slug,
+        count: child.count,
+        path: child.path,
+        slugPath: child.slugPath,
+        depth,
+        children:
+          childCategories.length > 0
+            ? childCategories.map((c) => ({
+                name: c.name,
+                slug: c.slug,
+                count: c.count,
+                path: c.path,
+                slugPath: c.slugPath,
+                depth: depth + 1,
+              }))
+            : undefined,
+      });
+      traverse(child, depth + 1);
+    });
+  }
+
+  traverse(tree);
+  return categories;
+}
+
+export function getPostsByCategoryPath(
+  slugPath: string[],
+  includeChildren: boolean = true
+): Post[] {
+  const posts = getAllPosts();
+
+  return posts.filter((post) => {
+    if (includeChildren) {
+      return slugPath.every((slug, index) => post.categorySlugPath[index] === slug);
+    } else {
+      return (
+        post.categorySlugPath.length === slugPath.length &&
+        slugPath.every((slug, index) => post.categorySlugPath[index] === slug)
+      );
+    }
+  });
+}
+
+export function getChildCategories(slugPath: string[]): Category[] {
+  const category = getCategoryBySlugPath(slugPath);
+  if (!category) return [];
+
+  return Object.values(category.children).map((child) => ({
+    name: child.name,
+    slug: child.slug,
+    count: child.count,
+    path: child.path,
+    slugPath: child.slugPath,
+    depth: slugPath.length,
+  }));
+}
+
+export function getRootCategories(): Category[] {
+  const tree = buildCategoryTree();
+  return Object.values(tree.children)
+    .map((child) => ({
+      name: child.name,
+      slug: child.slug,
+      count: child.count,
+      path: child.path,
+      slugPath: child.slugPath,
+      depth: 0,
+      children:
+        Object.values(child.children).length > 0
+          ? Object.values(child.children).map((c) => ({
+              name: c.name,
+              slug: c.slug,
+              count: c.count,
+              path: c.path,
+              slugPath: c.slugPath,
+              depth: 1,
+            }))
+          : undefined,
+    }))
+    .sort((a, b) => b.count - a.count);
 }

@@ -1,6 +1,6 @@
 import CategoryCard from '@/components/category/CategoryCard';
 import Sidebar from '@/components/sidebar/Sidebar';
-import { getRecentPosts, getAllCategories, getAllTags, getCategoriesWithTags } from '@/lib/posts';
+import { getRecentPosts, getAllTags, getCategoriesWithTags, getRootCategories } from '@/lib/posts';
 
 export const metadata = {
   title: '블로그 | func(sikk)',
@@ -9,7 +9,7 @@ export const metadata = {
 
 export default function BlogPage() {
   const recentPosts = getRecentPosts(5);
-  const categories = getAllCategories();
+  const categories = getRootCategories();
   const tags = getAllTags();
   const categoriesWithTags = getCategoriesWithTags();
 

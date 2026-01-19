@@ -2,14 +2,84 @@
 
 import { useState } from 'react';
 import Link from 'next/link';
-import { Post } from '@/types';
+import { Post, Category } from '@/types';
 import PostCard from '@/components/post/PostCard';
 
 interface SidebarProps {
   recentPosts: Post[];
   popularPosts: Post[];
-  categories: { name: string; count: number }[];
+  categories: Category[];
   tags: { name: string; count: number }[];
+}
+
+function CategoryTreeItem({
+  category,
+  depth = 0,
+}: {
+  category: Category;
+  depth?: number;
+}) {
+  const [isExpanded, setIsExpanded] = useState(depth === 0);
+  const hasChildren = category.children && category.children.length > 0;
+  const href = `/categories/${category.slugPath.join('/')}`;
+
+  return (
+    <li>
+      <div className="flex items-center">
+        {hasChildren ? (
+          <button
+            onClick={() => setIsExpanded(!isExpanded)}
+            className="p-1 mr-1 hover:bg-violet-100 dark:hover:bg-violet-500/20 rounded transition-colors"
+            aria-label={isExpanded ? '접기' : '펼치기'}
+          >
+            <svg
+              className={`w-3 h-3 transition-transform ${isExpanded ? 'rotate-90' : ''}`}
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+              style={{ color: 'var(--foreground-muted)' }}
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth={2}
+                d="M9 5l7 7-7 7"
+              />
+            </svg>
+          </button>
+        ) : (
+          <span className="w-5" />
+        )}
+        <Link
+          href={href}
+          className="flex-1 flex items-center justify-between py-1 transition-colors hover:text-violet-600 dark:hover:text-violet-400"
+          style={{
+            color: 'var(--foreground-muted)',
+            paddingLeft: `${depth * 0.5}rem`,
+          }}
+        >
+          <span>{category.name}</span>
+          <span
+            className="text-xs px-2 py-0.5 rounded-full"
+            style={{ background: 'var(--tag-bg)', color: 'var(--tag-text)' }}
+          >
+            {category.count}
+          </span>
+        </Link>
+      </div>
+      {hasChildren && isExpanded && (
+        <ul className="ml-4 space-y-1">
+          {category.children!.map((child) => (
+            <CategoryTreeItem
+              key={child.slug}
+              category={child}
+              depth={depth + 1}
+            />
+          ))}
+        </ul>
+      )}
+    </li>
+  );
 }
 
 export default function Sidebar({
@@ -77,21 +147,7 @@ export default function Sidebar({
         </h3>
         <ul className="space-y-2">
           {categories.slice(0, 8).map((category) => (
-            <li key={category.name}>
-              <Link
-                href={`/categories/${encodeURIComponent(category.name)}`}
-                className="flex items-center justify-between transition-colors hover:text-violet-600 dark:hover:text-violet-400"
-                style={{ color: 'var(--foreground-muted)' }}
-              >
-                <span>{category.name}</span>
-                <span
-                  className="text-xs px-2 py-0.5 rounded-full"
-                  style={{ background: 'var(--tag-bg)', color: 'var(--tag-text)' }}
-                >
-                  {category.count}
-                </span>
-              </Link>
-            </li>
+            <CategoryTreeItem key={category.slug} category={category} />
           ))}
         </ul>
         {categories.length > 8 && (

@@ -4,6 +4,7 @@ interface CategoryCardProps {
   name: string;
   count: number;
   tags: string[];
+  slugPath?: string[];
 }
 
 // Category icons mapping
@@ -65,12 +66,16 @@ const categoryColors: Record<string, { bg: string; border: string; iconBg: strin
 
 const defaultColors = { bg: 'from-violet-600 to-indigo-500', border: 'border-violet-400', iconBg: 'bg-violet-500' };
 
-export default function CategoryCard({ name, count, tags }: CategoryCardProps) {
+export default function CategoryCard({ name, count, tags, slugPath }: CategoryCardProps) {
   const icon = categoryIcons[name] || defaultIcon;
   const colors = categoryColors[name] || defaultColors;
 
+  const href = slugPath
+    ? `/categories/${slugPath.join('/')}`
+    : `/categories/${encodeURIComponent(name)}`;
+
   return (
-    <Link href={`/categories/${encodeURIComponent(name)}`} className="block group">
+    <Link href={href} className="block group">
       <article
         className="relative rounded-2xl overflow-hidden transition-all duration-300 backdrop-blur-xl
           border border-gray-200 dark:border-violet-500/30
