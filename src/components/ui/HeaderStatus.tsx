@@ -45,7 +45,6 @@ function getAppIcon(appName: string | null): string {
 
 export default function HeaderStatus() {
   const [status, setStatus] = useState<Status | null>(null);
-  const [isHovered, setIsHovered] = useState(false);
 
   useEffect(() => {
     const fetchStatus = async () => {
@@ -69,47 +68,28 @@ export default function HeaderStatus() {
     (new Date().getTime() - new Date(status.updatedAt).getTime()) < 5 * 60 * 1000;
 
   return (
-    <div
-      className="relative"
-      onMouseEnter={() => setIsHovered(true)}
-      onMouseLeave={() => setIsHovered(false)}
-    >
-      {/* Compact Status Button */}
-      <div className="flex items-center gap-1.5 px-2 py-1 rounded-lg bg-gray-100 dark:bg-gray-800/50 cursor-default">
-        <span className="text-sm">{getAppIcon(status?.app || null)}</span>
-        <div
-          className={`w-2 h-2 rounded-full ${
-            isOnline ? 'bg-green-500' : 'bg-gray-400'
-          }`}
-        />
+    <div className="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-gray-100 dark:bg-gray-800/50">
+      {/* Icon */}
+      <span className="text-base">{getAppIcon(status?.app || null)}</span>
+
+      {/* Status text */}
+      <div className="flex items-center gap-1.5 text-xs">
+        <span style={{ color: 'var(--foreground-muted)' }}>주인장:</span>
+        {status?.app ? (
+          <span className="text-violet-600 dark:text-violet-400 font-medium">
+            {status.app}
+          </span>
+        ) : (
+          <span style={{ color: 'var(--foreground-muted)' }}>자리 비움</span>
+        )}
       </div>
 
-      {/* Tooltip on hover */}
-      {isHovered && (
-        <div
-          className="absolute right-0 top-full mt-2 px-3 py-2 rounded-lg shadow-lg border whitespace-nowrap z-50"
-          style={{
-            background: 'var(--card-bg)',
-            borderColor: 'var(--card-border)',
-          }}
-        >
-          <div className="text-xs font-medium" style={{ color: 'var(--foreground)' }}>
-            주인장은 현재
-          </div>
-          <div className="text-sm" style={{ color: 'var(--foreground-muted)' }}>
-            {status?.app ? (
-              <>
-                <span className="text-violet-600 dark:text-violet-400 font-medium">
-                  {status.app}
-                </span>
-                {' '}사용 중
-              </>
-            ) : (
-              '자리 비움 💤'
-            )}
-          </div>
-        </div>
-      )}
+      {/* Online indicator */}
+      <div
+        className={`w-2 h-2 rounded-full ${
+          isOnline ? 'bg-green-500' : 'bg-gray-400'
+        }`}
+      />
     </div>
   );
 }
