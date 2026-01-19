@@ -1,13 +1,20 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/db';
+import { auth } from '@/lib/auth';
 
 export async function POST(request: NextRequest) {
   try {
+    // Server-side filter: Skip admin users
+    const session = await auth();
+    if (session?.user?.isAdmin) {
+      return NextResponse.json({ success: true, skipped: 'admin_user' });
+    }
+
     const { path, slug } = await request.json();
 
     // Server-side filter: Skip admin paths
     if (path?.startsWith('/admin')) {
-      return NextResponse.json({ success: true, skipped: true });
+      return NextResponse.json({ success: true, skipped: 'admin_path' });
     }
 
     const userAgent = request.headers.get('user-agent') || '';
