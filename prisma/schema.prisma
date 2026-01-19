@@ -118,3 +118,14 @@ model PushSubscription {
   auth      String
   createdAt DateTime @default(now())
 }
+
+// ============ OWNER STATUS ============
+
+model OwnerStatus {
+  id        String   @id @default("owner-status")
+  app       String?  // Current app name (e.g., "Visual Studio Code")
+  activity  String?  // Activity description (e.g., "Coding")
+  emoji     String?  // Optional emoji
+  isOnline  Boolean  @default(false)
+  updatedAt DateTime @updatedAt
+}
