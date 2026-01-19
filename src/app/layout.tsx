@@ -7,6 +7,7 @@ import MainContent from "@/components/layout/MainContent";
 import ThemeProvider from "@/components/ThemeProvider";
 import SessionProvider from "@/components/providers/SessionProvider";
 import PageTracker from "@/components/analytics/PageTracker";
+import PWARegister from "@/components/PWARegister";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -62,6 +63,7 @@ export default function RootLayout({
         <SessionProvider>
           <ThemeProvider>
             <PageTracker />
+            <PWARegister />
             <Header />
             <MainContent>{children}</MainContent>
             <Footer />
