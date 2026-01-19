@@ -31,8 +31,7 @@ export default function RootLayout({
   return (
     <html lang="ko" suppressHydrationWarning>
       <body
-        className={`${geistSans.variable} ${geistMono.variable} antialiased min-h-screen flex flex-col`}
-        style={{ background: 'var(--background)' }}
+        className={`${geistSans.variable} ${geistMono.variable} antialiased min-h-screen flex flex-col blog-page-bg`}
       >
         <SessionProvider>
           <ThemeProvider>

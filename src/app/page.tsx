@@ -14,7 +14,7 @@ export default function Home() {
   const postDates = posts.map((post) => post.date);
 
   return (
-    <div className="blog-page-bg min-h-full">
+    <>
       <HeroSection />
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12 space-y-8">
         {/* About Preview Bar */}
@@ -36,6 +36,6 @@ export default function Home() {
         </div>
         */}
       </div>
-    </div>
+    </>
   );
 }
