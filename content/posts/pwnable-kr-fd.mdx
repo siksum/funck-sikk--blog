@@ -1,0 +1,31 @@
+---
+title: 'pwnable.kr fd 풀이'
+description: 'pwnable.kr의 fd 문제 풀이입니다. 파일 디스크립터에 대해 알아봅니다.'
+date: '2026-01-18'
+category: 'Wargame/pwnable.kr'
+tags: ['Wargame', 'Pwnable', 'Security', 'File Descriptor']
+---
+
+# pwnable.kr - fd
+
+pwnable.kr의 첫 번째 문제인 fd입니다.
+
+## 문제 분석
+
+파일 디스크립터(File Descriptor)에 대한 이해가 필요한 문제입니다.
+
+- 0: stdin
+- 1: stdout
+- 2: stderr
+
+## 풀이
+
+```c
+int fd = atoi(argv[1]) - 0x1234;
+```
+
+0x1234는 10진수로 4660입니다. fd가 0이 되려면 argv[1]에 4660을 입력하면 됩니다.
+
+```bash
+./fd 4660
+```
