@@ -5,6 +5,7 @@ import Link from 'next/link';
 import { useSession, signIn, signOut } from 'next-auth/react';
 import { NavItem, Post } from '@/types';
 import ThemeToggle from '@/components/ui/ThemeToggle';
+import HeaderStatus from '@/components/ui/HeaderStatus';
 import SearchModal from '@/components/search/SearchModal';
 
 const navigation: NavItem[] = [
@@ -67,6 +68,11 @@ export default function HeaderClient({ posts }: HeaderClientProps) {
 
           {/* Actions */}
           <div className="flex items-center space-x-3">
+            {/* Owner Status */}
+            <div className="hidden sm:block">
+              <HeaderStatus />
+            </div>
+
             {/* Search Button */}
             <button
               onClick={() => setIsSearchOpen(true)}
