@@ -23,16 +23,20 @@ export default function Sidebar({
   return (
     <aside className="space-y-8">
       {/* Posts Tabs */}
-      <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 overflow-hidden">
+      <div
+        className="rounded-2xl overflow-hidden backdrop-blur-xl border border-gray-200 dark:border-violet-500/30"
+        style={{ background: 'var(--card-bg)' }}
+      >
         {/* Tab Headers */}
-        <div className="flex border-b border-gray-200 dark:border-gray-700">
+        <div className="flex border-b" style={{ borderColor: 'var(--card-border)' }}>
           <button
             onClick={() => setActiveTab('recent')}
             className={`flex-1 py-3 px-4 text-sm font-medium transition-colors ${
               activeTab === 'recent'
-                ? 'text-blue-600 dark:text-blue-400 border-b-2 border-blue-600 dark:border-blue-400 -mb-px'
-                : 'text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white'
+                ? 'text-violet-600 dark:text-violet-400 border-b-2 border-violet-600 dark:border-violet-400 -mb-px'
+                : ''
             }`}
+            style={activeTab !== 'recent' ? { color: 'var(--foreground-muted)' } : undefined}
           >
             최신 글
           </button>
@@ -40,22 +44,23 @@ export default function Sidebar({
             onClick={() => setActiveTab('popular')}
             className={`flex-1 py-3 px-4 text-sm font-medium transition-colors ${
               activeTab === 'popular'
-                ? 'text-blue-600 dark:text-blue-400 border-b-2 border-blue-600 dark:border-blue-400 -mb-px'
-                : 'text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white'
+                ? 'text-violet-600 dark:text-violet-400 border-b-2 border-violet-600 dark:border-violet-400 -mb-px'
+                : ''
             }`}
+            style={activeTab !== 'popular' ? { color: 'var(--foreground-muted)' } : undefined}
           >
             인기 글
           </button>
         </div>
 
         {/* Tab Content */}
-        <div className="divide-y divide-gray-200 dark:divide-gray-700">
+        <div className="divide-y" style={{ borderColor: 'var(--card-border)' }}>
           {(activeTab === 'recent' ? recentPosts : popularPosts).map((post) => (
             <PostCard key={post.slug} post={post} variant="compact" />
           ))}
           {(activeTab === 'recent' ? recentPosts : popularPosts).length ===
             0 && (
-            <p className="p-4 text-center text-gray-500 dark:text-gray-400 text-sm">
+            <p className="p-4 text-center text-sm" style={{ color: 'var(--foreground-muted)' }}>
               포스트가 없습니다.
             </p>
           )}
@@ -63,8 +68,11 @@ export default function Sidebar({
       </div>
 
       {/* Categories */}
-      <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 p-5">
-        <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">
+      <div
+        className="rounded-2xl backdrop-blur-xl border border-gray-200 dark:border-violet-500/30 p-5"
+        style={{ background: 'var(--card-bg)' }}
+      >
+        <h3 className="text-lg font-semibold mb-4" style={{ color: 'var(--foreground)' }}>
           카테고리
         </h3>
         <ul className="space-y-2">
@@ -72,10 +80,14 @@ export default function Sidebar({
             <li key={category.name}>
               <Link
                 href={`/categories/${encodeURIComponent(category.name)}`}
-                className="flex items-center justify-between text-gray-600 dark:text-gray-400 hover:text-blue-600 dark:hover:text-blue-400 transition-colors"
+                className="flex items-center justify-between transition-colors hover:text-violet-600 dark:hover:text-violet-400"
+                style={{ color: 'var(--foreground-muted)' }}
               >
                 <span>{category.name}</span>
-                <span className="text-xs bg-gray-100 dark:bg-gray-700 px-2 py-0.5 rounded-full">
+                <span
+                  className="text-xs px-2 py-0.5 rounded-full"
+                  style={{ background: 'var(--tag-bg)', color: 'var(--tag-text)' }}
+                >
                   {category.count}
                 </span>
               </Link>
@@ -85,7 +97,7 @@ export default function Sidebar({
         {categories.length > 8 && (
           <Link
             href="/categories"
-            className="block mt-4 text-center text-sm text-blue-600 dark:text-blue-400 hover:underline"
+            className="block mt-4 text-center text-sm text-violet-600 dark:text-violet-400 hover:underline"
           >
             전체 보기 →
           </Link>
@@ -93,8 +105,11 @@ export default function Sidebar({
       </div>
 
       {/* Tags Cloud */}
-      <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 p-5">
-        <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">
+      <div
+        className="rounded-2xl backdrop-blur-xl border border-gray-200 dark:border-violet-500/30 p-5"
+        style={{ background: 'var(--card-bg)' }}
+      >
+        <h3 className="text-lg font-semibold mb-4" style={{ color: 'var(--foreground)' }}>
           태그
         </h3>
         <div className="flex flex-wrap gap-2">
@@ -102,7 +117,8 @@ export default function Sidebar({
             <Link
               key={tag.name}
               href={`/tags/${encodeURIComponent(tag.name)}`}
-              className="px-3 py-1 text-sm bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 rounded-full hover:bg-blue-100 dark:hover:bg-blue-900/30 hover:text-blue-700 dark:hover:text-blue-300 transition-colors"
+              className="px-3 py-1 text-sm rounded-full transition-all hover:scale-105 border border-violet-200 dark:border-violet-500/40 hover:border-violet-400 dark:hover:border-violet-400"
+              style={{ background: 'var(--tag-bg)', color: 'var(--tag-text)' }}
             >
               #{tag.name}
             </Link>
@@ -111,7 +127,7 @@ export default function Sidebar({
         {tags.length > 15 && (
           <Link
             href="/tags"
-            className="block mt-4 text-center text-sm text-blue-600 dark:text-blue-400 hover:underline"
+            className="block mt-4 text-center text-sm text-violet-600 dark:text-violet-400 hover:underline"
           >
             전체 보기 →
           </Link>
