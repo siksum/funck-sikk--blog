@@ -45,41 +45,40 @@ export async function POST(request: NextRequest) {
     const today = new Date();
     today.setUTCHours(0, 0, 0, 0);
 
-    // Try to create a unique page view (visitor + path + date)
-    // If already exists, this will throw a unique constraint error
-    try {
-      await prisma.pageView.create({
-        data: {
-          path,
-          slug,
-          visitorHash,
-          userAgent,
-          referer,
-          date: today,
-        },
-      });
+    // Check if this visitor has already viewed this page today
+    const existingView = await prisma.pageView.findFirst({
+      where: {
+        visitorHash,
+        path,
+        date: today,
+      },
+    });
 
-      // Only increment daily visit count for new unique visitors
-      await prisma.dailyVisit.upsert({
-        where: { date: today },
-        update: { count: { increment: 1 } },
-        create: { date: today, count: 1 },
-      });
-
-      return NextResponse.json({ success: true, unique: true });
-    } catch (error: unknown) {
-      // Check if it's a unique constraint violation (duplicate visit)
-      if (
-        error &&
-        typeof error === 'object' &&
-        'code' in error &&
-        error.code === 'P2002'
-      ) {
-        // Duplicate visit - skip counting
-        return NextResponse.json({ success: true, unique: false, skipped: 'duplicate' });
-      }
-      throw error;
+    if (existingView) {
+      // Duplicate visit - skip counting
+      return NextResponse.json({ success: true, unique: false, skipped: 'duplicate' });
     }
+
+    // Create new page view
+    await prisma.pageView.create({
+      data: {
+        path,
+        slug,
+        visitorHash,
+        userAgent,
+        referer,
+        date: today,
+      },
+    });
+
+    // Increment daily visit count for new unique visitors
+    await prisma.dailyVisit.upsert({
+      where: { date: today },
+      update: { count: { increment: 1 } },
+      create: { date: today, count: 1 },
+    });
+
+    return NextResponse.json({ success: true, unique: true });
   } catch (error) {
     console.error('Analytics tracking error:', error);
     return NextResponse.json({ success: false }, { status: 500 });
