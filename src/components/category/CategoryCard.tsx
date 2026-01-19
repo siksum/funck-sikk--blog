@@ -73,82 +73,16 @@ const defaultIcon = (
   </svg>
 );
 
-// Category colors mapping with pastel backgrounds and neon glow
-const categoryColors: Record<string, { iconBg: string; pastelBg: string; neonBorder: string; neonGlow: string }> = {
-  'Next.js': {
-    iconBg: 'bg-gray-800',
-    pastelBg: 'bg-gradient-to-br from-gray-50 to-slate-100 dark:from-gray-900/50 dark:to-slate-800/50',
-    neonBorder: 'border-gray-400 dark:border-gray-500',
-    neonGlow: 'hover:shadow-[0_0_20px_rgba(100,100,100,0.3)] dark:hover:shadow-[0_0_25px_rgba(150,150,150,0.4)]',
-  },
-  'TypeScript': {
-    iconBg: 'bg-blue-500',
-    pastelBg: 'bg-gradient-to-br from-blue-50 to-sky-100 dark:from-blue-900/30 dark:to-sky-800/30',
-    neonBorder: 'border-blue-300 dark:border-blue-500',
-    neonGlow: 'hover:shadow-[0_0_20px_rgba(59,130,246,0.3)] dark:hover:shadow-[0_0_25px_rgba(96,165,250,0.5)]',
-  },
-  'CSS': {
-    iconBg: 'bg-cyan-500',
-    pastelBg: 'bg-gradient-to-br from-cyan-50 to-teal-100 dark:from-cyan-900/30 dark:to-teal-800/30',
-    neonBorder: 'border-cyan-300 dark:border-cyan-500',
-    neonGlow: 'hover:shadow-[0_0_20px_rgba(6,182,212,0.3)] dark:hover:shadow-[0_0_25px_rgba(34,211,238,0.5)]',
-  },
-  'JavaScript': {
-    iconBg: 'bg-yellow-400',
-    pastelBg: 'bg-gradient-to-br from-yellow-50 to-amber-100 dark:from-yellow-900/30 dark:to-amber-800/30',
-    neonBorder: 'border-yellow-300 dark:border-yellow-500',
-    neonGlow: 'hover:shadow-[0_0_20px_rgba(250,204,21,0.3)] dark:hover:shadow-[0_0_25px_rgba(253,224,71,0.5)]',
-  },
-  'React': {
-    iconBg: 'bg-cyan-500',
-    pastelBg: 'bg-gradient-to-br from-cyan-50 to-sky-100 dark:from-cyan-900/30 dark:to-sky-800/30',
-    neonBorder: 'border-cyan-300 dark:border-cyan-500',
-    neonGlow: 'hover:shadow-[0_0_20px_rgba(6,182,212,0.3)] dark:hover:shadow-[0_0_25px_rgba(34,211,238,0.5)]',
-  },
-  'Security': {
-    iconBg: 'bg-red-500',
-    pastelBg: 'bg-gradient-to-br from-red-50 to-rose-100 dark:from-red-900/30 dark:to-rose-800/30',
-    neonBorder: 'border-red-300 dark:border-red-500',
-    neonGlow: 'hover:shadow-[0_0_20px_rgba(239,68,68,0.3)] dark:hover:shadow-[0_0_25px_rgba(248,113,113,0.5)]',
-  },
-  'Web3': {
-    iconBg: 'bg-indigo-500',
-    pastelBg: 'bg-gradient-to-br from-purple-50 to-indigo-100 dark:from-purple-900/30 dark:to-indigo-800/30',
-    neonBorder: 'border-purple-300 dark:border-purple-500',
-    neonGlow: 'hover:shadow-[0_0_20px_rgba(168,85,247,0.3)] dark:hover:shadow-[0_0_25px_rgba(192,132,252,0.5)]',
-  },
-  'Wargame': {
-    iconBg: 'bg-red-500',
-    pastelBg: 'bg-gradient-to-br from-red-50 to-orange-100 dark:from-red-900/30 dark:to-orange-800/30',
-    neonBorder: 'border-red-300 dark:border-red-500',
-    neonGlow: 'hover:shadow-[0_0_20px_rgba(239,68,68,0.3)] dark:hover:shadow-[0_0_25px_rgba(248,113,113,0.5)]',
-  },
-  'Web Development': {
-    iconBg: 'bg-emerald-500',
-    pastelBg: 'bg-gradient-to-br from-emerald-50 to-teal-100 dark:from-emerald-900/30 dark:to-teal-800/30',
-    neonBorder: 'border-emerald-300 dark:border-emerald-500',
-    neonGlow: 'hover:shadow-[0_0_20px_rgba(16,185,129,0.3)] dark:hover:shadow-[0_0_25px_rgba(52,211,153,0.5)]',
-  },
-  'Programming': {
-    iconBg: 'bg-indigo-500',
-    pastelBg: 'bg-gradient-to-br from-indigo-50 to-purple-100 dark:from-indigo-900/30 dark:to-purple-800/30',
-    neonBorder: 'border-indigo-300 dark:border-indigo-500',
-    neonGlow: 'hover:shadow-[0_0_20px_rgba(99,102,241,0.3)] dark:hover:shadow-[0_0_25px_rgba(129,140,248,0.5)]',
-  },
-  '1': {
-    iconBg: 'bg-slate-500',
-    pastelBg: 'bg-gradient-to-br from-slate-50 to-gray-100 dark:from-slate-900/30 dark:to-gray-800/30',
-    neonBorder: 'border-slate-300 dark:border-slate-500',
-    neonGlow: 'hover:shadow-[0_0_20px_rgba(100,116,139,0.3)] dark:hover:shadow-[0_0_25px_rgba(148,163,184,0.5)]',
-  },
-};
-
+// Unified violet theme for all categories
 const defaultColors = {
   iconBg: 'bg-violet-500',
   pastelBg: 'bg-gradient-to-br from-violet-50 to-indigo-100 dark:from-violet-900/30 dark:to-indigo-800/30',
   neonBorder: 'border-violet-300 dark:border-violet-500',
   neonGlow: 'hover:shadow-[0_0_20px_rgba(139,92,246,0.3)] dark:hover:shadow-[0_0_25px_rgba(167,139,250,0.5)]',
 };
+
+// All categories use the same violet theme
+const categoryColors: Record<string, typeof defaultColors> = {};
 
 export default function CategoryCard({ name, count, tags, slugPath }: CategoryCardProps) {
   const icon = categoryIcons[name] || defaultIcon;
