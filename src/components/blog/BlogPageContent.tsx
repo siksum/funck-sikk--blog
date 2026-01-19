@@ -208,6 +208,7 @@ export default function BlogPageContent({
               popularPosts={recentPosts}
               categories={categories}
               tags={tags}
+              sections={sections}
             />
           </div>
 

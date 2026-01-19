@@ -5,12 +5,21 @@ import Link from 'next/link';
 import { Post, Category } from '@/types';
 import PostCard from '@/components/post/PostCard';
 
+interface DBSection {
+  id: string;
+  title: string;
+  description: string | null;
+  order: number;
+  categories: { id: string; name: string; slug: string }[];
+}
+
 interface SidebarProps {
   recentPosts: Post[];
   popularPosts: Post[];
   categories: Category[];
   tags: { name: string; count: number }[];
   currentCategorySlugPath?: string[];
+  sections?: DBSection[];
 }
 
 function CategoryTreeItem({
@@ -105,8 +114,36 @@ export default function Sidebar({
   categories,
   tags,
   currentCategorySlugPath,
+  sections,
 }: SidebarProps) {
   const [activeTab, setActiveTab] = useState<'recent' | 'popular'>('recent');
+
+  // Group categories by section
+  const categoriesBySection = sections && sections.length > 0
+    ? (() => {
+        const grouped: { section: DBSection | null; categories: Category[] }[] = [];
+
+        // Group categories by section
+        sections.forEach((section) => {
+          const sectionCategoryNames = section.categories.map((c) => c.name);
+          const sectionCategories = categories.filter((cat) =>
+            sectionCategoryNames.includes(cat.name)
+          );
+          if (sectionCategories.length > 0) {
+            grouped.push({ section, categories: sectionCategories });
+          }
+        });
+
+        // Add categories without section
+        const assignedNames = sections.flatMap((s) => s.categories.map((c) => c.name));
+        const uncategorized = categories.filter((cat) => !assignedNames.includes(cat.name));
+        if (uncategorized.length > 0) {
+          grouped.push({ section: null, categories: uncategorized });
+        }
+
+        return grouped;
+      })()
+    : [{ section: null, categories }];
 
   return (
     <aside className="space-y-8">
@@ -118,17 +155,28 @@ export default function Sidebar({
         <h3 className="text-lg font-semibold mb-4 sidebar-title">
           카테고리
         </h3>
-        <ul className="sidebar-divider-heart">
-          {categories.slice(0, 8).map((category) => (
-            <li key={category.slug}>
-              <CategoryTreeItem
-                category={category}
-                currentCategorySlugPath={currentCategorySlugPath}
-              />
-            </li>
+        <div className="space-y-4">
+          {categoriesBySection.map(({ section, categories: sectionCategories }) => (
+            <div key={section?.id || 'uncategorized'}>
+              {section && (
+                <div className="text-xs font-semibold text-indigo-600 dark:text-indigo-400 uppercase tracking-wider mb-2 pb-1 border-b border-indigo-200 dark:border-indigo-800">
+                  {section.title}
+                </div>
+              )}
+              <ul className="sidebar-divider-heart">
+                {sectionCategories.map((category) => (
+                  <li key={category.slug}>
+                    <CategoryTreeItem
+                      category={category}
+                      currentCategorySlugPath={currentCategorySlugPath}
+                    />
+                  </li>
+                ))}
+              </ul>
+            </div>
           ))}
-        </ul>
-        {categories.length > 8 && (
+        </div>
+        {categories.length > 10 && (
           <Link
             href="/blog"
             className="block mt-4 text-center text-sm text-violet-600 dark:text-violet-400 hover:underline"
