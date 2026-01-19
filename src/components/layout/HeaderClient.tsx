@@ -24,7 +24,7 @@ interface HeaderClientProps {
 }
 
 export default function HeaderClient({ posts }: HeaderClientProps) {
-  const { data: session } = useSession();
+  const { data: session, status } = useSession();
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [isSearchOpen, setIsSearchOpen] = useState(false);
   const [isUserMenuOpen, setIsUserMenuOpen] = useState(false);
@@ -98,7 +98,9 @@ export default function HeaderClient({ posts }: HeaderClientProps) {
             <ThemeToggle />
 
             {/* User Menu */}
-            {session ? (
+            {status === 'loading' ? (
+              <div className="w-8 h-8 rounded-full bg-gray-200 dark:bg-gray-700 animate-pulse" />
+            ) : session ? (
               <div className="relative">
                 <button
                   onClick={() => setIsUserMenuOpen(!isUserMenuOpen)}

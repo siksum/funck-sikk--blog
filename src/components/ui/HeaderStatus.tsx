@@ -45,6 +45,7 @@ function getAppIcon(appName: string | null): string {
 
 export default function HeaderStatus() {
   const [status, setStatus] = useState<Status | null>(null);
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     const fetchStatus = async () => {
@@ -56,6 +57,8 @@ export default function HeaderStatus() {
         }
       } catch (error) {
         console.error('Failed to fetch status:', error);
+      } finally {
+        setLoading(false);
       }
     };
 
@@ -66,6 +69,17 @@ export default function HeaderStatus() {
 
   const isOnline = status?.isOnline && status.updatedAt &&
     (new Date().getTime() - new Date(status.updatedAt).getTime()) < 5 * 60 * 1000;
+
+  // Loading skeleton
+  if (loading) {
+    return (
+      <div className="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-gray-100 dark:bg-gray-800/50">
+        <div className="w-4 h-4 rounded bg-gray-300 dark:bg-gray-600 animate-pulse" />
+        <div className="w-20 h-3 rounded bg-gray-300 dark:bg-gray-600 animate-pulse" />
+        <div className="w-2 h-2 rounded-full bg-gray-300 dark:bg-gray-600 animate-pulse" />
+      </div>
+    );
+  }
 
   return (
     <div className="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-gray-100 dark:bg-gray-800/50">
