@@ -79,16 +79,7 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Slug and title are required' }, { status: 400 });
     }
 
-    if (!fs.existsSync(postsDirectory)) {
-      fs.mkdirSync(postsDirectory, { recursive: true });
-    }
-
-    const filePath = path.join(postsDirectory, `${slug}.mdx`);
     const gitPath = `content/posts/${slug}.mdx`;
-
-    if (fs.existsSync(filePath)) {
-      return NextResponse.json({ error: 'Post already exists' }, { status: 409 });
-    }
 
     // Use local date to avoid UTC timezone issues
     const now = new Date();
@@ -107,6 +98,7 @@ export async function POST(request: NextRequest) {
 
     console.log('[POST] Environment flags:', { useGithub, isProduction, hasToken: !!process.env.GITHUB_TOKEN });
 
+    // In production/GitHub mode, skip local filesystem operations
     if (useGithub) {
       console.log('[POST] Attempting GitHub commit for:', gitPath);
       const success = await commitFile(
@@ -118,7 +110,6 @@ export async function POST(request: NextRequest) {
         return NextResponse.json({ error: 'GitHub 커밋 실패. GITHUB_TOKEN 권한을 확인하세요.' }, { status: 500 });
       }
       console.log('[POST] GitHub commit successful');
-      // GitHub mode: skip local file write (Vercel has read-only filesystem)
       return NextResponse.json({ success: true, slug, committed: true });
     }
 
@@ -130,7 +121,17 @@ export async function POST(request: NextRequest) {
       }, { status: 500 });
     }
 
-    // Local mode only: create local file
+    // Local development only - use filesystem
+    if (!fs.existsSync(postsDirectory)) {
+      fs.mkdirSync(postsDirectory, { recursive: true });
+    }
+
+    const filePath = path.join(postsDirectory, `${slug}.mdx`);
+
+    if (fs.existsSync(filePath)) {
+      return NextResponse.json({ error: 'Post already exists' }, { status: 409 });
+    }
+
     fs.writeFileSync(filePath, fileContent);
 
     return NextResponse.json({ success: true, slug, committed: false });
