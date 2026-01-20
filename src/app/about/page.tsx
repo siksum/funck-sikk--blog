@@ -57,7 +57,7 @@ export default function AboutPage() {
                   src="/profile.jpg"
                   alt="Namryeong Kim"
                   fill
-                  className="object-cover"
+                  className="object-cover object-top"
                   priority
                 />
               </div>
