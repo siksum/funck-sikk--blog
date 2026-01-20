@@ -81,6 +81,22 @@ const eventColors = [
   { name: '핑크', value: '#f9a8d4' },
 ];
 
+// Convert old saturated colors to pastel equivalents
+const colorToPastel: Record<string, string> = {
+  '#8b5cf6': '#c4b5fd', // violet
+  '#3b82f6': '#93c5fd', // blue
+  '#22c55e': '#86efac', // green
+  '#eab308': '#fde047', // yellow
+  '#f97316': '#fdba74', // orange
+  '#ef4444': '#fca5a5', // red
+  '#ec4899': '#f9a8d4', // pink
+};
+
+const getPastelColor = (color: string | null | undefined): string => {
+  if (!color) return '#c4b5fd';
+  return colorToPastel[color.toLowerCase()] || color;
+};
+
 const DEFAULT_EVENT_TYPES = ['일정', '기념일', '생일', '약속', '회의', '기타'];
 
 export default function MyWorldDashboard() {
@@ -676,7 +692,7 @@ export default function MyWorldDashboard() {
         title: event.title,
         description: event.description || '',
         type: event.type || '일정',
-        color: event.color || '#8b5cf6',
+        color: getPastelColor(event.color),
         isAllDay: event.isAllDay,
         startDate,
         endDate,
@@ -1398,7 +1414,7 @@ export default function MyWorldDashboard() {
                         <button
                           key={day}
                           onClick={() => setSelectedDate(dateStr)}
-                          className={`p-1 transition-all relative text-left align-top min-h-[80px] ${
+                          className={`p-1 transition-all relative min-h-[80px] flex flex-col items-start justify-start ${
                             !isLastRow ? 'border-b' : ''
                           } ${
                             !isLastCol ? 'border-r' : ''
@@ -1414,7 +1430,7 @@ export default function MyWorldDashboard() {
                                 : 'hover:bg-gray-50 dark:hover:bg-gray-700/50'
                           }`}
                         >
-                          <div className="flex items-start justify-between">
+                          <div className="w-full flex items-start justify-between">
                             <div
                               className={`text-sm font-medium ${
                                 isHoliday || isSunday ? 'text-red-500' : isSaturday ? 'text-blue-500' : 'text-gray-700 dark:text-gray-300'
@@ -1441,7 +1457,7 @@ export default function MyWorldDashboard() {
                                 <div
                                   key={event.id}
                                   className="text-xs px-1 py-0.5 rounded truncate font-medium"
-                                  style={{ backgroundColor: event.color || '#c4b5fd', color: '#374151' }}
+                                  style={{ backgroundColor: getPastelColor(event.color), color: '#374151' }}
                                   title={`${event.title}${event.location ? ` - ${event.location}` : ''}${event.url ? ' (링크)' : ''}`}
                                 >
                                   {event.title}
@@ -1482,7 +1498,7 @@ export default function MyWorldDashboard() {
                             width: `calc(${bar.span * colWidth}% - 4px)`,
                             top: `calc(${bar.row * rowHeight}% + 22px + ${barIndexInRow * 20}px)`,
                             height: '18px',
-                            backgroundColor: bar.event.color || '#c4b5fd',
+                            backgroundColor: getPastelColor(bar.event.color),
                             color: '#374151',
                             borderRadius: bar.isStart && bar.isEnd ? '4px' : bar.isStart ? '4px 0 0 4px' : bar.isEnd ? '0 4px 4px 0' : '0',
                           }}
@@ -1586,7 +1602,7 @@ export default function MyWorldDashboard() {
                               openEventModal(event);
                             }}
                             className="text-xs px-1 py-0.5 rounded truncate cursor-pointer hover:opacity-80 font-medium mb-0.5"
-                            style={{ backgroundColor: event.color || '#c4b5fd', color: '#374151' }}
+                            style={{ backgroundColor: getPastelColor(event.color), color: '#374151' }}
                           >
                             {event.title}
                           </div>
@@ -1611,7 +1627,7 @@ export default function MyWorldDashboard() {
                           width: `calc(${bar.span * colWidth}% - 4px)`,
                           top: `${4 + barIndex * 22}px`,
                           height: '20px',
-                          backgroundColor: bar.event.color || '#c4b5fd',
+                          backgroundColor: getPastelColor(bar.event.color),
                           color: '#374151',
                           borderRadius: bar.isStart && bar.isEnd ? '4px' : bar.isStart ? '4px 0 0 4px' : bar.isEnd ? '0 4px 4px 0' : '0',
                         }}
@@ -1693,7 +1709,7 @@ export default function MyWorldDashboard() {
                               style={{
                                 top: `${position.top}px`,
                                 height: `${Math.max(position.height, 20)}px`,
-                                backgroundColor: event.color || '#c4b5fd',
+                                backgroundColor: getPastelColor(event.color),
                                 color: '#374151',
                               }}
                             >
@@ -1775,8 +1791,8 @@ export default function MyWorldDashboard() {
                         key={event.id}
                         className="p-2 rounded-lg border-l-4 cursor-pointer hover:shadow-sm transition-all relative group"
                         style={{
-                          borderColor: event.color || '#c4b5fd',
-                          backgroundColor: `${event.color || '#c4b5fd'}30`
+                          borderColor: getPastelColor(event.color),
+                          backgroundColor: `${getPastelColor(event.color)}40`
                         }}
                         onClick={() => openEventModal(event)}
                       >
