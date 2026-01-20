@@ -1,6 +1,7 @@
 'use client';
 
 import Link from 'next/link';
+import Image from 'next/image';
 
 export default function AboutPreview() {
   const tags = [
@@ -46,14 +47,14 @@ export default function AboutPreview() {
         <div className="relative z-10 flex flex-col md:flex-row items-center gap-6 md:gap-10">
           {/* Profile Avatar */}
           <div
-            className="w-32 h-32 md:w-40 md:h-40 rounded-full bg-gradient-to-br from-violet-400 via-purple-400 to-violet-500 dark:from-violet-400 dark:via-purple-400 dark:to-violet-500 flex items-center justify-center text-3xl md:text-4xl font-bold shrink-0 text-white relative"
+            className="w-32 h-32 md:w-40 md:h-40 rounded-full shrink-0 relative overflow-hidden"
             style={{
               boxShadow: '0 0 30px var(--neon-pink-glow), inset 0 0 20px rgba(255, 255, 255, 0.1)',
             }}
           >
             {/* Rotating ring - dark mode only */}
             <div
-              className="absolute inset-[-4px] rounded-full border-2 border-transparent animate-spin hidden dark:block"
+              className="absolute inset-[-4px] rounded-full border-2 border-transparent animate-spin hidden dark:block z-10"
               style={{
                 animationDuration: '8s',
                 background: 'linear-gradient(0deg, transparent 40%, var(--neon-cyan) 50%, transparent 60%) border-box',
@@ -62,7 +63,13 @@ export default function AboutPreview() {
                 maskComposite: 'exclude',
               }}
             />
-            NK
+            <Image
+              src="/profile.jpg"
+              alt="Namryeong Kim"
+              fill
+              className="object-cover object-top"
+              priority
+            />
           </div>
 
           {/* Content */}
