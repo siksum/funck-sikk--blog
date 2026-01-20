@@ -1,70 +1,31 @@
 import { NextRequest, NextResponse } from 'next/server';
-import fs from 'fs';
-import path from 'path';
-import matter from 'gray-matter';
-import { commitFile, getFileContent, listFiles } from '@/lib/github';
+import { prisma } from '@/lib/db';
 
 export const dynamic = 'force-dynamic';
-
-const sikkDirectory = path.join(process.cwd(), 'content/sikk');
-
-const getEnvFlags = () => ({
-  useGithub: !!process.env.GITHUB_TOKEN,
-  isProduction: process.env.NODE_ENV === 'production' || process.env.VERCEL === '1',
-});
 
 export async function GET(request: NextRequest) {
   try {
     const { searchParams } = new URL(request.url);
     const includePrivate = searchParams.get('includePrivate') === 'true';
 
-    const { useGithub } = getEnvFlags();
-    const gitDirPath = 'content/sikk';
+    const posts = await prisma.sikkPost.findMany({
+      where: includePrivate ? {} : { isPublic: true },
+      orderBy: { date: 'desc' },
+    });
 
-    if (useGithub) {
-      const githubFiles = await listFiles(gitDirPath);
-      if (githubFiles && githubFiles.length > 0) {
-        const posts = await Promise.all(
-          githubFiles.map(async (filename) => {
-            const gitPath = `${gitDirPath}/${filename}`;
-            const fileContents = await getFileContent(gitPath);
-            if (!fileContents) return null;
+    // Transform to match existing format
+    const formattedPosts = posts.map((post) => ({
+      slug: post.slug,
+      title: post.title,
+      description: post.description || '',
+      date: post.date.toISOString().split('T')[0],
+      category: post.category || '',
+      tags: post.tags,
+      isPublic: post.isPublic,
+      content: post.content,
+    }));
 
-            const { data, content } = matter(fileContents);
-            return {
-              slug: filename.replace('.mdx', ''),
-              ...data,
-              content,
-            };
-          })
-        );
-
-        const filteredPosts = posts
-          .filter(Boolean)
-          .filter((post: any) => includePrivate || post.isPublic !== false);
-
-        return NextResponse.json(filteredPosts);
-      }
-    }
-
-    if (!fs.existsSync(sikkDirectory)) {
-      fs.mkdirSync(sikkDirectory, { recursive: true });
-    }
-
-    const files = fs.readdirSync(sikkDirectory).filter((f) => f.endsWith('.mdx'));
-    const posts = files.map((filename) => {
-      const filePath = path.join(sikkDirectory, filename);
-      const fileContents = fs.readFileSync(filePath, 'utf8');
-      const { data, content } = matter(fileContents);
-
-      return {
-        slug: filename.replace('.mdx', ''),
-        ...data,
-        content,
-      };
-    }).filter((post: any) => includePrivate || post.isPublic !== false);
-
-    return NextResponse.json(posts);
+    return NextResponse.json(formattedPosts);
   } catch (error) {
     console.error('Failed to fetch sikk posts:', error);
     return NextResponse.json({ error: 'Failed to fetch posts' }, { status: 500 });
@@ -80,56 +41,33 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Slug and title are required' }, { status: 400 });
     }
 
-    const gitPath = `content/sikk/${slug}.mdx`;
+    // Check if post already exists
+    const existing = await prisma.sikkPost.findUnique({
+      where: { slug },
+    });
 
-    // Use local date to avoid UTC timezone issues
-    const now = new Date();
-    const localDateStr = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`;
-    const postDate = date || localDateStr;
-    const frontmatter = {
-      title,
-      description: description || '',
-      date: postDate,
-      category: category || '',
-      tags: tags || [],
-      isPublic: isPublic !== false,
-    };
-
-    const fileContent = matter.stringify(content || '', frontmatter);
-    const { useGithub, isProduction } = getEnvFlags();
-
-    // In production/GitHub mode, skip local filesystem operations
-    if (useGithub) {
-      const success = await commitFile(
-        { path: gitPath, content: fileContent },
-        `sikk: Create "${title}"`
-      );
-      if (!success) {
-        return NextResponse.json({ error: 'GitHub commit failed' }, { status: 500 });
-      }
-      return NextResponse.json({ success: true, slug, committed: true });
-    }
-
-    if (isProduction) {
-      return NextResponse.json({
-        error: 'GITHUB_TOKEN not configured'
-      }, { status: 500 });
-    }
-
-    // Local development only - use filesystem
-    if (!fs.existsSync(sikkDirectory)) {
-      fs.mkdirSync(sikkDirectory, { recursive: true });
-    }
-
-    const filePath = path.join(sikkDirectory, `${slug}.mdx`);
-
-    if (fs.existsSync(filePath)) {
+    if (existing) {
       return NextResponse.json({ error: 'Post already exists' }, { status: 409 });
     }
 
-    fs.writeFileSync(filePath, fileContent);
+    // Parse date
+    const postDate = date ? new Date(date) : new Date();
 
-    return NextResponse.json({ success: true, slug, committed: false });
+    // Create post in database
+    const post = await prisma.sikkPost.create({
+      data: {
+        slug,
+        title,
+        description: description || '',
+        content: content || '',
+        category: category || '',
+        tags: tags || [],
+        isPublic: isPublic !== false,
+        date: postDate,
+      },
+    });
+
+    return NextResponse.json({ success: true, slug: post.slug, id: post.id });
   } catch (error) {
     console.error('Failed to create sikk post:', error);
     return NextResponse.json({ error: 'Failed to create post' }, { status: 500 });

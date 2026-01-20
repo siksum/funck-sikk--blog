@@ -1,9 +1,5 @@
-import fs from 'fs';
-import path from 'path';
-import matter from 'gray-matter';
+import { prisma } from '@/lib/db';
 import { Post, Category, CategoryTreeNode } from '@/types';
-
-const sikkDirectory = path.join(process.cwd(), 'content/sikk');
 
 function slugify(text: string): string {
   return text
@@ -19,72 +15,94 @@ function parseCategoryPath(category: string): string[] {
   return category.split('/').map((s) => s.trim()).filter(Boolean);
 }
 
-export function getSikkPostSlugs(): string[] {
-  if (!fs.existsSync(sikkDirectory)) {
-    return [];
-  }
-  return fs.readdirSync(sikkDirectory).filter((file) => file.endsWith('.mdx'));
-}
-
-export function getSikkPostBySlug(slug: string): Post | null {
-  const realSlug = slug.replace(/\.mdx$/, '');
-  const fullPath = path.join(sikkDirectory, `${realSlug}.mdx`);
-
-  if (!fs.existsSync(fullPath)) {
-    return null;
-  }
-
-  const fileContents = fs.readFileSync(fullPath, 'utf8');
-  const { data, content } = matter(fileContents);
-
-  const categoryPath = parseCategoryPath(data.category || '');
+// Transform database post to Post type
+function transformPost(dbPost: {
+  slug: string;
+  title: string;
+  description: string | null;
+  date: Date;
+  category: string | null;
+  tags: string[];
+  content: string;
+  isPublic: boolean;
+}): Post {
+  const categoryPath = parseCategoryPath(dbPost.category || '');
   const categorySlugPath = categoryPath.map(slugify);
 
   return {
-    slug: realSlug,
-    title: data.title || '',
-    description: data.description || '',
-    date: data.date || '',
-    category: data.category || '',
+    slug: dbPost.slug,
+    title: dbPost.title,
+    description: dbPost.description || '',
+    date: dbPost.date.toISOString().split('T')[0],
+    category: dbPost.category || '',
     categoryPath,
     categorySlugPath,
-    tags: data.tags || [],
-    thumbnail: data.thumbnail,
-    content,
-    isPublic: data.isPublic !== false,
+    tags: dbPost.tags,
+    content: dbPost.content,
+    isPublic: dbPost.isPublic,
   };
 }
 
-export function getAllSikkPosts(includePrivate: boolean = false): Post[] {
-  const slugs = getSikkPostSlugs();
-  const posts = slugs
-    .map((slug) => getSikkPostBySlug(slug.replace(/\.mdx$/, '')))
-    .filter((post): post is Post => post !== null)
-    .filter((post) => includePrivate || post.isPublic)
-    .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
+// ============ ASYNC FUNCTIONS (PRIMARY) ============
 
-  return posts;
+export async function getAllSikkPostsAsync(includePrivate: boolean = false): Promise<Post[]> {
+  const posts = await prisma.sikkPost.findMany({
+    where: includePrivate ? {} : { isPublic: true },
+    orderBy: { date: 'desc' },
+  });
+
+  return posts.map(transformPost);
 }
 
-export function getRecentSikkPosts(count: number = 5): Post[] {
-  return getAllSikkPosts().slice(0, count);
+export async function getSikkPostBySlugAsync(slug: string): Promise<Post | null> {
+  const post = await prisma.sikkPost.findUnique({
+    where: { slug },
+  });
+
+  if (!post) return null;
+  return transformPost(post);
 }
 
-export function getSikkPostsByCategory(category: string): Post[] {
-  return getAllSikkPosts().filter((post) => post.category === category);
+export async function getRecentSikkPostsAsync(count: number = 5): Promise<Post[]> {
+  const posts = await prisma.sikkPost.findMany({
+    where: { isPublic: true },
+    orderBy: { date: 'desc' },
+    take: count,
+  });
+
+  return posts.map(transformPost);
 }
 
-export function getSikkPostsByTag(tag: string): Post[] {
-  return getAllSikkPosts().filter((post) => post.tags.includes(tag));
+export async function getSikkPostsByCategoryAsync(category: string): Promise<Post[]> {
+  const posts = await prisma.sikkPost.findMany({
+    where: { category, isPublic: true },
+    orderBy: { date: 'desc' },
+  });
+
+  return posts.map(transformPost);
 }
 
-export function getAllSikkCategories(): { name: string; count: number }[] {
-  const posts = getAllSikkPosts();
+export async function getSikkPostsByTagAsync(tag: string): Promise<Post[]> {
+  const posts = await prisma.sikkPost.findMany({
+    where: {
+      tags: { has: tag },
+      isPublic: true,
+    },
+    orderBy: { date: 'desc' },
+  });
+
+  return posts.map(transformPost);
+}
+
+export async function getAllSikkCategoriesAsync(): Promise<{ name: string; count: number }[]> {
+  const posts = await getAllSikkPostsAsync();
   const categoryMap = new Map<string, number>();
 
   posts.forEach((post) => {
-    const count = categoryMap.get(post.category) || 0;
-    categoryMap.set(post.category, count + 1);
+    if (post.category) {
+      const count = categoryMap.get(post.category) || 0;
+      categoryMap.set(post.category, count + 1);
+    }
   });
 
   return Array.from(categoryMap.entries())
@@ -92,8 +110,8 @@ export function getAllSikkCategories(): { name: string; count: number }[] {
     .sort((a, b) => b.count - a.count);
 }
 
-export function getAllSikkTags(): { name: string; count: number }[] {
-  const posts = getAllSikkPosts();
+export async function getAllSikkTagsAsync(): Promise<{ name: string; count: number }[]> {
+  const posts = await getAllSikkPostsAsync();
   const tagMap = new Map<string, number>();
 
   posts.forEach((post) => {
@@ -108,8 +126,8 @@ export function getAllSikkTags(): { name: string; count: number }[] {
     .sort((a, b) => b.count - a.count);
 }
 
-export function buildSikkCategoryTree(): CategoryTreeNode {
-  const posts = getAllSikkPosts();
+async function buildSikkCategoryTreeAsync(): Promise<CategoryTreeNode> {
+  const posts = await getAllSikkPostsAsync();
   const root: CategoryTreeNode = {
     name: 'root',
     slug: '',
@@ -154,8 +172,8 @@ export function buildSikkCategoryTree(): CategoryTreeNode {
   return root;
 }
 
-export function getSikkRootCategories(): Category[] {
-  const tree = buildSikkCategoryTree();
+export async function getSikkRootCategoriesAsync(): Promise<Category[]> {
+  const tree = await buildSikkCategoryTreeAsync();
   return Object.values(tree.children).map((node) => ({
     name: node.name,
     slug: node.slug,
@@ -166,14 +184,14 @@ export function getSikkRootCategories(): Category[] {
   }));
 }
 
-export function getSikkRootCategoriesWithTags(): {
+export async function getSikkRootCategoriesWithTagsAsync(): Promise<{
   name: string;
   count: number;
   tags: string[];
   slugPath: string[];
-}[] {
-  const rootCategories = getSikkRootCategories();
-  const posts = getAllSikkPosts();
+}[]> {
+  const rootCategories = await getSikkRootCategoriesAsync();
+  const posts = await getAllSikkPostsAsync();
 
   return rootCategories
     .map((cat) => {
@@ -195,11 +213,11 @@ export function getSikkRootCategoriesWithTags(): {
     .sort((a, b) => a.name.localeCompare(b.name, 'ko'));
 }
 
-export function getRelatedSikkPosts(currentSlug: string, count: number = 3): Post[] {
-  const currentPost = getSikkPostBySlug(currentSlug);
+export async function getRelatedSikkPostsAsync(currentSlug: string, count: number = 3): Promise<Post[]> {
+  const currentPost = await getSikkPostBySlugAsync(currentSlug);
   if (!currentPost) return [];
 
-  const allPosts = getAllSikkPosts().filter((p) => p.slug !== currentSlug);
+  const allPosts = (await getAllSikkPostsAsync()).filter((p) => p.slug !== currentSlug);
 
   const scored = allPosts.map((post) => {
     let score = 0;
@@ -216,8 +234,8 @@ export function getRelatedSikkPosts(currentSlug: string, count: number = 3): Pos
     .map((s) => s.post);
 }
 
-export function getAdjacentSikkPosts(currentSlug: string): { prevPost: Post | null; nextPost: Post | null } {
-  const posts = getAllSikkPosts();
+export async function getAdjacentSikkPostsAsync(currentSlug: string): Promise<{ prevPost: Post | null; nextPost: Post | null }> {
+  const posts = await getAllSikkPostsAsync();
   const currentIndex = posts.findIndex((p) => p.slug === currentSlug);
 
   return {
@@ -226,55 +244,9 @@ export function getAdjacentSikkPosts(currentSlug: string): { prevPost: Post | nu
   };
 }
 
-// Async versions (for consistency with blog)
-export async function getAllSikkPostsAsync(includePrivate: boolean = false): Promise<Post[]> {
-  return getAllSikkPosts(includePrivate);
-}
-
-export async function getSikkPostBySlugAsync(slug: string): Promise<Post | null> {
-  return getSikkPostBySlug(slug);
-}
-
-export async function getRecentSikkPostsAsync(count: number = 5): Promise<Post[]> {
-  return getRecentSikkPosts(count);
-}
-
-export async function getAllSikkCategoriesAsync(): Promise<{ name: string; count: number }[]> {
-  return getAllSikkCategories();
-}
-
-export async function getAllSikkTagsAsync(): Promise<{ name: string; count: number }[]> {
-  return getAllSikkTags();
-}
-
-export async function getSikkRootCategoriesAsync(): Promise<Category[]> {
-  return getSikkRootCategories();
-}
-
-export async function getSikkRootCategoriesWithTagsAsync(): Promise<{
-  name: string;
-  count: number;
-  tags: string[];
-  slugPath: string[];
-}[]> {
-  return getSikkRootCategoriesWithTags();
-}
-
-export async function getRelatedSikkPostsAsync(currentSlug: string, count: number = 3): Promise<Post[]> {
-  return getRelatedSikkPosts(currentSlug, count);
-}
-
-export async function getAdjacentSikkPostsAsync(currentSlug: string): Promise<{ prevPost: Post | null; nextPost: Post | null }> {
-  return getAdjacentSikkPosts(currentSlug);
-}
-
-export async function getSikkPostsByTagAsync(tag: string): Promise<Post[]> {
-  return getSikkPostsByTag(tag);
-}
-
 // Category helper functions
-export function getSikkCategoryBySlugPath(slugPath: string[]): CategoryTreeNode | null {
-  const tree = buildSikkCategoryTree();
+export async function getSikkCategoryBySlugPathAsync(slugPath: string[]): Promise<CategoryTreeNode | null> {
+  const tree = await buildSikkCategoryTreeAsync();
   let current = tree;
 
   for (const slug of slugPath) {
@@ -287,8 +259,8 @@ export function getSikkCategoryBySlugPath(slugPath: string[]): CategoryTreeNode 
   return current;
 }
 
-export function getAllSikkCategoriesHierarchical(): Category[] {
-  const tree = buildSikkCategoryTree();
+export async function getAllSikkCategoriesHierarchicalAsync(): Promise<Category[]> {
+  const tree = await buildSikkCategoryTreeAsync();
   const categories: Category[] = [];
 
   function traverse(node: CategoryTreeNode, depth: number = 0) {
@@ -321,11 +293,11 @@ export function getAllSikkCategoriesHierarchical(): Category[] {
   return categories;
 }
 
-export function getSikkPostsByCategoryPath(
+export async function getSikkPostsByCategoryPathAsync(
   slugPath: string[],
   includeChildren: boolean = true
-): Post[] {
-  const posts = getAllSikkPosts();
+): Promise<Post[]> {
+  const posts = await getAllSikkPostsAsync();
 
   return posts.filter((post) => {
     if (includeChildren) {
@@ -339,8 +311,8 @@ export function getSikkPostsByCategoryPath(
   });
 }
 
-export function getSikkChildCategories(slugPath: string[]): Category[] {
-  const category = getSikkCategoryBySlugPath(slugPath);
+export async function getSikkChildCategoriesAsync(slugPath: string[]): Promise<Category[]> {
+  const category = await getSikkCategoryBySlugPathAsync(slugPath);
   if (!category) return [];
 
   return Object.values(category.children)
@@ -355,14 +327,14 @@ export function getSikkChildCategories(slugPath: string[]): Category[] {
     .sort((a, b) => a.name.localeCompare(b.name, 'ko'));
 }
 
-export function getSikkChildCategoriesWithTags(slugPath: string[]): {
+export async function getSikkChildCategoriesWithTagsAsync(slugPath: string[]): Promise<{
   name: string;
   count: number;
   tags: string[];
   slugPath: string[];
-}[] {
-  const childCategories = getSikkChildCategories(slugPath);
-  const posts = getAllSikkPosts();
+}[]> {
+  const childCategories = await getSikkChildCategoriesAsync(slugPath);
+  const posts = await getAllSikkPostsAsync();
 
   return childCategories
     .map((cat) => {
@@ -384,31 +356,74 @@ export function getSikkChildCategoriesWithTags(slugPath: string[]): {
     .sort((a, b) => a.name.localeCompare(b.name, 'ko'));
 }
 
-// Async versions of new functions
-export async function getSikkCategoryBySlugPathAsync(slugPath: string[]): Promise<CategoryTreeNode | null> {
-  return getSikkCategoryBySlugPath(slugPath);
+// ============ SYNC WRAPPERS (FOR COMPATIBILITY) ============
+// Note: These now just throw errors since we need async for DB
+// Use the async versions instead
+
+export function getAllSikkPosts(): Post[] {
+  throw new Error('Use getAllSikkPostsAsync instead - sync functions are deprecated');
 }
 
-export async function getAllSikkCategoriesHierarchicalAsync(): Promise<Category[]> {
-  return getAllSikkCategoriesHierarchical();
+export function getSikkPostBySlug(): Post | null {
+  throw new Error('Use getSikkPostBySlugAsync instead - sync functions are deprecated');
 }
 
-export async function getSikkPostsByCategoryPathAsync(
-  slugPath: string[],
-  includeChildren: boolean = true
-): Promise<Post[]> {
-  return getSikkPostsByCategoryPath(slugPath, includeChildren);
+export function getRecentSikkPosts(): Post[] {
+  throw new Error('Use getRecentSikkPostsAsync instead - sync functions are deprecated');
 }
 
-export async function getSikkChildCategoriesAsync(slugPath: string[]): Promise<Category[]> {
-  return getSikkChildCategories(slugPath);
+export function getSikkPostsByCategory(): Post[] {
+  throw new Error('Use getSikkPostsByCategoryAsync instead - sync functions are deprecated');
 }
 
-export async function getSikkChildCategoriesWithTagsAsync(slugPath: string[]): Promise<{
-  name: string;
-  count: number;
-  tags: string[];
-  slugPath: string[];
-}[]> {
-  return getSikkChildCategoriesWithTags(slugPath);
+export function getSikkPostsByTag(): Post[] {
+  throw new Error('Use getSikkPostsByTagAsync instead - sync functions are deprecated');
+}
+
+export function getAllSikkCategories(): { name: string; count: number }[] {
+  throw new Error('Use getAllSikkCategoriesAsync instead - sync functions are deprecated');
+}
+
+export function getAllSikkTags(): { name: string; count: number }[] {
+  throw new Error('Use getAllSikkTagsAsync instead - sync functions are deprecated');
+}
+
+export function buildSikkCategoryTree(): CategoryTreeNode {
+  throw new Error('Use buildSikkCategoryTreeAsync instead - sync functions are deprecated');
+}
+
+export function getSikkRootCategories(): Category[] {
+  throw new Error('Use getSikkRootCategoriesAsync instead - sync functions are deprecated');
+}
+
+export function getSikkRootCategoriesWithTags(): { name: string; count: number; tags: string[]; slugPath: string[] }[] {
+  throw new Error('Use getSikkRootCategoriesWithTagsAsync instead - sync functions are deprecated');
+}
+
+export function getRelatedSikkPosts(): Post[] {
+  throw new Error('Use getRelatedSikkPostsAsync instead - sync functions are deprecated');
+}
+
+export function getAdjacentSikkPosts(): { prevPost: Post | null; nextPost: Post | null } {
+  throw new Error('Use getAdjacentSikkPostsAsync instead - sync functions are deprecated');
+}
+
+export function getSikkCategoryBySlugPath(): CategoryTreeNode | null {
+  throw new Error('Use getSikkCategoryBySlugPathAsync instead - sync functions are deprecated');
+}
+
+export function getAllSikkCategoriesHierarchical(): Category[] {
+  throw new Error('Use getAllSikkCategoriesHierarchicalAsync instead - sync functions are deprecated');
+}
+
+export function getSikkPostsByCategoryPath(): Post[] {
+  throw new Error('Use getSikkPostsByCategoryPathAsync instead - sync functions are deprecated');
+}
+
+export function getSikkChildCategories(): Category[] {
+  throw new Error('Use getSikkChildCategoriesAsync instead - sync functions are deprecated');
+}
+
+export function getSikkChildCategoriesWithTags(): { name: string; count: number; tags: string[]; slugPath: string[] }[] {
+  throw new Error('Use getSikkChildCategoriesWithTagsAsync instead - sync functions are deprecated');
 }
