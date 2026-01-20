@@ -3,6 +3,12 @@ import { prisma } from '@/lib/db';
 import { auth } from '@/lib/auth';
 import { createHash } from 'crypto';
 
+// Admin emails that should not be tracked
+const ADMIN_EMAILS = [
+  process.env.ADMIN_EMAIL,
+  'sikk@sikk.kr',
+].filter(Boolean);
+
 // Generate a visitor hash from IP and User Agent
 function generateVisitorHash(ip: string, userAgent: string): string {
   const data = `${ip}:${userAgent}`;
@@ -24,6 +30,11 @@ function getClientIP(request: NextRequest): string {
 
 // Check if user agent is a bot/crawler
 function isBot(userAgent: string): boolean {
+  // Empty or very short user agent is suspicious
+  if (!userAgent || userAgent.length < 20) {
+    return true;
+  }
+
   const botPatterns = [
     /bot/i,
     /crawler/i,
@@ -54,11 +65,37 @@ function isBot(userAgent: string): boolean {
     /axios/i,
     /node-fetch/i,
     /go-http-client/i,
-    /java/i,
+    /java\//i,
     /apache-httpclient/i,
     /okhttp/i,
     /postman/i,
     /insomnia/i,
+    /libwww/i,
+    /httpunit/i,
+    /nutch/i,
+    /phpcrawl/i,
+    /msnbot/i,
+    /adidxbot/i,
+    /blekkobot/i,
+    /teoma/i,
+    /gigabot/i,
+    /dotbot/i,
+    /ahrefsbot/i,
+    /semrushbot/i,
+    /mj12bot/i,
+    /rogerbot/i,
+    /exabot/i,
+    /scrapy/i,
+    /feedfetcher/i,
+    /monitoring/i,
+    /uptime/i,
+    /pingdom/i,
+    /statuspage/i,
+    /dataprovider/i,
+    /censys/i,
+    /nmap/i,
+    /masscan/i,
+    /zgrab/i,
   ];
 
   return botPatterns.some(pattern => pattern.test(userAgent));
@@ -66,10 +103,17 @@ function isBot(userAgent: string): boolean {
 
 export async function POST(request: NextRequest) {
   try {
-    // Server-side filter: Skip admin users
+    // Server-side filter: Skip any logged-in user (admin check)
     const session = await auth();
+
+    // Skip if user is admin by isAdmin flag
     if (session?.user?.isAdmin) {
       return NextResponse.json({ success: true, skipped: 'admin_user' });
+    }
+
+    // Skip if user email is in admin list
+    if (session?.user?.email && ADMIN_EMAILS.includes(session.user.email)) {
+      return NextResponse.json({ success: true, skipped: 'admin_email' });
     }
 
     const { path, slug } = await request.json();
