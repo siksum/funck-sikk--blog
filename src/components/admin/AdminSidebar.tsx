@@ -2,7 +2,7 @@
 
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { signOut } from 'next-auth/react';
+import { signOutCompletely } from '@/lib/auth-client';
 
 interface AdminSidebarProps {
   user: {
@@ -69,7 +69,7 @@ export default function AdminSidebar({ user }: AdminSidebarProps) {
           </div>
         </div>
         <button
-          onClick={() => signOut({ callbackUrl: '/' })}
+          onClick={() => signOutCompletely('/')}
           className="w-full px-4 py-2 text-sm text-gray-300 hover:text-white hover:bg-gray-800 rounded-lg transition-colors"
         >
           로그아웃
