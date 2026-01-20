@@ -246,6 +246,22 @@ export default function MapPage() {
     window.open(url, '_blank');
   };
 
+  // Reverse geocode to get address from coordinates
+  const reverseGeocode = useCallback((lat: number, lng: number) => {
+    const geocoder = new google.maps.Geocoder();
+    geocoder.geocode(
+      { location: { lat, lng }, language: 'ko' },
+      (results, status) => {
+        if (status === google.maps.GeocoderStatus.OK && results && results[0]) {
+          setForm((prev) => ({
+            ...prev,
+            address: results[0].formatted_address,
+          }));
+        }
+      }
+    );
+  }, []);
+
   // Add new category
   const addCategory = () => {
     if (!newCategoryName.trim()) return;
@@ -698,12 +714,16 @@ export default function MapPage() {
                 }}
                 onClick={(e) => {
                   if (e.latLng) {
+                    const lat = e.latLng.lat();
+                    const lng = e.latLng.lng();
                     setForm({
                       ...form,
-                      latitude: e.latLng.lat(),
-                      longitude: e.latLng.lng(),
+                      latitude: lat,
+                      longitude: lng,
                     });
-                    setMapCenter({ lat: e.latLng.lat(), lng: e.latLng.lng() });
+                    setMapCenter({ lat, lng });
+                    // Get address from coordinates
+                    reverseGeocode(lat, lng);
                   }
                 }}
                 options={{
