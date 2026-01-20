@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect, useCallback, useRef } from 'react';
-import { GoogleMap, useJsApiLoader, Marker, InfoWindow, Autocomplete } from '@react-google-maps/api';
+import { GoogleMap, useJsApiLoader, Marker, InfoWindow } from '@react-google-maps/api';
 
 const libraries: ("places")[] = ['places'];
 import { useTheme } from 'next-themes';
@@ -150,8 +150,94 @@ export default function MapPage() {
   const [showCategoryEditor, setShowCategoryEditor] = useState(false);
   const [newCategoryName, setNewCategoryName] = useState('');
   const [newCategoryIcon, setNewCategoryIcon] = useState('📍');
-  const autocompleteRef = useRef<google.maps.places.Autocomplete | null>(null);
+  const [userLocation, setUserLocation] = useState<{ lat: number; lng: number } | null>(null);
+  const [placeResults, setPlaceResults] = useState<Array<{
+    name: string;
+    address: string;
+    lat: number;
+    lng: number;
+    rating?: number;
+    distance?: number;
+  }>>([]);
+  const [isSearching, setIsSearching] = useState(false);
+  const mapRef = useRef<google.maps.Map | null>(null);
   const { theme } = useTheme();
+
+  // Get user's current location
+  useEffect(() => {
+    if (navigator.geolocation) {
+      navigator.geolocation.getCurrentPosition(
+        (position) => {
+          setUserLocation({
+            lat: position.coords.latitude,
+            lng: position.coords.longitude,
+          });
+        },
+        (error) => {
+          console.log('Geolocation error:', error);
+        }
+      );
+    }
+  }, []);
+
+  // Calculate distance between two points (Haversine formula)
+  const calculateDistance = (lat1: number, lng1: number, lat2: number, lng2: number): number => {
+    const R = 6371; // Earth's radius in km
+    const dLat = (lat2 - lat1) * Math.PI / 180;
+    const dLng = (lng2 - lng1) * Math.PI / 180;
+    const a = Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+      Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) *
+      Math.sin(dLng / 2) * Math.sin(dLng / 2);
+    const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+    return R * c;
+  };
+
+  // Search places using PlacesService
+  const searchPlaces = useCallback(() => {
+    if (!mapRef.current || !placeSearchQuery.trim()) return;
+
+    setIsSearching(true);
+    const service = new google.maps.places.PlacesService(mapRef.current);
+    const searchLocation = userLocation || mapCenter;
+
+    service.textSearch(
+      {
+        query: placeSearchQuery,
+        location: new google.maps.LatLng(searchLocation.lat, searchLocation.lng),
+        radius: 50000, // 50km radius
+      },
+      (results, status) => {
+        setIsSearching(false);
+        if (status === google.maps.places.PlacesServiceStatus.OK && results) {
+          const placesWithDistance = results.map((place) => {
+            const lat = place.geometry?.location?.lat() || 0;
+            const lng = place.geometry?.location?.lng() || 0;
+            const distance = userLocation
+              ? calculateDistance(userLocation.lat, userLocation.lng, lat, lng)
+              : calculateDistance(searchLocation.lat, searchLocation.lng, lat, lng);
+
+            return {
+              name: place.name || '',
+              address: place.formatted_address || '',
+              lat,
+              lng,
+              rating: place.rating,
+              distance,
+            };
+          });
+
+          // Sort by distance and take top 10
+          const sortedResults = placesWithDistance
+            .sort((a, b) => (a.distance || 0) - (b.distance || 0))
+            .slice(0, 10);
+
+          setPlaceResults(sortedResults);
+        } else {
+          setPlaceResults([]);
+        }
+      }
+    );
+  }, [placeSearchQuery, userLocation, mapCenter]);
 
   // Open Google Maps directions
   const openDirections = (lat: number, lng: number, name: string) => {
@@ -239,29 +325,6 @@ export default function MapPage() {
     }
   };
 
-  const onAutocompleteLoad = useCallback((autocomplete: google.maps.places.Autocomplete) => {
-    autocompleteRef.current = autocomplete;
-  }, []);
-
-  const onPlaceChanged = useCallback(() => {
-    if (autocompleteRef.current) {
-      const place = autocompleteRef.current.getPlace();
-      if (place.geometry?.location) {
-        const lat = place.geometry.location.lat();
-        const lng = place.geometry.location.lng();
-        setSearchedPlace({
-          name: place.name || '',
-          address: place.formatted_address || '',
-          lat,
-          lng,
-          rating: place.rating,
-        });
-        setMapCenter({ lat, lng });
-        setPlaceSearchQuery(place.name || '');
-      }
-    }
-  }, []);
-
   const saveSearchedPlace = () => {
     if (searchedPlace) {
       setEditingLocation(null);
@@ -278,6 +341,7 @@ export default function MapPage() {
       });
       setSearchedPlace(null);
       setPlaceSearchQuery('');
+      setPlaceResults([]);
     }
   };
 
@@ -424,58 +488,81 @@ export default function MapPage() {
         <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-sm border border-violet-100 dark:border-violet-900/30 p-4">
           <h4 className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">새 장소 검색</h4>
           <div className="flex gap-2">
-            {isLoaded ? (
-              <Autocomplete
-                onLoad={onAutocompleteLoad}
-                onPlaceChanged={onPlaceChanged}
-                options={{
-                  componentRestrictions: { country: 'kr' },
-                  fields: ['name', 'formatted_address', 'geometry', 'rating'],
-                }}
-                className="flex-1"
-              >
-                <input
-                  type="text"
-                  value={placeSearchQuery}
-                  onChange={(e) => setPlaceSearchQuery(e.target.value)}
-                  onKeyDown={(e) => {
-                    if (e.key === 'Enter') {
-                      e.preventDefault();
-                      // Trigger autocomplete selection if available
-                      if (autocompleteRef.current) {
-                        const place = autocompleteRef.current.getPlace();
-                        if (place?.geometry?.location) {
-                          onPlaceChanged();
-                        }
-                      }
-                    }
-                  }}
-                  placeholder="CGV 용산, 스타벅스 강남..."
-                  className="w-full px-3 py-2 rounded-lg border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white text-sm"
-                />
-              </Autocomplete>
-            ) : (
-              <input
-                type="text"
-                disabled
-                placeholder="로딩 중..."
-                className="flex-1 px-3 py-2 rounded-lg border border-gray-200 dark:border-gray-600 bg-gray-100 dark:bg-gray-700 text-gray-500 text-sm"
-              />
-            )}
-            <button
-              onClick={() => {
-                if (autocompleteRef.current) {
-                  const place = autocompleteRef.current.getPlace();
-                  if (place?.geometry?.location) {
-                    onPlaceChanged();
-                  }
+            <input
+              type="text"
+              value={placeSearchQuery}
+              onChange={(e) => setPlaceSearchQuery(e.target.value)}
+              onKeyDown={(e) => {
+                if (e.key === 'Enter') {
+                  e.preventDefault();
+                  searchPlaces();
                 }
               }}
-              className="px-3 py-2 bg-violet-600 text-white rounded-lg hover:bg-violet-700 text-sm"
+              placeholder="스타벅스, CGV 용산..."
+              className="flex-1 px-3 py-2 rounded-lg border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white text-sm"
+            />
+            <button
+              onClick={searchPlaces}
+              disabled={isSearching || !isLoaded}
+              className="px-3 py-2 bg-violet-600 text-white rounded-lg hover:bg-violet-700 text-sm disabled:opacity-50"
             >
-              검색
+              {isSearching ? '...' : '검색'}
             </button>
           </div>
+          {/* Search Results - up to 10, sorted by distance */}
+          {placeResults.length > 0 && (
+            <div className="mt-3 max-h-[250px] overflow-y-auto space-y-2">
+              <div className="text-xs text-gray-500 dark:text-gray-400 mb-1">
+                가까운 순 ({placeResults.length}개 결과)
+              </div>
+              {placeResults.map((place, idx) => (
+                <div
+                  key={idx}
+                  onClick={() => {
+                    setSearchedPlace(place);
+                    setMapCenter({ lat: place.lat, lng: place.lng });
+                  }}
+                  className={`p-2 rounded-lg border cursor-pointer transition-colors ${
+                    searchedPlace?.lat === place.lat && searchedPlace?.lng === place.lng
+                      ? 'border-violet-500 bg-violet-50 dark:bg-violet-900/30'
+                      : 'border-gray-200 dark:border-gray-600 hover:bg-gray-50 dark:hover:bg-gray-700'
+                  }`}
+                >
+                  <div className="flex items-center justify-between">
+                    <div className="flex-1 min-w-0">
+                      <p className="font-medium text-gray-900 dark:text-white text-sm truncate">{place.name}</p>
+                      <p className="text-xs text-gray-500 dark:text-gray-400 truncate">{place.address}</p>
+                      <div className="flex items-center gap-2 mt-1">
+                        {place.rating && (
+                          <span className="text-xs text-gray-600 dark:text-gray-400">
+                            <span className="text-yellow-400">★</span> {place.rating.toFixed(1)}
+                          </span>
+                        )}
+                        {place.distance !== undefined && (
+                          <span className="text-xs text-blue-600 dark:text-blue-400">
+                            {place.distance < 1
+                              ? `${Math.round(place.distance * 1000)}m`
+                              : `${place.distance.toFixed(1)}km`}
+                          </span>
+                        )}
+                      </div>
+                    </div>
+                    <button
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        setSearchedPlace(place);
+                        setMapCenter({ lat: place.lat, lng: place.lng });
+                      }}
+                      className="ml-2 px-2 py-1 text-xs bg-violet-600 text-white rounded hover:bg-violet-700"
+                    >
+                      선택
+                    </button>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+          {/* Selected place info */}
           {searchedPlace && (
             <div className="mt-3 p-3 bg-violet-50 dark:bg-violet-900/20 rounded-lg border border-violet-200 dark:border-violet-800">
               <div className="flex items-center justify-between">
@@ -677,13 +764,16 @@ export default function MapPage() {
       {/* Main Content: Map + Form */}
       <div className="flex flex-col lg:flex-row gap-6 mb-6">
         {/* Left: Map */}
-        <div className="lg:w-1/3">
+        <div className="lg:w-1/2">
           <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-sm border border-violet-100 dark:border-violet-900/30 overflow-hidden h-[500px]">
             {isLoaded ? (
               <GoogleMap
                 mapContainerStyle={mapContainerStyle}
                 center={mapCenter}
                 zoom={12}
+                onLoad={(map) => {
+                  mapRef.current = map;
+                }}
                 onClick={(e) => {
                   if (e.latLng) {
                     setForm({
@@ -833,7 +923,7 @@ export default function MapPage() {
         </div>
 
         {/* Right: Form */}
-        <div className="lg:w-2/3">
+        <div className="lg:w-1/2">
           <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-sm border border-violet-100 dark:border-violet-900/30 p-4">
             <div className="flex items-center justify-between mb-3">
               <h3 className="text-sm font-semibold text-gray-900 dark:text-white">
