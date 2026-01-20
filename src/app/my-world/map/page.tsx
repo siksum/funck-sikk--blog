@@ -140,8 +140,26 @@ export default function MapPage() {
     lng: number;
     rating?: number;
   } | null>(null);
+  const [selectedTags, setSelectedTags] = useState<string[]>([]);
+  const [selectedRegion, setSelectedRegion] = useState<string | null>(null);
+  const [infoWindowTags, setInfoWindowTags] = useState('');
+  const [showMyLocationResults, setShowMyLocationResults] = useState(false);
   const autocompleteRef = useRef<google.maps.places.Autocomplete | null>(null);
   const { theme } = useTheme();
+
+  // Extract unique tags and regions from all locations
+  const allTags = Array.from(new Set(locations.flatMap((loc) => loc.tags))).filter(Boolean);
+  const allRegions = Array.from(
+    new Set(
+      locations
+        .map((loc) => {
+          // Extract region from address (e.g., "서울특별시 용산구" -> "용산구")
+          const match = loc.address?.match(/([가-힣]+[시군구])/);
+          return match ? match[1] : null;
+        })
+        .filter(Boolean)
+    )
+  ) as string[];
 
   const { isLoaded } = useJsApiLoader({
     id: 'google-map-script',
@@ -319,11 +337,45 @@ export default function MapPage() {
     return categories.find((c) => c.value === category) || categories[categories.length - 1];
   };
 
-  const filteredLocations = locations.filter((loc) =>
-    loc.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    loc.address?.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    loc.tags.some((t) => t.toLowerCase().includes(searchQuery.toLowerCase()))
-  );
+  const filteredLocations = locations.filter((loc) => {
+    // Text search filter
+    const matchesSearch = !searchQuery ||
+      loc.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      loc.address?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      loc.tags.some((t) => t.toLowerCase().includes(searchQuery.toLowerCase()));
+
+    // Tag filter
+    const matchesTags = selectedTags.length === 0 ||
+      selectedTags.some((tag) => loc.tags.includes(tag));
+
+    // Region filter
+    const matchesRegion = !selectedRegion ||
+      loc.address?.includes(selectedRegion);
+
+    return matchesSearch && matchesTags && matchesRegion;
+  });
+
+  // Top N search results for display
+  const searchResults = searchQuery ? filteredLocations.slice(0, 5) : [];
+
+  // Quick tag update from InfoWindow
+  const handleQuickTagUpdate = async (locationId: string, newTags: string) => {
+    try {
+      const res = await fetch(`/api/my-world/locations/${locationId}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          tags: newTags.split(',').map((t) => t.trim()).filter(Boolean),
+        }),
+      });
+      if (res.ok) {
+        fetchLocations();
+        setInfoWindowTags('');
+      }
+    } catch (error) {
+      console.error('Failed to update tags:', error);
+    }
+  };
 
   return (
     <div className="max-w-7xl mx-auto">
@@ -332,9 +384,11 @@ export default function MapPage() {
         <h1 className="text-2xl font-bold text-gray-900 dark:text-white">지도</h1>
       </div>
 
-      {/* Google Places Search */}
-      <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-sm border border-violet-100 dark:border-violet-900/30 p-4 mb-4">
-        <div className="flex flex-col gap-3">
+      {/* Search Section */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 mb-4">
+        {/* Google Places Search */}
+        <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-sm border border-violet-100 dark:border-violet-900/30 p-4">
+          <h4 className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">새 장소 검색</h4>
           <div className="flex gap-2">
             {isLoaded ? (
               <Autocomplete
@@ -350,88 +404,214 @@ export default function MapPage() {
                   type="text"
                   value={placeSearchQuery}
                   onChange={(e) => setPlaceSearchQuery(e.target.value)}
-                  placeholder="새로운 장소 검색 (예: CGV 용산, 스타벅스 강남)"
-                  className="w-full px-4 py-2 rounded-lg border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
+                  placeholder="CGV 용산, 스타벅스 강남..."
+                  className="w-full px-3 py-2 rounded-lg border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white text-sm"
                 />
               </Autocomplete>
             ) : (
               <input
                 type="text"
                 disabled
-                placeholder="지도 로딩 중..."
-                className="flex-1 px-4 py-2 rounded-lg border border-gray-200 dark:border-gray-600 bg-gray-100 dark:bg-gray-700 text-gray-500"
+                placeholder="로딩 중..."
+                className="flex-1 px-3 py-2 rounded-lg border border-gray-200 dark:border-gray-600 bg-gray-100 dark:bg-gray-700 text-gray-500 text-sm"
               />
             )}
           </div>
           {searchedPlace && (
-            <div className="flex items-center justify-between p-3 bg-violet-50 dark:bg-violet-900/20 rounded-lg border border-violet-200 dark:border-violet-800">
-              <div>
-                <p className="font-medium text-gray-900 dark:text-white">{searchedPlace.name}</p>
-                <p className="text-sm text-gray-500 dark:text-gray-400">{searchedPlace.address}</p>
-                {searchedPlace.rating && (
-                  <div className="flex items-center gap-1 mt-1">
-                    <span className="text-yellow-400">★</span>
-                    <span className="text-sm text-gray-600 dark:text-gray-400">{searchedPlace.rating.toFixed(1)}</span>
-                  </div>
-                )}
+            <div className="mt-3 p-3 bg-violet-50 dark:bg-violet-900/20 rounded-lg border border-violet-200 dark:border-violet-800">
+              <div className="flex items-center justify-between">
+                <div className="flex-1 min-w-0">
+                  <p className="font-medium text-gray-900 dark:text-white text-sm truncate">{searchedPlace.name}</p>
+                  <p className="text-xs text-gray-500 dark:text-gray-400 truncate">{searchedPlace.address}</p>
+                  {searchedPlace.rating && (
+                    <div className="flex items-center gap-1 mt-1">
+                      <span className="text-yellow-400 text-xs">★</span>
+                      <span className="text-xs text-gray-600 dark:text-gray-400">{searchedPlace.rating.toFixed(1)}</span>
+                    </div>
+                  )}
+                </div>
+                <div className="flex gap-2 ml-2">
+                  <button
+                    onClick={() => setSearchedPlace(null)}
+                    className="px-2 py-1 text-xs text-gray-600 dark:text-gray-400 hover:bg-gray-200 dark:hover:bg-gray-700 rounded"
+                  >
+                    취소
+                  </button>
+                  <button
+                    onClick={saveSearchedPlace}
+                    className="px-2 py-1 text-xs bg-violet-600 text-white rounded hover:bg-violet-700"
+                  >
+                    추가
+                  </button>
+                </div>
               </div>
-              <div className="flex gap-2">
-                <button
-                  onClick={() => setSearchedPlace(null)}
-                  className="px-3 py-1.5 text-sm text-gray-600 dark:text-gray-400 hover:bg-gray-200 dark:hover:bg-gray-700 rounded-lg"
-                >
-                  취소
-                </button>
-                <button
-                  onClick={saveSearchedPlace}
-                  className="px-3 py-1.5 text-sm bg-violet-600 text-white rounded-lg hover:bg-violet-700"
-                >
-                  내 장소에 추가
-                </button>
-              </div>
+            </div>
+          )}
+        </div>
+
+        {/* My Locations Search */}
+        <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-sm border border-violet-100 dark:border-violet-900/30 p-4">
+          <h4 className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">내 장소 검색</h4>
+          <div className="flex gap-2">
+            <input
+              type="text"
+              value={searchQuery}
+              onChange={(e) => {
+                setSearchQuery(e.target.value);
+                setShowMyLocationResults(true);
+              }}
+              onKeyDown={(e) => {
+                if (e.key === 'Enter') {
+                  setShowMyLocationResults(true);
+                }
+              }}
+              placeholder="이름, 주소, 태그로 검색..."
+              className="flex-1 px-3 py-2 rounded-lg border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white text-sm"
+            />
+            <button
+              onClick={() => setShowMyLocationResults(true)}
+              className="px-3 py-2 bg-violet-600 text-white rounded-lg hover:bg-violet-700 text-sm"
+            >
+              검색
+            </button>
+          </div>
+          {showMyLocationResults && searchQuery && (
+            <div className="mt-3 max-h-[200px] overflow-y-auto space-y-2">
+              {searchResults.length === 0 ? (
+                <p className="text-sm text-gray-500 dark:text-gray-400 text-center py-2">검색 결과가 없어요</p>
+              ) : (
+                searchResults.map((loc) => {
+                  const catInfo = getCategoryInfo(loc.category);
+                  return (
+                    <div
+                      key={loc.id}
+                      onClick={() => {
+                        setMapCenter({ lat: loc.latitude, lng: loc.longitude });
+                        setSelectedMarker(loc);
+                        selectLocation(loc);
+                        setShowMyLocationResults(false);
+                      }}
+                      className="flex items-center gap-2 p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 cursor-pointer"
+                    >
+                      <span className="text-lg">{catInfo.icon}</span>
+                      <div className="flex-1 min-w-0">
+                        <p className="text-sm font-medium text-gray-900 dark:text-white truncate">{loc.name}</p>
+                        <p className="text-xs text-gray-500 dark:text-gray-400 truncate">{loc.address}</p>
+                      </div>
+                    </div>
+                  );
+                })
+              )}
+              {searchResults.length > 0 && filteredLocations.length > 5 && (
+                <p className="text-xs text-gray-500 dark:text-gray-400 text-center">
+                  +{filteredLocations.length - 5}개 더 있음
+                </p>
+              )}
             </div>
           )}
         </div>
       </div>
 
-      {/* Filter */}
+      {/* Filter Section */}
       <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-sm border border-violet-100 dark:border-violet-900/30 p-4 mb-6">
-        <div className="flex flex-col md:flex-row gap-4">
-          <div className="flex-1">
-            <input
-              type="text"
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              placeholder="내 장소에서 검색..."
-              className="w-full px-4 py-2 rounded-lg border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
-            />
-          </div>
-          <div className="flex gap-2 flex-wrap">
-            <button
-              onClick={() => setSelectedCategory(null)}
-              className={`px-3 py-1 rounded-full text-sm transition-colors ${
-                !selectedCategory
-                  ? 'bg-violet-600 text-white'
-                  : 'bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300'
-              }`}
-            >
-              전체
-            </button>
-            {categories.map((cat) => (
+        <div className="space-y-3">
+          {/* Category Filter */}
+          <div>
+            <span className="text-xs font-medium text-gray-500 dark:text-gray-400 mr-2">카테고리:</span>
+            <div className="inline-flex gap-1 flex-wrap">
               <button
-                key={cat.value}
-                onClick={() => setSelectedCategory(cat.value === selectedCategory ? null : cat.value)}
-                className={`px-3 py-1 rounded-full text-sm transition-colors flex items-center gap-1 ${
-                  selectedCategory === cat.value
+                onClick={() => setSelectedCategory(null)}
+                className={`px-2 py-0.5 rounded-full text-xs transition-colors ${
+                  !selectedCategory
                     ? 'bg-violet-600 text-white'
                     : 'bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300'
                 }`}
               >
-                <span>{cat.icon}</span>
-                <span>{cat.value}</span>
+                전체
               </button>
-            ))}
+              {categories.map((cat) => (
+                <button
+                  key={cat.value}
+                  onClick={() => setSelectedCategory(cat.value === selectedCategory ? null : cat.value)}
+                  className={`px-2 py-0.5 rounded-full text-xs transition-colors ${
+                    selectedCategory === cat.value
+                      ? 'bg-violet-600 text-white'
+                      : 'bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300'
+                  }`}
+                >
+                  {cat.icon} {cat.value}
+                </button>
+              ))}
+            </div>
           </div>
+
+          {/* Tag Filter */}
+          {allTags.length > 0 && (
+            <div>
+              <span className="text-xs font-medium text-gray-500 dark:text-gray-400 mr-2">태그:</span>
+              <div className="inline-flex gap-1 flex-wrap">
+                <button
+                  onClick={() => setSelectedTags([])}
+                  className={`px-2 py-0.5 rounded-full text-xs transition-colors ${
+                    selectedTags.length === 0
+                      ? 'bg-emerald-600 text-white'
+                      : 'bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300'
+                  }`}
+                >
+                  전체
+                </button>
+                {allTags.map((tag) => (
+                  <button
+                    key={tag}
+                    onClick={() => {
+                      setSelectedTags((prev) =>
+                        prev.includes(tag) ? prev.filter((t) => t !== tag) : [...prev, tag]
+                      );
+                    }}
+                    className={`px-2 py-0.5 rounded-full text-xs transition-colors ${
+                      selectedTags.includes(tag)
+                        ? 'bg-emerald-600 text-white'
+                        : 'bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300'
+                    }`}
+                  >
+                    #{tag}
+                  </button>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {/* Region Filter */}
+          {allRegions.length > 0 && (
+            <div>
+              <span className="text-xs font-medium text-gray-500 dark:text-gray-400 mr-2">지역:</span>
+              <div className="inline-flex gap-1 flex-wrap">
+                <button
+                  onClick={() => setSelectedRegion(null)}
+                  className={`px-2 py-0.5 rounded-full text-xs transition-colors ${
+                    !selectedRegion
+                      ? 'bg-blue-600 text-white'
+                      : 'bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300'
+                  }`}
+                >
+                  전체
+                </button>
+                {allRegions.map((region) => (
+                  <button
+                    key={region}
+                    onClick={() => setSelectedRegion(selectedRegion === region ? null : region)}
+                    className={`px-2 py-0.5 rounded-full text-xs transition-colors ${
+                      selectedRegion === region
+                        ? 'bg-blue-600 text-white'
+                        : 'bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300'
+                    }`}
+                  >
+                    {region}
+                  </button>
+                ))}
+              </div>
+            </div>
+          )}
         </div>
       </div>
 
@@ -499,19 +679,22 @@ export default function MapPage() {
                 {selectedMarker && (
                   <InfoWindow
                     position={{ lat: selectedMarker.latitude, lng: selectedMarker.longitude }}
-                    onCloseClick={() => setSelectedMarker(null)}
+                    onCloseClick={() => {
+                      setSelectedMarker(null);
+                      setInfoWindowTags('');
+                    }}
                   >
-                    <div className="p-2 min-w-[150px]">
-                      <h3 className="font-semibold text-gray-900">{selectedMarker.name}</h3>
+                    <div className="p-2 min-w-[180px] max-w-[220px]">
+                      <h3 className="font-semibold text-gray-900 text-sm">{selectedMarker.name}</h3>
                       {selectedMarker.address && (
-                        <p className="text-sm text-gray-500">{selectedMarker.address}</p>
+                        <p className="text-xs text-gray-500 truncate">{selectedMarker.address}</p>
                       )}
                       {selectedMarker.rating && (
                         <div className="flex items-center gap-1 mt-1">
                           {Array.from({ length: 5 }).map((_, i) => (
                             <span
                               key={i}
-                              className={`text-sm ${
+                              className={`text-xs ${
                                 i < selectedMarker.rating! ? 'text-yellow-400' : 'text-gray-300'
                               }`}
                             >
@@ -520,12 +703,52 @@ export default function MapPage() {
                           ))}
                         </div>
                       )}
-                      <button
-                        onClick={() => selectLocation(selectedMarker)}
-                        className="mt-2 text-sm text-violet-600 hover:underline"
-                      >
-                        수정하기
-                      </button>
+                      {/* Current Tags */}
+                      {selectedMarker.tags.length > 0 && (
+                        <div className="flex flex-wrap gap-1 mt-2">
+                          {selectedMarker.tags.map((tag) => (
+                            <span
+                              key={tag}
+                              className="px-1.5 py-0.5 bg-violet-100 text-violet-700 rounded text-xs"
+                            >
+                              #{tag}
+                            </span>
+                          ))}
+                        </div>
+                      )}
+                      {/* Tag Edit */}
+                      <div className="mt-2 pt-2 border-t border-gray-200">
+                        <input
+                          type="text"
+                          value={infoWindowTags || selectedMarker.tags.join(', ')}
+                          onChange={(e) => setInfoWindowTags(e.target.value)}
+                          placeholder="태그 수정 (쉼표 구분)"
+                          className="w-full px-2 py-1 text-xs border border-gray-200 rounded"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            if (!infoWindowTags) {
+                              setInfoWindowTags(selectedMarker.tags.join(', '));
+                            }
+                          }}
+                        />
+                        <div className="flex gap-1 mt-1">
+                          <button
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              handleQuickTagUpdate(selectedMarker.id, infoWindowTags || selectedMarker.tags.join(', '));
+                            }}
+                            className="flex-1 px-2 py-1 text-xs bg-violet-600 text-white rounded hover:bg-violet-700"
+                          >
+                            태그 저장
+                          </button>
+                          <button
+                            onClick={() => selectLocation(selectedMarker)}
+                            className="flex-1 px-2 py-1 text-xs bg-gray-100 text-gray-700 rounded hover:bg-gray-200"
+                          >
+                            전체 수정
+                          </button>
+                        </div>
+                      </div>
                     </div>
                   </InfoWindow>
                 )}
