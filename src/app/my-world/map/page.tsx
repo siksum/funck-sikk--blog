@@ -205,6 +205,7 @@ export default function MapPage() {
         query: placeSearchQuery,
         location: new google.maps.LatLng(searchLocation.lat, searchLocation.lng),
         radius: 50000, // 50km radius
+        language: 'ko', // Korean language
       },
       (results, status) => {
         setIsSearching(false);
@@ -285,6 +286,8 @@ export default function MapPage() {
     id: 'google-map-script',
     googleMapsApiKey: process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY || '',
     libraries,
+    language: 'ko',
+    region: 'KR',
   });
 
   useEffect(() => {
