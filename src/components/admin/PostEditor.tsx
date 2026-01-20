@@ -506,18 +506,34 @@ export default function PostEditor({ initialData = {}, isEdit = false }: PostEdi
         />
       </div>
 
-      {/* Tags */}
-      <div>
-        <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-          태그 (쉼표로 구분)
-        </label>
-        <input
-          type="text"
-          value={formData.tags}
-          onChange={(e) => setFormData({ ...formData, tags: e.target.value })}
-          className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
-          placeholder="React, Next.js, TypeScript"
-        />
+      {/* Tags & Date */}
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        {/* Tags */}
+        <div>
+          <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+            태그 (쉼표로 구분)
+          </label>
+          <input
+            type="text"
+            value={formData.tags}
+            onChange={(e) => setFormData({ ...formData, tags: e.target.value })}
+            className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
+            placeholder="React, Next.js, TypeScript"
+          />
+        </div>
+
+        {/* Date */}
+        <div>
+          <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+            날짜
+          </label>
+          <input
+            type="date"
+            value={formData.date || new Date().toISOString().split('T')[0]}
+            onChange={(e) => setFormData({ ...formData, date: e.target.value })}
+            className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
+          />
+        </div>
       </div>
 
       {/* View Mode Tabs */}
