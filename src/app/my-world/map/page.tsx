@@ -658,109 +658,6 @@ export default function MapPage() {
         </div>
       </div>
 
-      {/* Filter Section */}
-      <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-sm border border-violet-100 dark:border-violet-900/30 p-4 mb-6">
-        <div className="space-y-3">
-          {/* Category Filter */}
-          <div>
-            <span className="text-xs font-medium text-gray-500 dark:text-gray-400 mr-2">카테고리:</span>
-            <div className="inline-flex gap-1 flex-wrap">
-              <button
-                onClick={() => setSelectedCategory(null)}
-                className={`px-2 py-0.5 rounded-full text-xs transition-colors ${
-                  !selectedCategory
-                    ? 'bg-violet-600 text-white'
-                    : 'bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300'
-                }`}
-              >
-                전체
-              </button>
-              {categories.map((cat) => (
-                <button
-                  key={cat.value}
-                  onClick={() => setSelectedCategory(cat.value === selectedCategory ? null : cat.value)}
-                  className={`px-2 py-0.5 rounded-full text-xs transition-colors ${
-                    selectedCategory === cat.value
-                      ? 'bg-violet-600 text-white'
-                      : 'bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300'
-                  }`}
-                >
-                  {cat.icon} {cat.value}
-                </button>
-              ))}
-            </div>
-          </div>
-
-          {/* Tag Filter */}
-          {allTags.length > 0 && (
-            <div>
-              <span className="text-xs font-medium text-gray-500 dark:text-gray-400 mr-2">태그:</span>
-              <div className="inline-flex gap-1 flex-wrap">
-                <button
-                  onClick={() => setSelectedTags([])}
-                  className={`px-2 py-0.5 rounded-full text-xs transition-colors ${
-                    selectedTags.length === 0
-                      ? 'bg-emerald-600 text-white'
-                      : 'bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300'
-                  }`}
-                >
-                  전체
-                </button>
-                {allTags.map((tag) => (
-                  <button
-                    key={tag}
-                    onClick={() => {
-                      setSelectedTags((prev) =>
-                        prev.includes(tag) ? prev.filter((t) => t !== tag) : [...prev, tag]
-                      );
-                    }}
-                    className={`px-2 py-0.5 rounded-full text-xs transition-colors ${
-                      selectedTags.includes(tag)
-                        ? 'bg-emerald-600 text-white'
-                        : 'bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300'
-                    }`}
-                  >
-                    #{tag}
-                  </button>
-                ))}
-              </div>
-            </div>
-          )}
-
-          {/* Region Filter */}
-          {allRegions.length > 0 && (
-            <div>
-              <span className="text-xs font-medium text-gray-500 dark:text-gray-400 mr-2">지역:</span>
-              <div className="inline-flex gap-1 flex-wrap">
-                <button
-                  onClick={() => setSelectedRegion(null)}
-                  className={`px-2 py-0.5 rounded-full text-xs transition-colors ${
-                    !selectedRegion
-                      ? 'bg-blue-600 text-white'
-                      : 'bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300'
-                  }`}
-                >
-                  전체
-                </button>
-                {allRegions.map((region) => (
-                  <button
-                    key={region}
-                    onClick={() => setSelectedRegion(selectedRegion === region ? null : region)}
-                    className={`px-2 py-0.5 rounded-full text-xs transition-colors ${
-                      selectedRegion === region
-                        ? 'bg-blue-600 text-white'
-                        : 'bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300'
-                    }`}
-                  >
-                    {region}
-                  </button>
-                ))}
-              </div>
-            </div>
-          )}
-        </div>
-      </div>
-
       {/* Main Content: Map + Form */}
       <div className="flex flex-col lg:flex-row gap-6 mb-6">
         {/* Left: Map */}
@@ -1107,6 +1004,110 @@ export default function MapPage() {
               </div>
             </div>
           </div>
+        </div>
+      </div>
+
+      {/* Filter Section */}
+      <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-sm border border-violet-100 dark:border-violet-900/30 p-4 mb-6">
+        <h3 className="text-sm font-semibold text-gray-900 dark:text-white mb-3">필터</h3>
+        <div className="max-h-[200px] overflow-y-auto space-y-3">
+          {/* Category Filter */}
+          <div>
+            <span className="text-xs font-medium text-gray-500 dark:text-gray-400 mr-2">카테고리:</span>
+            <div className="inline-flex gap-1 flex-wrap">
+              <button
+                onClick={() => setSelectedCategory(null)}
+                className={`px-2 py-0.5 rounded-full text-xs transition-colors ${
+                  !selectedCategory
+                    ? 'bg-violet-600 text-white'
+                    : 'bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300'
+                }`}
+              >
+                전체
+              </button>
+              {categories.map((cat) => (
+                <button
+                  key={cat.value}
+                  onClick={() => setSelectedCategory(cat.value === selectedCategory ? null : cat.value)}
+                  className={`px-2 py-0.5 rounded-full text-xs transition-colors ${
+                    selectedCategory === cat.value
+                      ? 'bg-violet-600 text-white'
+                      : 'bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300'
+                  }`}
+                >
+                  {cat.icon} {cat.value}
+                </button>
+              ))}
+            </div>
+          </div>
+
+          {/* Tag Filter */}
+          {allTags.length > 0 && (
+            <div>
+              <span className="text-xs font-medium text-gray-500 dark:text-gray-400 mr-2">태그:</span>
+              <div className="inline-flex gap-1 flex-wrap">
+                <button
+                  onClick={() => setSelectedTags([])}
+                  className={`px-2 py-0.5 rounded-full text-xs transition-colors ${
+                    selectedTags.length === 0
+                      ? 'bg-emerald-600 text-white'
+                      : 'bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300'
+                  }`}
+                >
+                  전체
+                </button>
+                {allTags.map((tag) => (
+                  <button
+                    key={tag}
+                    onClick={() => {
+                      setSelectedTags((prev) =>
+                        prev.includes(tag) ? prev.filter((t) => t !== tag) : [...prev, tag]
+                      );
+                    }}
+                    className={`px-2 py-0.5 rounded-full text-xs transition-colors ${
+                      selectedTags.includes(tag)
+                        ? 'bg-emerald-600 text-white'
+                        : 'bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300'
+                    }`}
+                  >
+                    #{tag}
+                  </button>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {/* Region Filter */}
+          {allRegions.length > 0 && (
+            <div>
+              <span className="text-xs font-medium text-gray-500 dark:text-gray-400 mr-2">지역:</span>
+              <div className="inline-flex gap-1 flex-wrap">
+                <button
+                  onClick={() => setSelectedRegion(null)}
+                  className={`px-2 py-0.5 rounded-full text-xs transition-colors ${
+                    !selectedRegion
+                      ? 'bg-blue-600 text-white'
+                      : 'bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300'
+                  }`}
+                >
+                  전체
+                </button>
+                {allRegions.map((region) => (
+                  <button
+                    key={region}
+                    onClick={() => setSelectedRegion(selectedRegion === region ? null : region)}
+                    className={`px-2 py-0.5 rounded-full text-xs transition-colors ${
+                      selectedRegion === region
+                        ? 'bg-blue-600 text-white'
+                        : 'bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300'
+                    }`}
+                  >
+                    {region}
+                  </button>
+                ))}
+              </div>
+            </div>
+          )}
         </div>
       </div>
 
