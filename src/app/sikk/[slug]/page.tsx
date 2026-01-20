@@ -174,7 +174,7 @@ export default async function SikkPostPage({ params }: SikkPostPageProps) {
         <MDXContent content={post.content} />
 
         {/* Post Navigation */}
-        <PostNavigation prevPost={prevPost} nextPost={nextPost} basePath="/sikk" />
+        <PostNavigation prevPost={prevPost} nextPost={nextPost} basePath="/sikk" variant="pink" />
 
         {/* Footer */}
         <footer className="mt-12 pt-8 border-t" style={{ borderColor: 'var(--card-border)' }}>

@@ -72,6 +72,7 @@ export default function SikkCategoryCard({ name, count, tags, slugPath, variant 
           className={`relative rounded-xl overflow-hidden transition-all duration-300
             border ${colors.neonBorder} category-card
             hover:border-pink-400 dark:hover:border-pink-400`}
+          style={{ background: 'var(--card-bg)' }}
         >
           <div className="relative p-4 flex items-center gap-4">
             {/* Icon */}
@@ -135,6 +136,7 @@ export default function SikkCategoryCard({ name, count, tags, slugPath, variant 
         className={`relative rounded-xl overflow-hidden transition-all duration-300 h-full flex flex-col
           border-2 ${colors.neonBorder} ${colors.neonGlow} category-card
           hover:-translate-y-1`}
+        style={{ background: 'var(--card-bg)' }}
       >
         {/* Content with Icon */}
         <div className="relative p-5 flex-1 flex flex-col">
