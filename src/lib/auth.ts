@@ -54,7 +54,19 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
       if (url.startsWith(baseUrl)) return url;
       return baseUrl;
     },
-    async jwt({ token, user }) {
+    async jwt({ token, user, account, profile }) {
+      // On every sign in, account and profile are provided with fresh OAuth data
+      if (account && profile) {
+        // Store actual OAuth profile info in token (not from DB)
+        token.name = profile.name;
+        token.email = profile.email;
+        // Google uses 'picture', GitHub uses 'avatar_url'
+        const profileData = profile as Record<string, unknown>;
+        token.picture = (profileData.picture as string) || (profileData.avatar_url as string);
+        token.provider = account.provider;
+        token.providerAccountId = account.providerAccountId;
+      }
+
       // Initial sign in - add user info to token
       if (user) {
         token.id = user.id;
@@ -78,6 +90,10 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
       if (token && session.user) {
         session.user.id = token.id as string;
         session.user.isAdmin = token.isAdmin as boolean;
+        // Use OAuth profile data from token (fresh from each login)
+        if (token.name) session.user.name = token.name as string;
+        if (token.email) session.user.email = token.email as string;
+        if (token.picture) session.user.image = token.picture as string;
       }
       return session;
     },
