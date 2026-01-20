@@ -4,7 +4,6 @@ import { useState } from 'react';
 import Link from 'next/link';
 import { Post, Category } from '@/types';
 import PostCard from '@/components/post/PostCard';
-import SubscribeForm from '@/components/subscribe/SubscribeForm';
 
 interface DBSection {
   id: string;
@@ -258,9 +257,6 @@ export default function Sidebar({
           </Link>
         )}
       </div>
-
-      {/* Subscribe Form */}
-      <SubscribeForm />
     </aside>
   );
 }

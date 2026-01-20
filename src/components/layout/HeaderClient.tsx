@@ -28,26 +28,6 @@ export default function HeaderClient({ posts }: HeaderClientProps) {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [isSearchOpen, setIsSearchOpen] = useState(false);
   const [isUserMenuOpen, setIsUserMenuOpen] = useState(false);
-  const [subscribeStatus, setSubscribeStatus] = useState<'idle' | 'loading' | 'success' | 'error'>('idle');
-
-  const handleSubscribe = async () => {
-    if (!session?.user?.email) return;
-    setSubscribeStatus('loading');
-    try {
-      const res = await fetch('/api/subscribe/email', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email: session.user.email }),
-      });
-      if (res.ok) {
-        setSubscribeStatus('success');
-      } else {
-        setSubscribeStatus('error');
-      }
-    } catch {
-      setSubscribeStatus('error');
-    }
-  };
 
   return (
     <header
@@ -168,13 +148,6 @@ export default function HeaderClient({ posts }: HeaderClientProps) {
                         </Link>
                       </>
                     )}
-                    <button
-                      onClick={handleSubscribe}
-                      disabled={subscribeStatus === 'loading' || subscribeStatus === 'success'}
-                      className="nav-link block w-full text-left px-4 py-2 text-sm transition-colors hover:bg-violet-100 dark:hover:bg-violet-500/20 disabled:opacity-50"
-                    >
-                      {subscribeStatus === 'loading' ? '구독 중...' : subscribeStatus === 'success' ? '구독 완료!' : '뉴스레터 구독'}
-                    </button>
                     <button
                       onClick={() => {
                         setIsUserMenuOpen(false);
