@@ -1,7 +1,10 @@
-const GITHUB_TOKEN = process.env.GITHUB_TOKEN;
-const GITHUB_OWNER = process.env.GITHUB_REPO_OWNER || 'siksum';
-const GITHUB_REPO = process.env.GITHUB_REPO_NAME || 'funck-sikk--blog';
-const BRANCH = 'main';
+// Read environment variables at runtime (not build time)
+const getGithubConfig = () => ({
+  token: process.env.GITHUB_TOKEN,
+  owner: process.env.GITHUB_REPO_OWNER || 'siksum',
+  repo: process.env.GITHUB_REPO_NAME || 'funck-sikk--blog',
+  branch: 'main',
+});
 
 interface GitHubFile {
   path: string;
@@ -9,10 +12,11 @@ interface GitHubFile {
 }
 
 async function githubApi(endpoint: string, options: RequestInit = {}) {
+  const { token } = getGithubConfig();
   const res = await fetch(`https://api.github.com${endpoint}`, {
     ...options,
     headers: {
-      'Authorization': `Bearer ${GITHUB_TOKEN}`,
+      'Authorization': `Bearer ${token}`,
       'Accept': 'application/vnd.github.v3+json',
       'Content-Type': 'application/json',
       ...options.headers,
@@ -28,8 +32,9 @@ async function githubApi(endpoint: string, options: RequestInit = {}) {
 }
 
 async function getFileSha(path: string): Promise<string | null> {
+  const { owner, repo, branch } = getGithubConfig();
   try {
-    const data = await githubApi(`/repos/${GITHUB_OWNER}/${GITHUB_REPO}/contents/${path}?ref=${BRANCH}`);
+    const data = await githubApi(`/repos/${owner}/${repo}/contents/${path}?ref=${branch}`);
     return data.sha;
   } catch {
     return null;
@@ -37,17 +42,20 @@ async function getFileSha(path: string): Promise<string | null> {
 }
 
 async function getLatestCommitSha(): Promise<string> {
-  const data = await githubApi(`/repos/${GITHUB_OWNER}/${GITHUB_REPO}/git/ref/heads/${BRANCH}`);
+  const { owner, repo, branch } = getGithubConfig();
+  const data = await githubApi(`/repos/${owner}/${repo}/git/ref/heads/${branch}`);
   return data.object.sha;
 }
 
 async function getTreeSha(commitSha: string): Promise<string> {
-  const data = await githubApi(`/repos/${GITHUB_OWNER}/${GITHUB_REPO}/git/commits/${commitSha}`);
+  const { owner, repo } = getGithubConfig();
+  const data = await githubApi(`/repos/${owner}/${repo}/git/commits/${commitSha}`);
   return data.tree.sha;
 }
 
 export async function commitFile(file: GitHubFile, message: string): Promise<boolean> {
-  if (!GITHUB_TOKEN) {
+  const { token, owner, repo, branch } = getGithubConfig();
+  if (!token) {
     console.error('GITHUB_TOKEN is not set');
     return false;
   }
@@ -56,12 +64,12 @@ export async function commitFile(file: GitHubFile, message: string): Promise<boo
     const existingSha = await getFileSha(file.path);
     const encodedContent = Buffer.from(file.content).toString('base64');
 
-    await githubApi(`/repos/${GITHUB_OWNER}/${GITHUB_REPO}/contents/${file.path}`, {
+    await githubApi(`/repos/${owner}/${repo}/contents/${file.path}`, {
       method: 'PUT',
       body: JSON.stringify({
         message,
         content: encodedContent,
-        branch: BRANCH,
+        branch: branch,
         ...(existingSha && { sha: existingSha }),
       }),
     });
@@ -74,7 +82,8 @@ export async function commitFile(file: GitHubFile, message: string): Promise<boo
 }
 
 export async function deleteFile(path: string, message: string): Promise<boolean> {
-  if (!GITHUB_TOKEN) {
+  const { token, owner, repo, branch } = getGithubConfig();
+  if (!token) {
     console.error('GITHUB_TOKEN is not set');
     return false;
   }
@@ -86,12 +95,12 @@ export async function deleteFile(path: string, message: string): Promise<boolean
       return false;
     }
 
-    await githubApi(`/repos/${GITHUB_OWNER}/${GITHUB_REPO}/contents/${path}`, {
+    await githubApi(`/repos/${owner}/${repo}/contents/${path}`, {
       method: 'DELETE',
       body: JSON.stringify({
         message,
         sha,
-        branch: BRANCH,
+        branch: branch,
       }),
     });
 
@@ -106,7 +115,8 @@ export async function commitMultipleFiles(
   files: GitHubFile[],
   message: string
 ): Promise<boolean> {
-  if (!GITHUB_TOKEN) {
+  const { token, owner, repo, branch } = getGithubConfig();
+  if (!token) {
     console.error('GITHUB_TOKEN is not set');
     return false;
   }
@@ -122,7 +132,7 @@ export async function commitMultipleFiles(
       content: file.content,
     }));
 
-    const newTree = await githubApi(`/repos/${GITHUB_OWNER}/${GITHUB_REPO}/git/trees`, {
+    const newTree = await githubApi(`/repos/${owner}/${repo}/git/trees`, {
       method: 'POST',
       body: JSON.stringify({
         base_tree: baseTreeSha,
@@ -130,7 +140,7 @@ export async function commitMultipleFiles(
       }),
     });
 
-    const newCommit = await githubApi(`/repos/${GITHUB_OWNER}/${GITHUB_REPO}/git/commits`, {
+    const newCommit = await githubApi(`/repos/${owner}/${repo}/git/commits`, {
       method: 'POST',
       body: JSON.stringify({
         message,
@@ -139,7 +149,7 @@ export async function commitMultipleFiles(
       }),
     });
 
-    await githubApi(`/repos/${GITHUB_OWNER}/${GITHUB_REPO}/git/refs/heads/${BRANCH}`, {
+    await githubApi(`/repos/${owner}/${repo}/git/refs/heads/${branch}`, {
       method: 'PATCH',
       body: JSON.stringify({
         sha: newCommit.sha,
