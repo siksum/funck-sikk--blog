@@ -37,27 +37,38 @@ interface SikkPostPageProps {
 }
 
 export async function generateMetadata({ params }: SikkPostPageProps) {
-  const { slug } = await params;
-  const post = await getSikkPostBySlugAsync(slug);
+  try {
+    const { slug } = await params;
+    const post = await getSikkPostBySlugAsync(slug);
 
-  if (!post) {
+    if (!post) {
+      return {
+        title: 'Post Not Found',
+      };
+    }
+
     return {
-      title: 'Post Not Found',
+      title: `${post.title} | Sikk`,
+      description: post.description || '',
+    };
+  } catch (error) {
+    console.error('Error generating metadata for sikk post:', error);
+    return {
+      title: 'Sikk',
     };
   }
-
-  return {
-    title: `${post.title} | Sikk`,
-    description: post.description,
-  };
 }
 
 export async function generateStaticParams() {
-  const posts = await getAllSikkPostsAsync();
-
-  return posts.map((post) => ({
-    slug: post.slug,
-  }));
+  try {
+    const posts = await getAllSikkPostsAsync();
+    return posts.map((post) => ({
+      slug: post.slug,
+    }));
+  } catch (error) {
+    console.error('Error generating static params for sikk posts:', error);
+    return [];
+  }
 }
 
 export default async function SikkPostPage({ params }: SikkPostPageProps) {
