@@ -1,6 +1,9 @@
 import { notFound } from 'next/navigation';
 import PostList from '@/components/post/PostList';
-import { getPostsByTag, getAllTags } from '@/lib/posts';
+import { getPostsByTagAsync, getAllTagsAsync } from '@/lib/posts';
+
+// Revalidate every 10 seconds for faster updates
+export const revalidate = 10;
 
 interface TagPageProps {
   params: Promise<{ slug: string }>;
@@ -17,7 +20,7 @@ export async function generateMetadata({ params }: TagPageProps) {
 }
 
 export async function generateStaticParams() {
-  const tags = getAllTags();
+  const tags = await getAllTagsAsync();
 
   return tags.map((tag) => ({
     slug: encodeURIComponent(tag.name),
@@ -27,7 +30,7 @@ export async function generateStaticParams() {
 export default async function TagPage({ params }: TagPageProps) {
   const { slug } = await params;
   const tagName = decodeURIComponent(slug);
-  const posts = getPostsByTag(tagName);
+  const posts = await getPostsByTagAsync(tagName);
 
   if (posts.length === 0) {
     notFound();

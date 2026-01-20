@@ -1,6 +1,6 @@
 import { notFound } from 'next/navigation';
 import Link from 'next/link';
-import { getPostBySlug, getAllPosts, getRelatedPosts, getAdjacentPosts, getRootCategories } from '@/lib/posts';
+import { getPostBySlugAsync, getAllPostsAsync, getRelatedPostsAsync, getAdjacentPostsAsync, getRootCategoriesAsync } from '@/lib/posts';
 import MDXContent from '@/components/mdx/MDXContent';
 import CommentSection from '@/components/comments/CommentSection';
 import ReadingProgressBar from '@/components/blog/ReadingProgressBar';
@@ -15,6 +15,9 @@ import DifficultyBadge from '@/components/blog/DifficultyBadge';
 import BlogPostLayout from '@/components/blog/BlogPostLayout';
 import { auth } from '@/lib/auth';
 import { prisma } from '@/lib/db';
+
+// Revalidate every 10 seconds for faster updates
+export const revalidate = 10;
 
 async function getSections() {
   try {
@@ -61,7 +64,7 @@ interface BlogPostPageProps {
 
 export async function generateMetadata({ params }: BlogPostPageProps) {
   const { slug } = await params;
-  const post = getPostBySlug(slug);
+  const post = await getPostBySlugAsync(slug);
 
   if (!post) {
     return {
@@ -76,7 +79,7 @@ export async function generateMetadata({ params }: BlogPostPageProps) {
 }
 
 export async function generateStaticParams() {
-  const posts = getAllPosts();
+  const posts = await getAllPostsAsync();
 
   return posts.map((post) => ({
     slug: post.slug,
@@ -85,7 +88,7 @@ export async function generateStaticParams() {
 
 export default async function BlogPostPage({ params }: BlogPostPageProps) {
   const { slug } = await params;
-  const post = getPostBySlug(slug);
+  const post = await getPostBySlugAsync(slug);
 
   if (!post) {
     notFound();
@@ -112,11 +115,13 @@ export default async function BlogPostPage({ params }: BlogPostPageProps) {
   });
 
   const readingTime = calculateReadingTime(post.content);
-  const relatedPosts = getRelatedPosts(slug, 3);
-  const { prevPost, nextPost } = getAdjacentPosts(slug);
+  const [relatedPosts, { prevPost, nextPost }, categories, sections] = await Promise.all([
+    getRelatedPostsAsync(slug, 3),
+    getAdjacentPostsAsync(slug),
+    getRootCategoriesAsync(),
+    getSections(),
+  ]);
   const difficulty = estimateDifficulty(post.content, post.tags);
-  const categories = getRootCategories();
-  const sections = await getSections();
 
   return (
     <>

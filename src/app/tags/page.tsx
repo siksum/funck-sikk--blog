@@ -1,13 +1,16 @@
 import Link from 'next/link';
-import { getAllTags } from '@/lib/posts';
+import { getAllTagsAsync } from '@/lib/posts';
 
 export const metadata = {
   title: '태그 | func(sikk)',
   description: '블로그 태그 목록',
 };
 
-export default function TagsPage() {
-  const tags = getAllTags();
+// Revalidate every 10 seconds for faster updates
+export const revalidate = 10;
+
+export default async function TagsPage() {
+  const tags = await getAllTagsAsync();
 
   // Calculate tag sizes based on count
   const maxCount = Math.max(...tags.map((t) => t.count), 1);

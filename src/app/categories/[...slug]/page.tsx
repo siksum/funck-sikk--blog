@@ -1,13 +1,13 @@
 import { notFound } from 'next/navigation';
 import CategoryPageContent from '@/components/category/CategoryPageContent';
 import {
-  getCategoryBySlugPath,
-  getPostsByCategoryPath,
-  getChildCategoriesWithTags,
-  getAllCategoriesHierarchical,
-  getRecentPosts,
-  getAllTags,
-  getRootCategories,
+  getCategoryBySlugPathAsync,
+  getPostsByCategoryPathAsync,
+  getChildCategoriesWithTagsAsync,
+  getAllCategoriesHierarchicalAsync,
+  getRecentPostsAsync,
+  getAllTagsAsync,
+  getRootCategoriesAsync,
 } from '@/lib/posts';
 import { prisma } from '@/lib/db';
 
@@ -15,8 +15,8 @@ interface CategoryPageProps {
   params: Promise<{ slug: string[] }>;
 }
 
-// Revalidate sections every 60 seconds
-export const revalidate = 60;
+// Revalidate every 10 seconds for faster updates
+export const revalidate = 10;
 
 async function getSections() {
   try {
@@ -39,7 +39,7 @@ async function getSections() {
 export async function generateMetadata({ params }: CategoryPageProps) {
   const { slug } = await params;
   const slugPath = slug || [];
-  const category = getCategoryBySlugPath(slugPath);
+  const category = await getCategoryBySlugPathAsync(slugPath);
 
   if (!category) {
     return { title: 'Category Not Found' };
@@ -53,7 +53,7 @@ export async function generateMetadata({ params }: CategoryPageProps) {
 }
 
 export async function generateStaticParams() {
-  const categories = getAllCategoriesHierarchical();
+  const categories = await getAllCategoriesHierarchicalAsync();
 
   return categories.map((category) => ({
     slug: category.slugPath,
@@ -63,21 +63,21 @@ export async function generateStaticParams() {
 export default async function CategoryPage({ params }: CategoryPageProps) {
   const { slug } = await params;
   const slugPath = slug || [];
-  const category = getCategoryBySlugPath(slugPath);
+  const category = await getCategoryBySlugPathAsync(slugPath);
 
   if (!category) {
     notFound();
   }
 
-  const childCategories = getChildCategoriesWithTags(slugPath);
-  const directPosts = getPostsByCategoryPath(slugPath, false);
-  const allPosts = getPostsByCategoryPath(slugPath, true);
-
-  // Sidebar data
-  const recentPosts = getRecentPosts(5);
-  const categories = getRootCategories();
-  const tags = getAllTags();
-  const sections = await getSections();
+  const [childCategories, directPosts, allPosts, recentPosts, categories, tags, sections] = await Promise.all([
+    getChildCategoriesWithTagsAsync(slugPath),
+    getPostsByCategoryPathAsync(slugPath, false),
+    getPostsByCategoryPathAsync(slugPath, true),
+    getRecentPostsAsync(5),
+    getRootCategoriesAsync(),
+    getAllTagsAsync(),
+    getSections(),
+  ]);
 
   return (
     <CategoryPageContent

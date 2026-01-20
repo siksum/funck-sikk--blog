@@ -1,5 +1,5 @@
 import BlogPageContent from '@/components/blog/BlogPageContent';
-import { getRecentPosts, getAllTags, getRootCategoriesWithTags, getRootCategories } from '@/lib/posts';
+import { getRecentPostsAsync, getAllTagsAsync, getRootCategoriesWithTagsAsync, getRootCategoriesAsync } from '@/lib/posts';
 import { prisma } from '@/lib/db';
 
 export const metadata = {
@@ -7,8 +7,8 @@ export const metadata = {
   description: '모든 블로그 포스트',
 };
 
-// Revalidate sections every 60 seconds
-export const revalidate = 60;
+// Revalidate every 10 seconds for faster updates
+export const revalidate = 10;
 
 async function getSections() {
   try {
@@ -29,11 +29,13 @@ async function getSections() {
 }
 
 export default async function BlogPage() {
-  const recentPosts = getRecentPosts(5);
-  const categories = getRootCategories();
-  const tags = getAllTags();
-  const rootCategoriesWithTags = getRootCategoriesWithTags();
-  const sections = await getSections();
+  const [recentPosts, categories, tags, rootCategoriesWithTags, sections] = await Promise.all([
+    getRecentPostsAsync(5),
+    getRootCategoriesAsync(),
+    getAllTagsAsync(),
+    getRootCategoriesWithTagsAsync(),
+    getSections(),
+  ]);
 
   return (
     <BlogPageContent
