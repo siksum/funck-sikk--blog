@@ -5,8 +5,12 @@ import matter from 'gray-matter';
 import { commitFile } from '@/lib/github';
 
 const postsDirectory = path.join(process.cwd(), 'content/posts');
-const USE_GITHUB = !!process.env.GITHUB_TOKEN;
-const IS_PRODUCTION = process.env.NODE_ENV === 'production' || process.env.VERCEL === '1';
+
+// Helper to check environment at runtime (not build time)
+const getEnvFlags = () => ({
+  useGithub: !!process.env.GITHUB_TOKEN,
+  isProduction: process.env.NODE_ENV === 'production' || process.env.VERCEL === '1',
+});
 
 // GET: 모든 포스트 조회
 export async function GET() {
@@ -66,8 +70,9 @@ export async function POST(request: NextRequest) {
     };
 
     const fileContent = matter.stringify(content || '', frontmatter);
+    const { useGithub, isProduction } = getEnvFlags();
 
-    if (USE_GITHUB) {
+    if (useGithub) {
       const success = await commitFile(
         { path: gitPath, content: fileContent },
         `post: Create "${title}"`
@@ -80,7 +85,7 @@ export async function POST(request: NextRequest) {
     }
 
     // Production without GitHub: cannot write files
-    if (IS_PRODUCTION) {
+    if (isProduction) {
       return NextResponse.json({
         error: 'GITHUB_TOKEN이 설정되지 않았습니다. Vercel 환경 변수를 확인하세요.'
       }, { status: 500 });
