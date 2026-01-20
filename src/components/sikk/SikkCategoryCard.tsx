@@ -70,7 +70,7 @@ export default function SikkCategoryCard({ name, count, tags, slugPath, variant 
       <Link href={href} className="block group">
         <article
           className={`relative rounded-xl overflow-hidden transition-all duration-300
-            border ${colors.neonBorder} category-card
+            border ${colors.neonBorder} category-card bg-pink-50/80 dark:bg-pink-950/30
             hover:border-pink-400 dark:hover:border-pink-400`}
         >
           <div className="relative p-4 flex items-center gap-4">
@@ -133,7 +133,7 @@ export default function SikkCategoryCard({ name, count, tags, slugPath, variant 
     <Link href={href} className="block group h-full">
       <article
         className={`relative rounded-xl overflow-hidden transition-all duration-300 h-full flex flex-col
-          border-2 ${colors.neonBorder} ${colors.neonGlow} category-card
+          border-2 ${colors.neonBorder} ${colors.neonGlow} category-card bg-pink-50/80 dark:bg-pink-950/30
           hover:-translate-y-1`}
       >
         {/* Content with Icon */}
