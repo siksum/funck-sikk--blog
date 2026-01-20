@@ -1,6 +1,9 @@
 import { auth } from '@/lib/auth';
 import { redirect } from 'next/navigation';
 
+// Prevent static generation - requires authentication
+export const dynamic = 'force-dynamic';
+
 export default async function MyWorldLayout({
   children,
 }: {
