@@ -72,13 +72,13 @@ interface Todo {
 }
 
 const eventColors = [
-  { name: '보라', value: '#8b5cf6' },
-  { name: '파랑', value: '#3b82f6' },
-  { name: '초록', value: '#22c55e' },
-  { name: '노랑', value: '#eab308' },
-  { name: '주황', value: '#f97316' },
-  { name: '빨강', value: '#ef4444' },
-  { name: '핑크', value: '#ec4899' },
+  { name: '보라', value: '#c4b5fd' },
+  { name: '파랑', value: '#93c5fd' },
+  { name: '초록', value: '#86efac' },
+  { name: '노랑', value: '#fde047' },
+  { name: '주황', value: '#fdba74' },
+  { name: '빨강', value: '#fca5a5' },
+  { name: '핑크', value: '#f9a8d4' },
 ];
 
 const DEFAULT_EVENT_TYPES = ['일정', '기념일', '생일', '약속', '회의', '기타'];
@@ -105,7 +105,7 @@ export default function MyWorldDashboard() {
     title: '',
     description: '',
     type: '일정',
-    color: '#8b5cf6',
+    color: '#c4b5fd',
     isAllDay: true,
     startDate: '',
     endDate: '',
@@ -692,7 +692,7 @@ export default function MyWorldDashboard() {
         title: '',
         description: '',
         type: '일정',
-        color: '#8b5cf6',
+        color: '#c4b5fd',
         isAllDay: true,
         startDate: selectedDate || todayStr,
         endDate: selectedDate || todayStr,
@@ -945,6 +945,74 @@ export default function MyWorldDashboard() {
   // Check if a week is the currently selected week
   const isCurrentWeek = (weekStart: Date) => {
     return weekStart.getTime() === weekStartDate.getTime();
+  };
+
+  // Get multi-day event bars for weekly view
+  const getWeeklyMultiDayEventBars = useMemo(() => {
+    interface WeeklyEventBar {
+      event: CalendarEvent;
+      startCol: number;
+      span: number;
+      isStart: boolean;
+      isEnd: boolean;
+    }
+
+    const bars: WeeklyEventBar[] = [];
+
+    // Get all-day events that span multiple days
+    const multiDayEvents = monthEvents.filter(e => {
+      if (!e.isAllDay) return false;
+      const startDate = e.date.split('T')[0];
+      const endDate = e.endDate ? e.endDate.split('T')[0] : startDate;
+      return startDate !== endDate;
+    });
+
+    multiDayEvents.forEach(event => {
+      const eventStart = new Date(event.date.split('T')[0] + 'T00:00:00');
+      const eventEnd = new Date((event.endDate || event.date).split('T')[0] + 'T00:00:00');
+
+      // Check overlap with current week
+      const weekEnd = new Date(weekStartDate);
+      weekEnd.setDate(weekStartDate.getDate() + 6);
+
+      if (eventEnd >= weekStartDate && eventStart <= weekEnd) {
+        // Calculate start column (0-6)
+        let startCol = 0;
+        if (eventStart > weekStartDate) {
+          startCol = Math.floor((eventStart.getTime() - weekStartDate.getTime()) / (1000 * 60 * 60 * 24));
+        }
+
+        // Calculate end column (0-6)
+        let endCol = 6;
+        if (eventEnd < weekEnd) {
+          endCol = Math.floor((eventEnd.getTime() - weekStartDate.getTime()) / (1000 * 60 * 60 * 24));
+        }
+
+        if (startCol <= endCol) {
+          bars.push({
+            event,
+            startCol,
+            span: endCol - startCol + 1,
+            isStart: eventStart >= weekStartDate && eventStart <= weekEnd,
+            isEnd: eventEnd >= weekStartDate && eventEnd <= weekEnd,
+          });
+        }
+      }
+    });
+
+    return bars;
+  }, [monthEvents, weekStartDate]);
+
+  // Get single-day all-day events for weekly view
+  const getSingleDayAllDayEventsForWeekDate = (date: Date) => {
+    const dateStr = date.toISOString().split('T')[0];
+    return monthEvents.filter(e => {
+      if (!e.isAllDay) return false;
+      const eventStart = e.date.split('T')[0];
+      const eventEnd = e.endDate ? e.endDate.split('T')[0] : eventStart;
+      // Single day event that matches this date
+      return eventStart === eventEnd && dateStr === eventStart;
+    });
   };
 
   return (
@@ -1363,7 +1431,7 @@ export default function MyWorldDashboard() {
 
                           {/* Space for multi-day event bars */}
                           {multiDayBarsInRow.length > 0 && (
-                            <div style={{ height: `${multiDayBarsInRow.length * 18}px` }} />
+                            <div style={{ height: `${multiDayBarsInRow.length * 20}px` }} />
                           )}
 
                           {/* Single-day events list */}
@@ -1372,8 +1440,8 @@ export default function MyWorldDashboard() {
                               {singleDayEvents.slice(0, holiday ? 1 : 2).map((event) => (
                                 <div
                                   key={event.id}
-                                  className="text-xs px-1 py-0.5 rounded truncate"
-                                  style={{ backgroundColor: `${event.color || '#8b5cf6'}20`, color: event.color || '#8b5cf6' }}
+                                  className="text-xs px-1 py-0.5 rounded truncate font-medium"
+                                  style={{ backgroundColor: event.color || '#c4b5fd', color: '#374151' }}
                                   title={`${event.title}${event.location ? ` - ${event.location}` : ''}${event.url ? ' (링크)' : ''}`}
                                 >
                                   {event.title}
@@ -1408,13 +1476,14 @@ export default function MyWorldDashboard() {
                       return (
                         <div
                           key={`${bar.event.id}-${bar.row}`}
-                          className="absolute text-xs text-white truncate px-1.5 py-0.5 cursor-pointer pointer-events-auto hover:opacity-90 transition-opacity"
+                          className="absolute text-xs truncate px-1.5 py-0.5 cursor-pointer pointer-events-auto hover:opacity-80 transition-opacity font-medium"
                           style={{
                             left: `calc(${bar.startCol * colWidth}% + 2px)`,
                             width: `calc(${bar.span * colWidth}% - 4px)`,
-                            top: `calc(${bar.row * rowHeight}% + 20px + ${barIndexInRow * 18}px)`,
-                            height: '16px',
-                            backgroundColor: bar.event.color || '#8b5cf6',
+                            top: `calc(${bar.row * rowHeight}% + 22px + ${barIndexInRow * 20}px)`,
+                            height: '18px',
+                            backgroundColor: bar.event.color || '#c4b5fd',
+                            color: '#374151',
                             borderRadius: bar.isStart && bar.isEnd ? '4px' : bar.isStart ? '4px 0 0 4px' : bar.isEnd ? '0 4px 4px 0' : '0',
                           }}
                           title={bar.event.title}
@@ -1500,33 +1569,63 @@ export default function MyWorldDashboard() {
               </div>
 
               {/* All-day events row */}
-              <div className="grid grid-cols-8 border-b border-gray-200 dark:border-gray-700 min-h-[40px] flex-shrink-0">
-                <div className="w-14 px-2 py-1 text-xs text-gray-400 dark:text-gray-500 text-right">
-                  종일
+              <div className="relative border-b border-gray-200 dark:border-gray-700 flex-shrink-0" style={{ minHeight: `${Math.max(40, 24 + getWeeklyMultiDayEventBars.length * 22)}px` }}>
+                <div className="grid grid-cols-8 h-full">
+                  <div className="w-14 px-2 py-1 text-xs text-gray-400 dark:text-gray-500 text-right">
+                    종일
+                  </div>
+                  {getWeekDates.map((date, index) => {
+                    const singleDayEvents = getSingleDayAllDayEventsForWeekDate(date);
+                    return (
+                      <div key={index} className="border-l border-gray-100 dark:border-gray-700 p-1 relative" style={{ paddingTop: `${getWeeklyMultiDayEventBars.length * 22 + 4}px` }}>
+                        {singleDayEvents.slice(0, 2).map((event) => (
+                          <div
+                            key={event.id}
+                            onClick={() => {
+                              setSelectedDate(date.toISOString().split('T')[0]);
+                              openEventModal(event);
+                            }}
+                            className="text-xs px-1 py-0.5 rounded truncate cursor-pointer hover:opacity-80 font-medium mb-0.5"
+                            style={{ backgroundColor: event.color || '#c4b5fd', color: '#374151' }}
+                          >
+                            {event.title}
+                          </div>
+                        ))}
+                        {singleDayEvents.length > 2 && (
+                          <div className="text-xs text-gray-400 px-1">+{singleDayEvents.length - 2}</div>
+                        )}
+                      </div>
+                    );
+                  })}
                 </div>
-                {getWeekDates.map((date, index) => {
-                  const events = getEventsForWeekDate(date).filter(e => e.isAllDay);
-                  return (
-                    <div key={index} className="border-l border-gray-100 dark:border-gray-700 p-1">
-                      {events.slice(0, 2).map((event) => (
-                        <div
-                          key={event.id}
-                          onClick={() => {
-                            setSelectedDate(date.toISOString().split('T')[0]);
-                            openEventModal(event);
-                          }}
-                          className="text-xs px-1 py-0.5 rounded truncate cursor-pointer hover:opacity-80"
-                          style={{ backgroundColor: `${event.color || '#8b5cf6'}30`, color: event.color || '#8b5cf6' }}
-                        >
-                          {event.title}
-                        </div>
-                      ))}
-                      {events.length > 2 && (
-                        <div className="text-xs text-gray-400 px-1">+{events.length - 2}</div>
-                      )}
-                    </div>
-                  );
-                })}
+                {/* Multi-day event bars overlay */}
+                <div className="absolute top-0 left-0 right-0 pointer-events-none" style={{ paddingLeft: 'calc(14.285714% + 0px)' }}>
+                  {getWeeklyMultiDayEventBars.map((bar, barIndex) => {
+                    const colWidth = 100 / 7;
+                    return (
+                      <div
+                        key={`weekly-${bar.event.id}`}
+                        className="absolute text-xs truncate px-1.5 py-0.5 cursor-pointer pointer-events-auto hover:opacity-80 transition-opacity font-medium"
+                        style={{
+                          left: `calc(${bar.startCol * colWidth}% + 2px)`,
+                          width: `calc(${bar.span * colWidth}% - 4px)`,
+                          top: `${4 + barIndex * 22}px`,
+                          height: '20px',
+                          backgroundColor: bar.event.color || '#c4b5fd',
+                          color: '#374151',
+                          borderRadius: bar.isStart && bar.isEnd ? '4px' : bar.isStart ? '4px 0 0 4px' : bar.isEnd ? '0 4px 4px 0' : '0',
+                        }}
+                        title={bar.event.title}
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          openEventModal(bar.event);
+                        }}
+                      >
+                        {bar.isStart && bar.event.title}
+                      </div>
+                    );
+                  })}
+                </div>
               </div>
 
               {/* Time grid */}
@@ -1590,22 +1689,22 @@ export default function MyWorldDashboard() {
                                 setSelectedDate(dateStr);
                                 openEventModal(event);
                               }}
-                              className="absolute left-0.5 right-0.5 rounded px-1 py-0.5 text-xs overflow-hidden cursor-pointer hover:opacity-90 transition-opacity"
+                              className="absolute left-0.5 right-0.5 rounded px-1 py-0.5 text-xs overflow-hidden cursor-pointer hover:opacity-80 transition-opacity"
                               style={{
                                 top: `${position.top}px`,
                                 height: `${Math.max(position.height, 20)}px`,
-                                backgroundColor: `${event.color || '#8b5cf6'}`,
-                                color: 'white',
+                                backgroundColor: event.color || '#c4b5fd',
+                                color: '#374151',
                               }}
                             >
                               <div className="font-medium truncate">{event.title}</div>
                               {position.height > 30 && (
-                                <div className="text-white/80 truncate">
+                                <div className="text-gray-600 truncate">
                                   {formatEventTime(event)}
                                 </div>
                               )}
                               {position.height > 50 && event.location && (
-                                <div className="text-white/70 truncate text-[10px] flex items-center gap-0.5">
+                                <div className="text-gray-500 truncate text-[10px] flex items-center gap-0.5">
                                   <svg className="w-2.5 h-2.5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
                                   </svg>
@@ -1676,8 +1775,8 @@ export default function MyWorldDashboard() {
                         key={event.id}
                         className="p-2 rounded-lg border-l-4 cursor-pointer hover:shadow-sm transition-all relative group"
                         style={{
-                          borderColor: event.color || '#8b5cf6',
-                          backgroundColor: `${event.color || '#8b5cf6'}10`
+                          borderColor: event.color || '#c4b5fd',
+                          backgroundColor: `${event.color || '#c4b5fd'}30`
                         }}
                         onClick={() => openEventModal(event)}
                       >
