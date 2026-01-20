@@ -12,13 +12,20 @@ interface AdminSidebarProps {
   };
 }
 
-const menuItems = [
+const blogMenuItems = [
   { href: '/admin', label: '대시보드', icon: '📊' },
   { href: '/admin/posts', label: '포스트 관리', icon: '📝' },
   { href: '/admin/new', label: '새 포스트', icon: '✏️' },
   { href: '/admin/comments', label: '댓글 관리', icon: '💬' },
   { href: '/admin/subscribers', label: '구독자 관리', icon: '📧' },
 ];
+
+const sikkMenuItems = [
+  { href: '/admin/sikk', label: 'Sikk 포스트 관리', icon: '📚' },
+  { href: '/admin/sikk/new', label: '새 Sikk 포스트', icon: '✍️' },
+];
+
+const menuItems = [...blogMenuItems, ...sikkMenuItems];
 
 export default function AdminSidebar({ user }: AdminSidebarProps) {
   const pathname = usePathname();
@@ -28,6 +35,7 @@ export default function AdminSidebar({ user }: AdminSidebarProps) {
   const getCurrentPageTitle = () => {
     const currentItem = menuItems.find((item) => item.href === pathname);
     if (currentItem) return currentItem.label;
+    if (pathname.startsWith('/admin/sikk/edit/')) return 'Sikk 포스트 수정';
     if (pathname.startsWith('/admin/edit/')) return '포스트 수정';
     return '관리자';
   };
@@ -125,26 +133,60 @@ export default function AdminSidebar({ user }: AdminSidebarProps) {
         </div>
 
         <nav className="flex-1 p-4">
-          <ul className="space-y-2">
-            {menuItems.map((item) => {
-              const isActive = pathname === item.href;
-              return (
-                <li key={item.href}>
-                  <Link
-                    href={item.href}
-                    className={`flex items-center gap-3 px-4 py-2 rounded-lg transition-colors ${
-                      isActive
-                        ? 'bg-blue-600 text-white'
-                        : 'text-gray-300 hover:bg-gray-800 hover:text-white'
-                    }`}
-                  >
-                    <span>{item.icon}</span>
-                    <span>{item.label}</span>
-                  </Link>
-                </li>
-              );
-            })}
-          </ul>
+          <div className="space-y-6">
+            {/* Blog Section */}
+            <div>
+              <p className="px-4 text-xs font-semibold text-gray-500 uppercase tracking-wider mb-2">Blog</p>
+              <ul className="space-y-2">
+                {blogMenuItems.map((item) => {
+                  const isActive = pathname === item.href;
+                  return (
+                    <li key={item.href}>
+                      <Link
+                        href={item.href}
+                        className={`flex items-center gap-3 px-4 py-2 rounded-lg transition-colors ${
+                          isActive
+                            ? 'bg-blue-600 text-white'
+                            : 'text-gray-300 hover:bg-gray-800 hover:text-white'
+                        }`}
+                      >
+                        <span>{item.icon}</span>
+                        <span>{item.label}</span>
+                      </Link>
+                    </li>
+                  );
+                })}
+              </ul>
+            </div>
+
+            {/* Divider */}
+            <hr className="border-gray-700" />
+
+            {/* Sikk Section */}
+            <div>
+              <p className="px-4 text-xs font-semibold text-pink-400 uppercase tracking-wider mb-2">Sikk</p>
+              <ul className="space-y-2">
+                {sikkMenuItems.map((item) => {
+                  const isActive = pathname === item.href || pathname.startsWith(item.href + '/');
+                  return (
+                    <li key={item.href}>
+                      <Link
+                        href={item.href}
+                        className={`flex items-center gap-3 px-4 py-2 rounded-lg transition-colors ${
+                          isActive
+                            ? 'bg-pink-600 text-white'
+                            : 'text-gray-300 hover:bg-gray-800 hover:text-white'
+                        }`}
+                      >
+                        <span>{item.icon}</span>
+                        <span>{item.label}</span>
+                      </Link>
+                    </li>
+                  );
+                })}
+              </ul>
+            </div>
+          </div>
         </nav>
 
         <div className="p-4 border-t border-gray-700">

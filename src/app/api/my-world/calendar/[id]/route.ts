@@ -58,7 +58,7 @@ export async function PUT(
       return NextResponse.json({ error: 'Event not found' }, { status: 404 });
     }
 
-    const { title, description, date, endDate, type, color, isAllDay, reminder } = body;
+    const { title, description, date, endDate, type, color, isAllDay, reminder, location, url } = body;
 
     const event = await prisma.calendarEvent.update({
       where: { id },
@@ -69,6 +69,8 @@ export async function PUT(
         ...(endDate !== undefined && { endDate: endDate ? new Date(endDate) : null }),
         ...(type !== undefined && { type }),
         ...(color !== undefined && { color }),
+        ...(location !== undefined && { location }),
+        ...(url !== undefined && { url }),
         ...(isAllDay !== undefined && { isAllDay }),
         ...(reminder !== undefined && { reminder }),
       },

@@ -16,6 +16,10 @@ const navigation: NavItem[] = [
     href: '/blog',
   },
   {
+    label: 'Sikk',
+    href: '/sikk',
+  },
+  {
     label: 'About',
     href: '/about',
   },
@@ -67,6 +71,14 @@ export default function HeaderClient({ posts }: HeaderClientProps) {
                 {item.label}
               </Link>
             ))}
+            {session?.user?.isAdmin && (
+              <Link
+                href="/my-world"
+                className="nav-link px-3 py-2 rounded-lg text-sm font-medium transition-all hover:bg-violet-100 dark:hover:bg-violet-500/20"
+              >
+                My World
+              </Link>
+            )}
           </nav>
 
           {/* Actions */}
@@ -217,6 +229,15 @@ export default function HeaderClient({ posts }: HeaderClientProps) {
                 {item.label}
               </Link>
             ))}
+            {session?.user?.isAdmin && (
+              <Link
+                href="/my-world"
+                className="nav-link block py-3 px-2 rounded-lg transition-all hover:bg-violet-100 dark:hover:bg-violet-500/20"
+                onClick={() => setIsMenuOpen(false)}
+              >
+                My World
+              </Link>
+            )}
           </nav>
         )}
       </div>
