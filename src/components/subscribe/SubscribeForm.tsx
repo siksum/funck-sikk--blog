@@ -1,15 +1,15 @@
 'use client';
 
 import { useState } from 'react';
+import { useSession, signIn } from 'next-auth/react';
 
 export default function SubscribeForm() {
-  const [email, setEmail] = useState('');
+  const { data: session, status: sessionStatus } = useSession();
   const [status, setStatus] = useState<'idle' | 'loading' | 'success' | 'error'>('idle');
   const [message, setMessage] = useState('');
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!email.trim()) return;
+  const handleSubscribe = async () => {
+    if (!session?.user?.email) return;
 
     setStatus('loading');
 
@@ -17,7 +17,7 @@ export default function SubscribeForm() {
       const res = await fetch('/api/subscribe/email', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email }),
+        body: JSON.stringify({ email: session.user.email }),
       });
 
       const data = await res.json();
@@ -25,12 +25,11 @@ export default function SubscribeForm() {
       if (res.ok) {
         setStatus('success');
         setMessage(data.message || '확인 이메일을 전송했습니다.');
-        setEmail('');
       } else {
         setStatus('error');
         setMessage(data.error || '구독 처리 중 오류가 발생했습니다.');
       }
-    } catch (error) {
+    } catch {
       setStatus('error');
       setMessage('네트워크 오류가 발생했습니다.');
     }
@@ -48,35 +47,37 @@ export default function SubscribeForm() {
         새로운 포스트가 올라오면 알림을 받아보세요
       </p>
 
-      <form onSubmit={handleSubmit} className="flex gap-2">
-        <input
-          type="email"
-          value={email}
-          onChange={(e) => setEmail(e.target.value)}
-          placeholder="이메일 주소"
-          className="flex-1 px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-violet-500"
-          style={{
-            background: 'var(--card-bg)',
-            borderColor: 'var(--card-border)',
-            color: 'var(--foreground)',
-          }}
-          disabled={status === 'loading'}
-        />
+      {status === 'success' ? (
+        <div className="flex items-center gap-2 text-green-600 dark:text-green-400 py-2">
+          <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+          </svg>
+          <span className="text-sm font-medium">{message}</span>
+        </div>
+      ) : sessionStatus === 'loading' ? (
+        <div className="py-2 text-sm sidebar-text-muted">로딩 중...</div>
+      ) : session?.user?.email ? (
+        <div className="space-y-2">
+          <p className="text-xs sidebar-text-muted truncate">{session.user.email}</p>
+          <button
+            onClick={handleSubscribe}
+            disabled={status === 'loading'}
+            className="w-full px-4 py-2 bg-violet-600 text-white rounded-lg hover:bg-violet-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors text-sm font-medium"
+          >
+            {status === 'loading' ? '구독 중...' : '구독하기'}
+          </button>
+        </div>
+      ) : (
         <button
-          type="submit"
-          disabled={status === 'loading' || !email.trim()}
-          className="px-4 py-2 bg-violet-600 text-white rounded-lg hover:bg-violet-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+          onClick={() => signIn()}
+          className="w-full px-4 py-2 bg-violet-600 text-white rounded-lg hover:bg-violet-700 transition-colors text-sm font-medium"
         >
-          {status === 'loading' ? '...' : '구독'}
+          로그인 후 구독하기
         </button>
-      </form>
+      )}
 
-      {status !== 'idle' && (
-        <p
-          className={`text-sm mt-3 ${status === 'success' ? 'text-green-600' : status === 'error' ? 'text-red-600' : ''}`}
-        >
-          {message}
-        </p>
+      {status === 'error' && (
+        <p className="text-sm mt-3 text-red-600">{message}</p>
       )}
     </div>
   );
