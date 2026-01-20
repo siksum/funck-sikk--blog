@@ -96,6 +96,24 @@ function isBot(userAgent: string): boolean {
     /nmap/i,
     /masscan/i,
     /zgrab/i,
+    // Vercel and deployment related
+    /vercel/i,
+    /netlify/i,
+    /cloudflare/i,
+    /render/i,
+    /railway/i,
+    /heroku/i,
+    /aws-sdk/i,
+    /lambda/i,
+    /edge-function/i,
+    /nextjs/i,
+    // More automated tools
+    /fetch\//i,
+    /undici/i,
+    /got\//i,
+    /superagent/i,
+    /request\//i,
+    /http-client/i,
   ];
 
   return botPatterns.some(pattern => pattern.test(userAgent));

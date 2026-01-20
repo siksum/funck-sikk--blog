@@ -6,6 +6,7 @@ import { useSession } from 'next-auth/react';
 
 // Admin emails that should not be tracked
 const ADMIN_EMAILS = ['sikk@sikk.kr'];
+const ADMIN_MARKER_KEY = 'blog_admin_no_track';
 
 export default function PageTracker() {
   const pathname = usePathname();
@@ -17,6 +18,17 @@ export default function PageTracker() {
       return;
     }
 
+    // Check if this browser is marked as admin (persists across sessions)
+    const isMarkedAsAdmin = typeof window !== 'undefined' && localStorage.getItem(ADMIN_MARKER_KEY) === 'true';
+
+    // If user is admin, mark this browser permanently
+    const isCurrentAdmin = session?.user?.isAdmin ||
+      (session?.user?.email && ADMIN_EMAILS.includes(session.user.email));
+
+    if (isCurrentAdmin && typeof window !== 'undefined') {
+      localStorage.setItem(ADMIN_MARKER_KEY, 'true');
+    }
+
     // Skip tracking for admin users (by isAdmin flag)
     if (session?.user?.isAdmin) {
       return;
@@ -24,6 +36,11 @@ export default function PageTracker() {
 
     // Skip tracking for admin users (by email)
     if (session?.user?.email && ADMIN_EMAILS.includes(session.user.email)) {
+      return;
+    }
+
+    // Skip tracking if this browser was previously marked as admin
+    if (isMarkedAsAdmin) {
       return;
     }
 
