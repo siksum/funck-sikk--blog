@@ -495,6 +495,118 @@ export default function MyWorldDashboard() {
     return holidays.find(h => h.date === dateStr);
   };
 
+  // Get multi-day events organized by week rows for bar rendering
+  const getMultiDayEventBars = useMemo(() => {
+    const year = currentMonth.getFullYear();
+    const month = currentMonth.getMonth();
+    const firstDayOfMonth = new Date(year, month, 1);
+    const daysInMonth = new Date(year, month + 1, 0).getDate();
+    const startingDayOfWeek = firstDayOfMonth.getDay();
+
+    const multiDayEvents = monthEvents.filter(e => {
+      const startDate = e.date.split('T')[0];
+      const endDate = e.endDate ? e.endDate.split('T')[0] : startDate;
+      return startDate !== endDate;
+    });
+
+    interface EventBar {
+      event: CalendarEvent;
+      row: number;
+      startCol: number;
+      span: number;
+      isStart: boolean;
+      isEnd: boolean;
+    }
+
+    const bars: EventBar[] = [];
+
+    multiDayEvents.forEach(event => {
+      const eventStart = new Date(event.date.split('T')[0] + 'T00:00:00');
+      const eventEnd = new Date((event.endDate || event.date).split('T')[0] + 'T00:00:00');
+
+      // Iterate through each week of the month
+      let currentDate = new Date(year, month, 1);
+      currentDate.setDate(1 - startingDayOfWeek); // Start from the first cell of the calendar
+
+      const totalCells = startingDayOfWeek + daysInMonth;
+      const totalRows = Math.ceil(totalCells / 7);
+
+      for (let row = 0; row < totalRows; row++) {
+        const weekStart = new Date(currentDate);
+        const weekEnd = new Date(currentDate);
+        weekEnd.setDate(weekEnd.getDate() + 6);
+
+        // Check if event overlaps with this week
+        if (eventEnd >= weekStart && eventStart <= weekEnd) {
+          // Calculate start column (0-6)
+          let startCol = 0;
+          if (eventStart > weekStart) {
+            startCol = Math.floor((eventStart.getTime() - weekStart.getTime()) / (1000 * 60 * 60 * 24));
+          }
+
+          // Calculate end column (0-6)
+          let endCol = 6;
+          if (eventEnd < weekEnd) {
+            endCol = Math.floor((eventEnd.getTime() - weekStart.getTime()) / (1000 * 60 * 60 * 24));
+          }
+
+          // Adjust for cells outside the month
+          if (row === 0 && startCol < startingDayOfWeek) {
+            startCol = startingDayOfWeek;
+          }
+
+          const lastDayCell = startingDayOfWeek + daysInMonth - 1;
+          const lastRow = Math.floor(lastDayCell / 7);
+          const lastColInMonth = lastDayCell % 7;
+
+          if (row === lastRow && endCol > lastColInMonth) {
+            endCol = lastColInMonth;
+          }
+
+          // Only add bar if it's valid within the month
+          const dayInStartCol = row * 7 + startCol - startingDayOfWeek + 1;
+          const dayInEndCol = row * 7 + endCol - startingDayOfWeek + 1;
+
+          if (dayInStartCol >= 1 && dayInStartCol <= daysInMonth && startCol <= endCol) {
+            bars.push({
+              event,
+              row,
+              startCol,
+              span: endCol - startCol + 1,
+              isStart: eventStart >= weekStart && eventStart <= weekEnd,
+              isEnd: eventEnd >= weekStart && eventEnd <= weekEnd,
+            });
+          }
+        }
+
+        currentDate.setDate(currentDate.getDate() + 7);
+      }
+    });
+
+    return bars;
+  }, [monthEvents, currentMonth]);
+
+  // Check if a day has multi-day event (to avoid showing duplicate tags)
+  const hasMultiDayEvent = (day: number) => {
+    const dateStr = `${currentMonth.getFullYear()}-${String(currentMonth.getMonth() + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
+    return monthEvents.some(e => {
+      const eventStart = e.date.split('T')[0];
+      const eventEnd = e.endDate ? e.endDate.split('T')[0] : eventStart;
+      return eventStart !== eventEnd && dateStr >= eventStart && dateStr <= eventEnd;
+    });
+  };
+
+  // Get only single-day events for a date
+  const getSingleDayEventsForDate = (day: number) => {
+    const dateStr = `${currentMonth.getFullYear()}-${String(currentMonth.getMonth() + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
+    return monthEvents.filter(e => {
+      const eventStart = e.date.split('T')[0];
+      const eventEnd = e.endDate ? e.endDate.split('T')[0] : eventStart;
+      // Single day event that matches this date
+      return eventStart === eventEnd && dateStr === eventStart;
+    });
+  };
+
   const getScoreColor = (score: number | null) => {
     if (score === null) return '';
     if (score >= 8) return 'bg-green-500';
@@ -1166,88 +1278,133 @@ export default function MyWorldDashboard() {
                 </div>
 
                 {/* Calendar Grid */}
-                <div className="grid grid-cols-7 border border-gray-200 dark:border-gray-700 rounded-lg overflow-hidden flex-1">
-                  {/* Empty cells for days before the first day of the month */}
-                  {Array.from({ length: startingDayOfWeek }).map((_, index) => (
-                    <div key={`empty-${index}`} className="p-1 border-b border-r border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800/50"></div>
-                  ))}
+                <div className="relative flex-1">
+                  <div className="grid grid-cols-7 border border-gray-200 dark:border-gray-700 rounded-lg overflow-hidden h-full">
+                    {/* Empty cells for days before the first day of the month */}
+                    {Array.from({ length: startingDayOfWeek }).map((_, index) => (
+                      <div key={`empty-${index}`} className="p-1 border-b border-r border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800/50 min-h-[80px]"></div>
+                    ))}
 
-                  {/* Days of the month */}
-                  {Array.from({ length: daysInMonth }).map((_, index) => {
-                    const day = index + 1;
-                    const dateStr = getDateStr(day);
-                    const entry = getEntryForDate(day);
-                    const events = getEventsForDate(day);
-                    const holiday = getHolidayForDate(day);
-                    const dayOfWeek = (startingDayOfWeek + index) % 7;
-                    const isSunday = dayOfWeek === 0;
-                    const isSaturday = dayOfWeek === 6;
-                    const isHoliday = !!holiday;
-                    const isSelected = selectedDate === dateStr;
-                    const isLastRow = (startingDayOfWeek + index) >= (Math.ceil((daysInMonth + startingDayOfWeek) / 7) - 1) * 7;
-                    const isLastCol = dayOfWeek === 6;
+                    {/* Days of the month */}
+                    {Array.from({ length: daysInMonth }).map((_, index) => {
+                      const day = index + 1;
+                      const dateStr = getDateStr(day);
+                      const entry = getEntryForDate(day);
+                      const singleDayEvents = getSingleDayEventsForDate(day);
+                      const holiday = getHolidayForDate(day);
+                      const dayOfWeek = (startingDayOfWeek + index) % 7;
+                      const isSunday = dayOfWeek === 0;
+                      const isSaturday = dayOfWeek === 6;
+                      const isHoliday = !!holiday;
+                      const isSelected = selectedDate === dateStr;
+                      const isLastRow = (startingDayOfWeek + index) >= (Math.ceil((daysInMonth + startingDayOfWeek) / 7) - 1) * 7;
+                      const isLastCol = dayOfWeek === 6;
+                      const row = Math.floor((startingDayOfWeek + index) / 7);
+                      // Count multi-day events for this row that start before or on this day
+                      const multiDayBarsInRow = getMultiDayEventBars.filter(bar => bar.row === row && bar.startCol <= dayOfWeek);
 
-                    return (
-                      <button
-                        key={day}
-                        onClick={() => setSelectedDate(dateStr)}
-                        className={`p-1 transition-all relative text-left align-top ${
-                          !isLastRow ? 'border-b' : ''
-                        } ${
-                          !isLastCol ? 'border-r' : ''
-                        } border-gray-200 dark:border-gray-700 ${
-                          isToday(day)
-                            ? 'ring-2 ring-inset ring-violet-500'
-                            : ''
-                        } ${
-                          isSelected
-                            ? 'bg-violet-100 dark:bg-violet-900/50'
-                            : isHoliday
-                              ? 'bg-red-50 dark:bg-red-900/20 hover:bg-red-100 dark:hover:bg-red-900/30'
-                              : 'hover:bg-gray-50 dark:hover:bg-gray-700/50'
-                        }`}
-                      >
-                        <div className="flex items-start justify-between">
-                          <div
-                            className={`text-sm font-medium ${
-                              isHoliday || isSunday ? 'text-red-500' : isSaturday ? 'text-blue-500' : 'text-gray-700 dark:text-gray-300'
-                            }`}
-                          >
-                            {day}
-                          </div>
-                          {holiday && (
-                            <div className="text-[10px] text-red-500 truncate max-w-[60px]" title={holiday.name}>
-                              {holiday.name}
+                      return (
+                        <button
+                          key={day}
+                          onClick={() => setSelectedDate(dateStr)}
+                          className={`p-1 transition-all relative text-left align-top min-h-[80px] ${
+                            !isLastRow ? 'border-b' : ''
+                          } ${
+                            !isLastCol ? 'border-r' : ''
+                          } border-gray-200 dark:border-gray-700 ${
+                            isToday(day)
+                              ? 'ring-2 ring-inset ring-violet-500'
+                              : ''
+                          } ${
+                            isSelected
+                              ? 'bg-violet-100 dark:bg-violet-900/50'
+                              : isHoliday
+                                ? 'bg-red-50 dark:bg-red-900/20 hover:bg-red-100 dark:hover:bg-red-900/30'
+                                : 'hover:bg-gray-50 dark:hover:bg-gray-700/50'
+                          }`}
+                        >
+                          <div className="flex items-start justify-between">
+                            <div
+                              className={`text-sm font-medium ${
+                                isHoliday || isSunday ? 'text-red-500' : isSaturday ? 'text-blue-500' : 'text-gray-700 dark:text-gray-300'
+                              }`}
+                            >
+                              {day}
                             </div>
-                          )}
-                        </div>
-
-                        {/* Events list */}
-                        {events.length > 0 && (
-                          <div className="space-y-0.5 mt-0.5">
-                            {events.slice(0, holiday ? 1 : 2).map((event) => (
-                              <div
-                                key={event.id}
-                                className="text-xs px-1 py-0.5 rounded truncate"
-                                style={{ backgroundColor: `${event.color || '#8b5cf6'}20`, color: event.color || '#8b5cf6' }}
-                                title={`${event.title}${event.location ? ` - ${event.location}` : ''}${event.url ? ' (링크)' : ''}`}
-                              >
-                                {event.title}
+                            {holiday && (
+                              <div className="text-[10px] text-red-500 truncate max-w-[60px]" title={holiday.name}>
+                                {holiday.name}
                               </div>
-                            ))}
-                            {events.length > (holiday ? 1 : 2) && (
-                              <div className="text-xs text-gray-400 px-1">+{events.length - (holiday ? 1 : 2)}개</div>
                             )}
                           </div>
-                        )}
 
-                        {/* Daily Entry Score Indicator */}
-                        {entry && entry.dayScore !== null && (
-                          <div className={`absolute bottom-1 right-1 w-2 h-2 rounded-full ${getScoreColor(entry.dayScore)}`} />
-                        )}
-                      </button>
-                    );
-                  })}
+                          {/* Space for multi-day event bars */}
+                          {multiDayBarsInRow.length > 0 && (
+                            <div style={{ height: `${multiDayBarsInRow.length * 18}px` }} />
+                          )}
+
+                          {/* Single-day events list */}
+                          {singleDayEvents.length > 0 && (
+                            <div className="space-y-0.5 mt-0.5">
+                              {singleDayEvents.slice(0, holiday ? 1 : 2).map((event) => (
+                                <div
+                                  key={event.id}
+                                  className="text-xs px-1 py-0.5 rounded truncate"
+                                  style={{ backgroundColor: `${event.color || '#8b5cf6'}20`, color: event.color || '#8b5cf6' }}
+                                  title={`${event.title}${event.location ? ` - ${event.location}` : ''}${event.url ? ' (링크)' : ''}`}
+                                >
+                                  {event.title}
+                                </div>
+                              ))}
+                              {singleDayEvents.length > (holiday ? 1 : 2) && (
+                                <div className="text-xs text-gray-400 px-1">+{singleDayEvents.length - (holiday ? 1 : 2)}개</div>
+                              )}
+                            </div>
+                          )}
+
+                          {/* Daily Entry Score Indicator */}
+                          {entry && entry.dayScore !== null && (
+                            <div className={`absolute bottom-1 right-1 w-2 h-2 rounded-full ${getScoreColor(entry.dayScore)}`} />
+                          )}
+                        </button>
+                      );
+                    })}
+                  </div>
+
+                  {/* Multi-day event bars overlay */}
+                  <div className="absolute inset-0 pointer-events-none" style={{ borderRadius: '0.5rem' }}>
+                    {getMultiDayEventBars.map((bar, barIndex) => {
+                      const totalRows = Math.ceil((startingDayOfWeek + daysInMonth) / 7);
+                      const rowHeight = 100 / totalRows;
+                      const colWidth = 100 / 7;
+
+                      // Calculate vertical position within the row (after date number, before single-day events)
+                      const barsInSameRow = getMultiDayEventBars.filter(b => b.row === bar.row);
+                      const barIndexInRow = barsInSameRow.findIndex(b => b.event.id === bar.event.id);
+
+                      return (
+                        <div
+                          key={`${bar.event.id}-${bar.row}`}
+                          className="absolute text-xs text-white truncate px-1.5 py-0.5 cursor-pointer pointer-events-auto hover:opacity-90 transition-opacity"
+                          style={{
+                            left: `calc(${bar.startCol * colWidth}% + 2px)`,
+                            width: `calc(${bar.span * colWidth}% - 4px)`,
+                            top: `calc(${bar.row * rowHeight}% + 20px + ${barIndexInRow * 18}px)`,
+                            height: '16px',
+                            backgroundColor: bar.event.color || '#8b5cf6',
+                            borderRadius: bar.isStart && bar.isEnd ? '4px' : bar.isStart ? '4px 0 0 4px' : bar.isEnd ? '0 4px 4px 0' : '0',
+                          }}
+                          title={bar.event.title}
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            openEventModal(bar.event);
+                          }}
+                        >
+                          {bar.isStart && bar.event.title}
+                        </div>
+                      );
+                    })}
+                  </div>
                 </div>
 
                 {/* Legend */}
@@ -1494,14 +1651,27 @@ export default function MyWorldDashboard() {
                     {selectedDateEvents.map((event) => (
                       <div
                         key={event.id}
-                        className="p-2 rounded-lg border-l-4 cursor-pointer hover:shadow-sm transition-all"
+                        className="p-2 rounded-lg border-l-4 cursor-pointer hover:shadow-sm transition-all relative group"
                         style={{
                           borderColor: event.color || '#8b5cf6',
                           backgroundColor: `${event.color || '#8b5cf6'}10`
                         }}
                         onClick={() => openEventModal(event)}
                       >
-                        <p className="font-medium text-gray-900 dark:text-white text-sm">
+                        {/* Delete button */}
+                        <button
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            handleDeleteEvent(event.id);
+                          }}
+                          className="absolute top-1 right-1 p-1 rounded-full opacity-0 group-hover:opacity-100 hover:bg-red-100 dark:hover:bg-red-900/30 transition-all"
+                          title="삭제"
+                        >
+                          <svg className="w-3.5 h-3.5 text-red-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                          </svg>
+                        </button>
+                        <p className="font-medium text-gray-900 dark:text-white text-sm pr-6">
                           {event.title}
                         </p>
                         <span className="text-xs text-gray-500 dark:text-gray-400">
