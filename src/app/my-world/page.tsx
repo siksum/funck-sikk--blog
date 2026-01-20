@@ -62,14 +62,23 @@ interface Holiday {
   isSubstitute?: boolean;
 }
 
+type TodoStatus = 'not_started' | 'in_progress' | 'completed';
+
 interface Todo {
   id: string;
   content: string;
   completed: boolean;
+  status: TodoStatus;
   category: 'personal' | 'research';
   date: string;
   order: number;
 }
+
+const todoStatusConfig = {
+  not_started: { label: '시작전', color: 'bg-gray-200 text-gray-600 dark:bg-gray-700 dark:text-gray-300' },
+  in_progress: { label: '진행중', color: 'bg-blue-100 text-blue-600 dark:bg-blue-900/50 dark:text-blue-400' },
+  completed: { label: '완료', color: 'bg-green-100 text-green-600 dark:bg-green-900/50 dark:text-green-400' },
+};
 
 const eventColors = [
   { name: '보라', value: '#c4b5fd' },
@@ -189,13 +198,41 @@ export default function MyWorldDashboard() {
   // Todo archive state
   const [showTodoArchive, setShowTodoArchive] = useState(false);
   const [archiveTodos, setArchiveTodos] = useState<Todo[]>([]);
+  const [archivePeriod, setArchivePeriod] = useState<'day' | 'week' | 'month' | 'custom'>('week');
   const [archiveStartDate, setArchiveStartDate] = useState(() => {
     const d = new Date();
-    d.setDate(d.getDate() - 30);
+    d.setDate(d.getDate() - 7);
     return d.toISOString().split('T')[0];
   });
   const [archiveEndDate, setArchiveEndDate] = useState(() => new Date().toISOString().split('T')[0]);
   const [archiveCategory, setArchiveCategory] = useState<string>('all');
+  const [archiveStatus, setArchiveStatus] = useState<string>('all');
+  const [archiveSortOrder, setArchiveSortOrder] = useState<'desc' | 'asc'>('desc');
+
+  // Update archive dates when period changes
+  const updateArchiveDates = (period: 'day' | 'week' | 'month' | 'custom') => {
+    const now = new Date();
+    const end = now.toISOString().split('T')[0];
+    let start = end;
+
+    if (period === 'day') {
+      start = end;
+    } else if (period === 'week') {
+      const d = new Date(now);
+      d.setDate(d.getDate() - 7);
+      start = d.toISOString().split('T')[0];
+    } else if (period === 'month') {
+      const d = new Date(now);
+      d.setMonth(d.getMonth() - 1);
+      start = d.toISOString().split('T')[0];
+    }
+
+    setArchivePeriod(period);
+    if (period !== 'custom') {
+      setArchiveStartDate(start);
+      setArchiveEndDate(end);
+    }
+  };
 
   // Drag and drop state for calendar events
   const [draggingEvent, setDraggingEvent] = useState<CalendarEvent | null>(null);
@@ -382,10 +419,13 @@ export default function MyWorldDashboard() {
       const params = new URLSearchParams({
         startDate: archiveStartDate,
         endDate: archiveEndDate,
-        completedOnly: 'true',
+        completedOnly: 'false',
       });
       if (archiveCategory !== 'all') {
         params.append('category', archiveCategory);
+      }
+      if (archiveStatus !== 'all') {
+        params.append('status', archiveStatus);
       }
       const res = await fetch(`/api/my-world/todos/archive?${params}`);
       if (res.ok) {
@@ -401,7 +441,7 @@ export default function MyWorldDashboard() {
     if (showTodoArchive) {
       fetchArchiveTodos();
     }
-  }, [showTodoArchive, archiveStartDate, archiveEndDate, archiveCategory]);
+  }, [showTodoArchive, archiveStartDate, archiveEndDate, archiveCategory, archiveStatus]);
 
   const addTodo = async (category: 'personal' | 'research', content: string) => {
     if (!content.trim()) return;
@@ -428,20 +468,25 @@ export default function MyWorldDashboard() {
     }
   };
 
-  const toggleTodo = async (id: string, completed: boolean, category: 'personal' | 'research') => {
+  const cycleStatus = async (id: string, currentStatus: TodoStatus, category: 'personal' | 'research') => {
+    const statusOrder: TodoStatus[] = ['not_started', 'in_progress', 'completed'];
+    const currentIndex = statusOrder.indexOf(currentStatus);
+    const nextStatus = statusOrder[(currentIndex + 1) % statusOrder.length];
+    const completed = nextStatus === 'completed';
+
     try {
       const res = await fetch(`/api/my-world/todos/${id}`, {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ completed: !completed }),
+        body: JSON.stringify({ status: nextStatus, completed }),
       });
 
       if (res.ok) {
         const updatedTodo = await res.json();
         if (category === 'personal') {
-          setPersonalTodos(prev => prev.map(t => t.id === id ? updatedTodo : t));
+          setPersonalTodos(prev => prev.map(t => t.id === id ? { ...t, ...updatedTodo } : t));
         } else {
-          setResearchTodos(prev => prev.map(t => t.id === id ? updatedTodo : t));
+          setResearchTodos(prev => prev.map(t => t.id === id ? { ...t, ...updatedTodo } : t));
         }
       }
     } catch (error) {
@@ -1207,58 +1252,106 @@ export default function MyWorldDashboard() {
         {showTodoArchive ? (
           <div className="bg-white dark:bg-gray-800 p-4 rounded-2xl shadow-sm border border-violet-100 dark:border-violet-900/30">
             {/* Archive Filters */}
-            <div className="flex flex-wrap items-center gap-3 mb-4 pb-4 border-b border-gray-200 dark:border-gray-700">
-              <div className="flex items-center gap-2">
-                <label className="text-xs text-gray-500">시작일</label>
-                <input
-                  type="date"
-                  value={archiveStartDate}
-                  onChange={(e) => setArchiveStartDate(e.target.value)}
-                  className="text-sm px-2 py-1 rounded-lg border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-900"
-                />
+            <div className="space-y-3 mb-4 pb-4 border-b border-gray-200 dark:border-gray-700">
+              {/* Period Filter */}
+              <div className="flex flex-wrap items-center gap-2">
+                <span className="text-xs text-gray-500">기간</span>
+                <div className="flex gap-1">
+                  {(['day', 'week', 'month', 'custom'] as const).map((period) => (
+                    <button
+                      key={period}
+                      onClick={() => updateArchiveDates(period)}
+                      className={`px-2 py-1 text-xs rounded-lg transition-colors ${
+                        archivePeriod === period
+                          ? 'bg-violet-500 text-white'
+                          : 'bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300 hover:bg-violet-100 dark:hover:bg-violet-900/30'
+                      }`}
+                    >
+                      {period === 'day' ? '일간' : period === 'week' ? '주간' : period === 'month' ? '월간' : '직접선택'}
+                    </button>
+                  ))}
+                </div>
+                {archivePeriod === 'custom' && (
+                  <div className="flex items-center gap-2 ml-2">
+                    <input
+                      type="date"
+                      value={archiveStartDate}
+                      onChange={(e) => setArchiveStartDate(e.target.value)}
+                      className="text-xs px-2 py-1 rounded-lg border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-900"
+                    />
+                    <span className="text-xs text-gray-400">~</span>
+                    <input
+                      type="date"
+                      value={archiveEndDate}
+                      onChange={(e) => setArchiveEndDate(e.target.value)}
+                      className="text-xs px-2 py-1 rounded-lg border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-900"
+                    />
+                  </div>
+                )}
               </div>
-              <div className="flex items-center gap-2">
-                <label className="text-xs text-gray-500">종료일</label>
-                <input
-                  type="date"
-                  value={archiveEndDate}
-                  onChange={(e) => setArchiveEndDate(e.target.value)}
-                  className="text-sm px-2 py-1 rounded-lg border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-900"
-                />
-              </div>
-              <div className="flex items-center gap-2">
-                <label className="text-xs text-gray-500">카테고리</label>
-                <select
-                  value={archiveCategory}
-                  onChange={(e) => setArchiveCategory(e.target.value)}
-                  className="text-sm px-2 py-1 rounded-lg border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-900"
+              {/* Category, Status, Sort */}
+              <div className="flex flex-wrap items-center gap-3">
+                <div className="flex items-center gap-2">
+                  <label className="text-xs text-gray-500">카테고리</label>
+                  <select
+                    value={archiveCategory}
+                    onChange={(e) => setArchiveCategory(e.target.value)}
+                    className="text-xs px-2 py-1 rounded-lg border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-900"
+                  >
+                    <option value="all">전체</option>
+                    <option value="personal">개인</option>
+                    <option value="research">연구</option>
+                  </select>
+                </div>
+                <div className="flex items-center gap-2">
+                  <label className="text-xs text-gray-500">상태</label>
+                  <select
+                    value={archiveStatus}
+                    onChange={(e) => setArchiveStatus(e.target.value)}
+                    className="text-xs px-2 py-1 rounded-lg border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-900"
+                  >
+                    <option value="all">전체</option>
+                    <option value="not_started">시작전</option>
+                    <option value="in_progress">진행중</option>
+                    <option value="completed">완료</option>
+                  </select>
+                </div>
+                <button
+                  onClick={() => setArchiveSortOrder(prev => prev === 'desc' ? 'asc' : 'desc')}
+                  className="flex items-center gap-1 text-xs text-gray-500 hover:text-violet-500 transition-colors"
+                  title="정렬 순서 변경"
                 >
-                  <option value="all">전체</option>
-                  <option value="personal">개인</option>
-                  <option value="research">연구</option>
-                </select>
+                  <svg className={`w-4 h-4 transition-transform ${archiveSortOrder === 'asc' ? 'rotate-180' : ''}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 4h13M3 8h9m-9 4h6m4 0l4-4m0 0l4 4m-4-4v12" />
+                  </svg>
+                  {archiveSortOrder === 'desc' ? '최신순' : '오래된순'}
+                </button>
+                <span className="text-xs text-gray-400 ml-auto">
+                  총 {archiveTodos.length}개
+                </span>
               </div>
-              <span className="text-xs text-gray-400 ml-auto">
-                총 {archiveTodos.length}개 완료
-              </span>
             </div>
             {/* Archive List */}
             <div className="max-h-[400px] overflow-y-auto space-y-4">
               {archiveTodos.length === 0 ? (
                 <div className="text-center py-8 text-gray-400">
-                  완료된 할 일이 없습니다
+                  할 일이 없습니다
                 </div>
               ) : (
                 Object.entries(
                   archiveTodos.reduce((acc, todo) => {
                     const dateKey = new Date(todo.date).toISOString().split('T')[0];
-                    if (!acc[dateKey]) acc[dateKey] = [];
-                    acc[dateKey].push(todo);
+                    if (!acc[dateKey]) acc[dateKey] = { personal: [], research: [] };
+                    if (todo.category === 'personal') {
+                      acc[dateKey].personal.push(todo);
+                    } else {
+                      acc[dateKey].research.push(todo);
+                    }
                     return acc;
-                  }, {} as Record<string, Todo[]>)
+                  }, {} as Record<string, { personal: Todo[]; research: Todo[] }>)
                 )
-                  .sort(([a], [b]) => b.localeCompare(a))
-                  .map(([dateKey, todos]) => (
+                  .sort(([a], [b]) => archiveSortOrder === 'desc' ? b.localeCompare(a) : a.localeCompare(b))
+                  .map(([dateKey, { personal, research }]) => (
                     <div key={dateKey}>
                       <div className="text-xs font-medium text-gray-500 dark:text-gray-400 mb-2">
                         {new Date(dateKey).toLocaleDateString('ko-KR', {
@@ -1267,27 +1360,55 @@ export default function MyWorldDashboard() {
                           day: 'numeric',
                           weekday: 'short',
                         })}
-                        <span className="ml-2 text-violet-500">({todos.length}개)</span>
+                        <span className="ml-2 text-violet-500">({personal.length + research.length}개)</span>
                       </div>
-                      <div className="space-y-1 pl-2 border-l-2 border-violet-200 dark:border-violet-800">
-                        {todos.map((todo) => (
-                          <div
-                            key={todo.id}
-                            className="flex items-center gap-2 text-sm text-gray-600 dark:text-gray-400"
-                          >
-                            <span
-                              className={`w-2 h-2 rounded-full ${
-                                todo.category === 'personal'
-                                  ? 'bg-violet-400'
-                                  : 'bg-pink-400'
-                              }`}
-                            />
-                            <span className="line-through">{todo.content}</span>
-                            <span className="text-xs text-gray-400 ml-auto">
-                              {todo.category === 'personal' ? '개인' : '연구'}
-                            </span>
+                      <div className="space-y-3 pl-2 border-l-2 border-violet-200 dark:border-violet-800">
+                        {/* Personal todos */}
+                        {personal.length > 0 && (
+                          <div>
+                            <div className="text-xs font-medium text-violet-500 mb-1">👤 개인</div>
+                            <div className="space-y-1 pl-2">
+                              {personal.map((todo) => {
+                                const status = todo.status || 'not_started';
+                                const statusConfig = todoStatusConfig[status];
+                                return (
+                                  <div
+                                    key={todo.id}
+                                    className="flex items-center gap-2 text-sm text-gray-600 dark:text-gray-400"
+                                  >
+                                    <span className={`${status === 'completed' ? 'line-through' : ''}`}>{todo.content}</span>
+                                    <span className={`text-xs px-1.5 py-0.5 rounded-full ml-auto ${statusConfig.color}`}>
+                                      {statusConfig.label}
+                                    </span>
+                                  </div>
+                                );
+                              })}
+                            </div>
                           </div>
-                        ))}
+                        )}
+                        {/* Research todos */}
+                        {research.length > 0 && (
+                          <div>
+                            <div className="text-xs font-medium text-pink-500 mb-1">🔬 연구</div>
+                            <div className="space-y-1 pl-2">
+                              {research.map((todo) => {
+                                const status = todo.status || 'not_started';
+                                const statusConfig = todoStatusConfig[status];
+                                return (
+                                  <div
+                                    key={todo.id}
+                                    className="flex items-center gap-2 text-sm text-gray-600 dark:text-gray-400"
+                                  >
+                                    <span className={`${status === 'completed' ? 'line-through' : ''}`}>{todo.content}</span>
+                                    <span className={`text-xs px-1.5 py-0.5 rounded-full ml-auto ${statusConfig.color}`}>
+                                      {statusConfig.label}
+                                    </span>
+                                  </div>
+                                );
+                              })}
+                            </div>
+                          </div>
+                        )}
                       </div>
                     </div>
                   ))
@@ -1328,38 +1449,35 @@ export default function MyWorldDashboard() {
             </button>
           </form>
           <div className="space-y-2 max-h-[200px] overflow-y-auto">
-            {personalTodos.map((todo) => (
-              <div
-                key={todo.id}
-                className={`flex items-center gap-2 group ${todo.completed ? 'opacity-60' : ''}`}
-              >
-                <button
-                  onClick={() => toggleTodo(todo.id, todo.completed, 'personal')}
-                  className={`w-5 h-5 rounded border-2 flex items-center justify-center flex-shrink-0 transition-colors ${
-                    todo.completed
-                      ? 'bg-violet-500 border-violet-500 text-white'
-                      : 'border-gray-300 dark:border-gray-600 hover:border-violet-400'
-                  }`}
+            {personalTodos.map((todo) => {
+              const status = todo.status || 'not_started';
+              const statusConfig = todoStatusConfig[status];
+              return (
+                <div
+                  key={todo.id}
+                  className={`flex items-center gap-2 group ${status === 'completed' ? 'opacity-60' : ''}`}
                 >
-                  {todo.completed && (
-                    <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" />
+                  <button
+                    onClick={() => cycleStatus(todo.id, status, 'personal')}
+                    className={`px-2 py-0.5 text-xs rounded-full flex-shrink-0 transition-colors ${statusConfig.color}`}
+                    title="클릭하여 상태 변경"
+                  >
+                    {statusConfig.label}
+                  </button>
+                  <span className={`flex-1 text-sm ${status === 'completed' ? 'line-through text-gray-400' : 'text-gray-700 dark:text-gray-300'}`}>
+                    {todo.content}
+                  </span>
+                  <button
+                    onClick={() => deleteTodo(todo.id, 'personal')}
+                    className="opacity-0 group-hover:opacity-100 text-gray-400 hover:text-red-500 transition-opacity"
+                  >
+                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
                     </svg>
-                  )}
-                </button>
-                <span className={`flex-1 text-sm ${todo.completed ? 'line-through text-gray-400' : 'text-gray-700 dark:text-gray-300'}`}>
-                  {todo.content}
-                </span>
-                <button
-                  onClick={() => deleteTodo(todo.id, 'personal')}
-                  className="opacity-0 group-hover:opacity-100 text-gray-400 hover:text-red-500 transition-opacity"
-                >
-                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-                  </svg>
-                </button>
-              </div>
-            ))}
+                  </button>
+                </div>
+              );
+            })}
           </div>
         </div>
 
@@ -1395,38 +1513,35 @@ export default function MyWorldDashboard() {
             </button>
           </form>
           <div className="space-y-2 max-h-[200px] overflow-y-auto">
-            {researchTodos.map((todo) => (
-              <div
-                key={todo.id}
-                className={`flex items-center gap-2 group ${todo.completed ? 'opacity-60' : ''}`}
-              >
-                <button
-                  onClick={() => toggleTodo(todo.id, todo.completed, 'research')}
-                  className={`w-5 h-5 rounded border-2 flex items-center justify-center flex-shrink-0 transition-colors ${
-                    todo.completed
-                      ? 'bg-pink-500 border-pink-500 text-white'
-                      : 'border-gray-300 dark:border-gray-600 hover:border-pink-400'
-                  }`}
+            {researchTodos.map((todo) => {
+              const status = todo.status || 'not_started';
+              const statusConfig = todoStatusConfig[status];
+              return (
+                <div
+                  key={todo.id}
+                  className={`flex items-center gap-2 group ${status === 'completed' ? 'opacity-60' : ''}`}
                 >
-                  {todo.completed && (
-                    <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" />
+                  <button
+                    onClick={() => cycleStatus(todo.id, status, 'research')}
+                    className={`px-2 py-0.5 text-xs rounded-full flex-shrink-0 transition-colors ${statusConfig.color}`}
+                    title="클릭하여 상태 변경"
+                  >
+                    {statusConfig.label}
+                  </button>
+                  <span className={`flex-1 text-sm ${status === 'completed' ? 'line-through text-gray-400' : 'text-gray-700 dark:text-gray-300'}`}>
+                    {todo.content}
+                  </span>
+                  <button
+                    onClick={() => deleteTodo(todo.id, 'research')}
+                    className="opacity-0 group-hover:opacity-100 text-gray-400 hover:text-red-500 transition-opacity"
+                  >
+                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
                     </svg>
-                  )}
-                </button>
-                <span className={`flex-1 text-sm ${todo.completed ? 'line-through text-gray-400' : 'text-gray-700 dark:text-gray-300'}`}>
-                  {todo.content}
-                </span>
-                <button
-                  onClick={() => deleteTodo(todo.id, 'research')}
-                  className="opacity-0 group-hover:opacity-100 text-gray-400 hover:text-red-500 transition-opacity"
-                >
-                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-                  </svg>
-                </button>
-              </div>
-            ))}
+                  </button>
+                </div>
+              );
+            })}
           </div>
         </div>
         </div>

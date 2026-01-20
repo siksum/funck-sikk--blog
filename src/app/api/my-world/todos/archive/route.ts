@@ -4,7 +4,7 @@ import { prisma } from '@/lib/db';
 
 const isProduction = process.env.NODE_ENV === 'production';
 
-// GET - 완료된 할일 목록 조회 (날짜 범위 필터링)
+// GET - 할일 목록 조회 (날짜 범위 필터링)
 export async function GET(request: NextRequest) {
   const session = await auth();
 
@@ -17,7 +17,9 @@ export async function GET(request: NextRequest) {
     const startDate = searchParams.get('startDate');
     const endDate = searchParams.get('endDate');
     const category = searchParams.get('category');
-    const completedOnly = searchParams.get('completedOnly') !== 'false';
+    const status = searchParams.get('status');
+    const completedOnly = searchParams.get('completedOnly') === 'true';
+    const sortOrder = searchParams.get('sortOrder') || 'desc';
 
     const userId = session?.user?.id || 'dev-user';
 
@@ -43,7 +45,12 @@ export async function GET(request: NextRequest) {
       where.category = category;
     }
 
-    // Completed filter
+    // Status filter
+    if (status) {
+      where.status = status;
+    }
+
+    // Completed filter (backward compatibility)
     if (completedOnly) {
       where.completed = true;
     }
@@ -51,20 +58,24 @@ export async function GET(request: NextRequest) {
     const todos = await prisma.todo.findMany({
       where,
       orderBy: [
-        { date: 'desc' },
+        { date: sortOrder === 'asc' ? 'asc' : 'desc' },
         { category: 'asc' },
         { order: 'asc' },
       ],
     });
 
-    // Group by date
-    const groupedByDate: Record<string, typeof todos> = {};
+    // Group by date then by category
+    const groupedByDate: Record<string, { personal: typeof todos; research: typeof todos }> = {};
     todos.forEach(todo => {
       const dateKey = todo.date.toISOString().split('T')[0];
       if (!groupedByDate[dateKey]) {
-        groupedByDate[dateKey] = [];
+        groupedByDate[dateKey] = { personal: [], research: [] };
       }
-      groupedByDate[dateKey].push(todo);
+      if (todo.category === 'personal') {
+        groupedByDate[dateKey].personal.push(todo);
+      } else {
+        groupedByDate[dateKey].research.push(todo);
+      }
     });
 
     return NextResponse.json({
