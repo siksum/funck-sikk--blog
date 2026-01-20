@@ -1,7 +1,9 @@
 'use client';
 
-import { useState, useEffect, useCallback } from 'react';
-import { GoogleMap, useJsApiLoader, Marker, InfoWindow } from '@react-google-maps/api';
+import { useState, useEffect, useCallback, useRef } from 'react';
+import { GoogleMap, useJsApiLoader, Marker, InfoWindow, Autocomplete } from '@react-google-maps/api';
+
+const libraries: ("places")[] = ['places'];
 import { useTheme } from 'next-themes';
 
 interface MapLocation {
@@ -131,11 +133,21 @@ export default function MapPage() {
   const [selectedMarker, setSelectedMarker] = useState<MapLocation | null>(null);
   const [mapCenter, setMapCenter] = useState(defaultCenter);
   const [mounted, setMounted] = useState(false);
+  const [placeSearchQuery, setPlaceSearchQuery] = useState('');
+  const [searchedPlace, setSearchedPlace] = useState<{
+    name: string;
+    address: string;
+    lat: number;
+    lng: number;
+    rating?: number;
+  } | null>(null);
+  const autocompleteRef = useRef<google.maps.places.Autocomplete | null>(null);
   const { theme } = useTheme();
 
   const { isLoaded } = useJsApiLoader({
     id: 'google-map-script',
     googleMapsApiKey: process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY || '',
+    libraries,
   });
 
   useEffect(() => {
@@ -185,6 +197,48 @@ export default function MapPage() {
       }));
     }
   }, []);
+
+  const onAutocompleteLoad = useCallback((autocomplete: google.maps.places.Autocomplete) => {
+    autocompleteRef.current = autocomplete;
+  }, []);
+
+  const onPlaceChanged = useCallback(() => {
+    if (autocompleteRef.current) {
+      const place = autocompleteRef.current.getPlace();
+      if (place.geometry?.location) {
+        const lat = place.geometry.location.lat();
+        const lng = place.geometry.location.lng();
+        setSearchedPlace({
+          name: place.name || '',
+          address: place.formatted_address || '',
+          lat,
+          lng,
+          rating: place.rating,
+        });
+        setMapCenter({ lat, lng });
+        setPlaceSearchQuery(place.name || '');
+      }
+    }
+  }, []);
+
+  const saveSearchedPlace = () => {
+    if (searchedPlace) {
+      setForm({
+        name: searchedPlace.name,
+        address: searchedPlace.address,
+        latitude: searchedPlace.lat,
+        longitude: searchedPlace.lng,
+        category: '맛집',
+        tags: '',
+        rating: searchedPlace.rating ? Math.round(searchedPlace.rating) : 0,
+        visitDate: '',
+        notes: '',
+      });
+      setShowModal(true);
+      setSearchedPlace(null);
+      setPlaceSearchQuery('');
+    }
+  };
 
   const openModal = (location?: MapLocation) => {
     if (location) {
@@ -301,7 +355,69 @@ export default function MapPage() {
         </button>
       </div>
 
-      {/* Search & Filter */}
+      {/* Google Places Search */}
+      <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-sm border border-violet-100 dark:border-violet-900/30 p-4 mb-4">
+        <div className="flex flex-col gap-3">
+          <div className="flex gap-2">
+            {isLoaded ? (
+              <Autocomplete
+                onLoad={onAutocompleteLoad}
+                onPlaceChanged={onPlaceChanged}
+                options={{
+                  componentRestrictions: { country: 'kr' },
+                  fields: ['name', 'formatted_address', 'geometry', 'rating'],
+                }}
+                className="flex-1"
+              >
+                <input
+                  type="text"
+                  value={placeSearchQuery}
+                  onChange={(e) => setPlaceSearchQuery(e.target.value)}
+                  placeholder="새로운 장소 검색 (예: CGV 용산, 스타벅스 강남)"
+                  className="w-full px-4 py-2 rounded-lg border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
+                />
+              </Autocomplete>
+            ) : (
+              <input
+                type="text"
+                disabled
+                placeholder="지도 로딩 중..."
+                className="flex-1 px-4 py-2 rounded-lg border border-gray-200 dark:border-gray-600 bg-gray-100 dark:bg-gray-700 text-gray-500"
+              />
+            )}
+          </div>
+          {searchedPlace && (
+            <div className="flex items-center justify-between p-3 bg-violet-50 dark:bg-violet-900/20 rounded-lg border border-violet-200 dark:border-violet-800">
+              <div>
+                <p className="font-medium text-gray-900 dark:text-white">{searchedPlace.name}</p>
+                <p className="text-sm text-gray-500 dark:text-gray-400">{searchedPlace.address}</p>
+                {searchedPlace.rating && (
+                  <div className="flex items-center gap-1 mt-1">
+                    <span className="text-yellow-400">★</span>
+                    <span className="text-sm text-gray-600 dark:text-gray-400">{searchedPlace.rating.toFixed(1)}</span>
+                  </div>
+                )}
+              </div>
+              <div className="flex gap-2">
+                <button
+                  onClick={() => setSearchedPlace(null)}
+                  className="px-3 py-1.5 text-sm text-gray-600 dark:text-gray-400 hover:bg-gray-200 dark:hover:bg-gray-700 rounded-lg"
+                >
+                  취소
+                </button>
+                <button
+                  onClick={saveSearchedPlace}
+                  className="px-3 py-1.5 text-sm bg-violet-600 text-white rounded-lg hover:bg-violet-700"
+                >
+                  내 장소에 추가
+                </button>
+              </div>
+            </div>
+          )}
+        </div>
+      </div>
+
+      {/* Filter */}
       <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-sm border border-violet-100 dark:border-violet-900/30 p-4 mb-6">
         <div className="flex flex-col md:flex-row gap-4">
           <div className="flex-1">
@@ -309,7 +425,7 @@ export default function MapPage() {
               type="text"
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              placeholder="장소 검색..."
+              placeholder="내 장소에서 검색..."
               className="w-full px-4 py-2 rounded-lg border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
             />
           </div>
@@ -370,6 +486,15 @@ export default function MapPage() {
                 />
               );
             })}
+
+            {searchedPlace && (
+              <Marker
+                position={{ lat: searchedPlace.lat, lng: searchedPlace.lng }}
+                icon={{
+                  url: 'https://maps.google.com/mapfiles/ms/icons/blue-dot.png',
+                }}
+              />
+            )}
 
             {selectedMarker && (
               <InfoWindow
