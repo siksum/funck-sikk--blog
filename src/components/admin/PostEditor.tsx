@@ -53,6 +53,7 @@ export default function PostEditor({ initialData = {}, isEdit = false }: PostEdi
   const router = useRouter();
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const pdfInputRef = useRef<HTMLInputElement>(null);
   const [saving, setSaving] = useState(false);
   const [uploading, setUploading] = useState(false);
   const [activeTab, setActiveTab] = useState<'edit' | 'preview' | 'split'>('split');
@@ -272,8 +273,8 @@ export default function PostEditor({ initialData = {}, isEdit = false }: PostEdi
     }, 0);
   };
 
-  // Image upload function
-  const uploadImage = async (file: File) => {
+  // File upload function (images and PDFs)
+  const uploadFile = async (file: File) => {
     setUploading(true);
     try {
       const formDataUpload = new FormData();
@@ -290,24 +291,46 @@ export default function PostEditor({ initialData = {}, isEdit = false }: PostEdi
       }
 
       const data = await response.json();
-      const markdown = `![${file.name}](${data.url})`;
+
+      // Generate appropriate markdown based on file type
+      let markdown: string;
+      if (file.type === 'application/pdf') {
+        // PDF: create a link
+        markdown = `[📄 ${file.name}](${data.url})`;
+      } else {
+        // Image: create image embed
+        markdown = `![${file.name}](${data.url})`;
+      }
+
       insertMarkdown(markdown);
     } catch (error) {
-      alert(error instanceof Error ? error.message : '이미지 업로드에 실패했습니다.');
+      alert(error instanceof Error ? error.message : '파일 업로드에 실패했습니다.');
     } finally {
       setUploading(false);
     }
   };
 
-  // Handle file input change
+  // Handle image input change
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file) {
-      uploadImage(file);
+      uploadFile(file);
     }
     // Reset input
     if (fileInputRef.current) {
       fileInputRef.current.value = '';
+    }
+  };
+
+  // Handle PDF input change
+  const handlePdfChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      uploadFile(file);
+    }
+    // Reset input
+    if (pdfInputRef.current) {
+      pdfInputRef.current.value = '';
     }
   };
 
@@ -321,7 +344,7 @@ export default function PostEditor({ initialData = {}, isEdit = false }: PostEdi
         e.preventDefault();
         const file = item.getAsFile();
         if (file) {
-          uploadImage(file);
+          uploadFile(file);
         }
         break;
       }
@@ -334,7 +357,7 @@ export default function PostEditor({ initialData = {}, isEdit = false }: PostEdi
     e.stopPropagation();
   };
 
-  // Handle drop
+  // Handle drop (images and PDFs)
   const handleDrop = (e: React.DragEvent) => {
     e.preventDefault();
     e.stopPropagation();
@@ -343,8 +366,8 @@ export default function PostEditor({ initialData = {}, isEdit = false }: PostEdi
     if (!files || files.length === 0) return;
 
     const file = files[0];
-    if (file.type.startsWith('image/')) {
-      uploadImage(file);
+    if (file.type.startsWith('image/') || file.type === 'application/pdf') {
+      uploadFile(file);
     }
   };
 
@@ -544,6 +567,15 @@ export default function PostEditor({ initialData = {}, isEdit = false }: PostEdi
       ),
       label: '비공개',
       action: () => insertMarkdown('\n:::private\n이 내용은 로그인한 사용자만 볼 수 있습니다.\n:::\n'),
+    },
+    {
+      icon: (
+        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z" />
+        </svg>
+      ),
+      label: 'PDF 업로드',
+      action: () => pdfInputRef.current?.click(),
     },
   ];
 
@@ -827,6 +859,15 @@ export default function PostEditor({ initialData = {}, isEdit = false }: PostEdi
               type="file"
               accept="image/*"
               onChange={handleFileChange}
+              className="hidden"
+            />
+
+            {/* Hidden file input for PDF upload */}
+            <input
+              ref={pdfInputRef}
+              type="file"
+              accept="application/pdf"
+              onChange={handlePdfChange}
               className="hidden"
             />
 

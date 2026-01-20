@@ -29,19 +29,23 @@ export async function POST(request: NextRequest) {
     }
 
     // Validate file type
-    const validTypes = ['image/jpeg', 'image/png', 'image/gif', 'image/webp', 'image/svg+xml'];
+    const imageTypes = ['image/jpeg', 'image/png', 'image/gif', 'image/webp', 'image/svg+xml'];
+    const documentTypes = ['application/pdf'];
+    const validTypes = [...imageTypes, ...documentTypes];
+
     if (!validTypes.includes(file.type)) {
       return NextResponse.json(
-        { error: 'Invalid file type. Allowed: JPEG, PNG, GIF, WebP, SVG' },
+        { error: 'Invalid file type. Allowed: JPEG, PNG, GIF, WebP, SVG, PDF' },
         { status: 400 }
       );
     }
 
-    // Validate file size (max 10MB)
-    const maxSize = 10 * 1024 * 1024;
+    // Validate file size (max 10MB for images, 20MB for PDFs)
+    const isPdf = file.type === 'application/pdf';
+    const maxSize = isPdf ? 20 * 1024 * 1024 : 10 * 1024 * 1024;
     if (file.size > maxSize) {
       return NextResponse.json(
-        { error: 'File too large. Maximum size is 10MB' },
+        { error: `File too large. Maximum size is ${isPdf ? '20MB' : '10MB'}` },
         { status: 400 }
       );
     }
@@ -52,9 +56,10 @@ export async function POST(request: NextRequest) {
     const base64 = `data:${file.type};base64,${buffer.toString('base64')}`;
 
     // Upload to Cloudinary
+    const resourceType = isPdf ? 'raw' : 'image';
     const result = await cloudinary.uploader.upload(base64, {
       folder: 'blog',
-      resource_type: 'image',
+      resource_type: resourceType,
     });
 
     return NextResponse.json({
@@ -62,6 +67,8 @@ export async function POST(request: NextRequest) {
       publicId: result.public_id,
       width: result.width,
       height: result.height,
+      resourceType: resourceType,
+      format: result.format,
     });
   } catch (error) {
     console.error('Upload error:', error);
