@@ -7,6 +7,7 @@ import PostNavigation from '@/components/blog/PostNavigation';
 import FloatingActions from '@/components/blog/FloatingActions';
 import DifficultyBadge from '@/components/blog/DifficultyBadge';
 import SikkPostLayout from '@/components/sikk/SikkPostLayout';
+import ShareButton from '@/components/sikk/ShareButton';
 import { auth } from '@/lib/auth';
 
 export const revalidate = 10;
@@ -116,10 +117,12 @@ export default async function SikkPostPage({ params }: SikkPostPageProps) {
 
           <div className="flex items-center gap-3 mb-4">
             <DifficultyBadge level={difficulty} />
-            {isPrivate && (
+            {isPrivate ? (
               <span className="px-3 py-1 text-xs font-semibold bg-yellow-100 dark:bg-yellow-900/30 text-yellow-800 dark:text-yellow-300 rounded-full border border-yellow-300 dark:border-yellow-700">
-                비공개 미리보기
+                비공개
               </span>
+            ) : (
+              <ShareButton slug={post.slug} title={post.title} />
             )}
           </div>
 

@@ -6,7 +6,6 @@ interface DailyEntry {
   id?: string;
   date: string;
   status: string | null;
-  weather: string | null;
   condition: string | null;
   sleepHours: number | null;
   water: number | null;
@@ -14,13 +13,10 @@ interface DailyEntry {
   medicine: boolean;
   headache: boolean;
   period: boolean;
-  breakfast: string | null;
   lunch: string | null;
   dinner: string | null;
   snack: string | null;
   income: number;
-  expense: number;
-  expenseNote: string | null;
   joy: number;
   depression: number;
   anxiety: number;
@@ -28,10 +24,7 @@ interface DailyEntry {
   fatigue: number;
   focus: number;
   dayScore: number | null;
-  notes: string | null;
 }
-
-const weatherOptions = ['☀️', '⛅', '☁️', '🌧️', '⛈️', '❄️', '🌫️'];
 const conditionOptions = ['좋음', '보통', '나쁨'];
 const statusOptions = ['완료', '진행중', '미완료'];
 
@@ -50,7 +43,6 @@ interface CalendarEvent {
 
 interface Stats {
   totalEntries: number;
-  thisMonthExpense: number;
   thisMonthIncome: number;
   avgDayScore: number;
   avgSleepHours: number;
@@ -145,7 +137,6 @@ export default function MyWorldDashboard() {
   const [dailyForm, setDailyForm] = useState<DailyEntry>({
     date: '',
     status: null,
-    weather: null,
     condition: null,
     sleepHours: null,
     water: null,
@@ -153,13 +144,10 @@ export default function MyWorldDashboard() {
     medicine: false,
     headache: false,
     period: false,
-    breakfast: null,
     lunch: null,
     dinner: null,
     snack: null,
     income: 0,
-    expense: 0,
-    expenseNote: null,
     joy: 0,
     depression: 0,
     anxiety: 0,
@@ -167,7 +155,6 @@ export default function MyWorldDashboard() {
     fatigue: 0,
     focus: 0,
     dayScore: null,
-    notes: null,
   });
   const [savingDaily, setSavingDaily] = useState(false);
   const [dailyFormExpanded, setDailyFormExpanded] = useState<string | null>('status');
@@ -245,6 +232,9 @@ export default function MyWorldDashboard() {
   // Drag and drop state for calendar events
   const [draggingEvent, setDraggingEvent] = useState<CalendarEvent | null>(null);
 
+  // Statistics view state
+  const [statsPeriod, setStatsPeriod] = useState<'daily' | 'weekly' | 'monthly'>('monthly');
+
   const today = new Date();
   const todayStr = today.toISOString().split('T')[0];
 
@@ -282,7 +272,6 @@ export default function MyWorldDashboard() {
         setDailyForm({
           date: '',
           status: null,
-          weather: null,
           condition: null,
           sleepHours: null,
           water: null,
@@ -290,13 +279,10 @@ export default function MyWorldDashboard() {
           medicine: false,
           headache: false,
           period: false,
-          breakfast: null,
           lunch: null,
           dinner: null,
           snack: null,
           income: 0,
-          expense: 0,
-          expenseNote: null,
           joy: 0,
           depression: 0,
           anxiety: 0,
@@ -304,7 +290,6 @@ export default function MyWorldDashboard() {
           fatigue: 0,
           focus: 0,
           dayScore: null,
-          notes: null,
         });
         return;
       }
@@ -318,7 +303,6 @@ export default function MyWorldDashboard() {
           setDailyForm({
             date: selectedDate,
             status: null,
-            weather: null,
             condition: null,
             sleepHours: null,
             water: null,
@@ -326,13 +310,10 @@ export default function MyWorldDashboard() {
             medicine: false,
             headache: false,
             period: false,
-            breakfast: null,
             lunch: null,
             dinner: null,
             snack: null,
             income: 0,
-            expense: 0,
-            expenseNote: null,
             joy: 0,
             depression: 0,
             anxiety: 0,
@@ -340,7 +321,6 @@ export default function MyWorldDashboard() {
             fatigue: 0,
             focus: 0,
             dayScore: null,
-            notes: null,
           });
         }
       } catch (error) {
@@ -919,6 +899,10 @@ export default function MyWorldDashboard() {
     setDraggingEvent(event);
     e.dataTransfer.effectAllowed = 'move';
     e.dataTransfer.setData('text/plain', event.id);
+    // Set drag image with slight offset for better UX
+    if (e.currentTarget instanceof HTMLElement) {
+      e.dataTransfer.setDragImage(e.currentTarget, 10, 10);
+    }
   };
 
   const handleDragEnd = () => {
@@ -949,27 +933,35 @@ export default function MyWorldDashboard() {
     const newDateStr = newStartDate.toISOString();
     const newEndDateStr = newEndDate ? newEndDate.toISOString() : null;
 
+    // Store original events for rollback
+    const originalEvents = [...monthEvents];
+
+    // Optimistic UI update
+    const updatedEvent = {
+      ...draggingEvent,
+      date: newDateStr,
+      endDate: newEndDateStr,
+    };
+    setMonthEvents(prev => prev.map(ev => ev.id === draggingEvent.id ? updatedEvent : ev));
+    setDraggingEvent(null);
+
     try {
       const res = await fetch(`/api/my-world/calendar/${draggingEvent.id}`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          ...draggingEvent,
-          date: newDateStr,
-          endDate: newEndDateStr,
-        }),
+        body: JSON.stringify(updatedEvent),
       });
 
-      if (res.ok) {
-        fetchMonthData();
-      } else {
+      if (!res.ok) {
+        // Rollback on error
+        setMonthEvents(originalEvents);
         alert('일정 이동에 실패했습니다');
       }
     } catch (error) {
       console.error('Failed to move event:', error);
+      // Rollback on error
+      setMonthEvents(originalEvents);
       alert('일정 이동에 실패했습니다');
-    } finally {
-      setDraggingEvent(null);
     }
   };
 
@@ -1122,6 +1114,79 @@ export default function MyWorldDashboard() {
     const offset = totalMinutes - 420;
     return (offset / 60) * hourHeight;
   }, []);
+
+  // Detailed statistics calculation based on period
+  const detailedStats = useMemo(() => {
+    if (!allDailyEntries || allDailyEntries.length === 0) return null;
+
+    const now = new Date();
+    let filteredEntries: DailyEntry[] = [];
+
+    if (statsPeriod === 'daily') {
+      const todayStr = now.toISOString().split('T')[0];
+      filteredEntries = allDailyEntries.filter(e => e.date === todayStr);
+    } else if (statsPeriod === 'weekly') {
+      const weekStart = new Date(now);
+      weekStart.setDate(weekStart.getDate() - weekStart.getDay());
+      const weekEnd = new Date(weekStart);
+      weekEnd.setDate(weekEnd.getDate() + 6);
+      const startStr = weekStart.toISOString().split('T')[0];
+      const endStr = weekEnd.toISOString().split('T')[0];
+      filteredEntries = allDailyEntries.filter(e => e.date >= startStr && e.date <= endStr);
+    } else {
+      const monthStart = new Date(now.getFullYear(), now.getMonth(), 1);
+      const monthEnd = new Date(now.getFullYear(), now.getMonth() + 1, 0);
+      const startStr = monthStart.toISOString().split('T')[0];
+      const endStr = monthEnd.toISOString().split('T')[0];
+      filteredEntries = allDailyEntries.filter(e => e.date >= startStr && e.date <= endStr);
+    }
+
+    if (filteredEntries.length === 0) return null;
+
+    const sleepEntries = filteredEntries.filter(e => e.sleepHours !== null && e.sleepHours > 0);
+    const avgSleep = sleepEntries.length > 0
+      ? sleepEntries.reduce((sum, e) => sum + (e.sleepHours || 0), 0) / sleepEntries.length
+      : 0;
+
+    const medicineCount = filteredEntries.filter(e => e.medicine).length;
+    const headacheCount = filteredEntries.filter(e => e.headache).length;
+    const periodCount = filteredEntries.filter(e => e.period).length;
+    const totalIncome = filteredEntries.reduce((sum, e) => sum + (e.income || 0), 0);
+
+    // Emotion averages
+    const emotions = {
+      joy: 0,
+      depression: 0,
+      anxiety: 0,
+      sadness: 0,
+      fatigue: 0,
+      focus: 0,
+    };
+
+    filteredEntries.forEach(e => {
+      emotions.joy += e.joy || 0;
+      emotions.depression += e.depression || 0;
+      emotions.anxiety += e.anxiety || 0;
+      emotions.sadness += e.sadness || 0;
+      emotions.fatigue += e.fatigue || 0;
+      emotions.focus += e.focus || 0;
+    });
+
+    const count = filteredEntries.length;
+    Object.keys(emotions).forEach(key => {
+      emotions[key as keyof typeof emotions] = emotions[key as keyof typeof emotions] / count;
+    });
+
+    return {
+      count,
+      avgSleep,
+      medicineCount,
+      headacheCount,
+      periodCount,
+      totalIncome,
+      emotions,
+    };
+  }, [allDailyEntries, statsPeriod]);
 
   const isDateToday = (date: Date) => {
     const t = new Date();
@@ -1865,8 +1930,9 @@ export default function MyWorldDashboard() {
                                     e.stopPropagation();
                                     openEventModal(event);
                                   }}
-                                  className={`text-xs px-1 py-0.5 rounded truncate font-medium cursor-grab hover:opacity-80 ${
-                                    draggingEvent?.id === event.id ? 'opacity-50' : ''
+                                  className={`text-xs px-1 py-0.5 rounded truncate font-medium cursor-grab active:cursor-grabbing
+                                    hover:scale-105 hover:shadow-md transition-all duration-150 select-none ${
+                                    draggingEvent?.id === event.id ? 'opacity-50 scale-95' : ''
                                   }`}
                                   style={{ backgroundColor: getPastelColor(event.color), color: '#374151' }}
                                   title={`${event.title}${event.location ? ` - ${event.location}` : ''}${event.url ? ' (링크)' : ''} (드래그하여 이동)`}
@@ -1906,8 +1972,9 @@ export default function MyWorldDashboard() {
                           draggable
                           onDragStart={(e) => handleDragStart(bar.event, e)}
                           onDragEnd={handleDragEnd}
-                          className={`absolute text-xs truncate px-1.5 py-0.5 cursor-grab pointer-events-auto hover:opacity-80 transition-opacity font-medium ${
-                            draggingEvent?.id === bar.event.id ? 'opacity-50' : ''
+                          className={`absolute text-xs truncate px-1.5 py-0.5 cursor-grab active:cursor-grabbing pointer-events-auto
+                            hover:shadow-md transition-all duration-150 font-medium select-none ${
+                            draggingEvent?.id === bar.event.id ? 'opacity-50 scale-95' : ''
                           }`}
                           style={{
                             left: `calc(${bar.startCol * colWidth}% + 2px)`,
@@ -2023,8 +2090,9 @@ export default function MyWorldDashboard() {
                               setSelectedDate(date.toISOString().split('T')[0]);
                               openEventModal(event);
                             }}
-                            className={`text-xs px-1 py-0.5 rounded truncate cursor-grab hover:opacity-80 font-medium mb-0.5 ${
-                              draggingEvent?.id === event.id ? 'opacity-50' : ''
+                            className={`text-xs px-1 py-0.5 rounded truncate cursor-grab active:cursor-grabbing
+                              hover:scale-105 hover:shadow-md transition-all duration-150 font-medium mb-0.5 select-none ${
+                              draggingEvent?.id === event.id ? 'opacity-50 scale-95' : ''
                             }`}
                             style={{ backgroundColor: getPastelColor(event.color), color: '#374151' }}
                             title={`${event.title} (드래그하여 이동)`}
@@ -2051,8 +2119,9 @@ export default function MyWorldDashboard() {
                           draggable
                           onDragStart={(e) => handleDragStart(bar.event, e)}
                           onDragEnd={handleDragEnd}
-                          className={`absolute text-xs truncate px-1.5 py-0.5 cursor-grab pointer-events-auto hover:opacity-80 transition-opacity font-medium ${
-                            draggingEvent?.id === bar.event.id ? 'opacity-50' : ''
+                          className={`absolute text-xs truncate px-1.5 py-0.5 cursor-grab active:cursor-grabbing pointer-events-auto
+                            hover:shadow-md transition-all duration-150 font-medium select-none ${
+                            draggingEvent?.id === bar.event.id ? 'opacity-50 scale-95' : ''
                           }`}
                           style={{
                             left: `calc(${bar.startCol * colWidth}% + 2px)`,
@@ -2384,7 +2453,6 @@ export default function MyWorldDashboard() {
                                   {dateStr}
                                 </span>
                                 <div className="flex items-center gap-2">
-                                  {entry.weather && <span className="text-sm">{entry.weather}</span>}
                                   {entry.dayScore !== null && (
                                     <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${
                                       entry.dayScore >= 70 ? 'bg-green-100 text-green-700 dark:bg-green-900/50 dark:text-green-400' :
@@ -2416,22 +2484,12 @@ export default function MyWorldDashboard() {
                                     😴 {entry.sleepHours}h
                                   </span>
                                 )}
-                                {(entry.expense > 0) && (
-                                  <span className="px-1.5 py-0.5 bg-red-50 dark:bg-red-900/30 text-red-600 dark:text-red-400 rounded">
-                                    -{entry.expense.toLocaleString()}원
-                                  </span>
-                                )}
                                 {(entry.income > 0) && (
                                   <span className="px-1.5 py-0.5 bg-green-50 dark:bg-green-900/30 text-green-600 dark:text-green-400 rounded">
                                     +{entry.income.toLocaleString()}원
                                   </span>
                                 )}
                               </div>
-                              {entry.notes && (
-                                <p className="mt-1 text-xs text-gray-500 dark:text-gray-400 truncate">
-                                  {entry.notes}
-                                </p>
-                              )}
                             </div>
                           );
                         })
@@ -2447,7 +2505,7 @@ export default function MyWorldDashboard() {
                       onClick={() => setDailyFormExpanded(dailyFormExpanded === 'status' ? null : 'status')}
                       className="w-full px-3 py-2 flex items-center justify-between bg-gray-50 dark:bg-gray-700/50 text-sm font-medium text-gray-700 dark:text-gray-300"
                     >
-                      <span>상태/날씨</span>
+                      <span>상태</span>
                       <svg className={`w-4 h-4 transition-transform ${dailyFormExpanded === 'status' ? 'rotate-180' : ''}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
                       </svg>
@@ -2464,20 +2522,6 @@ export default function MyWorldDashboard() {
                             <option value="">선택</option>
                             {statusOptions.map((opt) => <option key={opt} value={opt}>{opt}</option>)}
                           </select>
-                        </div>
-                        <div className="flex items-center justify-between">
-                          <span className="text-xs text-gray-500">날씨</span>
-                          <div className="flex gap-1">
-                            {weatherOptions.map((w) => (
-                              <button
-                                key={w}
-                                onClick={() => setDailyForm({ ...dailyForm, weather: dailyForm.weather === w ? null : w })}
-                                className={`text-sm p-1 rounded ${dailyForm.weather === w ? 'bg-violet-100 dark:bg-violet-900/50' : ''}`}
-                              >
-                                {w}
-                              </button>
-                            ))}
-                          </div>
                         </div>
                         <div className="flex items-center justify-between">
                           <span className="text-xs text-gray-500">컨디션</span>
@@ -2581,7 +2625,6 @@ export default function MyWorldDashboard() {
                     {dailyFormExpanded === 'meals' && (
                       <div className="p-3 space-y-2">
                         {[
-                          { key: 'breakfast', icon: '🍳', label: '아침' },
                           { key: 'lunch', icon: '🍱', label: '점심' },
                           { key: 'dinner', icon: '🍽️', label: '저녁' },
                           { key: 'snack', icon: '🍿', label: '간식' },
@@ -2601,21 +2644,21 @@ export default function MyWorldDashboard() {
                     )}
                   </div>
 
-                  {/* 재정 섹션 */}
+                  {/* 소득 섹션 */}
                   <div className="border border-gray-200 dark:border-gray-600 rounded-lg overflow-hidden">
                     <button
                       onClick={() => setDailyFormExpanded(dailyFormExpanded === 'finance' ? null : 'finance')}
                       className="w-full px-3 py-2 flex items-center justify-between bg-gray-50 dark:bg-gray-700/50 text-sm font-medium text-gray-700 dark:text-gray-300"
                     >
-                      <span>재정</span>
+                      <span>소득</span>
                       <svg className={`w-4 h-4 transition-transform ${dailyFormExpanded === 'finance' ? 'rotate-180' : ''}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
                       </svg>
                     </button>
                     {dailyFormExpanded === 'finance' && (
-                      <div className="p-3 space-y-2">
+                      <div className="p-3">
                         <div className="flex items-center gap-2">
-                          <span className="text-xs text-gray-500 w-12">➕ 소득</span>
+                          <span className="text-xs text-gray-500 w-12">💰 소득</span>
                           <div className="flex items-center gap-1 flex-1">
                             <span className="text-xs">₩</span>
                             <input
@@ -2626,29 +2669,6 @@ export default function MyWorldDashboard() {
                               className="flex-1 px-2 py-1 text-xs rounded border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-700 text-right"
                             />
                           </div>
-                        </div>
-                        <div className="flex items-center gap-2">
-                          <span className="text-xs text-gray-500 w-12">➖ 지출</span>
-                          <div className="flex items-center gap-1 flex-1">
-                            <span className="text-xs">₩</span>
-                            <input
-                              type="number"
-                              min="0"
-                              value={dailyForm.expense || ''}
-                              onChange={(e) => setDailyForm({ ...dailyForm, expense: parseInt(e.target.value) || 0 })}
-                              className="flex-1 px-2 py-1 text-xs rounded border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-700 text-right"
-                            />
-                          </div>
-                        </div>
-                        <div className="flex items-center gap-2">
-                          <span className="text-xs text-gray-500 w-12">📝 메모</span>
-                          <input
-                            type="text"
-                            value={dailyForm.expenseNote || ''}
-                            onChange={(e) => setDailyForm({ ...dailyForm, expenseNote: e.target.value || null })}
-                            className="flex-1 px-2 py-1 text-xs rounded border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-700"
-                            placeholder="지출 내역"
-                          />
                         </div>
                       </div>
                     )}
@@ -2709,29 +2729,6 @@ export default function MyWorldDashboard() {
                       </div>
                     )}
                   </div>
-
-                  {/* 메모 섹션 */}
-                  <div className="border border-gray-200 dark:border-gray-600 rounded-lg overflow-hidden">
-                    <button
-                      onClick={() => setDailyFormExpanded(dailyFormExpanded === 'notes' ? null : 'notes')}
-                      className="w-full px-3 py-2 flex items-center justify-between bg-gray-50 dark:bg-gray-700/50 text-sm font-medium text-gray-700 dark:text-gray-300"
-                    >
-                      <span>메모</span>
-                      <svg className={`w-4 h-4 transition-transform ${dailyFormExpanded === 'notes' ? 'rotate-180' : ''}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
-                      </svg>
-                    </button>
-                    {dailyFormExpanded === 'notes' && (
-                      <div className="p-3">
-                        <textarea
-                          value={dailyForm.notes || ''}
-                          onChange={(e) => setDailyForm({ ...dailyForm, notes: e.target.value || null })}
-                          className="w-full h-20 px-2 py-1 text-xs rounded border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-700 resize-none"
-                          placeholder="오늘 하루를 기록해보세요..."
-                        />
-                      </div>
-                    )}
-                  </div>
                 </div>
                 )}
               </div>
@@ -2746,58 +2743,113 @@ export default function MyWorldDashboard() {
         </div>
       </div>
 
-      {/* Monthly Stats */}
+      {/* Statistics View */}
       <div className="mb-8">
         <div className="bg-white dark:bg-gray-800 p-6 rounded-2xl shadow-sm border border-violet-100 dark:border-violet-900/30">
-          <h2 className="text-lg font-semibold text-gray-900 dark:text-white mb-4 flex items-center gap-2">
-            <span>📊</span> 이번 달 통계
-          </h2>
+          <div className="flex items-center justify-between mb-4">
+            <h2 className="text-lg font-semibold text-gray-900 dark:text-white flex items-center gap-2">
+              <span>📊</span> 통계
+            </h2>
+            <div className="flex gap-1 bg-gray-100 dark:bg-gray-700 rounded-lg p-1">
+              {(['daily', 'weekly', 'monthly'] as const).map((period) => (
+                <button
+                  key={period}
+                  onClick={() => setStatsPeriod(period)}
+                  className={`px-3 py-1 text-xs rounded-md transition-colors ${
+                    statsPeriod === period
+                      ? 'bg-violet-500 text-white'
+                      : 'text-gray-600 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600'
+                  }`}
+                >
+                  {period === 'daily' ? '오늘' : period === 'weekly' ? '이번 주' : '이번 달'}
+                </button>
+              ))}
+            </div>
+          </div>
+
           {loading ? (
             <div className="animate-pulse space-y-3">
               <div className="h-4 bg-gray-200 dark:bg-gray-700 rounded w-3/4"></div>
               <div className="h-4 bg-gray-200 dark:bg-gray-700 rounded w-1/2"></div>
             </div>
-          ) : stats ? (
+          ) : detailedStats ? (
             <div className="space-y-4">
-              <div className="grid grid-cols-2 gap-4">
-                <div className="bg-gray-50 dark:bg-gray-700/50 p-4 rounded-xl">
-                  <p className="text-sm text-gray-500 dark:text-gray-400">기록 일수</p>
-                  <p className="text-2xl font-bold text-gray-900 dark:text-white">
-                    {stats.totalEntries}일
+              {/* Basic Stats */}
+              <div className="grid grid-cols-3 gap-3">
+                <div className="bg-gray-50 dark:bg-gray-700/50 p-3 rounded-xl text-center">
+                  <p className="text-xs text-gray-500 dark:text-gray-400">기록</p>
+                  <p className="text-lg font-bold text-gray-900 dark:text-white">
+                    {detailedStats.count}일
                   </p>
                 </div>
-                <div className="bg-gray-50 dark:bg-gray-700/50 p-4 rounded-xl">
-                  <p className="text-sm text-gray-500 dark:text-gray-400">평균 점수</p>
-                  <p className="text-2xl font-bold text-violet-600 dark:text-violet-400">
-                    {stats.avgDayScore.toFixed(1)}
+                <div className="bg-indigo-50 dark:bg-indigo-900/20 p-3 rounded-xl text-center">
+                  <p className="text-xs text-indigo-600 dark:text-indigo-400">😴 수면</p>
+                  <p className="text-lg font-bold text-indigo-700 dark:text-indigo-300">
+                    {detailedStats.avgSleep.toFixed(1)}h
                   </p>
                 </div>
-              </div>
-              <div className="bg-gray-50 dark:bg-gray-700/50 p-4 rounded-xl">
-                <p className="text-sm text-gray-500 dark:text-gray-400">평균 수면시간</p>
-                <p className="text-xl font-bold text-gray-900 dark:text-white">
-                  {stats.avgSleepHours.toFixed(1)}시간
-                </p>
-              </div>
-              <div className="grid grid-cols-2 gap-4">
-                <div className="bg-green-50 dark:bg-green-900/20 p-4 rounded-xl">
-                  <p className="text-sm text-green-600 dark:text-green-400">수입</p>
+                <div className="bg-green-50 dark:bg-green-900/20 p-3 rounded-xl text-center">
+                  <p className="text-xs text-green-600 dark:text-green-400">💰 소득</p>
                   <p className="text-lg font-bold text-green-700 dark:text-green-300">
-                    {formatCurrency(stats.thisMonthIncome)}
+                    {formatCurrency(detailedStats.totalIncome)}
                   </p>
                 </div>
-                <div className="bg-red-50 dark:bg-red-900/20 p-4 rounded-xl">
-                  <p className="text-sm text-red-600 dark:text-red-400">지출</p>
-                  <p className="text-lg font-bold text-red-700 dark:text-red-300">
-                    {formatCurrency(stats.thisMonthExpense)}
+              </div>
+
+              {/* Health Indicators */}
+              <div className="grid grid-cols-3 gap-3">
+                <div className="bg-blue-50 dark:bg-blue-900/20 p-3 rounded-xl text-center">
+                  <p className="text-xs text-blue-600 dark:text-blue-400">💊 약 복용</p>
+                  <p className="text-lg font-bold text-blue-700 dark:text-blue-300">
+                    {detailedStats.medicineCount}회
                   </p>
+                </div>
+                <div className="bg-red-50 dark:bg-red-900/20 p-3 rounded-xl text-center">
+                  <p className="text-xs text-red-600 dark:text-red-400">🤕 두통</p>
+                  <p className="text-lg font-bold text-red-700 dark:text-red-300">
+                    {detailedStats.headacheCount}회
+                  </p>
+                </div>
+                <div className="bg-pink-50 dark:bg-pink-900/20 p-3 rounded-xl text-center">
+                  <p className="text-xs text-pink-600 dark:text-pink-400">🩸 생리</p>
+                  <p className="text-lg font-bold text-pink-700 dark:text-pink-300">
+                    {detailedStats.periodCount}일
+                  </p>
+                </div>
+              </div>
+
+              {/* Emotions */}
+              <div className="bg-gray-50 dark:bg-gray-700/50 p-4 rounded-xl">
+                <p className="text-xs text-gray-500 dark:text-gray-400 mb-3">감정 평균</p>
+                <div className="space-y-2">
+                  {[
+                    { key: 'joy', icon: '😊', label: '기쁨', color: 'bg-yellow-400' },
+                    { key: 'depression', icon: '😢', label: '우울', color: 'bg-gray-400' },
+                    { key: 'anxiety', icon: '😰', label: '불안', color: 'bg-orange-400' },
+                    { key: 'sadness', icon: '😞', label: '슬픔', color: 'bg-blue-400' },
+                    { key: 'fatigue', icon: '😴', label: '피곤', color: 'bg-purple-400' },
+                    { key: 'focus', icon: '🎯', label: '집중', color: 'bg-green-400' },
+                  ].map(({ key, icon, label, color }) => (
+                    <div key={key} className="flex items-center gap-2">
+                      <span className="text-xs w-12">{icon} {label}</span>
+                      <div className="flex-1 h-2 bg-gray-200 dark:bg-gray-600 rounded-full overflow-hidden">
+                        <div
+                          className={`h-full ${color} transition-all`}
+                          style={{ width: `${(detailedStats.emotions[key as keyof typeof detailedStats.emotions] / 10) * 100}%` }}
+                        />
+                      </div>
+                      <span className="text-xs w-6 text-right text-gray-600 dark:text-gray-300">
+                        {detailedStats.emotions[key as keyof typeof detailedStats.emotions].toFixed(1)}
+                      </span>
+                    </div>
+                  ))}
                 </div>
               </div>
             </div>
           ) : (
             <div className="text-center py-8">
               <p className="text-gray-500 dark:text-gray-400">
-                아직 기록된 데이터가 없어요
+                {statsPeriod === 'daily' ? '오늘' : statsPeriod === 'weekly' ? '이번 주' : '이번 달'} 기록된 데이터가 없어요
               </p>
             </div>
           )}

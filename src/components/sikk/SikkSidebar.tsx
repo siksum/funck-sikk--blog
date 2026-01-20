@@ -2,8 +2,7 @@
 
 import { useState } from 'react';
 import Link from 'next/link';
-import { Post, Category } from '@/types';
-import PostCard from '@/components/post/PostCard';
+import { Category } from '@/types';
 
 interface DBSikkSection {
   id: string;
@@ -14,8 +13,6 @@ interface DBSikkSection {
 }
 
 interface SikkSidebarProps {
-  recentPosts: Post[];
-  popularPosts: Post[];
   categories: Category[];
   tags: { name: string; count: number }[];
   currentCategorySlugPath?: string[];
@@ -107,14 +104,11 @@ function CategoryTreeItem({
 }
 
 export default function SikkSidebar({
-  recentPosts,
-  popularPosts,
   categories,
   tags,
   currentCategorySlugPath,
   sections,
 }: SikkSidebarProps) {
-  const [activeTab, setActiveTab] = useState<'recent' | 'popular'>('recent');
 
   // Group categories by section
   const categoriesBySection = sections && sections.length > 0
@@ -143,19 +137,19 @@ export default function SikkSidebar({
 
   return (
     <aside className="space-y-8">
-      {/* Categories - First */}
+      {/* Categories */}
       <div
-        className="rounded-2xl backdrop-blur-xl border p-5"
-        style={{ background: 'var(--card-bg)', borderColor: 'var(--card-border)' }}
+        className="rounded-2xl backdrop-blur-xl border-2 border-pink-200 dark:border-pink-500/40 p-5"
+        style={{ background: 'var(--card-bg)' }}
       >
-        <h3 className="text-lg font-semibold mb-4 sidebar-title">
+        <h3 className="text-lg font-semibold mb-4 text-pink-600 dark:text-pink-400">
           카테고리
         </h3>
         <div className="space-y-4">
           {categoriesBySection.map(({ section, categories: sectionCategories }) => (
             <div key={section?.id || 'uncategorized'}>
               {section && (
-                <div className="text-xs font-semibold text-pink-600 dark:text-pink-300 uppercase tracking-wider mb-2 pb-1 border-b border-pink-200 dark:border-pink-300">
+                <div className="text-xs font-semibold text-pink-600 dark:text-pink-300 uppercase tracking-wider mb-2 pb-1 border-b border-pink-200 dark:border-pink-500/40">
                   {section.title}
                 </div>
               )}
@@ -182,52 +176,12 @@ export default function SikkSidebar({
         )}
       </div>
 
-      {/* Posts Tabs - Recent/Popular */}
-      <div
-        className="rounded-2xl overflow-hidden backdrop-blur-xl border"
-        style={{ background: 'var(--card-bg)', borderColor: 'var(--card-border)' }}
-      >
-        <div className="flex border-b" style={{ borderColor: 'var(--card-border)' }}>
-          <button
-            onClick={() => setActiveTab('recent')}
-            className={`flex-1 py-3 px-4 text-sm font-medium transition-colors ${
-              activeTab === 'recent'
-                ? 'text-pink-400 dark:text-pink-300 border-b-2 border-pink-400 dark:border-pink-300 -mb-px'
-                : 'sidebar-text'
-            }`}
-          >
-            최신 글
-          </button>
-          <button
-            onClick={() => setActiveTab('popular')}
-            className={`flex-1 py-3 px-4 text-sm font-medium transition-colors ${
-              activeTab === 'popular'
-                ? 'text-pink-400 dark:text-pink-300 border-b-2 border-pink-400 dark:border-pink-300 -mb-px'
-                : 'sidebar-text'
-            }`}
-          >
-            인기 글
-          </button>
-        </div>
-
-        <div className="sidebar-divider-simple">
-          {(activeTab === 'recent' ? recentPosts : popularPosts).map((post) => (
-            <PostCard key={post.slug} post={post} variant="compact" basePath="/sikk" />
-          ))}
-          {(activeTab === 'recent' ? recentPosts : popularPosts).length === 0 && (
-            <p className="p-4 text-center text-sm sidebar-text-muted">
-              포스트가 없습니다.
-            </p>
-          )}
-        </div>
-      </div>
-
       {/* Tags Cloud */}
       <div
-        className="rounded-2xl backdrop-blur-xl border p-5"
-        style={{ background: 'var(--card-bg)', borderColor: 'var(--card-border)' }}
+        className="rounded-2xl backdrop-blur-xl border-2 border-pink-200 dark:border-pink-500/40 p-5"
+        style={{ background: 'var(--card-bg)' }}
       >
-        <h3 className="text-lg font-semibold mb-4 sidebar-title">
+        <h3 className="text-lg font-semibold mb-4 text-pink-600 dark:text-pink-400">
           태그
         </h3>
         <div className="flex flex-wrap gap-2">
@@ -235,7 +189,7 @@ export default function SikkSidebar({
             <Link
               key={tag.name}
               href={`/sikk/tag/${encodeURIComponent(tag.name)}`}
-              className="px-3 py-1 text-sm rounded-full transition-all hover:scale-105 border hover:border-pink-400 sidebar-tag"
+              className="px-3 py-1 text-sm rounded-full transition-all hover:scale-105 border-2 border-pink-200 dark:border-pink-500/40 hover:border-pink-400 dark:hover:border-pink-400 text-pink-600 dark:text-pink-400 hover:bg-pink-50 dark:hover:bg-pink-500/10"
             >
               #{tag.name}
             </Link>
