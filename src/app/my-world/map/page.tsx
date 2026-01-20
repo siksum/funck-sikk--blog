@@ -20,7 +20,7 @@ interface MapLocation {
   photos: string[];
 }
 
-const categories = [
+const defaultCategories = [
   { value: '맛집', icon: '🍽️', color: '#ef4444' },
   { value: '카페', icon: '☕', color: '#f59e0b' },
   { value: '여행지', icon: '🏝️', color: '#3b82f6' },
@@ -30,6 +30,8 @@ const categories = [
   { value: '자연', icon: '🌲', color: '#22c55e' },
   { value: '기타', icon: '📍', color: '#6b7280' },
 ];
+
+const categoryColors = ['#ef4444', '#f59e0b', '#3b82f6', '#8b5cf6', '#ec4899', '#6366f1', '#22c55e', '#6b7280', '#14b8a6', '#f97316'];
 
 const mapContainerStyle = {
   width: '100%',
@@ -144,8 +146,33 @@ export default function MapPage() {
   const [selectedRegion, setSelectedRegion] = useState<string | null>(null);
   const [infoWindowTags, setInfoWindowTags] = useState('');
   const [showMyLocationResults, setShowMyLocationResults] = useState(false);
+  const [categories, setCategories] = useState(defaultCategories);
+  const [showCategoryEditor, setShowCategoryEditor] = useState(false);
+  const [newCategoryName, setNewCategoryName] = useState('');
+  const [newCategoryIcon, setNewCategoryIcon] = useState('📍');
   const autocompleteRef = useRef<google.maps.places.Autocomplete | null>(null);
   const { theme } = useTheme();
+
+  // Open Google Maps directions
+  const openDirections = (lat: number, lng: number, name: string) => {
+    const url = `https://www.google.com/maps/dir/?api=1&destination=${lat},${lng}&destination_place_id=${encodeURIComponent(name)}`;
+    window.open(url, '_blank');
+  };
+
+  // Add new category
+  const addCategory = () => {
+    if (!newCategoryName.trim()) return;
+    const newColor = categoryColors[categories.length % categoryColors.length];
+    setCategories([...categories, { value: newCategoryName, icon: newCategoryIcon, color: newColor }]);
+    setNewCategoryName('');
+    setNewCategoryIcon('📍');
+  };
+
+  // Remove category
+  const removeCategory = (value: string) => {
+    if (defaultCategories.some(c => c.value === value)) return; // Can't remove default
+    setCategories(categories.filter(c => c.value !== value));
+  };
 
   // Extract unique tags and regions from all locations
   const allTags = Array.from(new Set(locations.flatMap((loc) => loc.tags))).filter(Boolean);
@@ -404,6 +431,18 @@ export default function MapPage() {
                   type="text"
                   value={placeSearchQuery}
                   onChange={(e) => setPlaceSearchQuery(e.target.value)}
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter') {
+                      e.preventDefault();
+                      // Trigger autocomplete selection if available
+                      if (autocompleteRef.current) {
+                        const place = autocompleteRef.current.getPlace();
+                        if (place?.geometry?.location) {
+                          onPlaceChanged();
+                        }
+                      }
+                    }
+                  }}
                   placeholder="CGV 용산, 스타벅스 강남..."
                   className="w-full px-3 py-2 rounded-lg border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white text-sm"
                 />
@@ -416,6 +455,19 @@ export default function MapPage() {
                 className="flex-1 px-3 py-2 rounded-lg border border-gray-200 dark:border-gray-600 bg-gray-100 dark:bg-gray-700 text-gray-500 text-sm"
               />
             )}
+            <button
+              onClick={() => {
+                if (autocompleteRef.current) {
+                  const place = autocompleteRef.current.getPlace();
+                  if (place?.geometry?.location) {
+                    onPlaceChanged();
+                  }
+                }
+              }}
+              className="px-3 py-2 bg-violet-600 text-white rounded-lg hover:bg-violet-700 text-sm"
+            >
+              검색
+            </button>
           </div>
           {searchedPlace && (
             <div className="mt-3 p-3 bg-violet-50 dark:bg-violet-900/20 rounded-lg border border-violet-200 dark:border-violet-800">
@@ -739,15 +791,24 @@ export default function MapPage() {
                             }}
                             className="flex-1 px-2 py-1 text-xs bg-violet-600 text-white rounded hover:bg-violet-700"
                           >
-                            태그 저장
+                            저장
                           </button>
                           <button
                             onClick={() => selectLocation(selectedMarker)}
                             className="flex-1 px-2 py-1 text-xs bg-gray-100 text-gray-700 rounded hover:bg-gray-200"
                           >
-                            전체 수정
+                            수정
                           </button>
                         </div>
+                        <button
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            openDirections(selectedMarker.latitude, selectedMarker.longitude, selectedMarker.name);
+                          }}
+                          className="w-full mt-1 px-2 py-1 text-xs bg-blue-600 text-white rounded hover:bg-blue-700 flex items-center justify-center gap-1"
+                        >
+                          🧭 길찾기
+                        </button>
                       </div>
                     </div>
                   </InfoWindow>
@@ -766,137 +827,167 @@ export default function MapPage() {
 
         {/* Right: Form */}
         <div className="lg:w-2/3">
-          <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-sm border border-violet-100 dark:border-violet-900/30 p-6">
-            <div className="flex items-center justify-between mb-4">
-              <h3 className="text-lg font-semibold text-gray-900 dark:text-white">
+          <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-sm border border-violet-100 dark:border-violet-900/30 p-4">
+            <div className="flex items-center justify-between mb-3">
+              <h3 className="text-sm font-semibold text-gray-900 dark:text-white">
                 {editingLocation ? '장소 수정' : '새 장소'}
               </h3>
               {editingLocation && (
                 <button
                   onClick={resetForm}
-                  className="text-sm text-gray-500 hover:text-gray-700 dark:hover:text-gray-300"
+                  className="text-xs text-gray-500 hover:text-gray-700 dark:hover:text-gray-300"
                 >
                   새로 작성
                 </button>
               )}
             </div>
-            <div className="space-y-4">
-              <div>
-                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                  이름 *
-                </label>
-                <input
-                  type="text"
-                  value={form.name}
-                  onChange={(e) => setForm({ ...form, name: e.target.value })}
-                  className="w-full px-3 py-2 rounded-lg border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
-                  placeholder="장소 이름"
-                />
+            <div className="space-y-3">
+              {/* Name & Address in one row */}
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">이름 *</label>
+                  <input
+                    type="text"
+                    value={form.name}
+                    onChange={(e) => setForm({ ...form, name: e.target.value })}
+                    className="w-full px-2 py-1.5 text-sm rounded-lg border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
+                    placeholder="장소 이름"
+                  />
+                </div>
+                <div>
+                  <label className="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">주소</label>
+                  <input
+                    type="text"
+                    value={form.address}
+                    onChange={(e) => setForm({ ...form, address: e.target.value })}
+                    className="w-full px-2 py-1.5 text-sm rounded-lg border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
+                    placeholder="주소"
+                  />
+                </div>
               </div>
+
+              {/* Category */}
               <div>
-                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                  주소
-                </label>
-                <input
-                  type="text"
-                  value={form.address}
-                  onChange={(e) => setForm({ ...form, address: e.target.value })}
-                  className="w-full px-3 py-2 rounded-lg border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
-                  placeholder="주소"
-                />
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                  카테고리 *
-                </label>
-                <div className="grid grid-cols-4 gap-2">
+                <div className="flex items-center justify-between mb-1">
+                  <label className="text-xs font-medium text-gray-700 dark:text-gray-300">카테고리 *</label>
+                  <button
+                    onClick={() => setShowCategoryEditor(!showCategoryEditor)}
+                    className="text-xs text-violet-600 hover:text-violet-700"
+                  >
+                    {showCategoryEditor ? '닫기' : '편집'}
+                  </button>
+                </div>
+                <div className="flex gap-1 flex-wrap">
                   {categories.map((cat) => (
                     <button
                       key={cat.value}
                       type="button"
                       onClick={() => setForm({ ...form, category: cat.value })}
-                      className={`p-2 rounded-lg text-center transition-colors ${
+                      className={`px-2 py-1 rounded-lg text-xs flex items-center gap-1 transition-colors ${
                         form.category === cat.value
-                          ? 'bg-violet-100 dark:bg-violet-900/50 ring-2 ring-violet-500'
+                          ? 'bg-violet-100 dark:bg-violet-900/50 ring-1 ring-violet-500'
                           : 'bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600'
                       }`}
                     >
-                      <div className="text-xl">{cat.icon}</div>
-                      <div className="text-xs text-gray-600 dark:text-gray-400">{cat.value}</div>
+                      <span>{cat.icon}</span>
+                      <span className="text-gray-700 dark:text-gray-300">{cat.value}</span>
+                      {showCategoryEditor && !defaultCategories.some(c => c.value === cat.value) && (
+                        <span
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            removeCategory(cat.value);
+                          }}
+                          className="ml-1 text-red-500 hover:text-red-700"
+                        >
+                          ×
+                        </span>
+                      )}
                     </button>
                   ))}
                 </div>
+                {showCategoryEditor && (
+                  <div className="mt-2 flex gap-2">
+                    <input
+                      type="text"
+                      value={newCategoryIcon}
+                      onChange={(e) => setNewCategoryIcon(e.target.value)}
+                      className="w-12 px-2 py-1 text-center text-sm rounded border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-700"
+                      placeholder="🏷️"
+                    />
+                    <input
+                      type="text"
+                      value={newCategoryName}
+                      onChange={(e) => setNewCategoryName(e.target.value)}
+                      onKeyDown={(e) => e.key === 'Enter' && addCategory()}
+                      className="flex-1 px-2 py-1 text-sm rounded border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
+                      placeholder="새 카테고리 이름"
+                    />
+                    <button
+                      onClick={addCategory}
+                      className="px-2 py-1 text-xs bg-violet-600 text-white rounded hover:bg-violet-700"
+                    >
+                      추가
+                    </button>
+                  </div>
+                )}
               </div>
-              <div className="grid grid-cols-2 gap-4">
+
+              {/* Tags, Date, Rating in one row */}
+              <div className="grid grid-cols-3 gap-3">
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                    태그 (쉼표로 구분)
-                  </label>
+                  <label className="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">태그</label>
                   <input
                     type="text"
                     value={form.tags}
                     onChange={(e) => setForm({ ...form, tags: e.target.value })}
-                    className="w-full px-3 py-2 rounded-lg border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
-                    placeholder="데이트, 혼밥, 뷰맛집"
+                    className="w-full px-2 py-1.5 text-sm rounded-lg border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
+                    placeholder="쉼표로 구분"
                   />
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                    방문일
-                  </label>
+                  <label className="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">방문일</label>
                   <input
                     type="date"
                     value={form.visitDate}
                     onChange={(e) => setForm({ ...form, visitDate: e.target.value })}
-                    className="w-full px-3 py-2 rounded-lg border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
+                    className="w-full px-2 py-1.5 text-sm rounded-lg border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
                   />
                 </div>
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                  평점
-                </label>
-                <div className="flex gap-1">
-                  {[1, 2, 3, 4, 5].map((star) => (
-                    <button
-                      key={star}
-                      type="button"
-                      onClick={() => setForm({ ...form, rating: star })}
-                      className={`text-2xl transition-colors ${
-                        star <= form.rating ? 'text-yellow-400' : 'text-gray-300'
-                      }`}
-                    >
-                      ★
-                    </button>
-                  ))}
-                  {form.rating > 0 && (
-                    <button
-                      type="button"
-                      onClick={() => setForm({ ...form, rating: 0 })}
-                      className="ml-2 text-sm text-gray-500 hover:text-gray-700"
-                    >
-                      초기화
-                    </button>
-                  )}
+                <div>
+                  <label className="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">평점</label>
+                  <div className="flex gap-0.5">
+                    {[1, 2, 3, 4, 5].map((star) => (
+                      <button
+                        key={star}
+                        type="button"
+                        onClick={() => setForm({ ...form, rating: form.rating === star ? 0 : star })}
+                        className={`text-lg transition-colors ${star <= form.rating ? 'text-yellow-400' : 'text-gray-300'}`}
+                      >
+                        ★
+                      </button>
+                    ))}
+                  </div>
                 </div>
               </div>
+
+              {/* Notes */}
               <div>
-                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                  메모
-                </label>
+                <label className="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">메모</label>
                 <textarea
                   value={form.notes}
                   onChange={(e) => setForm({ ...form, notes: e.target.value })}
-                  className="w-full px-3 py-2 rounded-lg border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white resize-none"
-                  rows={3}
+                  className="w-full px-2 py-1.5 text-sm rounded-lg border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white resize-none"
+                  rows={2}
                   placeholder="메모"
                 />
               </div>
-              <div className="flex gap-3 pt-2">
+
+              {/* Buttons */}
+              <div className="flex gap-2 pt-1">
                 {editingLocation && (
                   <button
                     onClick={handleDelete}
-                    className="px-4 py-2 text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg"
+                    className="px-3 py-1.5 text-xs text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg"
                   >
                     삭제
                   </button>
@@ -905,14 +996,14 @@ export default function MapPage() {
                 {editingLocation && (
                   <button
                     onClick={resetForm}
-                    className="px-4 py-2 text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg"
+                    className="px-3 py-1.5 text-xs text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg"
                   >
                     취소
                   </button>
                 )}
                 <button
                   onClick={handleSubmit}
-                  className="px-6 py-2 bg-violet-600 text-white rounded-lg hover:bg-violet-700"
+                  className="px-4 py-1.5 text-xs bg-violet-600 text-white rounded-lg hover:bg-violet-700"
                 >
                   {editingLocation ? '수정' : '저장'}
                 </button>
