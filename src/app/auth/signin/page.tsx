@@ -1,12 +1,13 @@
 'use client';
 
-import { signIn, getProviders } from 'next-auth/react';
+import { signIn, signOut, getProviders, useSession } from 'next-auth/react';
 import { useSearchParams } from 'next/navigation';
 import { Suspense, useEffect, useState } from 'react';
 
 type Providers = Awaited<ReturnType<typeof getProviders>>;
 
 function SignInContent() {
+  const { data: session, status } = useSession();
   const searchParams = useSearchParams();
   const callbackUrl = searchParams.get('callbackUrl') || '/';
   const [providers, setProviders] = useState<Providers>(null);
@@ -18,22 +19,73 @@ function SignInContent() {
   const hasGitHub = providers?.github;
   const hasGoogle = providers?.google;
 
+  // Handle login with account switching
+  const handleSignIn = async (provider: string) => {
+    if (session) {
+      // If already logged in, sign out first then sign in with new account
+      await signOut({ redirect: false });
+    }
+    // Use prompt: 'select_account' for Google to force account selection
+    if (provider === 'google') {
+      signIn(provider, { callbackUrl }, { prompt: 'select_account' });
+    } else {
+      signIn(provider, { callbackUrl });
+    }
+  };
+
+  if (status === 'loading') {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <div style={{ color: 'var(--foreground)', opacity: 0.5 }}>로딩 중...</div>
+      </div>
+    );
+  }
+
   return (
     <div className="min-h-screen flex items-center justify-center px-4">
       <div className="max-w-md w-full space-y-8">
         <div className="text-center">
           <h1 className="text-3xl font-bold" style={{ color: 'var(--foreground)' }}>
-            로그인
+            {session ? '계정 전환' : '로그인'}
           </h1>
           <p className="mt-2 text-sm" style={{ color: 'var(--foreground)', opacity: 0.7 }}>
-            소셜 계정으로 로그인하세요
+            {session ? '다른 계정으로 로그인하세요' : '소셜 계정으로 로그인하세요'}
           </p>
         </div>
+
+        {/* Show current account if logged in */}
+        {session && (
+          <div
+            className="p-4 rounded-lg border"
+            style={{ borderColor: 'var(--card-border)', background: 'var(--card-bg)' }}
+          >
+            <p className="text-xs mb-2" style={{ color: 'var(--foreground)', opacity: 0.5 }}>
+              현재 로그인된 계정
+            </p>
+            <div className="flex items-center gap-3">
+              {session.user?.image && (
+                <img
+                  src={session.user.image}
+                  alt=""
+                  className="w-10 h-10 rounded-full"
+                />
+              )}
+              <div>
+                <p className="font-medium" style={{ color: 'var(--foreground)' }}>
+                  {session.user?.name}
+                </p>
+                <p className="text-sm" style={{ color: 'var(--foreground)', opacity: 0.7 }}>
+                  {session.user?.email}
+                </p>
+              </div>
+            </div>
+          </div>
+        )}
 
         <div className="space-y-4">
           {hasGitHub && (
             <button
-              onClick={() => signIn('github', { callbackUrl })}
+              onClick={() => handleSignIn('github')}
               className="w-full flex items-center justify-center gap-3 px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors"
             >
               <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
@@ -43,13 +95,15 @@ function SignInContent() {
                   clipRule="evenodd"
                 />
               </svg>
-              <span style={{ color: 'var(--foreground)' }}>GitHub로 계속하기</span>
+              <span style={{ color: 'var(--foreground)' }}>
+                {session ? 'GitHub 계정으로 전환' : 'GitHub로 계속하기'}
+              </span>
             </button>
           )}
 
           {hasGoogle && (
             <button
-              onClick={() => signIn('google', { callbackUrl })}
+              onClick={() => handleSignIn('google')}
               className="w-full flex items-center justify-center gap-3 px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors"
             >
               <svg className="w-5 h-5" viewBox="0 0 24 24">
@@ -70,7 +124,9 @@ function SignInContent() {
                   d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"
                 />
               </svg>
-              <span style={{ color: 'var(--foreground)' }}>Google로 계속하기</span>
+              <span style={{ color: 'var(--foreground)' }}>
+                {session ? 'Google 계정으로 전환' : 'Google로 계속하기'}
+              </span>
             </button>
           )}
 
