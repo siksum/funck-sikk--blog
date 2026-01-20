@@ -2,7 +2,7 @@ import type { Metadata, Viewport } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
 import Header from "@/components/layout/Header";
-import Footer from "@/components/layout/Footer";
+import FooterClient from "@/components/layout/FooterClient";
 import MainContent from "@/components/layout/MainContent";
 import ThemeProvider from "@/components/ThemeProvider";
 import SessionProvider from "@/components/providers/SessionProvider";
@@ -67,7 +67,7 @@ export default function RootLayout({
             <PWARegister />
             <Header />
             <MainContent>{children}</MainContent>
-            <Footer />
+            <FooterClient />
           </ThemeProvider>
         </SessionProvider>
       </body>

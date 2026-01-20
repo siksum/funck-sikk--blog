@@ -2,6 +2,7 @@
 
 import { useState } from 'react';
 import Link from 'next/link';
+import { usePathname } from 'next/navigation';
 import { useSession, signIn } from 'next-auth/react';
 import { signOutCompletely } from '@/lib/auth-client';
 import { NavItem, Post } from '@/types';
@@ -25,10 +26,16 @@ interface HeaderClientProps {
 }
 
 export default function HeaderClient({ posts }: HeaderClientProps) {
+  const pathname = usePathname();
   const { data: session, status } = useSession();
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [isSearchOpen, setIsSearchOpen] = useState(false);
   const [isUserMenuOpen, setIsUserMenuOpen] = useState(false);
+
+  // Hide header on admin pages (admin has its own header)
+  if (pathname?.startsWith('/admin')) {
+    return null;
+  }
 
   return (
     <header
