@@ -1,8 +1,19 @@
 'use client';
 
-import { motion } from 'framer-motion';
+import { useState } from 'react';
+import { motion, AnimatePresence } from 'framer-motion';
+import Image from 'next/image';
 
 export default function AboutPage() {
+  const [expandedSections, setExpandedSections] = useState({
+    journals: true,
+    international: false,
+    domestic: false,
+  });
+
+  const toggleSection = (section: keyof typeof expandedSections) => {
+    setExpandedSections(prev => ({ ...prev, [section]: !prev[section] }));
+  };
   const fadeInUp = {
     initial: { opacity: 0, y: 20 },
     animate: { opacity: 1, y: 0 },
@@ -41,8 +52,14 @@ export default function AboutPage() {
               whileHover={{ scale: 1.05 }}
               transition={{ type: "spring", stiffness: 300 }}
             >
-              <div className="w-40 h-40 rounded-full bg-gradient-to-br from-violet-500 to-indigo-600 flex items-center justify-center text-white text-5xl font-bold shadow-xl shadow-violet-500/30 dark:shadow-violet-500/20">
-                NK
+              <div className="relative w-40 h-40 rounded-full overflow-hidden ring-4 ring-violet-200 dark:ring-violet-800 shadow-xl shadow-violet-500/30 dark:shadow-violet-500/20">
+                <Image
+                  src="/profile.jpg"
+                  alt="Namryeong Kim"
+                  fill
+                  className="object-cover"
+                  priority
+                />
               </div>
             </motion.div>
 
@@ -258,8 +275,34 @@ export default function AboutPage() {
           </h2>
 
           {/* Journals */}
-          <h3 className="text-lg font-semibold text-gray-800 dark:text-gray-200 mb-4">Journals</h3>
-          <div className="space-y-4 mb-8">
+          <button
+            onClick={() => toggleSection('journals')}
+            className="w-full flex items-center justify-between text-lg font-semibold text-gray-800 dark:text-gray-200 mb-4 p-3 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
+          >
+            <span className="flex items-center gap-2">
+              Journals
+              <span className="text-sm font-normal text-violet-600 dark:text-violet-400">(4)</span>
+            </span>
+            <motion.svg
+              className="w-5 h-5 text-gray-500"
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+              animate={{ rotate: expandedSections.journals ? 180 : 0 }}
+              transition={{ duration: 0.2 }}
+            >
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+            </motion.svg>
+          </button>
+          <AnimatePresence>
+          {expandedSections.journals && (
+          <motion.div
+            className="space-y-4 mb-8"
+            initial={{ height: 0, opacity: 0 }}
+            animate={{ height: "auto", opacity: 1 }}
+            exit={{ height: 0, opacity: 0 }}
+            transition={{ duration: 0.3 }}
+          >
             {[
               {
                 authors: 'Eunyoung Lee*, Namryeong Kim* (co-first), Chaerim Han, Nayeon Shin, Ilgu Lee',
@@ -307,11 +350,39 @@ export default function AboutPage() {
                 {pub.korean && <p className="text-xs text-gray-500 dark:text-gray-500 mt-1"># {pub.korean}</p>}
               </motion.div>
             ))}
-          </div>
+          </motion.div>
+          )}
+          </AnimatePresence>
 
           {/* International Conference */}
-          <h3 className="text-lg font-semibold text-gray-800 dark:text-gray-200 mb-4">International Conference</h3>
-          <div className="space-y-3 mb-8">
+          <button
+            onClick={() => toggleSection('international')}
+            className="w-full flex items-center justify-between text-lg font-semibold text-gray-800 dark:text-gray-200 mb-4 p-3 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
+          >
+            <span className="flex items-center gap-2">
+              International Conference
+              <span className="text-sm font-normal text-violet-600 dark:text-violet-400">(3)</span>
+            </span>
+            <motion.svg
+              className="w-5 h-5 text-gray-500"
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+              animate={{ rotate: expandedSections.international ? 180 : 0 }}
+              transition={{ duration: 0.2 }}
+            >
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+            </motion.svg>
+          </button>
+          <AnimatePresence>
+          {expandedSections.international && (
+          <motion.div
+            className="space-y-3 mb-8"
+            initial={{ height: 0, opacity: 0 }}
+            animate={{ height: "auto", opacity: 1 }}
+            exit={{ height: 0, opacity: 0 }}
+            transition={{ duration: 0.3 }}
+          >
             {[
               { authors: 'Hyobeen Cho, Namryeong Kim, Sunwoo Jeong, Ilgu Lee', title: 'Enhancing DeFi Smart Contract Security via LangChain and Retrieval-Augmented Generation', venue: 'World Conference on Information Security Applications (WISA) 2025, Jeju, Aug. 21, 2025' },
               { authors: 'Namryeong Kim, Ilgu Lee', title: 'A Fault-Tolerant Consensus Mechanism for Scalable and Reliable Blockchain Systems', venue: 'IEEE International Conference on Consumer Technology - Pacific 2025, Matsue Shimane, Japan, Mar. 31, 2025' },
@@ -330,11 +401,39 @@ export default function AboutPage() {
                 <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">{pub.venue}</p>
               </motion.div>
             ))}
-          </div>
+          </motion.div>
+          )}
+          </AnimatePresence>
 
           {/* Domestic Conference */}
-          <h3 className="text-lg font-semibold text-gray-800 dark:text-gray-200 mb-4">Domestic Conference</h3>
-          <div className="space-y-3">
+          <button
+            onClick={() => toggleSection('domestic')}
+            className="w-full flex items-center justify-between text-lg font-semibold text-gray-800 dark:text-gray-200 mb-4 p-3 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
+          >
+            <span className="flex items-center gap-2">
+              Domestic Conference
+              <span className="text-sm font-normal text-violet-600 dark:text-violet-400">(11)</span>
+            </span>
+            <motion.svg
+              className="w-5 h-5 text-gray-500"
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+              animate={{ rotate: expandedSections.domestic ? 180 : 0 }}
+              transition={{ duration: 0.2 }}
+            >
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+            </motion.svg>
+          </button>
+          <AnimatePresence>
+          {expandedSections.domestic && (
+          <motion.div
+            className="space-y-3"
+            initial={{ height: 0, opacity: 0 }}
+            animate={{ height: "auto", opacity: 1 }}
+            exit={{ height: 0, opacity: 0 }}
+            transition={{ duration: 0.3 }}
+          >
             {[
               { authors: 'Namryeong Kim, Sunwoo Jeong, Hyobeen Cho, Eunseo Youk, Ilgu Lee', title: 'A Retrieval-Augmented Chain-of-Thought Framework for Vulnerability Detection in DeFi Smart Contracts', venue: 'Annual Conference of KIPS (ACK) 2025, Nov. 7, 2025', korean: 'Retrieval-Augmented Chain-of-Thought 프레임워크를 활용한 DeFi 스마트 컨트랙트 취약점 탐지' },
               { authors: 'Hyobeen Cho, Namryeong Kim, Sunwoo Jeong, Eunseo Youk, Ilgu Lee', title: 'A Static Analysis Approaches for Detecting Access Control Vulnerabilities in DeFi Smart Contracts', venue: 'Annual Conference of KIPS (ACK) 2025, Nov. 7, 2025', korean: 'DeFi 스마트 컨트랙트 접근 제어 취약점 탐지를 위한 정적 분석 기법' },
@@ -363,7 +462,9 @@ export default function AboutPage() {
                 {pub.korean && <p className="text-xs text-gray-400 dark:text-gray-500 mt-1"># {pub.korean}</p>}
               </motion.div>
             ))}
-          </div>
+          </motion.div>
+          )}
+          </AnimatePresence>
         </motion.section>
 
         {/* Honors & Awards */}
