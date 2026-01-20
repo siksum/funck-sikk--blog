@@ -137,8 +137,8 @@ export default function SikkPageContent({
           {/* View Toggle */}
           {rootCategoriesWithTags.length > 0 && (
             <div
-              className="inline-flex rounded-lg p-1 border"
-              style={{ background: 'var(--card-bg)', borderColor: 'var(--card-border)' }}
+              className="inline-flex rounded-lg p-1 border-2 border-pink-200 dark:border-pink-500/40"
+              style={{ background: 'var(--card-bg)' }}
             >
               <button
                 onClick={() => setViewMode('grid')}
