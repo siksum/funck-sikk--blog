@@ -2,6 +2,7 @@
 
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
+import { useState, useEffect } from 'react';
 import { signOutCompletely } from '@/lib/auth-client';
 
 interface AdminSidebarProps {
@@ -21,60 +22,136 @@ const menuItems = [
 
 export default function AdminSidebar({ user }: AdminSidebarProps) {
   const pathname = usePathname();
+  const [isOpen, setIsOpen] = useState(false);
+
+  // Close sidebar when route changes on mobile
+  useEffect(() => {
+    setIsOpen(false);
+  }, [pathname]);
+
+  // Close sidebar when clicking outside on mobile
+  useEffect(() => {
+    const handleResize = () => {
+      if (window.innerWidth >= 1024) {
+        setIsOpen(false);
+      }
+    };
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, []);
+
+  // Prevent body scroll when sidebar is open on mobile
+  useEffect(() => {
+    if (isOpen) {
+      document.body.style.overflow = 'hidden';
+    } else {
+      document.body.style.overflow = '';
+    }
+    return () => {
+      document.body.style.overflow = '';
+    };
+  }, [isOpen]);
 
   return (
-    <aside className="w-64 bg-gray-900 text-white min-h-screen flex flex-col">
-      <div className="p-4 border-b border-gray-700">
-        <Link href="/" className="text-xl font-bold">
+    <>
+      {/* Mobile Header */}
+      <div className="lg:hidden fixed top-0 left-0 right-0 z-40 bg-gray-900 text-white h-14 flex items-center justify-between px-4 border-b border-gray-700">
+        <button
+          onClick={() => setIsOpen(true)}
+          className="p-2 hover:bg-gray-800 rounded-lg transition-colors"
+          aria-label="메뉴 열기"
+        >
+          <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
+          </svg>
+        </button>
+        <Link href="/" className="text-lg font-bold">
           func(sikk)
         </Link>
-        <p className="text-sm text-gray-400 mt-1">관리자 패널</p>
+        <div className="w-10" /> {/* Spacer for centering */}
       </div>
 
-      <nav className="flex-1 p-4">
-        <ul className="space-y-2">
-          {menuItems.map((item) => {
-            const isActive = pathname === item.href;
-            return (
-              <li key={item.href}>
-                <Link
-                  href={item.href}
-                  className={`flex items-center gap-3 px-4 py-2 rounded-lg transition-colors ${
-                    isActive
-                      ? 'bg-blue-600 text-white'
-                      : 'text-gray-300 hover:bg-gray-800 hover:text-white'
-                  }`}
-                >
-                  <span>{item.icon}</span>
-                  <span>{item.label}</span>
-                </Link>
-              </li>
-            );
-          })}
-        </ul>
-      </nav>
+      {/* Mobile Overlay */}
+      {isOpen && (
+        <div
+          className="lg:hidden fixed inset-0 bg-black/50 z-40"
+          onClick={() => setIsOpen(false)}
+        />
+      )}
 
-      <div className="p-4 border-t border-gray-700">
-        <div className="flex items-center gap-3 mb-4">
-          {user.image && (
-            <img
-              src={user.image}
-              alt={user.name || ''}
-              className="w-10 h-10 rounded-full"
-            />
-          )}
+      {/* Sidebar */}
+      <aside
+        className={`
+          fixed lg:static inset-y-0 left-0 z-50
+          w-64 bg-gray-900 text-white min-h-screen flex flex-col
+          transform transition-transform duration-300 ease-in-out
+          ${isOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0'}
+        `}
+      >
+        <div className="p-4 border-b border-gray-700 flex items-center justify-between">
           <div>
-            <p className="font-medium">{user.name}</p>
-            <p className="text-xs text-gray-400">관리자</p>
+            <Link href="/" className="text-xl font-bold">
+              func(sikk)
+            </Link>
+            <p className="text-sm text-gray-400 mt-1">관리자 패널</p>
           </div>
+          {/* Mobile close button */}
+          <button
+            onClick={() => setIsOpen(false)}
+            className="lg:hidden p-2 hover:bg-gray-800 rounded-lg transition-colors"
+            aria-label="메뉴 닫기"
+          >
+            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+            </svg>
+          </button>
         </div>
-        <button
-          onClick={() => signOutCompletely('/')}
-          className="w-full px-4 py-2 text-sm text-gray-300 hover:text-white hover:bg-gray-800 rounded-lg transition-colors"
-        >
-          로그아웃
-        </button>
-      </div>
-    </aside>
+
+        <nav className="flex-1 p-4">
+          <ul className="space-y-2">
+            {menuItems.map((item) => {
+              const isActive = pathname === item.href;
+              return (
+                <li key={item.href}>
+                  <Link
+                    href={item.href}
+                    className={`flex items-center gap-3 px-4 py-2 rounded-lg transition-colors ${
+                      isActive
+                        ? 'bg-blue-600 text-white'
+                        : 'text-gray-300 hover:bg-gray-800 hover:text-white'
+                    }`}
+                  >
+                    <span>{item.icon}</span>
+                    <span>{item.label}</span>
+                  </Link>
+                </li>
+              );
+            })}
+          </ul>
+        </nav>
+
+        <div className="p-4 border-t border-gray-700">
+          <div className="flex items-center gap-3 mb-4">
+            {user.image && (
+              <img
+                src={user.image}
+                alt={user.name || ''}
+                className="w-10 h-10 rounded-full"
+              />
+            )}
+            <div>
+              <p className="font-medium">{user.name}</p>
+              <p className="text-xs text-gray-400">관리자</p>
+            </div>
+          </div>
+          <button
+            onClick={() => signOutCompletely('/')}
+            className="w-full px-4 py-2 text-sm text-gray-300 hover:text-white hover:bg-gray-800 rounded-lg transition-colors"
+          >
+            로그아웃
+          </button>
+        </div>
+      </aside>
+    </>
   );
 }

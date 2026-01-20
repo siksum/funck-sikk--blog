@@ -3,6 +3,92 @@
 import { useState, useEffect, useMemo } from 'react';
 import Link from 'next/link';
 
+// Mobile category filter dropdown component
+function MobileCategoryFilter({
+  selectedCategory,
+  selectedSubcategory,
+  categories,
+  totalPosts,
+  onSelect,
+}: {
+  selectedCategory: string;
+  selectedSubcategory: string | null;
+  categories: { name: string; postCount: number; children: { name: string; postCount: number }[] }[];
+  totalPosts: number;
+  onSelect: (category: string, subcategory: string | null) => void;
+}) {
+  const [isOpen, setIsOpen] = useState(false);
+
+  const currentLabel = selectedCategory === 'all'
+    ? '전체보기'
+    : selectedSubcategory
+      ? `${selectedCategory}/${selectedSubcategory}`
+      : selectedCategory;
+
+  return (
+    <div className="relative lg:hidden mb-4">
+      <button
+        onClick={() => setIsOpen(!isOpen)}
+        className="w-full flex items-center justify-between px-4 py-3 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg text-left"
+      >
+        <span className="text-sm font-medium text-gray-900 dark:text-white">
+          {currentLabel}
+        </span>
+        <svg
+          className={`w-5 h-5 text-gray-500 transition-transform ${isOpen ? 'rotate-180' : ''}`}
+          fill="none"
+          stroke="currentColor"
+          viewBox="0 0 24 24"
+        >
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+        </svg>
+      </button>
+
+      {isOpen && (
+        <div className="absolute top-full left-0 right-0 mt-1 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg shadow-lg z-20 max-h-64 overflow-y-auto">
+          <button
+            onClick={() => { onSelect('all', null); setIsOpen(false); }}
+            className={`w-full px-4 py-2 text-left text-sm ${
+              selectedCategory === 'all'
+                ? 'bg-violet-50 dark:bg-violet-900/20 text-violet-600 dark:text-violet-400'
+                : 'text-gray-900 dark:text-white hover:bg-gray-50 dark:hover:bg-gray-700'
+            }`}
+          >
+            전체보기 ({totalPosts})
+          </button>
+          {categories.map((cat) => (
+            <div key={cat.name}>
+              <button
+                onClick={() => { onSelect(cat.name, null); setIsOpen(false); }}
+                className={`w-full px-4 py-2 text-left text-sm ${
+                  selectedCategory === cat.name && !selectedSubcategory
+                    ? 'bg-violet-50 dark:bg-violet-900/20 text-violet-600 dark:text-violet-400'
+                    : 'text-gray-900 dark:text-white hover:bg-gray-50 dark:hover:bg-gray-700'
+                }`}
+              >
+                {cat.name} ({cat.postCount})
+              </button>
+              {cat.children.map((sub) => (
+                <button
+                  key={sub.name}
+                  onClick={() => { onSelect(cat.name, sub.name); setIsOpen(false); }}
+                  className={`w-full px-4 py-2 pl-8 text-left text-sm ${
+                    selectedCategory === cat.name && selectedSubcategory === sub.name
+                      ? 'bg-violet-50 dark:bg-violet-900/20 text-violet-600 dark:text-violet-400'
+                      : 'text-gray-500 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-700'
+                  }`}
+                >
+                  └ {sub.name} ({sub.postCount})
+                </button>
+              ))}
+            </div>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
+
 interface Post {
   slug: string;
   title: string;
@@ -452,26 +538,26 @@ export default function PostsManagementPage() {
   return (
     <div>
       {/* Header */}
-      <div className="flex justify-between items-center mb-6">
-        <h1 className="text-2xl font-bold text-gray-900 dark:text-white">
+      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-6">
+        <h1 className="text-xl sm:text-2xl font-bold text-gray-900 dark:text-white">
           포스트 관리
         </h1>
-        <div className="flex gap-2">
+        <div className="flex flex-wrap gap-2 w-full sm:w-auto">
           <button
             onClick={() => setShowSectionModal(true)}
-            className="px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors"
+            className="flex-1 sm:flex-none px-3 sm:px-4 py-2 text-sm bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors"
           >
             섹션 관리
           </button>
           <button
             onClick={() => setShowCategoryModal(true)}
-            className="px-4 py-2 bg-violet-600 text-white rounded-lg hover:bg-violet-700 transition-colors"
+            className="flex-1 sm:flex-none px-3 sm:px-4 py-2 text-sm bg-violet-600 text-white rounded-lg hover:bg-violet-700 transition-colors"
           >
             카테고리 관리
           </button>
           <Link
             href="/admin/new"
-            className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+            className="flex-1 sm:flex-none px-3 sm:px-4 py-2 text-sm text-center bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
           >
             새 포스트 작성
           </Link>
@@ -515,9 +601,21 @@ export default function PostsManagementPage() {
         </div>
       </div>
 
+      {/* Mobile Category Filter */}
+      <MobileCategoryFilter
+        selectedCategory={selectedCategory}
+        selectedSubcategory={selectedSubcategory}
+        categories={sidebarCategories}
+        totalPosts={posts.length}
+        onSelect={(cat, sub) => {
+          setSelectedCategory(cat);
+          setSelectedSubcategory(sub);
+        }}
+      />
+
       <div className="flex gap-6">
-        {/* Category Sidebar */}
-        <div className="w-56 flex-shrink-0">
+        {/* Category Sidebar - Hidden on mobile */}
+        <div className="hidden lg:block w-56 flex-shrink-0">
           <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-violet-200 dark:border-violet-800/50 p-5">
             <h2 className="text-base font-semibold mb-4 text-gray-900 dark:text-white">
               카테고리
@@ -624,127 +722,201 @@ export default function PostsManagementPage() {
                   : '검색 결과가 없습니다.'}
               </div>
             ) : (
-              <div className="overflow-x-auto">
-                <table className="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
-                  <thead className="bg-gray-50 dark:bg-gray-700">
-                    <tr>
-                      <th
-                        onClick={() => handleSort('title')}
-                        className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-600 transition-colors"
-                      >
-                        <span className="flex items-center gap-1">
-                          제목
-                          {sortBy === 'title' && (
-                            <span className="text-violet-500">{sortOrder === 'asc' ? '↑' : '↓'}</span>
-                          )}
-                        </span>
-                      </th>
-                      <th
-                        onClick={() => handleSort('category')}
-                        className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-600 transition-colors"
-                      >
-                        <span className="flex items-center gap-1">
-                          카테고리
-                          {sortBy === 'category' && (
-                            <span className="text-violet-500">{sortOrder === 'asc' ? '↑' : '↓'}</span>
-                          )}
-                        </span>
-                      </th>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
-                        태그
-                      </th>
-                      <th
-                        onClick={() => handleSort('date')}
-                        className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-600 transition-colors"
-                      >
-                        <span className="flex items-center gap-1">
-                          날짜
-                          {sortBy === 'date' && (
-                            <span className="text-violet-500">{sortOrder === 'asc' ? '↑' : '↓'}</span>
-                          )}
-                        </span>
-                      </th>
-                      <th className="px-6 py-3 text-center text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
-                        공개
-                      </th>
-                      <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
-                        작업
-                      </th>
-                    </tr>
-                  </thead>
-                  <tbody className="divide-y divide-gray-200 dark:divide-gray-700">
-                    {filteredPosts.map((post) => (
-                      <tr key={post.slug} className="hover:bg-gray-50 dark:hover:bg-gray-700/50">
-                        <td className="px-6 py-4">
-                          <div className="text-sm font-medium text-gray-900 dark:text-white">
+              <>
+                {/* Mobile Card View */}
+                <div className="lg:hidden divide-y divide-gray-200 dark:divide-gray-700">
+                  {filteredPosts.map((post) => (
+                    <div key={post.slug} className="p-4">
+                      <div className="flex items-start justify-between gap-2">
+                        <div className="flex-1 min-w-0">
+                          <h3 className="text-sm font-medium text-gray-900 dark:text-white truncate">
                             {post.title}
-                          </div>
-                          <div className="text-xs text-gray-500 dark:text-gray-400 mt-1">
+                          </h3>
+                          <p className="text-xs text-gray-500 dark:text-gray-400 mt-0.5 truncate">
                             {post.slug}
-                          </div>
-                        </td>
-                        <td className="px-6 py-4 whitespace-nowrap">
-                          <span className="px-2 py-1 text-xs bg-violet-100 dark:bg-violet-900/30 text-violet-800 dark:text-violet-300 rounded border border-violet-200 dark:border-violet-800">
-                            {post.category}
-                          </span>
-                        </td>
-                        <td className="px-6 py-4">
-                          <div className="flex flex-wrap gap-1">
-                            {post.tags.slice(0, 3).map((tag) => (
-                              <span
-                                key={tag}
-                                className="px-2 py-0.5 text-xs bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300 rounded"
-                              >
-                                {tag}
-                              </span>
-                            ))}
-                            {post.tags.length > 3 && (
-                              <span className="text-xs text-gray-400">+{post.tags.length - 3}</span>
-                            )}
-                          </div>
-                        </td>
-                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">
+                          </p>
+                        </div>
+                        <button
+                          onClick={() => handleToggleVisibility(post)}
+                          className={`flex-shrink-0 px-2 py-1 text-xs rounded-full font-medium ${
+                            post.isPublic !== false
+                              ? 'bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-400'
+                              : 'bg-gray-100 dark:bg-gray-700 text-gray-500 dark:text-gray-400'
+                          }`}
+                        >
+                          {post.isPublic !== false ? '공개' : '비공개'}
+                        </button>
+                      </div>
+                      <div className="flex flex-wrap items-center gap-2 mt-2">
+                        <span className="px-2 py-0.5 text-xs bg-violet-100 dark:bg-violet-900/30 text-violet-800 dark:text-violet-300 rounded">
+                          {post.category}
+                        </span>
+                        <span className="text-xs text-gray-500 dark:text-gray-400">
                           {post.date}
-                        </td>
-                        <td className="px-6 py-4 whitespace-nowrap text-center">
-                          <button
-                            onClick={() => handleToggleVisibility(post)}
-                            className={`px-2 py-1 text-xs rounded-full font-medium transition-colors ${
-                              post.isPublic !== false
-                                ? 'bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-400 hover:bg-green-200 dark:hover:bg-green-900/50'
-                                : 'bg-gray-100 dark:bg-gray-700 text-gray-500 dark:text-gray-400 hover:bg-gray-200 dark:hover:bg-gray-600'
-                            }`}
-                          >
-                            {post.isPublic !== false ? '공개' : '비공개'}
-                          </button>
-                        </td>
-                        <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
-                          <div className="flex justify-end gap-2">
-                            <Link
-                              href={`/blog/${post.slug}`}
-                              className="px-2 py-1 text-gray-600 hover:text-gray-900 dark:text-gray-400 dark:hover:text-white rounded hover:bg-gray-100 dark:hover:bg-gray-700"
+                        </span>
+                      </div>
+                      {post.tags.length > 0 && (
+                        <div className="flex flex-wrap gap-1 mt-2">
+                          {post.tags.slice(0, 3).map((tag) => (
+                            <span
+                              key={tag}
+                              className="px-2 py-0.5 text-xs bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300 rounded"
                             >
-                              보기
-                            </Link>
-                            <Link
-                              href={`/admin/edit/${post.slug}`}
-                              className="px-2 py-1 text-blue-600 hover:text-blue-900 dark:text-blue-400 dark:hover:text-blue-300 rounded hover:bg-blue-50 dark:hover:bg-blue-900/20"
-                            >
-                              수정
-                            </Link>
-                            <button
-                              onClick={() => handleDelete(post.slug)}
-                              className="px-2 py-1 text-red-600 hover:text-red-900 dark:text-red-400 dark:hover:text-red-300 rounded hover:bg-red-50 dark:hover:bg-red-900/20"
-                            >
-                              삭제
-                            </button>
-                          </div>
-                        </td>
+                              {tag}
+                            </span>
+                          ))}
+                          {post.tags.length > 3 && (
+                            <span className="text-xs text-gray-400">+{post.tags.length - 3}</span>
+                          )}
+                        </div>
+                      )}
+                      <div className="flex gap-3 mt-3 pt-3 border-t border-gray-100 dark:border-gray-700">
+                        <Link
+                          href={`/blog/${post.slug}`}
+                          className="text-xs text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white"
+                        >
+                          보기
+                        </Link>
+                        <Link
+                          href={`/admin/edit/${post.slug}`}
+                          className="text-xs text-blue-600 dark:text-blue-400 hover:text-blue-900"
+                        >
+                          수정
+                        </Link>
+                        <button
+                          onClick={() => handleDelete(post.slug)}
+                          className="text-xs text-red-600 dark:text-red-400 hover:text-red-900"
+                        >
+                          삭제
+                        </button>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+
+                {/* Desktop Table View */}
+                <div className="hidden lg:block overflow-x-auto">
+                  <table className="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
+                    <thead className="bg-gray-50 dark:bg-gray-700">
+                      <tr>
+                        <th
+                          onClick={() => handleSort('title')}
+                          className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-600 transition-colors"
+                        >
+                          <span className="flex items-center gap-1">
+                            제목
+                            {sortBy === 'title' && (
+                              <span className="text-violet-500">{sortOrder === 'asc' ? '↑' : '↓'}</span>
+                            )}
+                          </span>
+                        </th>
+                        <th
+                          onClick={() => handleSort('category')}
+                          className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-600 transition-colors"
+                        >
+                          <span className="flex items-center gap-1">
+                            카테고리
+                            {sortBy === 'category' && (
+                              <span className="text-violet-500">{sortOrder === 'asc' ? '↑' : '↓'}</span>
+                            )}
+                          </span>
+                        </th>
+                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
+                          태그
+                        </th>
+                        <th
+                          onClick={() => handleSort('date')}
+                          className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-600 transition-colors"
+                        >
+                          <span className="flex items-center gap-1">
+                            날짜
+                            {sortBy === 'date' && (
+                              <span className="text-violet-500">{sortOrder === 'asc' ? '↑' : '↓'}</span>
+                            )}
+                          </span>
+                        </th>
+                        <th className="px-6 py-3 text-center text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
+                          공개
+                        </th>
+                        <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
+                          작업
+                        </th>
                       </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
+                    </thead>
+                    <tbody className="divide-y divide-gray-200 dark:divide-gray-700">
+                      {filteredPosts.map((post) => (
+                        <tr key={post.slug} className="hover:bg-gray-50 dark:hover:bg-gray-700/50">
+                          <td className="px-6 py-4">
+                            <div className="text-sm font-medium text-gray-900 dark:text-white">
+                              {post.title}
+                            </div>
+                            <div className="text-xs text-gray-500 dark:text-gray-400 mt-1">
+                              {post.slug}
+                            </div>
+                          </td>
+                          <td className="px-6 py-4 whitespace-nowrap">
+                            <span className="px-2 py-1 text-xs bg-violet-100 dark:bg-violet-900/30 text-violet-800 dark:text-violet-300 rounded border border-violet-200 dark:border-violet-800">
+                              {post.category}
+                            </span>
+                          </td>
+                          <td className="px-6 py-4">
+                            <div className="flex flex-wrap gap-1">
+                              {post.tags.slice(0, 3).map((tag) => (
+                                <span
+                                  key={tag}
+                                  className="px-2 py-0.5 text-xs bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300 rounded"
+                                >
+                                  {tag}
+                                </span>
+                              ))}
+                              {post.tags.length > 3 && (
+                                <span className="text-xs text-gray-400">+{post.tags.length - 3}</span>
+                              )}
+                            </div>
+                          </td>
+                          <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">
+                            {post.date}
+                          </td>
+                          <td className="px-6 py-4 whitespace-nowrap text-center">
+                            <button
+                              onClick={() => handleToggleVisibility(post)}
+                              className={`px-2 py-1 text-xs rounded-full font-medium transition-colors ${
+                                post.isPublic !== false
+                                  ? 'bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-400 hover:bg-green-200 dark:hover:bg-green-900/50'
+                                  : 'bg-gray-100 dark:bg-gray-700 text-gray-500 dark:text-gray-400 hover:bg-gray-200 dark:hover:bg-gray-600'
+                              }`}
+                            >
+                              {post.isPublic !== false ? '공개' : '비공개'}
+                            </button>
+                          </td>
+                          <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+                            <div className="flex justify-end gap-2">
+                              <Link
+                                href={`/blog/${post.slug}`}
+                                className="px-2 py-1 text-gray-600 hover:text-gray-900 dark:text-gray-400 dark:hover:text-white rounded hover:bg-gray-100 dark:hover:bg-gray-700"
+                              >
+                                보기
+                              </Link>
+                              <Link
+                                href={`/admin/edit/${post.slug}`}
+                                className="px-2 py-1 text-blue-600 hover:text-blue-900 dark:text-blue-400 dark:hover:text-blue-300 rounded hover:bg-blue-50 dark:hover:bg-blue-900/20"
+                              >
+                                수정
+                              </Link>
+                              <button
+                                onClick={() => handleDelete(post.slug)}
+                                className="px-2 py-1 text-red-600 hover:text-red-900 dark:text-red-400 dark:hover:text-red-300 rounded hover:bg-red-50 dark:hover:bg-red-900/20"
+                              >
+                                삭제
+                              </button>
+                            </div>
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              </>
             )}
           </div>
         </div>

@@ -2,6 +2,92 @@
 
 import { useState, useEffect, useMemo } from 'react';
 
+// Mobile category filter dropdown component
+function MobileCategoryFilter({
+  selectedCategory,
+  selectedSubcategory,
+  categories,
+  totalComments,
+  onSelect,
+}: {
+  selectedCategory: string;
+  selectedSubcategory: string | null;
+  categories: { name: string; commentCount: number; children: { name: string; commentCount: number }[] }[];
+  totalComments: number;
+  onSelect: (category: string, subcategory: string | null) => void;
+}) {
+  const [isOpen, setIsOpen] = useState(false);
+
+  const currentLabel = selectedCategory === 'all'
+    ? '전체보기'
+    : selectedSubcategory
+      ? `${selectedCategory}/${selectedSubcategory}`
+      : selectedCategory;
+
+  return (
+    <div className="relative lg:hidden mb-4">
+      <button
+        onClick={() => setIsOpen(!isOpen)}
+        className="w-full flex items-center justify-between px-4 py-3 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg text-left"
+      >
+        <span className="text-sm font-medium text-gray-900 dark:text-white">
+          {currentLabel}
+        </span>
+        <svg
+          className={`w-5 h-5 text-gray-500 transition-transform ${isOpen ? 'rotate-180' : ''}`}
+          fill="none"
+          stroke="currentColor"
+          viewBox="0 0 24 24"
+        >
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+        </svg>
+      </button>
+
+      {isOpen && (
+        <div className="absolute top-full left-0 right-0 mt-1 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg shadow-lg z-20 max-h-64 overflow-y-auto">
+          <button
+            onClick={() => { onSelect('all', null); setIsOpen(false); }}
+            className={`w-full px-4 py-2 text-left text-sm ${
+              selectedCategory === 'all'
+                ? 'bg-violet-50 dark:bg-violet-900/20 text-violet-600 dark:text-violet-400'
+                : 'text-gray-900 dark:text-white hover:bg-gray-50 dark:hover:bg-gray-700'
+            }`}
+          >
+            전체보기 ({totalComments})
+          </button>
+          {categories.map((cat) => (
+            <div key={cat.name}>
+              <button
+                onClick={() => { onSelect(cat.name, null); setIsOpen(false); }}
+                className={`w-full px-4 py-2 text-left text-sm ${
+                  selectedCategory === cat.name && !selectedSubcategory
+                    ? 'bg-violet-50 dark:bg-violet-900/20 text-violet-600 dark:text-violet-400'
+                    : 'text-gray-900 dark:text-white hover:bg-gray-50 dark:hover:bg-gray-700'
+                }`}
+              >
+                {cat.name} ({cat.commentCount})
+              </button>
+              {cat.children.map((sub) => (
+                <button
+                  key={sub.name}
+                  onClick={() => { onSelect(cat.name, sub.name); setIsOpen(false); }}
+                  className={`w-full px-4 py-2 pl-8 text-left text-sm ${
+                    selectedCategory === cat.name && selectedSubcategory === sub.name
+                      ? 'bg-violet-50 dark:bg-violet-900/20 text-violet-600 dark:text-violet-400'
+                      : 'text-gray-500 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-700'
+                  }`}
+                >
+                  └ {sub.name} ({sub.commentCount})
+                </button>
+              ))}
+            </div>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
+
 interface Author {
   id: string;
   name: string | null;
@@ -261,10 +347,23 @@ export default function CommentModeration() {
   }
 
   return (
-    <div className="flex gap-6">
-      {/* Category Sidebar */}
-      <div className="w-56 flex-shrink-0">
-        <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-violet-200 dark:border-violet-800/50 p-5">
+    <div>
+      {/* Mobile Category Filter */}
+      <MobileCategoryFilter
+        selectedCategory={selectedCategory}
+        selectedSubcategory={selectedSubcategory}
+        categories={sidebarCategories}
+        totalComments={data?.totalComments || 0}
+        onSelect={(cat, sub) => {
+          setSelectedCategory(cat);
+          setSelectedSubcategory(sub);
+        }}
+      />
+
+      <div className="flex gap-6">
+        {/* Category Sidebar - Hidden on mobile */}
+        <div className="hidden lg:block w-56 flex-shrink-0">
+          <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-violet-200 dark:border-violet-800/50 p-5">
           <h2 className="text-base font-semibold mb-4 text-gray-900 dark:text-white">
             카테고리
           </h2>
@@ -503,6 +602,7 @@ export default function CommentModeration() {
             </div>
           ))
         )}
+      </div>
       </div>
     </div>
   );
