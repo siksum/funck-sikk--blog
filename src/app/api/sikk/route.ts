@@ -80,16 +80,7 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Slug and title are required' }, { status: 400 });
     }
 
-    if (!fs.existsSync(sikkDirectory)) {
-      fs.mkdirSync(sikkDirectory, { recursive: true });
-    }
-
-    const filePath = path.join(sikkDirectory, `${slug}.mdx`);
     const gitPath = `content/sikk/${slug}.mdx`;
-
-    if (fs.existsSync(filePath)) {
-      return NextResponse.json({ error: 'Post already exists' }, { status: 409 });
-    }
 
     // Use local date to avoid UTC timezone issues
     const now = new Date();
@@ -107,6 +98,7 @@ export async function POST(request: NextRequest) {
     const fileContent = matter.stringify(content || '', frontmatter);
     const { useGithub, isProduction } = getEnvFlags();
 
+    // In production/GitHub mode, skip local filesystem operations
     if (useGithub) {
       const success = await commitFile(
         { path: gitPath, content: fileContent },
@@ -122,6 +114,17 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({
         error: 'GITHUB_TOKEN not configured'
       }, { status: 500 });
+    }
+
+    // Local development only - use filesystem
+    if (!fs.existsSync(sikkDirectory)) {
+      fs.mkdirSync(sikkDirectory, { recursive: true });
+    }
+
+    const filePath = path.join(sikkDirectory, `${slug}.mdx`);
+
+    if (fs.existsSync(filePath)) {
+      return NextResponse.json({ error: 'Post already exists' }, { status: 409 });
     }
 
     fs.writeFileSync(filePath, fileContent);
