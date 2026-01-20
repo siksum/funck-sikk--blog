@@ -1,7 +1,6 @@
 'use client';
 
 import { useState } from 'react';
-import PushToggle from './PushToggle';
 
 export default function SubscribeForm() {
   const [email, setEmail] = useState('');
@@ -49,7 +48,7 @@ export default function SubscribeForm() {
         새로운 포스트가 올라오면 알림을 받아보세요
       </p>
 
-      <form onSubmit={handleSubmit} className="flex gap-2 mb-4">
+      <form onSubmit={handleSubmit} className="flex gap-2">
         <input
           type="email"
           value={email}
@@ -74,15 +73,11 @@ export default function SubscribeForm() {
 
       {status !== 'idle' && (
         <p
-          className={`text-sm ${status === 'success' ? 'text-green-600' : status === 'error' ? 'text-red-600' : ''}`}
+          className={`text-sm mt-3 ${status === 'success' ? 'text-green-600' : status === 'error' ? 'text-red-600' : ''}`}
         >
           {message}
         </p>
       )}
-
-      <div className="mt-4 pt-4 border-t border-gray-200 dark:border-gray-700">
-        <PushToggle />
-      </div>
     </div>
   );
 }
