@@ -1,14 +1,5 @@
-import fs from 'fs';
-import path from 'path';
-import matter from 'gray-matter';
+import { prisma } from '@/lib/db';
 import { Post, Category, CategoryTreeNode } from '@/types';
-import { getFileContent, listFiles } from './github';
-
-const postsDirectory = path.join(process.cwd(), 'content/posts');
-const gitPostsPath = 'content/posts';
-
-// Check if GitHub mode is enabled
-const useGithub = () => !!process.env.GITHUB_TOKEN;
 
 function slugify(text: string): string {
   return text
@@ -24,76 +15,96 @@ function parseCategoryPath(category: string): string[] {
   return category.split('/').map((s) => s.trim()).filter(Boolean);
 }
 
-export function getPostSlugs(): string[] {
-  if (!fs.existsSync(postsDirectory)) {
-    return [];
-  }
-  return fs.readdirSync(postsDirectory).filter((file) => file.endsWith('.mdx'));
-}
-
-export function getPostBySlug(slug: string): Post | null {
-  const realSlug = slug.replace(/\.mdx$/, '');
-  const fullPath = path.join(postsDirectory, `${realSlug}.mdx`);
-
-  if (!fs.existsSync(fullPath)) {
-    return null;
-  }
-
-  const fileContents = fs.readFileSync(fullPath, 'utf8');
-  const { data, content } = matter(fileContents);
-
-  const categoryPath = parseCategoryPath(data.category || '');
+// Transform database post to Post type
+function transformPost(dbPost: {
+  slug: string;
+  title: string;
+  description: string | null;
+  date: Date;
+  category: string | null;
+  tags: string[];
+  thumbnail: string | null;
+  content: string;
+  isPublic: boolean;
+}): Post {
+  const categoryPath = parseCategoryPath(dbPost.category || '');
   const categorySlugPath = categoryPath.map(slugify);
 
   return {
-    slug: realSlug,
-    title: data.title || '',
-    description: data.description || '',
-    date: data.date || '',
-    category: data.category || '',
+    slug: dbPost.slug,
+    title: dbPost.title,
+    description: dbPost.description || '',
+    date: dbPost.date.toISOString().split('T')[0],
+    category: dbPost.category || '',
     categoryPath,
     categorySlugPath,
-    tags: data.tags || [],
-    thumbnail: data.thumbnail,
-    content,
-    isPublic: data.isPublic !== false, // Default to true if not specified
+    tags: dbPost.tags,
+    thumbnail: dbPost.thumbnail || undefined,
+    content: dbPost.content,
+    isPublic: dbPost.isPublic,
   };
 }
 
-export function getAllPosts(includePrivate: boolean = false): Post[] {
-  const slugs = getPostSlugs();
-  const posts = slugs
-    .map((slug) => getPostBySlug(slug.replace(/\.mdx$/, '')))
-    .filter((post): post is Post => post !== null)
-    .filter((post) => includePrivate || post.isPublic)
-    .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
+// ============ ASYNC FUNCTIONS (PRIMARY) ============
 
-  return posts;
+export async function getAllPostsAsync(includePrivate: boolean = false): Promise<Post[]> {
+  const posts = await prisma.blogPost.findMany({
+    where: includePrivate ? {} : { isPublic: true },
+    orderBy: { date: 'desc' },
+  });
+
+  return posts.map(transformPost);
 }
 
-export function getPublicPosts(): Post[] {
-  return getAllPosts(false);
+export async function getPostBySlugAsync(slug: string): Promise<Post | null> {
+  const post = await prisma.blogPost.findUnique({
+    where: { slug },
+  });
+
+  if (!post) return null;
+  return transformPost(post);
 }
 
-export function getRecentPosts(count: number = 5): Post[] {
-  return getAllPosts().slice(0, count);
+export async function getRecentPostsAsync(count: number = 5): Promise<Post[]> {
+  const posts = await prisma.blogPost.findMany({
+    where: { isPublic: true },
+    orderBy: { date: 'desc' },
+    take: count,
+  });
+
+  return posts.map(transformPost);
 }
 
-export function getPostsByCategory(category: string): Post[] {
-  return getAllPosts().filter((post) => post.category === category);
+export async function getPostsByCategoryAsync(category: string): Promise<Post[]> {
+  const posts = await prisma.blogPost.findMany({
+    where: { category, isPublic: true },
+    orderBy: { date: 'desc' },
+  });
+
+  return posts.map(transformPost);
 }
 
-export function getPostsByTag(tag: string): Post[] {
-  return getAllPosts().filter((post) => post.tags.includes(tag));
+export async function getPostsByTagAsync(tag: string): Promise<Post[]> {
+  const posts = await prisma.blogPost.findMany({
+    where: {
+      tags: { has: tag },
+      isPublic: true,
+    },
+    orderBy: { date: 'desc' },
+  });
+
+  return posts.map(transformPost);
 }
 
-export function getAllCategories(): { name: string; count: number }[] {
-  const posts = getAllPosts();
+export async function getAllCategoriesAsync(): Promise<{ name: string; count: number }[]> {
+  const posts = await getAllPostsAsync();
   const categoryMap = new Map<string, number>();
 
   posts.forEach((post) => {
-    const count = categoryMap.get(post.category) || 0;
-    categoryMap.set(post.category, count + 1);
+    if (post.category) {
+      const count = categoryMap.get(post.category) || 0;
+      categoryMap.set(post.category, count + 1);
+    }
   });
 
   return Array.from(categoryMap.entries())
@@ -101,8 +112,8 @@ export function getAllCategories(): { name: string; count: number }[] {
     .sort((a, b) => b.count - a.count);
 }
 
-export function getAllTags(): { name: string; count: number }[] {
-  const posts = getAllPosts();
+export async function getAllTagsAsync(): Promise<{ name: string; count: number }[]> {
+  const posts = await getAllPostsAsync();
   const tagMap = new Map<string, number>();
 
   posts.forEach((post) => {
@@ -117,56 +128,8 @@ export function getAllTags(): { name: string; count: number }[] {
     .sort((a, b) => b.count - a.count);
 }
 
-export function getTagsByCategory(category: string): string[] {
-  const posts = getPostsByCategory(category);
-  const tagSet = new Set<string>();
-
-  posts.forEach((post) => {
-    post.tags.forEach((tag) => tagSet.add(tag));
-  });
-
-  return Array.from(tagSet);
-}
-
-export function getCategoriesWithTags(): { name: string; count: number; tags: string[] }[] {
-  const categories = getAllCategories();
-  return categories.map((cat) => ({
-    ...cat,
-    tags: getTagsByCategory(cat.name),
-  }));
-}
-
-export function getRootCategoriesWithTags(): {
-  name: string;
-  count: number;
-  tags: string[];
-  slugPath: string[];
-}[] {
-  const rootCategories = getRootCategories();
-  const posts = getAllPosts();
-
-  return rootCategories
-    .map((cat) => {
-      const categoryPosts = posts.filter((post) =>
-        post.categorySlugPath[0] === cat.slug
-      );
-      const tagSet = new Set<string>();
-      categoryPosts.forEach((post) => {
-        post.tags.forEach((tag) => tagSet.add(tag));
-      });
-
-      return {
-        name: cat.name,
-        count: cat.count,
-        tags: Array.from(tagSet),
-        slugPath: cat.slugPath,
-      };
-    })
-    .sort((a, b) => a.name.localeCompare(b.name, 'ko'));
-}
-
-export function buildCategoryTree(): CategoryTreeNode {
-  const posts = getAllPosts();
+async function buildCategoryTreeAsync(): Promise<CategoryTreeNode> {
+  const posts = await getAllPostsAsync();
   const root: CategoryTreeNode = {
     name: 'root',
     slug: '',
@@ -211,312 +174,8 @@ export function buildCategoryTree(): CategoryTreeNode {
   return root;
 }
 
-export function getCategoryBySlugPath(slugPath: string[]): CategoryTreeNode | null {
-  const tree = buildCategoryTree();
-  let current = tree;
-
-  for (const slug of slugPath) {
-    if (!current.children[slug]) {
-      return null;
-    }
-    current = current.children[slug];
-  }
-
-  return current;
-}
-
-export function getAllCategoriesHierarchical(): Category[] {
-  const tree = buildCategoryTree();
-  const categories: Category[] = [];
-
-  function traverse(node: CategoryTreeNode, depth: number = 0) {
-    Object.values(node.children).forEach((child) => {
-      const childCategories = Object.values(child.children);
-      categories.push({
-        name: child.name,
-        slug: child.slug,
-        count: child.count,
-        path: child.path,
-        slugPath: child.slugPath,
-        depth,
-        children:
-          childCategories.length > 0
-            ? childCategories.map((c) => ({
-                name: c.name,
-                slug: c.slug,
-                count: c.count,
-                path: c.path,
-                slugPath: c.slugPath,
-                depth: depth + 1,
-              }))
-            : undefined,
-      });
-      traverse(child, depth + 1);
-    });
-  }
-
-  traverse(tree);
-  return categories;
-}
-
-export function getPostsByCategoryPath(
-  slugPath: string[],
-  includeChildren: boolean = true
-): Post[] {
-  const posts = getAllPosts();
-
-  return posts.filter((post) => {
-    if (includeChildren) {
-      return slugPath.every((slug, index) => post.categorySlugPath[index] === slug);
-    } else {
-      return (
-        post.categorySlugPath.length === slugPath.length &&
-        slugPath.every((slug, index) => post.categorySlugPath[index] === slug)
-      );
-    }
-  });
-}
-
-export function getChildCategories(slugPath: string[]): Category[] {
-  const category = getCategoryBySlugPath(slugPath);
-  if (!category) return [];
-
-  return Object.values(category.children)
-    .map((child) => ({
-      name: child.name,
-      slug: child.slug,
-      count: child.count,
-      path: child.path,
-      slugPath: child.slugPath,
-      depth: slugPath.length,
-    }))
-    .sort((a, b) => a.name.localeCompare(b.name, 'ko'));
-}
-
-export function getChildCategoriesWithTags(slugPath: string[]): {
-  name: string;
-  count: number;
-  tags: string[];
-  slugPath: string[];
-}[] {
-  const childCategories = getChildCategories(slugPath);
-  const posts = getAllPosts();
-
-  return childCategories
-    .map((cat) => {
-      const categoryPosts = posts.filter((post) =>
-        cat.slugPath.every((slug, index) => post.categorySlugPath[index] === slug)
-      );
-      const tagSet = new Set<string>();
-      categoryPosts.forEach((post) => {
-        post.tags.forEach((tag) => tagSet.add(tag));
-      });
-
-      return {
-        name: cat.name,
-        count: cat.count,
-        tags: Array.from(tagSet),
-        slugPath: cat.slugPath,
-      };
-    })
-    .sort((a, b) => a.name.localeCompare(b.name, 'ko'));
-}
-
-export function getRootCategories(): Category[] {
-  const tree = buildCategoryTree();
-  return Object.values(tree.children)
-    .map((child) => ({
-      name: child.name,
-      slug: child.slug,
-      count: child.count,
-      path: child.path,
-      slugPath: child.slugPath,
-      depth: 0,
-      children:
-        Object.values(child.children).length > 0
-          ? Object.values(child.children)
-              .map((c) => ({
-                name: c.name,
-                slug: c.slug,
-                count: c.count,
-                path: c.path,
-                slugPath: c.slugPath,
-                depth: 1,
-              }))
-              .sort((a, b) => a.name.localeCompare(b.name, 'ko'))
-          : undefined,
-    }))
-    .sort((a, b) => a.name.localeCompare(b.name, 'ko'));
-}
-
-export function getRelatedPosts(slug: string, count: number = 3): Post[] {
-  const currentPost = getPostBySlug(slug);
-  if (!currentPost) return [];
-
-  const allPosts = getAllPosts().filter((post) => post.slug !== slug);
-
-  const scoredPosts = allPosts.map((post) => {
-    let score = 0;
-
-    // Same category gets highest score
-    if (post.category === currentPost.category) {
-      score += 10;
-    }
-
-    // Shared tags increase score
-    const sharedTags = post.tags.filter((tag) => currentPost.tags.includes(tag));
-    score += sharedTags.length * 3;
-
-    // Same root category gets some score
-    if (post.categorySlugPath[0] === currentPost.categorySlugPath[0]) {
-      score += 2;
-    }
-
-    return { post, score };
-  });
-
-  return scoredPosts
-    .sort((a, b) => b.score - a.score)
-    .slice(0, count)
-    .map((item) => item.post);
-}
-
-export function getAdjacentPosts(slug: string): {
-  prevPost: Post | null;
-  nextPost: Post | null;
-} {
-  const currentPost = getPostBySlug(slug);
-  if (!currentPost) {
-    return { prevPost: null, nextPost: null };
-  }
-
-  // Filter posts to only include those in the same category
-  const categoryPosts = getAllPosts().filter(
-    (post) => post.category === currentPost.category
-  );
-
-  const currentIndex = categoryPosts.findIndex((post) => post.slug === slug);
-
-  if (currentIndex === -1) {
-    return { prevPost: null, nextPost: null };
-  }
-
-  const prevPost = currentIndex < categoryPosts.length - 1 ? categoryPosts[currentIndex + 1] : null;
-  const nextPost = currentIndex > 0 ? categoryPosts[currentIndex - 1] : null;
-
-  return { prevPost, nextPost };
-}
-
-// ============================================
-// ASYNC VERSIONS (Read from GitHub when available)
-// ============================================
-
-export async function getPostSlugsAsync(): Promise<string[]> {
-  if (useGithub()) {
-    const files = await listFiles(gitPostsPath);
-    if (files && files.length > 0) {
-      return files;
-    }
-  }
-
-  // Fallback to local filesystem
-  if (!fs.existsSync(postsDirectory)) {
-    return [];
-  }
-  return fs.readdirSync(postsDirectory).filter((file) => file.endsWith('.mdx'));
-}
-
-export async function getPostBySlugAsync(slug: string): Promise<Post | null> {
-  const realSlug = slug.replace(/\.mdx$/, '');
-
-  let fileContents: string | null = null;
-
-  if (useGithub()) {
-    const gitPath = `${gitPostsPath}/${realSlug}.mdx`;
-    fileContents = await getFileContent(gitPath);
-  }
-
-  // Fallback to local filesystem
-  if (!fileContents) {
-    const fullPath = path.join(postsDirectory, `${realSlug}.mdx`);
-    if (!fs.existsSync(fullPath)) {
-      return null;
-    }
-    fileContents = fs.readFileSync(fullPath, 'utf8');
-  }
-
-  const { data, content } = matter(fileContents);
-
-  const categoryPath = parseCategoryPath(data.category || '');
-  const categorySlugPath = categoryPath.map(slugify);
-
-  return {
-    slug: realSlug,
-    title: data.title || '',
-    description: data.description || '',
-    date: data.date || '',
-    category: data.category || '',
-    categoryPath,
-    categorySlugPath,
-    tags: data.tags || [],
-    thumbnail: data.thumbnail,
-    content,
-    isPublic: data.isPublic !== false,
-  };
-}
-
-export async function getAllPostsAsync(includePrivate: boolean = false): Promise<Post[]> {
-  const slugs = await getPostSlugsAsync();
-  const postPromises = slugs.map((slug) => getPostBySlugAsync(slug.replace(/\.mdx$/, '')));
-  const postsWithNull = await Promise.all(postPromises);
-
-  const posts = postsWithNull
-    .filter((post): post is Post => post !== null)
-    .filter((post) => includePrivate || post.isPublic)
-    .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
-
-  return posts;
-}
-
-export async function getRecentPostsAsync(count: number = 5): Promise<Post[]> {
-  const posts = await getAllPostsAsync();
-  return posts.slice(0, count);
-}
-
-export async function getAllCategoriesAsync(): Promise<{ name: string; count: number }[]> {
-  const posts = await getAllPostsAsync();
-  const categoryMap = new Map<string, number>();
-
-  posts.forEach((post) => {
-    const count = categoryMap.get(post.category) || 0;
-    categoryMap.set(post.category, count + 1);
-  });
-
-  return Array.from(categoryMap.entries())
-    .map(([name, count]) => ({ name, count }))
-    .sort((a, b) => b.count - a.count);
-}
-
-export async function getAllTagsAsync(): Promise<{ name: string; count: number }[]> {
-  const posts = await getAllPostsAsync();
-  const tagMap = new Map<string, number>();
-
-  posts.forEach((post) => {
-    post.tags.forEach((tag) => {
-      const count = tagMap.get(tag) || 0;
-      tagMap.set(tag, count + 1);
-    });
-  });
-
-  return Array.from(tagMap.entries())
-    .map(([name, count]) => ({ name, count }))
-    .sort((a, b) => b.count - a.count);
-}
-
 export async function getRootCategoriesAsync(): Promise<Category[]> {
-  const posts = await getAllPostsAsync();
-  const tree = buildCategoryTreeFromPosts(posts);
-
+  const tree = await buildCategoryTreeAsync();
   return Object.values(tree.children)
     .map((child) => ({
       name: child.name,
@@ -571,86 +230,30 @@ export async function getRootCategoriesWithTagsAsync(): Promise<{
     .sort((a, b) => a.name.localeCompare(b.name, 'ko'));
 }
 
-// Helper: Build category tree from posts array
-function buildCategoryTreeFromPosts(posts: Post[]): CategoryTreeNode {
-  const root: CategoryTreeNode = {
-    name: 'root',
-    slug: '',
-    count: 0,
-    directCount: 0,
-    children: {},
-    path: [],
-    slugPath: [],
-  };
-
-  posts.forEach((post) => {
-    const pathSegments = post.categoryPath;
-    let current = root;
-
-    pathSegments.forEach((segment, index) => {
-      const segmentSlug = slugify(segment);
-      const currentPath = pathSegments.slice(0, index + 1);
-      const currentSlugPath = currentPath.map(slugify);
-
-      if (!current.children[segmentSlug]) {
-        current.children[segmentSlug] = {
-          name: segment,
-          slug: segmentSlug,
-          count: 0,
-          directCount: 0,
-          children: {},
-          path: currentPath,
-          slugPath: currentSlugPath,
-        };
-      }
-
-      current.children[segmentSlug].count++;
-
-      if (index === pathSegments.length - 1) {
-        current.children[segmentSlug].directCount++;
-      }
-
-      current = current.children[segmentSlug];
-    });
-  });
-
-  return root;
-}
-
-export async function getRelatedPostsAsync(slug: string, count: number = 3): Promise<Post[]> {
-  const currentPost = await getPostBySlugAsync(slug);
+export async function getRelatedPostsAsync(currentSlug: string, count: number = 3): Promise<Post[]> {
+  const currentPost = await getPostBySlugAsync(currentSlug);
   if (!currentPost) return [];
 
-  const allPosts = (await getAllPostsAsync()).filter((post) => post.slug !== slug);
+  const allPosts = (await getAllPostsAsync()).filter((p) => p.slug !== currentSlug);
 
-  const scoredPosts = allPosts.map((post) => {
+  const scored = allPosts.map((post) => {
     let score = 0;
-
-    if (post.category === currentPost.category) {
-      score += 10;
-    }
-
-    const sharedTags = post.tags.filter((tag) => currentPost.tags.includes(tag));
-    score += sharedTags.length * 3;
-
-    if (post.categorySlugPath[0] === currentPost.categorySlugPath[0]) {
-      score += 2;
-    }
-
+    if (post.category === currentPost.category) score += 10;
+    if (post.categorySlugPath[0] === currentPost.categorySlugPath[0]) score += 2;
+    currentPost.tags.forEach((tag) => {
+      if (post.tags.includes(tag)) score += 3;
+    });
     return { post, score };
   });
 
-  return scoredPosts
+  return scored
     .sort((a, b) => b.score - a.score)
     .slice(0, count)
-    .map((item) => item.post);
+    .map((s) => s.post);
 }
 
-export async function getAdjacentPostsAsync(slug: string): Promise<{
-  prevPost: Post | null;
-  nextPost: Post | null;
-}> {
-  const currentPost = await getPostBySlugAsync(slug);
+export async function getAdjacentPostsAsync(currentSlug: string): Promise<{ prevPost: Post | null; nextPost: Post | null }> {
+  const currentPost = await getPostBySlugAsync(currentSlug);
   if (!currentPost) {
     return { prevPost: null, nextPost: null };
   }
@@ -658,12 +261,7 @@ export async function getAdjacentPostsAsync(slug: string): Promise<{
   const categoryPosts = (await getAllPostsAsync()).filter(
     (post) => post.category === currentPost.category
   );
-
-  const currentIndex = categoryPosts.findIndex((post) => post.slug === slug);
-
-  if (currentIndex === -1) {
-    return { prevPost: null, nextPost: null };
-  }
+  const currentIndex = categoryPosts.findIndex((p) => p.slug === currentSlug);
 
   const prevPost = currentIndex < categoryPosts.length - 1 ? categoryPosts[currentIndex + 1] : null;
   const nextPost = currentIndex > 0 ? categoryPosts[currentIndex - 1] : null;
@@ -671,9 +269,9 @@ export async function getAdjacentPostsAsync(slug: string): Promise<{
   return { prevPost, nextPost };
 }
 
+// Category helper functions
 export async function getCategoryBySlugPathAsync(slugPath: string[]): Promise<CategoryTreeNode | null> {
-  const posts = await getAllPostsAsync();
-  const tree = buildCategoryTreeFromPosts(posts);
+  const tree = await buildCategoryTreeAsync();
   let current = tree;
 
   for (const slug of slugPath) {
@@ -687,8 +285,7 @@ export async function getCategoryBySlugPathAsync(slugPath: string[]): Promise<Ca
 }
 
 export async function getAllCategoriesHierarchicalAsync(): Promise<Category[]> {
-  const posts = await getAllPostsAsync();
-  const tree = buildCategoryTreeFromPosts(posts);
+  const tree = await buildCategoryTreeAsync();
   const categories: Category[] = [];
 
   function traverse(node: CategoryTreeNode, depth: number = 0) {
@@ -784,7 +381,90 @@ export async function getChildCategoriesWithTagsAsync(slugPath: string[]): Promi
     .sort((a, b) => a.name.localeCompare(b.name, 'ko'));
 }
 
-export async function getPostsByTagAsync(tag: string): Promise<Post[]> {
-  const posts = await getAllPostsAsync();
-  return posts.filter((post) => post.tags.includes(tag));
+// ============ SYNC WRAPPERS (FOR COMPATIBILITY) ============
+// Note: These now just throw errors since we need async for DB
+// Use the async versions instead
+
+export function getPostSlugs(): string[] {
+  throw new Error('Use getAllPostsAsync instead - sync functions are deprecated');
+}
+
+export function getAllPosts(): Post[] {
+  throw new Error('Use getAllPostsAsync instead - sync functions are deprecated');
+}
+
+export function getPublicPosts(): Post[] {
+  throw new Error('Use getAllPostsAsync instead - sync functions are deprecated');
+}
+
+export function getPostBySlug(): Post | null {
+  throw new Error('Use getPostBySlugAsync instead - sync functions are deprecated');
+}
+
+export function getRecentPosts(): Post[] {
+  throw new Error('Use getRecentPostsAsync instead - sync functions are deprecated');
+}
+
+export function getPostsByCategory(): Post[] {
+  throw new Error('Use getPostsByCategoryAsync instead - sync functions are deprecated');
+}
+
+export function getPostsByTag(): Post[] {
+  throw new Error('Use getPostsByTagAsync instead - sync functions are deprecated');
+}
+
+export function getAllCategories(): { name: string; count: number }[] {
+  throw new Error('Use getAllCategoriesAsync instead - sync functions are deprecated');
+}
+
+export function getAllTags(): { name: string; count: number }[] {
+  throw new Error('Use getAllTagsAsync instead - sync functions are deprecated');
+}
+
+export function getTagsByCategory(): string[] {
+  throw new Error('Use async version instead - sync functions are deprecated');
+}
+
+export function getCategoriesWithTags(): { name: string; count: number; tags: string[] }[] {
+  throw new Error('Use async version instead - sync functions are deprecated');
+}
+
+export function getRootCategoriesWithTags(): { name: string; count: number; tags: string[]; slugPath: string[] }[] {
+  throw new Error('Use getRootCategoriesWithTagsAsync instead - sync functions are deprecated');
+}
+
+export function buildCategoryTree(): CategoryTreeNode {
+  throw new Error('Use buildCategoryTreeAsync instead - sync functions are deprecated');
+}
+
+export function getCategoryBySlugPath(): CategoryTreeNode | null {
+  throw new Error('Use getCategoryBySlugPathAsync instead - sync functions are deprecated');
+}
+
+export function getAllCategoriesHierarchical(): Category[] {
+  throw new Error('Use getAllCategoriesHierarchicalAsync instead - sync functions are deprecated');
+}
+
+export function getPostsByCategoryPath(): Post[] {
+  throw new Error('Use getPostsByCategoryPathAsync instead - sync functions are deprecated');
+}
+
+export function getChildCategories(): Category[] {
+  throw new Error('Use getChildCategoriesAsync instead - sync functions are deprecated');
+}
+
+export function getChildCategoriesWithTags(): { name: string; count: number; tags: string[]; slugPath: string[] }[] {
+  throw new Error('Use getChildCategoriesWithTagsAsync instead - sync functions are deprecated');
+}
+
+export function getRootCategories(): Category[] {
+  throw new Error('Use getRootCategoriesAsync instead - sync functions are deprecated');
+}
+
+export function getRelatedPosts(): Post[] {
+  throw new Error('Use getRelatedPostsAsync instead - sync functions are deprecated');
+}
+
+export function getAdjacentPosts(): { prevPost: Post | null; nextPost: Post | null } {
+  throw new Error('Use getAdjacentPostsAsync instead - sync functions are deprecated');
 }

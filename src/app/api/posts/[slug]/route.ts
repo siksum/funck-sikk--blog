@@ -1,158 +1,104 @@
 import { NextRequest, NextResponse } from 'next/server';
-import fs from 'fs';
-import path from 'path';
-import matter from 'gray-matter';
-import { commitFile, deleteFile, getFileContent } from '@/lib/github';
+import { prisma } from '@/lib/db';
 
-// Force dynamic rendering - no caching
 export const dynamic = 'force-dynamic';
 
-const postsDirectory = path.join(process.cwd(), 'content/posts');
+interface RouteContext {
+  params: Promise<{ slug: string }>;
+}
 
-// Helper to check environment at runtime (not build time)
-const getEnvFlags = () => ({
-  useGithub: !!process.env.GITHUB_TOKEN,
-  isProduction: process.env.NODE_ENV === 'production' || process.env.VERCEL === '1',
-});
-
-// GET: 단일 포스트 조회
-export async function GET(
-  request: NextRequest,
-  { params }: { params: Promise<{ slug: string }> }
-) {
+export async function GET(request: NextRequest, context: RouteContext) {
   try {
-    const { slug } = await params;
-    const { useGithub } = getEnvFlags();
-    const gitPath = `content/posts/${slug}.mdx`;
-    const filePath = path.join(postsDirectory, `${slug}.mdx`);
+    const { slug } = await context.params;
 
-    let fileContents: string | null = null;
+    const post = await prisma.blogPost.findUnique({
+      where: { slug },
+    });
 
-    // Try to read from GitHub first if available
-    if (useGithub) {
-      fileContents = await getFileContent(gitPath);
+    if (!post) {
+      return NextResponse.json({ error: 'Post not found' }, { status: 404 });
     }
 
-    // Fallback to local filesystem
-    if (!fileContents) {
-      if (!fs.existsSync(filePath)) {
-        return NextResponse.json({ error: 'Post not found' }, { status: 404 });
-      }
-      fileContents = fs.readFileSync(filePath, 'utf8');
-    }
-
-    const { data, content } = matter(fileContents);
-
-    return NextResponse.json({ slug, ...data, content });
+    return NextResponse.json({
+      slug: post.slug,
+      title: post.title,
+      description: post.description || '',
+      date: post.date.toISOString().split('T')[0],
+      category: post.category || '',
+      tags: post.tags,
+      thumbnail: post.thumbnail || undefined,
+      isPublic: post.isPublic,
+      content: post.content,
+    });
   } catch (error) {
     console.error('Failed to fetch post:', error);
     return NextResponse.json({ error: 'Failed to fetch post' }, { status: 500 });
   }
 }
 
-// PUT: 포스트 수정
-export async function PUT(
-  request: NextRequest,
-  { params }: { params: Promise<{ slug: string }> }
-) {
+export async function PUT(request: NextRequest, context: RouteContext) {
   try {
-    const { slug } = await params;
+    const { slug } = await context.params;
     const body = await request.json();
-    const { title, description, category, tags, content, date, isPublic } = body;
+    const { title, description, category, tags, content, date, isPublic, thumbnail } = body;
 
-    const filePath = path.join(postsDirectory, `${slug}.mdx`);
-    const gitPath = `content/posts/${slug}.mdx`;
+    if (!title) {
+      return NextResponse.json({ error: 'Title is required' }, { status: 400 });
+    }
 
-    if (!fs.existsSync(filePath)) {
+    // Check if post exists
+    const existing = await prisma.blogPost.findUnique({
+      where: { slug },
+    });
+
+    if (!existing) {
       return NextResponse.json({ error: 'Post not found' }, { status: 404 });
     }
 
-    // Use local date to avoid UTC timezone issues
-    const now = new Date();
-    const localDateStr = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`;
-    const frontmatter = {
-      title,
-      description: description || '',
-      date: date || localDateStr,
-      category: category || 'Uncategorized',
-      tags: tags || [],
-      isPublic: isPublic !== false, // Default to true
-    };
+    // Parse date
+    const postDate = date ? new Date(date) : existing.date;
 
-    const fileContent = matter.stringify(content || '', frontmatter);
-    const { useGithub, isProduction } = getEnvFlags();
+    // Update post
+    const post = await prisma.blogPost.update({
+      where: { slug },
+      data: {
+        title,
+        description: description || '',
+        content: content || '',
+        category: category || '',
+        tags: tags || [],
+        thumbnail: thumbnail || null,
+        isPublic: isPublic !== false,
+        date: postDate,
+      },
+    });
 
-    console.log('[PUT] Environment flags:', { useGithub, isProduction, hasToken: !!process.env.GITHUB_TOKEN });
-
-    if (useGithub) {
-      console.log('[PUT] Attempting GitHub commit for:', gitPath);
-      const success = await commitFile(
-        { path: gitPath, content: fileContent },
-        `post: Update "${title}"`
-      );
-      if (!success) {
-        console.error('[PUT] GitHub commit failed');
-        return NextResponse.json({ error: 'GitHub 커밋 실패. GITHUB_TOKEN 권한을 확인하세요.' }, { status: 500 });
-      }
-      console.log('[PUT] GitHub commit successful');
-      // GitHub mode: skip local file write (Vercel has read-only filesystem)
-      return NextResponse.json({ success: true, slug, committed: true });
-    }
-
-    // Production without GitHub: cannot write files
-    if (isProduction) {
-      console.error('[PUT] No GITHUB_TOKEN in production');
-      return NextResponse.json({
-        error: 'GITHUB_TOKEN이 설정되지 않았습니다. Vercel 환경 변수를 확인하세요.'
-      }, { status: 500 });
-    }
-
-    // Local mode only: update local file
-    fs.writeFileSync(filePath, fileContent);
-
-    return NextResponse.json({ success: true, slug, committed: false });
+    return NextResponse.json({ success: true, slug: post.slug });
   } catch (error) {
     console.error('Failed to update post:', error);
     return NextResponse.json({ error: 'Failed to update post' }, { status: 500 });
   }
 }
 
-// DELETE: 포스트 삭제
-export async function DELETE(
-  request: NextRequest,
-  { params }: { params: Promise<{ slug: string }> }
-) {
+export async function DELETE(request: NextRequest, context: RouteContext) {
   try {
-    const { slug } = await params;
-    const filePath = path.join(postsDirectory, `${slug}.mdx`);
-    const gitPath = `content/posts/${slug}.mdx`;
+    const { slug } = await context.params;
 
-    if (!fs.existsSync(filePath)) {
+    // Check if post exists
+    const existing = await prisma.blogPost.findUnique({
+      where: { slug },
+    });
+
+    if (!existing) {
       return NextResponse.json({ error: 'Post not found' }, { status: 404 });
     }
 
-    const { useGithub, isProduction } = getEnvFlags();
+    // Delete post
+    await prisma.blogPost.delete({
+      where: { slug },
+    });
 
-    if (useGithub) {
-      const success = await deleteFile(gitPath, `post: Delete "${slug}"`);
-      if (!success) {
-        return NextResponse.json({ error: 'GitHub 삭제 실패. GITHUB_TOKEN 권한을 확인하세요.' }, { status: 500 });
-      }
-      // GitHub mode: skip local file delete (Vercel has read-only filesystem)
-      return NextResponse.json({ success: true, committed: true });
-    }
-
-    // Production without GitHub: cannot delete files
-    if (isProduction) {
-      return NextResponse.json({
-        error: 'GITHUB_TOKEN이 설정되지 않았습니다. Vercel 환경 변수를 확인하세요.'
-      }, { status: 500 });
-    }
-
-    // Local mode only: delete local file
-    fs.unlinkSync(filePath);
-
-    return NextResponse.json({ success: true, committed: false });
+    return NextResponse.json({ success: true });
   } catch (error) {
     console.error('Failed to delete post:', error);
     return NextResponse.json({ error: 'Failed to delete post' }, { status: 500 });
