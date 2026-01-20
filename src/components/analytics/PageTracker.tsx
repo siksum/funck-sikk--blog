@@ -4,6 +4,9 @@ import { useEffect } from 'react';
 import { usePathname } from 'next/navigation';
 import { useSession } from 'next-auth/react';
 
+// Admin emails that should not be tracked
+const ADMIN_EMAILS = ['sikk@sikk.kr'];
+
 export default function PageTracker() {
   const pathname = usePathname();
   const { data: session, status } = useSession();
@@ -14,8 +17,13 @@ export default function PageTracker() {
       return;
     }
 
-    // Skip tracking for admin users
+    // Skip tracking for admin users (by isAdmin flag)
     if (session?.user?.isAdmin) {
+      return;
+    }
+
+    // Skip tracking for admin users (by email)
+    if (session?.user?.email && ADMIN_EMAILS.includes(session.user.email)) {
       return;
     }
 
