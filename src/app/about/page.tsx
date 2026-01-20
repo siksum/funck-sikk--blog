@@ -112,7 +112,7 @@ export default function AboutPage() {
         <motion.section
           initial={{ opacity: 0, y: 20 }}
           whileInView={{ opacity: 1, y: 0 }}
-          viewport={{ once: true, margin: "-100px" }}
+          viewport={{ margin: "-100px" }}
           transition={{ duration: 0.5 }}
         >
           <h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-6 flex items-center gap-3">
@@ -130,7 +130,7 @@ export default function AboutPage() {
                 className="px-5 py-2.5 bg-gradient-to-r from-violet-100 to-indigo-100 dark:from-violet-900/30 dark:to-indigo-900/30 text-violet-700 dark:text-violet-300 rounded-full font-medium border border-violet-200 dark:border-violet-800"
                 initial={{ opacity: 0, scale: 0.8 }}
                 whileInView={{ opacity: 1, scale: 1 }}
-                viewport={{ once: true }}
+                viewport={{ }}
                 transition={{ duration: 0.3, delay: index * 0.1 }}
                 whileHover={{ scale: 1.05 }}
               >
@@ -144,7 +144,7 @@ export default function AboutPage() {
         <motion.section
           initial={{ opacity: 0, y: 20 }}
           whileInView={{ opacity: 1, y: 0 }}
-          viewport={{ once: true, margin: "-100px" }}
+          viewport={{ margin: "-100px" }}
           transition={{ duration: 0.5 }}
         >
           <h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-8 flex items-center gap-3">
@@ -174,7 +174,7 @@ export default function AboutPage() {
                   className={`relative flex items-center ${index % 2 === 0 ? 'md:flex-row' : 'md:flex-row-reverse'}`}
                   initial={{ opacity: 0, x: index % 2 === 0 ? -20 : 20 }}
                   whileInView={{ opacity: 1, x: 0 }}
-                  viewport={{ once: true, margin: "-50px" }}
+                  viewport={{ margin: "-50px" }}
                   transition={{ duration: 0.5, delay: index * 0.1 }}
                 >
                   {/* Timeline dot */}
@@ -209,7 +209,7 @@ export default function AboutPage() {
         <motion.section
           initial={{ opacity: 0, y: 20 }}
           whileInView={{ opacity: 1, y: 0 }}
-          viewport={{ once: true, margin: "-100px" }}
+          viewport={{ margin: "-100px" }}
           transition={{ duration: 0.5 }}
         >
           <h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-6 flex items-center gap-3">
@@ -237,7 +237,7 @@ export default function AboutPage() {
                 }`}
                 initial={{ opacity: 0, y: 20 }}
                 whileInView={{ opacity: 1, y: 0 }}
-                viewport={{ once: true }}
+                viewport={{ }}
                 transition={{ duration: 0.3, delay: index * 0.1 }}
                 whileHover={{ y: -3, boxShadow: "0 8px 24px rgba(139, 92, 246, 0.1)" }}
               >
@@ -257,7 +257,7 @@ export default function AboutPage() {
         <motion.section
           initial={{ opacity: 0, y: 20 }}
           whileInView={{ opacity: 1, y: 0 }}
-          viewport={{ once: true, margin: "-100px" }}
+          viewport={{ margin: "-100px" }}
           transition={{ duration: 0.5 }}
         >
           <h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-6 flex items-center gap-3">
@@ -287,7 +287,7 @@ export default function AboutPage() {
                 }`}
                 initial={{ opacity: 0, scale: 0.95 }}
                 whileInView={{ opacity: 1, scale: 1 }}
-                viewport={{ once: true }}
+                viewport={{ }}
                 transition={{ duration: 0.3, delay: index * 0.05 }}
                 whileHover={{ scale: 1.02 }}
               >
@@ -305,7 +305,7 @@ export default function AboutPage() {
         <motion.section
           initial={{ opacity: 0, y: 20 }}
           whileInView={{ opacity: 1, y: 0 }}
-          viewport={{ once: true, margin: "-100px" }}
+          viewport={{ margin: "-100px" }}
           transition={{ duration: 0.5 }}
         >
           <h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-6 flex items-center gap-3">
@@ -328,7 +328,7 @@ export default function AboutPage() {
                     className="px-3 py-1 bg-violet-100 dark:bg-violet-900/30 text-violet-700 dark:text-violet-300 rounded-full text-sm"
                     initial={{ opacity: 0, x: -10 }}
                     whileInView={{ opacity: 1, x: 0 }}
-                    viewport={{ once: true }}
+                    viewport={{ }}
                     transition={{ delay: i * 0.1 }}
                   >
                     {role}
@@ -349,7 +349,7 @@ export default function AboutPage() {
                   className="p-4 bg-gray-50 dark:bg-gray-800/50 rounded-xl border border-gray-200 dark:border-gray-700"
                   initial={{ opacity: 0, y: 10 }}
                   whileInView={{ opacity: 1, y: 0 }}
-                  viewport={{ once: true }}
+                  viewport={{ }}
                   transition={{ delay: index * 0.1 }}
                   whileHover={{ borderColor: "rgb(139 92 246 / 0.5)" }}
                 >
@@ -367,7 +367,7 @@ export default function AboutPage() {
         <motion.section
           initial={{ opacity: 0, y: 20 }}
           whileInView={{ opacity: 1, y: 0 }}
-          viewport={{ once: true, margin: "-100px" }}
+          viewport={{ margin: "-100px" }}
           transition={{ duration: 0.5 }}
         >
           <h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-6 flex items-center gap-3">
@@ -389,7 +389,7 @@ export default function AboutPage() {
                 className="p-4 bg-gray-50 dark:bg-gray-800/50 rounded-xl border border-gray-200 dark:border-gray-700"
                 initial={{ opacity: 0, x: index === 0 ? -20 : 20 }}
                 whileInView={{ opacity: 1, x: 0 }}
-                viewport={{ once: true }}
+                viewport={{ }}
                 transition={{ duration: 0.4 }}
                 whileHover={{ borderColor: "rgb(139 92 246 / 0.5)" }}
               >
