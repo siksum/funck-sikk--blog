@@ -162,3 +162,16 @@ model Category {
   @@index([parentId])
   @@index([sectionId])
 }
+
+// ============ POST TEMPLATES ============
+
+model PostTemplate {
+  id          String   @id @default(cuid())
+  name        String
+  description String?
+  category    String?
+  tags        String[] @default([])
+  content     String   @default("")
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}

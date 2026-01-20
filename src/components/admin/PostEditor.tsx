@@ -21,6 +21,15 @@ interface DBCategory {
   children: DBCategory[];
 }
 
+interface PostTemplate {
+  id: string;
+  name: string;
+  description: string | null;
+  category: string | null;
+  tags: string[];
+  content: string;
+}
+
 interface PostEditorProps {
   initialData?: {
     slug?: string;
@@ -53,6 +62,11 @@ export default function PostEditor({ initialData = {}, isEdit = false }: PostEdi
   const [showColumnEditor, setShowColumnEditor] = useState(false);
   const [showMathEditor, setShowMathEditor] = useState(false);
   const [showButtonEditor, setShowButtonEditor] = useState(false);
+  const [showTemplateModal, setShowTemplateModal] = useState(false);
+  const [showSaveTemplateModal, setShowSaveTemplateModal] = useState(false);
+  const [templates, setTemplates] = useState<PostTemplate[]>([]);
+  const [newTemplateName, setNewTemplateName] = useState('');
+  const [newTemplateDescription, setNewTemplateDescription] = useState('');
   const [categories, setCategories] = useState<DBCategory[]>([]);
 
   // Parse initial category into parent and sub
@@ -108,6 +122,81 @@ export default function PostEditor({ initialData = {}, isEdit = false }: PostEdi
     };
     fetchCategories();
   }, []);
+
+  // Fetch templates from database
+  const fetchTemplates = async () => {
+    try {
+      const res = await fetch('/api/admin/templates');
+      if (res.ok) {
+        const data = await res.json();
+        setTemplates(data);
+      }
+    } catch (error) {
+      console.error('Failed to fetch templates:', error);
+    }
+  };
+
+  useEffect(() => {
+    fetchTemplates();
+  }, []);
+
+  // Load template
+  const loadTemplate = (template: PostTemplate) => {
+    const categoryParsed = parseCategory(template.category || '');
+    setSelectedParentCategory(categoryParsed.parent);
+    setSelectedSubCategory(categoryParsed.sub);
+    setFormData(prev => ({
+      ...prev,
+      category: template.category || '',
+      tags: template.tags.join(', '),
+      content: template.content,
+    }));
+    setShowTemplateModal(false);
+  };
+
+  // Save as template
+  const saveAsTemplate = async () => {
+    if (!newTemplateName.trim()) return;
+
+    try {
+      const res = await fetch('/api/admin/templates', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          name: newTemplateName.trim(),
+          description: newTemplateDescription.trim() || null,
+          category: formData.category,
+          tags: formData.tags.split(',').map(t => t.trim()).filter(Boolean),
+          content: formData.content,
+        }),
+      });
+
+      if (res.ok) {
+        setNewTemplateName('');
+        setNewTemplateDescription('');
+        setShowSaveTemplateModal(false);
+        fetchTemplates();
+        alert('템플릿이 저장되었습니다.');
+      }
+    } catch (error) {
+      console.error('Failed to save template:', error);
+      alert('템플릿 저장에 실패했습니다.');
+    }
+  };
+
+  // Delete template
+  const deleteTemplate = async (id: string, name: string) => {
+    if (!confirm(`"${name}" 템플릿을 삭제하시겠습니까?`)) return;
+
+    try {
+      const res = await fetch(`/api/admin/templates/${id}`, { method: 'DELETE' });
+      if (res.ok) {
+        fetchTemplates();
+      }
+    } catch (error) {
+      console.error('Failed to delete template:', error);
+    }
+  };
 
 
   const insertText = (before: string, after: string = '') => {
@@ -411,6 +500,32 @@ export default function PostEditor({ initialData = {}, isEdit = false }: PostEdi
 
   return (
     <form onSubmit={handleSubmit} className="space-y-6">
+      {/* Template Buttons */}
+      {!isEdit && (
+        <div className="flex gap-2">
+          <button
+            type="button"
+            onClick={() => setShowTemplateModal(true)}
+            className="px-4 py-2 text-sm bg-violet-100 dark:bg-violet-900/30 text-violet-700 dark:text-violet-300 rounded-lg hover:bg-violet-200 dark:hover:bg-violet-900/50 transition-colors flex items-center gap-2"
+          >
+            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+            </svg>
+            템플릿 불러오기
+          </button>
+          <button
+            type="button"
+            onClick={() => setShowSaveTemplateModal(true)}
+            className="px-4 py-2 text-sm bg-emerald-100 dark:bg-emerald-900/30 text-emerald-700 dark:text-emerald-300 rounded-lg hover:bg-emerald-200 dark:hover:bg-emerald-900/50 transition-colors flex items-center gap-2"
+          >
+            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7H5a2 2 0 00-2 2v9a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-3m-1 4l-3 3m0 0l-3-3m3 3V4" />
+            </svg>
+            템플릿으로 저장
+          </button>
+        </div>
+      )}
+
       {/* Meta Fields */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         {/* Slug */}
@@ -760,6 +875,152 @@ export default function PostEditor({ initialData = {}, isEdit = false }: PostEdi
         onClose={() => setShowButtonEditor(false)}
         onInsert={insertMarkdown}
       />
+
+      {/* Template Selection Modal */}
+      {showTemplateModal && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
+          <div className="bg-white dark:bg-gray-800 rounded-xl shadow-xl w-full max-w-lg mx-4 max-h-[80vh] overflow-hidden flex flex-col">
+            <div className="flex justify-between items-center p-4 border-b border-gray-200 dark:border-gray-700">
+              <h3 className="text-lg font-semibold text-gray-900 dark:text-white">
+                템플릿 불러오기
+              </h3>
+              <button
+                type="button"
+                onClick={() => setShowTemplateModal(false)}
+                className="p-1 hover:bg-gray-100 dark:hover:bg-gray-700 rounded"
+              >
+                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                </svg>
+              </button>
+            </div>
+            <div className="flex-1 overflow-y-auto p-4">
+              {templates.length === 0 ? (
+                <p className="text-center text-gray-500 py-8">저장된 템플릿이 없습니다.</p>
+              ) : (
+                <div className="space-y-2">
+                  {templates.map((template) => (
+                    <div
+                      key={template.id}
+                      className="flex items-center justify-between p-3 border border-gray-200 dark:border-gray-700 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700/50"
+                    >
+                      <div className="flex-1 min-w-0 cursor-pointer" onClick={() => loadTemplate(template)}>
+                        <div className="font-medium text-gray-900 dark:text-white">
+                          {template.name}
+                        </div>
+                        {template.description && (
+                          <div className="text-sm text-gray-500 dark:text-gray-400 truncate">
+                            {template.description}
+                          </div>
+                        )}
+                        <div className="flex items-center gap-2 mt-1">
+                          {template.category && (
+                            <span className="text-xs px-2 py-0.5 bg-violet-100 dark:bg-violet-900/30 text-violet-700 dark:text-violet-300 rounded">
+                              {template.category}
+                            </span>
+                          )}
+                          {template.tags.length > 0 && (
+                            <span className="text-xs text-gray-400 dark:text-gray-500">
+                              {template.tags.slice(0, 3).join(', ')}
+                              {template.tags.length > 3 && '...'}
+                            </span>
+                          )}
+                        </div>
+                      </div>
+                      <button
+                        type="button"
+                        onClick={() => deleteTemplate(template.id, template.name)}
+                        className="ml-2 p-1.5 text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 rounded"
+                      >
+                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                        </svg>
+                      </button>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+            <div className="p-4 border-t border-gray-200 dark:border-gray-700">
+              <button
+                type="button"
+                onClick={() => setShowTemplateModal(false)}
+                className="w-full px-4 py-2 bg-gray-200 dark:bg-gray-700 text-gray-800 dark:text-gray-200 rounded-lg hover:bg-gray-300 dark:hover:bg-gray-600 transition-colors"
+              >
+                닫기
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Save Template Modal */}
+      {showSaveTemplateModal && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
+          <div className="bg-white dark:bg-gray-800 rounded-xl shadow-xl w-full max-w-md mx-4">
+            <div className="flex justify-between items-center p-4 border-b border-gray-200 dark:border-gray-700">
+              <h3 className="text-lg font-semibold text-gray-900 dark:text-white">
+                템플릿으로 저장
+              </h3>
+              <button
+                type="button"
+                onClick={() => setShowSaveTemplateModal(false)}
+                className="p-1 hover:bg-gray-100 dark:hover:bg-gray-700 rounded"
+              >
+                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                </svg>
+              </button>
+            </div>
+            <div className="p-4 space-y-4">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                  템플릿 이름 *
+                </label>
+                <input
+                  type="text"
+                  value={newTemplateName}
+                  onChange={(e) => setNewTemplateName(e.target.value)}
+                  placeholder="예: TIL 템플릿"
+                  className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-emerald-500"
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                  설명 (선택)
+                </label>
+                <input
+                  type="text"
+                  value={newTemplateDescription}
+                  onChange={(e) => setNewTemplateDescription(e.target.value)}
+                  placeholder="예: 오늘 배운 것 기록용"
+                  className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-emerald-500"
+                />
+              </div>
+              <p className="text-xs text-gray-500 dark:text-gray-400">
+                현재 카테고리, 태그, 내용이 템플릿으로 저장됩니다.
+              </p>
+            </div>
+            <div className="flex gap-2 p-4 border-t border-gray-200 dark:border-gray-700">
+              <button
+                type="button"
+                onClick={() => setShowSaveTemplateModal(false)}
+                className="flex-1 px-4 py-2 bg-gray-200 dark:bg-gray-700 text-gray-800 dark:text-gray-200 rounded-lg hover:bg-gray-300 dark:hover:bg-gray-600 transition-colors"
+              >
+                취소
+              </button>
+              <button
+                type="button"
+                onClick={saveAsTemplate}
+                disabled={!newTemplateName.trim()}
+                className="flex-1 px-4 py-2 bg-emerald-600 text-white rounded-lg hover:bg-emerald-700 disabled:opacity-50 transition-colors"
+              >
+                저장
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </form>
   );
 }
