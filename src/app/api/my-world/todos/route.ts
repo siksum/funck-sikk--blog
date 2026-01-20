@@ -1,10 +1,17 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { auth } from '@/lib/auth';
 import { prisma } from '@/lib/db';
 
-const DEFAULT_USER_ID = 'default-user';
+const isProduction = process.env.NODE_ENV === 'production';
 
 // GET - 특정 날짜의 할일 목록 조회
 export async function GET(request: NextRequest) {
+  const session = await auth();
+
+  if (isProduction && !session?.user?.isAdmin) {
+    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+  }
+
   try {
     const { searchParams } = new URL(request.url);
     const dateStr = searchParams.get('date');
@@ -13,6 +20,8 @@ export async function GET(request: NextRequest) {
     if (!dateStr) {
       return NextResponse.json({ error: 'Date is required' }, { status: 400 });
     }
+
+    const userId = session?.user?.id || 'dev-user';
 
     const date = new Date(dateStr);
     date.setHours(0, 0, 0, 0);
@@ -25,7 +34,7 @@ export async function GET(request: NextRequest) {
       date: { gte: Date; lt: Date };
       category?: string;
     } = {
-      userId: DEFAULT_USER_ID,
+      userId,
       date: {
         gte: date,
         lt: nextDay,
@@ -54,6 +63,12 @@ export async function GET(request: NextRequest) {
 
 // POST - 새 할일 생성
 export async function POST(request: NextRequest) {
+  const session = await auth();
+
+  if (isProduction && !session?.user?.isAdmin) {
+    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+  }
+
   try {
     const body = await request.json();
     const { content, category, date } = body;
@@ -65,13 +80,15 @@ export async function POST(request: NextRequest) {
       );
     }
 
+    const userId = session?.user?.id || 'dev-user';
+
     const todoDate = new Date(date);
     todoDate.setHours(0, 0, 0, 0);
 
     // Get the max order for this date and category
     const maxOrder = await prisma.todo.aggregate({
       where: {
-        userId: DEFAULT_USER_ID,
+        userId,
         category,
         date: todoDate,
       },
@@ -82,7 +99,7 @@ export async function POST(request: NextRequest) {
 
     const todo = await prisma.todo.create({
       data: {
-        userId: DEFAULT_USER_ID,
+        userId,
         content,
         category,
         date: todoDate,

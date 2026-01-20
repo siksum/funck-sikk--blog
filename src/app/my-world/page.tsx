@@ -166,6 +166,10 @@ export default function MyWorldDashboard() {
   const [newPersonalTodo, setNewPersonalTodo] = useState('');
   const [newResearchTodo, setNewResearchTodo] = useState('');
 
+  // Daily list view state
+  const [showDailyList, setShowDailyList] = useState(false);
+  const [allDailyEntries, setAllDailyEntries] = useState<DailyEntry[]>([]);
+
   const today = new Date();
   const todayStr = today.toISOString().split('T')[0];
 
@@ -305,6 +309,25 @@ export default function MyWorldDashboard() {
   useEffect(() => {
     fetchTodos(todoDate);
   }, [todoDate]);
+
+  // Fetch all daily entries for list view
+  const fetchAllDailyEntries = async () => {
+    try {
+      const res = await fetch('/api/my-world/daily');
+      if (res.ok) {
+        const data = await res.json();
+        setAllDailyEntries(data);
+      }
+    } catch (error) {
+      console.error('Failed to fetch daily entries:', error);
+    }
+  };
+
+  useEffect(() => {
+    if (showDailyList) {
+      fetchAllDailyEntries();
+    }
+  }, [showDailyList]);
 
   const addTodo = async (category: 'personal' | 'research', content: string) => {
     if (!content.trim()) return;
@@ -1716,16 +1739,115 @@ export default function MyWorldDashboard() {
                   <h3 className="text-sm font-medium text-gray-700 dark:text-gray-300 flex items-center gap-1">
                     <span>📋</span> 데일리 기록
                   </h3>
-                  <button
-                    onClick={handleSaveDaily}
-                    disabled={savingDaily}
-                    className="px-3 py-1 text-xs bg-violet-600 text-white rounded-lg hover:bg-violet-700 disabled:opacity-50"
-                  >
-                    {savingDaily ? '저장 중...' : '저장'}
-                  </button>
+                  <div className="flex items-center gap-2">
+                    {/* View Toggle */}
+                    <button
+                      onClick={() => setShowDailyList(!showDailyList)}
+                      className={`px-2 py-1 text-xs rounded-lg transition-colors ${
+                        showDailyList
+                          ? 'bg-violet-100 text-violet-600 dark:bg-violet-900/50 dark:text-violet-400'
+                          : 'bg-gray-100 text-gray-600 dark:bg-gray-700 dark:text-gray-400'
+                      }`}
+                      title={showDailyList ? '입력폼 보기' : '목록 보기'}
+                    >
+                      {showDailyList ? (
+                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+                        </svg>
+                      ) : (
+                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 10h16M4 14h16M4 18h16" />
+                        </svg>
+                      )}
+                    </button>
+                    {!showDailyList && (
+                      <button
+                        onClick={handleSaveDaily}
+                        disabled={savingDaily}
+                        className="px-3 py-1 text-xs bg-violet-600 text-white rounded-lg hover:bg-violet-700 disabled:opacity-50"
+                      >
+                        {savingDaily ? '저장 중...' : '저장'}
+                      </button>
+                    )}
+                  </div>
                 </div>
 
-                {/* Accordion Sections */}
+                {showDailyList ? (
+                  /* Daily Entries List View */
+                  <div className="space-y-2 max-h-[500px] overflow-y-auto">
+                    {allDailyEntries.length === 0 ? (
+                      <div className="text-center py-8 text-gray-500 dark:text-gray-400 text-sm">
+                        기록된 데이터가 없어요
+                      </div>
+                    ) : (
+                      allDailyEntries.map((entry) => {
+                        const entryDate = new Date(entry.date);
+                        const dateStr = entryDate.toLocaleDateString('ko-KR', {
+                          year: 'numeric',
+                          month: 'short',
+                          day: 'numeric',
+                          weekday: 'short'
+                        });
+                        return (
+                          <div
+                            key={entry.id || entry.date}
+                            onClick={() => {
+                              setSelectedDate(entry.date.split('T')[0]);
+                              setShowDailyList(false);
+                            }}
+                            className="p-3 bg-gray-50 dark:bg-gray-700/50 rounded-lg cursor-pointer hover:bg-violet-50 dark:hover:bg-violet-900/30 transition-colors"
+                          >
+                            <div className="flex items-center justify-between mb-1">
+                              <span className="text-sm font-medium text-gray-900 dark:text-white">
+                                {dateStr}
+                              </span>
+                              <div className="flex items-center gap-2">
+                                {entry.weather && <span className="text-sm">{entry.weather}</span>}
+                                {entry.dayScore !== null && (
+                                  <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${
+                                    entry.dayScore >= 70 ? 'bg-green-100 text-green-700 dark:bg-green-900/50 dark:text-green-400' :
+                                    entry.dayScore >= 40 ? 'bg-yellow-100 text-yellow-700 dark:bg-yellow-900/50 dark:text-yellow-400' :
+                                    'bg-red-100 text-red-700 dark:bg-red-900/50 dark:text-red-400'
+                                  }`}>
+                                    {entry.dayScore}점
+                                  </span>
+                                )}
+                              </div>
+                            </div>
+                            <div className="flex flex-wrap gap-1 text-xs text-gray-500 dark:text-gray-400">
+                              {entry.condition && (
+                                <span className="px-1.5 py-0.5 bg-gray-100 dark:bg-gray-600 rounded">
+                                  {entry.condition}
+                                </span>
+                              )}
+                              {entry.sleepHours && (
+                                <span className="px-1.5 py-0.5 bg-gray-100 dark:bg-gray-600 rounded">
+                                  😴 {entry.sleepHours}h
+                                </span>
+                              )}
+                              {(entry.expense > 0) && (
+                                <span className="px-1.5 py-0.5 bg-red-50 dark:bg-red-900/30 text-red-600 dark:text-red-400 rounded">
+                                  -{entry.expense.toLocaleString()}원
+                                </span>
+                              )}
+                              {(entry.income > 0) && (
+                                <span className="px-1.5 py-0.5 bg-green-50 dark:bg-green-900/30 text-green-600 dark:text-green-400 rounded">
+                                  +{entry.income.toLocaleString()}원
+                                </span>
+                              )}
+                            </div>
+                            {entry.notes && (
+                              <p className="mt-1 text-xs text-gray-500 dark:text-gray-400 truncate">
+                                {entry.notes}
+                              </p>
+                            )}
+                          </div>
+                        );
+                      })
+                    )}
+                  </div>
+                ) : (
+                /* Accordion Sections */
                 <div className="space-y-2">
                   {/* 상태 섹션 */}
                   <div className="border border-gray-200 dark:border-gray-600 rounded-lg overflow-hidden">
@@ -2019,6 +2141,7 @@ export default function MyWorldDashboard() {
                     )}
                   </div>
                 </div>
+                )}
               </div>
             </div>
           ) : (
