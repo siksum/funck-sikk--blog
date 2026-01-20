@@ -188,6 +188,19 @@ export default function CommentModeration() {
     return grouped;
   }, [sidebarCategories, dbSections]);
 
+  // Filter posts by selected category
+  const filteredPosts = useMemo(() => {
+    if (!data) return [];
+    return data.posts.filter((post) => {
+      const parts = post.category.split('/');
+      const mainCategory = parts[0];
+      const subCategory = parts[1] || null;
+      const matchesCategory = selectedCategory === 'all' || mainCategory === selectedCategory;
+      const matchesSubcategory = !selectedSubcategory || subCategory === selectedSubcategory;
+      return matchesCategory && matchesSubcategory;
+    });
+  }, [data, selectedCategory, selectedSubcategory]);
+
   const handleDelete = async (id: string, isReply: boolean = false) => {
     if (!confirm('이 댓글을 삭제하시겠습니까?')) return;
 
@@ -246,19 +259,6 @@ export default function CommentModeration() {
   if (!data || data.posts.length === 0) {
     return <div className="text-gray-500 dark:text-gray-400">아직 댓글이 없습니다.</div>;
   }
-
-  // Filter posts by selected category
-  const filteredPosts = useMemo(() => {
-    if (!data) return [];
-    return data.posts.filter((post) => {
-      const parts = post.category.split('/');
-      const mainCategory = parts[0];
-      const subCategory = parts[1] || null;
-      const matchesCategory = selectedCategory === 'all' || mainCategory === selectedCategory;
-      const matchesSubcategory = !selectedSubcategory || subCategory === selectedSubcategory;
-      return matchesCategory && matchesSubcategory;
-    });
-  }, [data, selectedCategory, selectedSubcategory]);
 
   return (
     <div className="flex gap-6">
