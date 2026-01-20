@@ -1424,7 +1424,7 @@ export default function MyWorldDashboard() {
                                     key={todo.id}
                                     className="flex items-center gap-2 text-sm text-gray-600 dark:text-gray-400"
                                   >
-                                    <span className={`${status === 'completed' ? 'line-through' : ''}`}>{todo.content}</span>
+                                    <span className={`${status === 'completed' ? 'line-through' : ''}`}>• {todo.content}</span>
                                     <span className={`text-xs px-1.5 py-0.5 rounded-full ml-auto ${statusConfig.color}`}>
                                       {statusConfig.label}
                                     </span>
@@ -1447,7 +1447,7 @@ export default function MyWorldDashboard() {
                                     key={todo.id}
                                     className="flex items-center gap-2 text-sm text-gray-600 dark:text-gray-400"
                                   >
-                                    <span className={`${status === 'completed' ? 'line-through' : ''}`}>{todo.content}</span>
+                                    <span className={`${status === 'completed' ? 'line-through' : ''}`}>• {todo.content}</span>
                                     <span className={`text-xs px-1.5 py-0.5 rounded-full ml-auto ${statusConfig.color}`}>
                                       {statusConfig.label}
                                     </span>
