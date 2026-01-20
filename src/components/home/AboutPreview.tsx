@@ -46,7 +46,7 @@ export default function AboutPreview() {
         <div className="relative z-10 flex flex-col md:flex-row items-center gap-6 md:gap-10">
           {/* Profile Avatar */}
           <div
-            className="w-24 h-24 md:w-28 md:h-28 rounded-full bg-gradient-to-br from-violet-400 via-purple-400 to-violet-500 dark:from-violet-400 dark:via-purple-400 dark:to-violet-500 flex items-center justify-center text-2xl md:text-3xl font-bold shrink-0 text-white relative"
+            className="w-32 h-32 md:w-40 md:h-40 rounded-full bg-gradient-to-br from-violet-400 via-purple-400 to-violet-500 dark:from-violet-400 dark:via-purple-400 dark:to-violet-500 flex items-center justify-center text-3xl md:text-4xl font-bold shrink-0 text-white relative"
             style={{
               boxShadow: '0 0 30px var(--neon-pink-glow), inset 0 0 20px rgba(255, 255, 255, 0.1)',
             }}
