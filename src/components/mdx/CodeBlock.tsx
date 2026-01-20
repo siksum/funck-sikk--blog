@@ -50,9 +50,12 @@ function parseHighlightLines(highlightStr: string | undefined): Set<number> {
   return lines;
 }
 
+const COLLAPSE_THRESHOLD = 15; // 15줄 이상이면 접기 버튼 표시
+
 export default function CodeBlock({ children, className, language, title, highlightLines }: CodeBlockProps) {
   const [copied, setCopied] = useState(false);
   const [showLineNumbers, setShowLineNumbers] = useState(true);
+  const [isCollapsed, setIsCollapsed] = useState(false);
 
   // Extract language from className (e.g., "language-javascript hljs" -> "javascript")
   const langMatch = className?.match(/language-(\w+)/);
@@ -98,6 +101,18 @@ export default function CodeBlock({ children, className, language, title, highli
           {lang}
         </span>
         <div className="flex items-center gap-3">
+          {/* Collapse Toggle (only for long code) */}
+          {lineCount > COLLAPSE_THRESHOLD && (
+            <button
+              onClick={() => setIsCollapsed(!isCollapsed)}
+              className={`text-xs transition-colors ${isCollapsed ? 'text-yellow-400' : 'text-gray-400 hover:text-gray-200'}`}
+              aria-label={isCollapsed ? '코드 펼치기' : '코드 접기'}
+            >
+              <svg className={`w-4 h-4 transition-transform ${isCollapsed ? 'rotate-180' : ''}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+              </svg>
+            </button>
+          )}
           {/* Line Numbers Toggle */}
           <button
             onClick={() => setShowLineNumbers(!showLineNumbers)}
@@ -134,18 +149,18 @@ export default function CodeBlock({ children, className, language, title, highli
       </div>
 
       {/* Code Content with Line Numbers */}
-      <div className={`overflow-x-auto pt-10 bg-gray-900 dark:bg-gray-950 ${title ? '' : 'rounded-lg'} rounded-b-lg`}>
+      <div className={`overflow-x-auto pt-10 bg-gray-900 dark:bg-gray-950 ${title ? '' : 'rounded-lg'} rounded-b-lg transition-all duration-300 ${isCollapsed ? 'max-h-48 overflow-hidden' : ''}`}>
         <div className="flex">
           {/* Line Numbers Column */}
           {showLineNumbers && (
-            <div className="flex-shrink-0 select-none text-right pr-4 pl-4 py-4 text-sm font-mono text-gray-500 border-r border-gray-700/50">
+            <div className="flex-shrink-0 select-none text-right pr-4 pl-4 py-5 text-sm font-mono text-gray-500 border-r border-gray-700/50" style={{ lineHeight: '1.85' }}>
               {Array.from({ length: lineCount }, (_, i) => {
                 const lineNumber = i + 1;
                 const isHighlighted = highlightedLines.has(lineNumber);
                 return (
                   <div
                     key={i}
-                    className={`leading-relaxed ${isHighlighted ? 'text-violet-400 bg-violet-500/20' : ''}`}
+                    className={`${isHighlighted ? 'text-violet-400 bg-violet-500/20' : ''}`}
                   >
                     {lineNumber}
                   </div>
@@ -156,14 +171,29 @@ export default function CodeBlock({ children, className, language, title, highli
 
           {/* Code Content */}
           <div className="flex-1 overflow-x-auto">
-            <pre className="p-4 text-sm font-mono leading-relaxed m-0 bg-transparent">
-              <code className={className}>
+            <pre className="p-4 py-5 text-sm font-mono m-0 bg-transparent" style={{ lineHeight: '1.85', tabSize: 4 }}>
+              <code className={className} style={{ tabSize: 4 }}>
                 {children}
               </code>
             </pre>
           </div>
         </div>
       </div>
+
+      {/* Collapsed Overlay */}
+      {isCollapsed && (
+        <div
+          className="absolute bottom-0 left-0 right-0 h-20 bg-gradient-to-t from-gray-900 dark:from-gray-950 to-transparent flex items-end justify-center pb-3 cursor-pointer rounded-b-lg"
+          onClick={() => setIsCollapsed(false)}
+        >
+          <span className="text-xs text-gray-400 hover:text-gray-200 flex items-center gap-1">
+            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+            </svg>
+            펼치기 ({lineCount}줄)
+          </span>
+        </div>
+      )}
     </div>
   );
 }

@@ -85,7 +85,7 @@ export default function HeaderStatus() {
       {/* Online indicator - at front */}
       <div
         className={`w-2 h-2 rounded-full flex-shrink-0 ${
-          isOnline ? 'bg-green-500' : 'bg-gray-400'
+          status?.app ? 'bg-green-500' : 'bg-gray-400'
         }`}
       />
 

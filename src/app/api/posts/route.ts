@@ -2,8 +2,10 @@ import { NextRequest, NextResponse } from 'next/server';
 import fs from 'fs';
 import path from 'path';
 import matter from 'gray-matter';
+import { commitFile } from '@/lib/github';
 
 const postsDirectory = path.join(process.cwd(), 'content/posts');
+const USE_GITHUB = !!process.env.GITHUB_TOKEN;
 
 // GET: 모든 포스트 조회
 export async function GET() {
@@ -46,6 +48,7 @@ export async function POST(request: NextRequest) {
     }
 
     const filePath = path.join(postsDirectory, `${slug}.mdx`);
+    const gitPath = `content/posts/${slug}.mdx`;
 
     if (fs.existsSync(filePath)) {
       return NextResponse.json({ error: 'Post already exists' }, { status: 409 });
@@ -62,10 +65,23 @@ export async function POST(request: NextRequest) {
     };
 
     const fileContent = matter.stringify(content || '', frontmatter);
+
+    if (USE_GITHUB) {
+      const success = await commitFile(
+        { path: gitPath, content: fileContent },
+        `post: Create "${title}"`
+      );
+      if (!success) {
+        return NextResponse.json({ error: 'Failed to commit to GitHub' }, { status: 500 });
+      }
+    }
+
+    // Also create local file for immediate preview
     fs.writeFileSync(filePath, fileContent);
 
-    return NextResponse.json({ success: true, slug });
+    return NextResponse.json({ success: true, slug, committed: USE_GITHUB });
   } catch (error) {
+    console.error('Failed to create post:', error);
     return NextResponse.json({ error: 'Failed to create post' }, { status: 500 });
   }
 }
