@@ -14,6 +14,11 @@ if (process.env.GITHUB_ID && process.env.GITHUB_SECRET) {
     GitHub({
       clientId: process.env.GITHUB_ID,
       clientSecret: process.env.GITHUB_SECRET,
+      authorization: {
+        params: {
+          prompt: 'consent',
+        },
+      },
     })
   );
 }
@@ -34,6 +39,9 @@ if (process.env.GOOGLE_ID && process.env.GOOGLE_SECRET) {
 
 export const { handlers, auth, signIn, signOut } = NextAuth({
   adapter: PrismaAdapter(prisma),
+  session: {
+    strategy: 'jwt',
+  },
   providers,
   callbacks: {
     async signIn() {
@@ -46,9 +54,10 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
       if (url.startsWith(baseUrl)) return url;
       return baseUrl;
     },
-    async session({ session, user }) {
-      if (session.user) {
-        session.user.id = user.id;
+    async jwt({ token, user }) {
+      // Initial sign in - add user info to token
+      if (user) {
+        token.id = user.id;
 
         try {
           const dbUser = await prisma.user.findUnique({
@@ -57,11 +66,18 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
           });
 
           const githubAccount = dbUser?.accounts.find(a => a.provider === 'github');
-          session.user.isAdmin = githubAccount?.providerAccountId === ADMIN_GITHUB_ID;
+          token.isAdmin = githubAccount?.providerAccountId === ADMIN_GITHUB_ID;
         } catch (error) {
-          console.error('Failed to fetch user for session:', error);
-          session.user.isAdmin = false;
+          console.error('Failed to fetch user for jwt:', error);
+          token.isAdmin = false;
         }
+      }
+      return token;
+    },
+    async session({ session, token }) {
+      if (token && session.user) {
+        session.user.id = token.id as string;
+        session.user.isAdmin = token.isAdmin as boolean;
       }
       return session;
     },

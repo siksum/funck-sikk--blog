@@ -1,6 +1,6 @@
 'use client';
 
-import { signIn, signOut, getProviders, useSession } from 'next-auth/react';
+import { signIn, getProviders, useSession } from 'next-auth/react';
 import { useSearchParams } from 'next/navigation';
 import { Suspense, useEffect, useState } from 'react';
 
@@ -19,42 +19,20 @@ function SignInContent() {
   const hasGitHub = providers?.github;
   const hasGoogle = providers?.google;
 
-  // Handle login with account switching
-  const handleSignIn = async (provider: string) => {
-    if (session) {
-      // If already logged in, sign out and redirect to signin with provider param
-      // This ensures full session clear before new login
-      await signOut({
-        redirect: true,
-        callbackUrl: `/auth/signin?provider=${provider}&callbackUrl=${encodeURIComponent(callbackUrl)}`
-      });
-      return;
-    }
-    // Proceed with sign in
+  // Handle login - always go directly to OAuth provider
+  const handleSignIn = (provider: string) => {
+    // Always sign in directly - OAuth provider will handle account selection
+    // The prompt: 'select_account' (Google) or prompt: 'consent' (GitHub)
+    // in auth.ts ensures the provider shows account picker
     signIn(provider, { callbackUrl });
   };
 
-  // Auto-trigger login if redirected after signout
+  // Redirect to home if already logged in
   useEffect(() => {
-    const provider = searchParams.get('provider');
-
-    // If already logged in and on signin page, redirect to home
     if (session && status === 'authenticated') {
       window.location.href = callbackUrl;
-      return;
     }
-
-    // Auto-trigger login only when unauthenticated and provider param exists
-    if (provider && !session && status === 'unauthenticated') {
-      // Clear the URL params first to prevent loops
-      window.history.replaceState({}, '', '/auth/signin');
-      // Small delay to ensure session is fully cleared
-      const timer = setTimeout(() => {
-        signIn(provider, { callbackUrl });
-      }, 100);
-      return () => clearTimeout(timer);
-    }
-  }, [session, status, searchParams, callbackUrl]);
+  }, [session, status, callbackUrl]);
 
   if (status === 'loading') {
     return (
