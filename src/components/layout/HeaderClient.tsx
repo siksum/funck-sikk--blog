@@ -31,7 +31,7 @@ const adminNavigation: NavItem[] = [
     href: '/my-world',
   },
   {
-    label: '지도',
+    label: 'Maps',
     href: '/my-world/map',
   },
 ];
@@ -82,15 +82,26 @@ export default function HeaderClient({ posts }: HeaderClientProps) {
                 {item.label}
               </Link>
             ))}
-            {session?.user?.isAdmin && adminNavigation.map((item) => (
-              <Link
-                key={item.href}
-                href={item.href}
-                className="nav-link px-3 py-2 rounded-lg text-sm font-medium transition-all hover:bg-violet-100 dark:hover:bg-violet-500/20"
-              >
-                {item.label}
-              </Link>
-            ))}
+            {status === 'loading' ? (
+              // Skeleton placeholders while session loads
+              adminNavigation.map((item) => (
+                <div
+                  key={item.href}
+                  className="px-3 py-2 rounded-lg text-sm font-medium bg-gray-200 dark:bg-gray-700 animate-pulse"
+                  style={{ width: `${item.label.length * 8 + 24}px`, height: '36px' }}
+                />
+              ))
+            ) : session?.user?.isAdmin ? (
+              adminNavigation.map((item) => (
+                <Link
+                  key={item.href}
+                  href={item.href}
+                  className="nav-link px-3 py-2 rounded-lg text-sm font-medium transition-all hover:bg-violet-100 dark:hover:bg-violet-500/20"
+                >
+                  {item.label}
+                </Link>
+              ))
+            ) : null}
           </nav>
 
           {/* Actions */}
@@ -241,16 +252,26 @@ export default function HeaderClient({ posts }: HeaderClientProps) {
                 {item.label}
               </Link>
             ))}
-            {session?.user?.isAdmin && adminNavigation.map((item) => (
-              <Link
-                key={item.href}
-                href={item.href}
-                className="nav-link block py-3 px-2 rounded-lg transition-all hover:bg-violet-100 dark:hover:bg-violet-500/20"
-                onClick={() => setIsMenuOpen(false)}
-              >
-                {item.label}
-              </Link>
-            ))}
+            {status === 'loading' ? (
+              adminNavigation.map((item) => (
+                <div
+                  key={item.href}
+                  className="py-3 px-2 rounded-lg bg-gray-200 dark:bg-gray-700 animate-pulse my-1"
+                  style={{ width: '100px', height: '44px' }}
+                />
+              ))
+            ) : session?.user?.isAdmin ? (
+              adminNavigation.map((item) => (
+                <Link
+                  key={item.href}
+                  href={item.href}
+                  className="nav-link block py-3 px-2 rounded-lg transition-all hover:bg-violet-100 dark:hover:bg-violet-500/20"
+                  onClick={() => setIsMenuOpen(false)}
+                >
+                  {item.label}
+                </Link>
+              ))
+            ) : null}
           </nav>
         )}
       </div>
