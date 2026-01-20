@@ -30,6 +30,10 @@ const adminNavigation: NavItem[] = [
     label: 'My World',
     href: '/my-world',
   },
+  {
+    label: '지도',
+    href: '/my-world/map',
+  },
 ];
 
 interface HeaderClientProps {
