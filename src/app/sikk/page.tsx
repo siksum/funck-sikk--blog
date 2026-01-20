@@ -2,6 +2,7 @@ import { redirect } from 'next/navigation';
 import { auth } from '@/lib/auth';
 import SikkPageContent from '@/components/sikk/SikkPageContent';
 import { getRecentSikkPostsAsync, getAllSikkTagsAsync, getSikkRootCategoriesWithTagsAsync, getSikkRootCategoriesAsync } from '@/lib/sikk';
+import { prisma } from '@/lib/db';
 
 export const metadata = {
   title: 'Sikk | func(sikk)',
@@ -10,6 +11,24 @@ export const metadata = {
 
 export const revalidate = 10;
 
+async function getSikkSections() {
+  try {
+    const sections = await prisma.sikkSection.findMany({
+      include: {
+        categories: {
+          where: { parentId: null },
+          orderBy: { order: 'asc' },
+        },
+      },
+      orderBy: { order: 'asc' },
+    });
+    return sections;
+  } catch (error) {
+    console.error('Failed to fetch sikk sections:', error);
+    return [];
+  }
+}
+
 export default async function SikkPage() {
   // Check admin access
   const session = await auth();
@@ -17,11 +36,12 @@ export default async function SikkPage() {
     redirect('/');
   }
 
-  const [recentPosts, categories, tags, rootCategoriesWithTags] = await Promise.all([
+  const [recentPosts, categories, tags, rootCategoriesWithTags, sections] = await Promise.all([
     getRecentSikkPostsAsync(5),
     getSikkRootCategoriesAsync(),
     getAllSikkTagsAsync(),
     getSikkRootCategoriesWithTagsAsync(),
+    getSikkSections(),
   ]);
 
   return (
@@ -30,6 +50,7 @@ export default async function SikkPage() {
       recentPosts={recentPosts}
       categories={categories}
       tags={tags}
+      sections={sections}
     />
   );
 }

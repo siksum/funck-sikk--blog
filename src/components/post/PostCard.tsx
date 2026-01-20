@@ -7,9 +7,10 @@ interface PostCardProps {
   post: Post;
   variant?: 'default' | 'compact' | 'list';
   commentCount?: number;
+  basePath?: string;
 }
 
-export default function PostCard({ post, variant = 'default', commentCount = 0 }: PostCardProps) {
+export default function PostCard({ post, variant = 'default', commentCount = 0, basePath = '/blog' }: PostCardProps) {
   const formattedDate = new Date(post.date).toLocaleDateString('ko-KR', {
     year: 'numeric',
     month: 'long',
@@ -20,7 +21,7 @@ export default function PostCard({ post, variant = 'default', commentCount = 0 }
     e.preventDefault();
     e.stopPropagation();
 
-    const url = `${window.location.origin}/blog/${post.slug}`;
+    const url = `${window.location.origin}${basePath}/${post.slug}`;
 
     if (navigator.share) {
       try {
@@ -49,7 +50,7 @@ export default function PostCard({ post, variant = 'default', commentCount = 0 }
   if (variant === 'compact') {
     return (
       <Link
-        href={`/blog/${post.slug}`}
+        href={`${basePath}/${post.slug}`}
         className="block group p-4 transition-colors hover:bg-violet-50 dark:hover:bg-violet-500/10"
       >
         <h3
@@ -74,7 +75,7 @@ export default function PostCard({ post, variant = 'default', commentCount = 0 }
           hover:shadow-lg hover:shadow-violet-200/20 dark:hover:shadow-[0_0_20px_rgba(167,139,250,0.2)]"
         style={{ background: 'var(--card-bg)' }}
       >
-        <Link href={`/blog/${post.slug}`} className="block">
+        <Link href={`${basePath}/${post.slug}`} className="block">
           <div className="p-4">
             {/* Category Breadcrumb */}
             <div className="flex items-center gap-1 mb-2 flex-wrap">
@@ -177,7 +178,7 @@ export default function PostCard({ post, variant = 'default', commentCount = 0 }
         hover:-translate-y-1"
       style={{ background: 'var(--card-bg)' }}
     >
-      <Link href={`/blog/${post.slug}`} className="block">
+      <Link href={`${basePath}/${post.slug}`} className="block">
         {/* Thumbnail */}
         {post.thumbnail ? (
           <div className="relative w-full h-36 overflow-hidden">
