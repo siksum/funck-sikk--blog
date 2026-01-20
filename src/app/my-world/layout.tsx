@@ -26,7 +26,10 @@ export default async function MyWorldLayout({
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-violet-50 to-indigo-50 dark:from-gray-900 dark:to-violet-950">
+    <div
+      className="min-h-screen"
+      style={{ background: 'var(--background)' }}
+    >
       <main className="p-4 lg:p-8">{children}</main>
     </div>
   );

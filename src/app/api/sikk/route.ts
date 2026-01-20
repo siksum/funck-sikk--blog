@@ -91,7 +91,10 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Post already exists' }, { status: 409 });
     }
 
-    const postDate = date || new Date().toISOString().split('T')[0];
+    // Use local date to avoid UTC timezone issues
+    const now = new Date();
+    const localDateStr = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`;
+    const postDate = date || localDateStr;
     const frontmatter = {
       title,
       description: description || '',
