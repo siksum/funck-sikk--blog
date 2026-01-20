@@ -5,7 +5,7 @@ import { PrismaAdapter } from '@auth/prisma-adapter';
 import { prisma } from './db';
 
 const ADMIN_GITHUB_ID = process.env.ADMIN_GITHUB_ID;
-const ADMIN_EMAIL = process.env.ADMIN_EMAIL;
+const ADMIN_GOOGLE_ID = process.env.ADMIN_GOOGLE_ID;
 
 // Build providers array dynamically based on available credentials
 const providers = [];
@@ -67,11 +67,10 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
         token.provider = account.provider;
         token.providerAccountId = account.providerAccountId;
 
-        // Check admin by email (works for all providers)
-        const isAdminByEmail = ADMIN_EMAIL && profile.email === ADMIN_EMAIL;
-        // Check admin by GitHub ID (legacy support)
+        // Check admin by provider account ID
         const isAdminByGitHub = account.provider === 'github' && account.providerAccountId === ADMIN_GITHUB_ID;
-        token.isAdmin = isAdminByEmail || isAdminByGitHub;
+        const isAdminByGoogle = account.provider === 'google' && account.providerAccountId === ADMIN_GOOGLE_ID;
+        token.isAdmin = isAdminByGitHub || isAdminByGoogle;
       }
 
       // Initial sign in - add user id to token
