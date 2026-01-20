@@ -2,7 +2,8 @@
 
 import { useState } from 'react';
 import Link from 'next/link';
-import { useSession, signIn, signOut } from 'next-auth/react';
+import { useSession, signIn } from 'next-auth/react';
+import { signOutCompletely } from '@/lib/auth-client';
 import { NavItem, Post } from '@/types';
 import ThemeToggle from '@/components/ui/ThemeToggle';
 import HeaderStatus from '@/components/ui/HeaderStatus';
@@ -151,7 +152,7 @@ export default function HeaderClient({ posts }: HeaderClientProps) {
                     <button
                       onClick={() => {
                         setIsUserMenuOpen(false);
-                        signOut();
+                        signOutCompletely('/');
                       }}
                       className="nav-link block w-full text-left px-4 py-2 text-sm transition-colors hover:bg-violet-100 dark:hover:bg-violet-500/20"
                     >

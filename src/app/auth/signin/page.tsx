@@ -1,6 +1,6 @@
 'use client';
 
-import { signIn, getProviders, useSession } from 'next-auth/react';
+import { signIn, signOut, getProviders, useSession } from 'next-auth/react';
 import { useSearchParams } from 'next/navigation';
 import { Suspense, useEffect, useState } from 'react';
 
@@ -19,20 +19,24 @@ function SignInContent() {
   const hasGitHub = providers?.github;
   const hasGoogle = providers?.google;
 
-  // Handle login - always go directly to OAuth provider
-  const handleSignIn = (provider: string) => {
-    // Always sign in directly - OAuth provider will handle account selection
-    // The prompt: 'select_account' (Google) or prompt: 'consent' (GitHub)
-    // in auth.ts ensures the provider shows account picker
+  // Handle login - if already logged in, sign out first then sign in
+  const handleSignIn = async (provider: string) => {
+    if (session) {
+      // Clear existing session completely before signing in with new account
+      try {
+        await fetch('/api/auth/signout-custom', {
+          method: 'POST',
+          credentials: 'include',
+        });
+      } catch (e) {
+        console.error('Failed to clear session:', e);
+      }
+      // Sign out without redirect, then sign in
+      await signOut({ redirect: false });
+    }
+    // Now sign in with the new provider
     signIn(provider, { callbackUrl });
   };
-
-  // Redirect to home if already logged in
-  useEffect(() => {
-    if (session && status === 'authenticated') {
-      window.location.href = callbackUrl;
-    }
-  }, [session, status, callbackUrl]);
 
   if (status === 'loading') {
     return (
