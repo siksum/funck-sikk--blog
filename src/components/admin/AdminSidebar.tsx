@@ -24,6 +24,14 @@ export default function AdminSidebar({ user }: AdminSidebarProps) {
   const pathname = usePathname();
   const [isOpen, setIsOpen] = useState(false);
 
+  // Get current page title
+  const getCurrentPageTitle = () => {
+    const currentItem = menuItems.find((item) => item.href === pathname);
+    if (currentItem) return currentItem.label;
+    if (pathname.startsWith('/admin/edit/')) return '포스트 수정';
+    return '관리자';
+  };
+
   // Close sidebar when route changes on mobile
   useEffect(() => {
     setIsOpen(false);
@@ -55,7 +63,7 @@ export default function AdminSidebar({ user }: AdminSidebarProps) {
   return (
     <>
       {/* Mobile Header */}
-      <div className="lg:hidden fixed top-0 left-0 right-0 z-40 bg-gray-900 text-white h-14 flex items-center justify-between px-4 border-b border-gray-700">
+      <div className="lg:hidden fixed top-0 left-0 right-0 z-40 bg-gray-900 text-white h-14 flex items-center px-3 border-b border-gray-700 shadow-lg">
         <button
           onClick={() => setIsOpen(true)}
           className="p-2 hover:bg-gray-800 rounded-lg transition-colors"
@@ -65,10 +73,18 @@ export default function AdminSidebar({ user }: AdminSidebarProps) {
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
           </svg>
         </button>
-        <Link href="/" className="text-lg font-bold">
-          func(sikk)
+        <div className="flex-1 flex items-center justify-center">
+          <span className="text-sm font-medium">{getCurrentPageTitle()}</span>
+        </div>
+        <Link
+          href="/"
+          className="p-2 hover:bg-gray-800 rounded-lg transition-colors"
+          aria-label="블로그로 이동"
+        >
+          <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" />
+          </svg>
         </Link>
-        <div className="w-10" /> {/* Spacer for centering */}
       </div>
 
       {/* Mobile Overlay */}
