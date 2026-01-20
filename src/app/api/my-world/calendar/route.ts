@@ -51,7 +51,7 @@ export async function POST(request: NextRequest) {
 
   try {
     const body = await request.json();
-    const { title, description, date, endDate, type, color, isAllDay, reminder } = body;
+    const { title, description, date, endDate, type, color, isAllDay, reminder, location, url } = body;
 
     if (!title || !date) {
       return NextResponse.json({ error: 'Title and date are required' }, { status: 400 });
@@ -68,6 +68,8 @@ export async function POST(request: NextRequest) {
         endDate: endDate ? new Date(endDate) : null,
         type,
         color,
+        location,
+        url,
         isAllDay: isAllDay ?? true,
         reminder: reminder ?? false,
       },

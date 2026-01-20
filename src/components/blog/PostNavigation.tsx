@@ -4,9 +4,10 @@ import { Post } from '@/types';
 interface PostNavigationProps {
   prevPost: Post | null;
   nextPost: Post | null;
+  basePath?: string;
 }
 
-export default function PostNavigation({ prevPost, nextPost }: PostNavigationProps) {
+export default function PostNavigation({ prevPost, nextPost, basePath = '/blog' }: PostNavigationProps) {
   return (
     <nav className="mt-8">
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -14,7 +15,7 @@ export default function PostNavigation({ prevPost, nextPost }: PostNavigationPro
         <div>
           {prevPost ? (
             <Link
-              href={`/blog/${prevPost.slug}`}
+              href={`${basePath}/${prevPost.slug}`}
               className="group block p-4 rounded-xl border h-full transition-all duration-300
                 hover:border-violet-400 dark:hover:border-violet-400/60
                 hover:shadow-lg hover:shadow-violet-200/20 dark:hover:shadow-violet-500/10"
@@ -50,7 +51,7 @@ export default function PostNavigation({ prevPost, nextPost }: PostNavigationPro
         <div>
           {nextPost ? (
             <Link
-              href={`/blog/${nextPost.slug}`}
+              href={`${basePath}/${nextPost.slug}`}
               className="group block p-4 rounded-xl border h-full transition-all duration-300 text-right
                 hover:border-violet-400 dark:hover:border-violet-400/60
                 hover:shadow-lg hover:shadow-violet-200/20 dark:hover:shadow-violet-500/10"

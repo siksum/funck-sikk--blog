@@ -53,6 +53,7 @@ model User {
   mapLocations    MapLocation[]
   trips           Trip[]
   calendarEvents  CalendarEvent[]
+  todos           Todo[]
 }
 
 model VerificationToken {
@@ -179,6 +180,37 @@ model PostTemplate {
   content     String   @default("")
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
+}
+
+// ============ SIKK SECTIONS ============
+
+model SikkSection {
+  id          String         @id @default(cuid())
+  title       String
+  description String?
+  order       Int            @default(0)
+  categories  SikkCategory[]
+  createdAt   DateTime       @default(now())
+  updatedAt   DateTime       @updatedAt
+}
+
+// ============ SIKK CATEGORIES ============
+
+model SikkCategory {
+  id        String         @id @default(cuid())
+  name      String
+  slug      String         @unique
+  parentId  String?
+  parent    SikkCategory?  @relation("SikkCategoryChildren", fields: [parentId], references: [id])
+  children  SikkCategory[] @relation("SikkCategoryChildren")
+  sectionId String?
+  section   SikkSection?   @relation(fields: [sectionId], references: [id])
+  order     Int            @default(0)
+  createdAt DateTime       @default(now())
+  updatedAt DateTime       @updatedAt
+
+  @@index([parentId])
+  @@index([sectionId])
 }
 
 // ============ MY WORLD - DAILY TRACKER ============
@@ -316,6 +348,8 @@ model CalendarEvent {
 
   type     String?  // "일정", "기념일", "생일" 등
   color    String?  // hex color
+  location String?  // 장소
+  url      String?  // 관련 URL
 
   isAllDay Boolean @default(true)
   reminder Boolean @default(false)
@@ -326,4 +360,25 @@ model CalendarEvent {
   user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@index([userId, date])
+}
+
+// ============ MY WORLD - TODO LIST ============
+
+model Todo {
+  id        String   @id @default(cuid())
+  userId    String
+
+  content   String
+  completed Boolean  @default(false)
+  category  String   // "personal" or "research"
+  date      DateTime // 해당 할일의 날짜
+
+  order     Int      @default(0)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, date, category])
 }
