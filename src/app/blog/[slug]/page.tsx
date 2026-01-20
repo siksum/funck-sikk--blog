@@ -9,12 +9,30 @@ import FloatingActions from '@/components/blog/FloatingActions';
 import SocialShareButtons from '@/components/blog/SocialShareButtons';
 import EmojiReactions from '@/components/blog/EmojiReactions';
 import AuthorCard from '@/components/blog/AuthorCard';
-import NewsletterCTA from '@/components/blog/NewsletterCTA';
 import KeyboardNavigation from '@/components/blog/KeyboardNavigation';
 import HighlightShare from '@/components/blog/HighlightShare';
 import DifficultyBadge from '@/components/blog/DifficultyBadge';
 import BlogPostLayout from '@/components/blog/BlogPostLayout';
 import { auth } from '@/lib/auth';
+import { prisma } from '@/lib/db';
+
+async function getSections() {
+  try {
+    const sections = await prisma.section.findMany({
+      include: {
+        categories: {
+          where: { parentId: null },
+          orderBy: { order: 'asc' },
+        },
+      },
+      orderBy: { order: 'asc' },
+    });
+    return sections;
+  } catch (error) {
+    console.error('Failed to fetch sections:', error);
+    return [];
+  }
+}
 
 function calculateReadingTime(content: string): number {
   const wordsPerMinute = 200;
@@ -98,6 +116,7 @@ export default async function BlogPostPage({ params }: BlogPostPageProps) {
   const { prevPost, nextPost } = getAdjacentPosts(slug);
   const difficulty = estimateDifficulty(post.content, post.tags);
   const categories = getRootCategories();
+  const sections = await getSections();
 
   return (
     <>
@@ -110,6 +129,7 @@ export default async function BlogPostPage({ params }: BlogPostPageProps) {
         relatedPosts={relatedPosts}
         categories={categories}
         currentCategorySlugPath={post.categorySlugPath}
+        sections={sections}
       >
         {/* Header */}
         <header className="mb-8">
@@ -200,9 +220,6 @@ export default async function BlogPostPage({ params }: BlogPostPageProps) {
 
         {/* Author Card */}
         <AuthorCard />
-
-        {/* Newsletter CTA */}
-        <NewsletterCTA />
 
         {/* Footer */}
         <footer className="mt-12 pt-8 border-t" style={{ borderColor: 'var(--card-border)' }}>

@@ -4,6 +4,14 @@ import { useState, useEffect } from 'react';
 import { Post, Category } from '@/types';
 import BlogPostSidebar from './BlogPostSidebar';
 
+interface DBSection {
+  id: string;
+  title: string;
+  description: string | null;
+  order: number;
+  categories: { id: string; name: string; slug: string }[];
+}
+
 interface BlogPostLayoutProps {
   children: React.ReactNode;
   content: string;
@@ -12,6 +20,7 @@ interface BlogPostLayoutProps {
   relatedPosts: Post[];
   categories: Category[];
   currentCategorySlugPath?: string[];
+  sections?: DBSection[];
 }
 
 export default function BlogPostLayout({
@@ -22,6 +31,7 @@ export default function BlogPostLayout({
   relatedPosts,
   categories,
   currentCategorySlugPath,
+  sections,
 }: BlogPostLayoutProps) {
   const [isWide, setIsWide] = useState(false);
   const [mounted, setMounted] = useState(false);
@@ -56,6 +66,7 @@ export default function BlogPostLayout({
                 relatedPosts={relatedPosts}
                 categories={categories}
                 currentCategorySlugPath={currentCategorySlugPath}
+                sections={sections}
               />
             </div>
           </div>

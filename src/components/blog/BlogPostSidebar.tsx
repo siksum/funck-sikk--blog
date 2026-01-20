@@ -5,6 +5,14 @@ import Link from 'next/link';
 import { Post, Category } from '@/types';
 import TableOfContents from './TableOfContents';
 
+interface DBSection {
+  id: string;
+  title: string;
+  description: string | null;
+  order: number;
+  categories: { id: string; name: string; slug: string }[];
+}
+
 interface BlogPostSidebarProps {
   content: string;
   tags: string[];
@@ -12,6 +20,7 @@ interface BlogPostSidebarProps {
   relatedPosts: Post[];
   categories: Category[];
   currentCategorySlugPath?: string[];
+  sections?: DBSection[];
 }
 
 function CategoryTreeItem({
@@ -112,7 +121,35 @@ export default function BlogPostSidebar({
   relatedPosts,
   categories,
   currentCategorySlugPath,
+  sections,
 }: BlogPostSidebarProps) {
+  // Group categories by section
+  const categoriesBySection = sections && sections.length > 0
+    ? (() => {
+        const grouped: { section: DBSection | null; categories: Category[] }[] = [];
+
+        // Group categories by section
+        sections.forEach((section) => {
+          const sectionCategoryNames = section.categories.map((c) => c.name);
+          const sectionCategories = categories.filter((cat) =>
+            sectionCategoryNames.includes(cat.name)
+          );
+          if (sectionCategories.length > 0) {
+            grouped.push({ section, categories: sectionCategories });
+          }
+        });
+
+        // Add categories without section
+        const assignedNames = sections.flatMap((s) => s.categories.map((c) => c.name));
+        const uncategorized = categories.filter((cat) => !assignedNames.includes(cat.name));
+        if (uncategorized.length > 0) {
+          grouped.push({ section: null, categories: uncategorized });
+        }
+
+        return grouped;
+      })()
+    : [{ section: null, categories }];
+
   return (
     <aside className="space-y-6">
       {/* Table of Contents */}
@@ -137,16 +174,27 @@ export default function BlogPostSidebar({
         <h3 className="text-base font-semibold mb-3" style={{ color: 'var(--foreground)' }}>
           카테고리
         </h3>
-        <ul className="space-y-1">
-          {categories.map((cat) => (
-            <li key={cat.slug}>
-              <CategoryTreeItem
-                category={cat}
-                currentCategorySlugPath={currentCategorySlugPath}
-              />
-            </li>
+        <div className="space-y-4">
+          {categoriesBySection.map(({ section, categories: sectionCategories }) => (
+            <div key={section?.id || 'uncategorized'}>
+              {section && (
+                <div className="text-xs font-semibold text-indigo-600 dark:text-purple-300 uppercase tracking-wider mb-2 pb-1 border-b border-indigo-200 dark:border-purple-300">
+                  {section.title}
+                </div>
+              )}
+              <ul className="space-y-1">
+                {sectionCategories.map((cat) => (
+                  <li key={cat.slug}>
+                    <CategoryTreeItem
+                      category={cat}
+                      currentCategorySlugPath={currentCategorySlugPath}
+                    />
+                  </li>
+                ))}
+              </ul>
+            </div>
           ))}
-        </ul>
+        </div>
       </div>
 
       {/* Tags */}

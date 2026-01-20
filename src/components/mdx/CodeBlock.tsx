@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useMemo } from 'react';
+import { useState, useMemo, ReactNode, isValidElement } from 'react';
 
 interface CodeBlockProps {
   children: React.ReactNode;
@@ -8,6 +8,26 @@ interface CodeBlockProps {
   language?: string;
   title?: string;
   highlightLines?: string;
+}
+
+// Helper to extract text content from React children (for copy functionality)
+function extractTextContent(children: ReactNode): string {
+  if (typeof children === 'string') return children;
+  if (typeof children === 'number') return String(children);
+  if (!children) return '';
+
+  if (Array.isArray(children)) {
+    return children.map(extractTextContent).join('');
+  }
+
+  if (isValidElement(children)) {
+    const props = children.props as { children?: ReactNode };
+    if (props.children) {
+      return extractTextContent(props.children);
+    }
+  }
+
+  return '';
 }
 
 // Parse highlight lines string like "1,3-5,7" into a Set of line numbers
@@ -34,16 +54,18 @@ export default function CodeBlock({ children, className, language, title, highli
   const [copied, setCopied] = useState(false);
   const [showLineNumbers, setShowLineNumbers] = useState(true);
 
-  // Extract language from className (e.g., "language-javascript" -> "javascript")
-  const lang = language || className?.replace('language-', '') || 'code';
+  // Extract language from className (e.g., "language-javascript hljs" -> "javascript")
+  const langMatch = className?.match(/language-(\w+)/);
+  const lang = language || langMatch?.[1] || 'code';
 
-  // Get code as string and split into lines
-  const codeString = typeof children === 'string' ? children : String(children);
-  const lines = codeString.split('\n');
-  // Remove last empty line if exists
-  if (lines[lines.length - 1] === '') {
-    lines.pop();
-  }
+  // Get code as string for copy functionality
+  const codeString = extractTextContent(children);
+
+  // Count lines for line numbers
+  const lineCount = useMemo(() => {
+    const lines = codeString.split('\n');
+    return lines[lines.length - 1] === '' ? lines.length - 1 : lines.length;
+  }, [codeString]);
 
   // Parse highlighted lines
   const highlightedLines = useMemo(() => parseHighlightLines(highlightLines), [highlightLines]);
@@ -71,7 +93,7 @@ export default function CodeBlock({ children, className, language, title, highli
       )}
 
       {/* Language Badge & Controls */}
-      <div className={`absolute ${title ? 'top-10' : 'top-0'} left-0 right-0 flex items-center justify-between px-4 py-2 bg-gray-800 dark:bg-gray-900 ${title ? '' : 'rounded-t-lg'} border-b border-gray-700 dark:border-gray-700`}>
+      <div className={`absolute ${title ? 'top-10' : 'top-0'} left-0 right-0 flex items-center justify-between px-4 py-2 bg-gray-800 dark:bg-gray-900 ${title ? '' : 'rounded-t-lg'} border-b border-gray-700 dark:border-gray-700 z-10`}>
         <span className="text-xs font-mono text-violet-400 uppercase tracking-wide">
           {lang}
         </span>
@@ -112,30 +134,35 @@ export default function CodeBlock({ children, className, language, title, highli
       </div>
 
       {/* Code Content with Line Numbers */}
-      <div className={`overflow-x-auto ${title ? 'pt-10' : 'pt-10'} bg-gray-900 dark:bg-gray-950 ${title ? '' : 'rounded-lg'} rounded-b-lg`}>
-        <table className="w-full">
-          <tbody>
-            {lines.map((line, index) => {
-              const lineNumber = index + 1;
-              const isHighlighted = highlightedLines.has(lineNumber);
-              return (
-                <tr
-                  key={index}
-                  className={`${isHighlighted ? 'bg-violet-500/20 border-l-2 border-violet-500' : 'hover:bg-gray-800/50'}`}
-                >
-                  {showLineNumbers && (
-                    <td className={`select-none text-right pr-4 pl-4 text-sm font-mono w-12 align-top ${isHighlighted ? 'text-violet-400' : 'text-gray-500'}`}>
-                      {lineNumber}
-                    </td>
-                  )}
-                  <td className="pr-4 pl-2 text-sm text-gray-100 font-mono whitespace-pre">
-                    {line || ' '}
-                  </td>
-                </tr>
-              );
-            })}
-          </tbody>
-        </table>
+      <div className={`overflow-x-auto pt-10 bg-gray-900 dark:bg-gray-950 ${title ? '' : 'rounded-lg'} rounded-b-lg`}>
+        <div className="flex">
+          {/* Line Numbers Column */}
+          {showLineNumbers && (
+            <div className="flex-shrink-0 select-none text-right pr-4 pl-4 py-4 text-sm font-mono text-gray-500 border-r border-gray-700/50">
+              {Array.from({ length: lineCount }, (_, i) => {
+                const lineNumber = i + 1;
+                const isHighlighted = highlightedLines.has(lineNumber);
+                return (
+                  <div
+                    key={i}
+                    className={`leading-relaxed ${isHighlighted ? 'text-violet-400 bg-violet-500/20' : ''}`}
+                  >
+                    {lineNumber}
+                  </div>
+                );
+              })}
+            </div>
+          )}
+
+          {/* Code Content */}
+          <div className="flex-1 overflow-x-auto">
+            <pre className="p-4 text-sm font-mono leading-relaxed m-0 bg-transparent">
+              <code className={className}>
+                {children}
+              </code>
+            </pre>
+          </div>
+        </div>
       </div>
     </div>
   );

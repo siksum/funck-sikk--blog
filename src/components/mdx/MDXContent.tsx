@@ -3,6 +3,7 @@
 import { useState } from 'react';
 import ReactMarkdown from 'react-markdown';
 import rehypeRaw from 'rehype-raw';
+import rehypeHighlight from 'rehype-highlight';
 import remarkGfm from 'remark-gfm';
 import remarkMath from 'remark-math';
 import rehypeKatex from 'rehype-katex';
@@ -13,6 +14,7 @@ import YouTube from './YouTube';
 import { CodeTabs, Tab } from './CodeTabs';
 import Mermaid from './Mermaid';
 import 'katex/dist/katex.min.css';
+import 'highlight.js/styles/github-dark.css';
 
 interface MDXContentProps {
   content: string;
@@ -94,7 +96,7 @@ export default function MDXContent({ content }: MDXContentProps) {
       <article className="max-w-none" style={{ color: 'var(--foreground)' }}>
         <ReactMarkdown
           remarkPlugins={[remarkGfm, remarkMath]}
-          rehypePlugins={[rehypeRaw, rehypeKatex]}
+          rehypePlugins={[rehypeRaw, rehypeKatex, rehypeHighlight]}
           components={{
             h1: ({ children }) => {
               const id = generateId(String(children));
