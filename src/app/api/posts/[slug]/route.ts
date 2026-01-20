@@ -6,6 +6,7 @@ import { commitFile, deleteFile } from '@/lib/github';
 
 const postsDirectory = path.join(process.cwd(), 'content/posts');
 const USE_GITHUB = !!process.env.GITHUB_TOKEN;
+const IS_PRODUCTION = process.env.NODE_ENV === 'production' || process.env.VERCEL === '1';
 
 // GET: 단일 포스트 조회
 export async function GET(
@@ -63,10 +64,17 @@ export async function PUT(
         `post: Update "${title}"`
       );
       if (!success) {
-        return NextResponse.json({ error: 'Failed to commit to GitHub' }, { status: 500 });
+        return NextResponse.json({ error: 'GitHub 커밋 실패. GITHUB_TOKEN 권한을 확인하세요.' }, { status: 500 });
       }
       // GitHub mode: skip local file write (Vercel has read-only filesystem)
       return NextResponse.json({ success: true, slug, committed: true });
+    }
+
+    // Production without GitHub: cannot write files
+    if (IS_PRODUCTION) {
+      return NextResponse.json({
+        error: 'GITHUB_TOKEN이 설정되지 않았습니다. Vercel 환경 변수를 확인하세요.'
+      }, { status: 500 });
     }
 
     // Local mode only: update local file
@@ -96,10 +104,17 @@ export async function DELETE(
     if (USE_GITHUB) {
       const success = await deleteFile(gitPath, `post: Delete "${slug}"`);
       if (!success) {
-        return NextResponse.json({ error: 'Failed to delete from GitHub' }, { status: 500 });
+        return NextResponse.json({ error: 'GitHub 삭제 실패. GITHUB_TOKEN 권한을 확인하세요.' }, { status: 500 });
       }
       // GitHub mode: skip local file delete (Vercel has read-only filesystem)
       return NextResponse.json({ success: true, committed: true });
+    }
+
+    // Production without GitHub: cannot delete files
+    if (IS_PRODUCTION) {
+      return NextResponse.json({
+        error: 'GITHUB_TOKEN이 설정되지 않았습니다. Vercel 환경 변수를 확인하세요.'
+      }, { status: 500 });
     }
 
     // Local mode only: delete local file
