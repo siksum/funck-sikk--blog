@@ -62,8 +62,8 @@ export default function AdminSidebar({ user }: AdminSidebarProps) {
 
   return (
     <>
-      {/* Mobile Header */}
-      <div className="lg:hidden fixed top-0 left-0 right-0 z-40 bg-gray-900 text-white h-14 flex items-center px-3 border-b border-gray-700 shadow-lg">
+      {/* Mobile Header - positioned below blog header (h-16 = 64px) */}
+      <div className="lg:hidden fixed top-16 left-0 right-0 z-40 bg-gray-900 text-white h-14 flex items-center px-3 border-b border-gray-700 shadow-lg">
         <button
           onClick={() => setIsOpen(true)}
           className="p-2 hover:bg-gray-800 rounded-lg transition-colors"

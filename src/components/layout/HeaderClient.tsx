@@ -32,13 +32,6 @@ export default function HeaderClient({ posts }: HeaderClientProps) {
   const [isSearchOpen, setIsSearchOpen] = useState(false);
   const [isUserMenuOpen, setIsUserMenuOpen] = useState(false);
 
-  // Only hide header on admin pages (admin has its own header)
-  // Check explicitly for /admin prefix
-  const isAdminPage = typeof pathname === 'string' && pathname.startsWith('/admin');
-  if (isAdminPage) {
-    return null;
-  }
-
   return (
     <header
       className="sticky top-0 z-50 backdrop-blur-xl border-b transition-all"
