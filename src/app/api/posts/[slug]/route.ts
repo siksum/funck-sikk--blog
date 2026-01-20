@@ -4,6 +4,9 @@ import path from 'path';
 import matter from 'gray-matter';
 import { commitFile, deleteFile } from '@/lib/github';
 
+// Force dynamic rendering - no caching
+export const dynamic = 'force-dynamic';
+
 const postsDirectory = path.join(process.cwd(), 'content/posts');
 
 // Helper to check environment at runtime (not build time)
