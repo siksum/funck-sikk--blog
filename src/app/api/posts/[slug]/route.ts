@@ -65,12 +65,14 @@ export async function PUT(
       if (!success) {
         return NextResponse.json({ error: 'Failed to commit to GitHub' }, { status: 500 });
       }
+      // GitHub mode: skip local file write (Vercel has read-only filesystem)
+      return NextResponse.json({ success: true, slug, committed: true });
     }
 
-    // Also update local file for immediate preview
+    // Local mode only: update local file
     fs.writeFileSync(filePath, fileContent);
 
-    return NextResponse.json({ success: true, slug, committed: USE_GITHUB });
+    return NextResponse.json({ success: true, slug, committed: false });
   } catch (error) {
     console.error('Failed to update post:', error);
     return NextResponse.json({ error: 'Failed to update post' }, { status: 500 });
@@ -96,12 +98,14 @@ export async function DELETE(
       if (!success) {
         return NextResponse.json({ error: 'Failed to delete from GitHub' }, { status: 500 });
       }
+      // GitHub mode: skip local file delete (Vercel has read-only filesystem)
+      return NextResponse.json({ success: true, committed: true });
     }
 
-    // Also delete local file
+    // Local mode only: delete local file
     fs.unlinkSync(filePath);
 
-    return NextResponse.json({ success: true, committed: USE_GITHUB });
+    return NextResponse.json({ success: true, committed: false });
   } catch (error) {
     console.error('Failed to delete post:', error);
     return NextResponse.json({ error: 'Failed to delete post' }, { status: 500 });

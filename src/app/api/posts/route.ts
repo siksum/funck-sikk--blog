@@ -74,12 +74,14 @@ export async function POST(request: NextRequest) {
       if (!success) {
         return NextResponse.json({ error: 'Failed to commit to GitHub' }, { status: 500 });
       }
+      // GitHub mode: skip local file write (Vercel has read-only filesystem)
+      return NextResponse.json({ success: true, slug, committed: true });
     }
 
-    // Also create local file for immediate preview
+    // Local mode only: create local file
     fs.writeFileSync(filePath, fileContent);
 
-    return NextResponse.json({ success: true, slug, committed: USE_GITHUB });
+    return NextResponse.json({ success: true, slug, committed: false });
   } catch (error) {
     console.error('Failed to create post:', error);
     return NextResponse.json({ error: 'Failed to create post' }, { status: 500 });
