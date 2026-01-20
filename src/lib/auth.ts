@@ -31,17 +31,32 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
   adapter: PrismaAdapter(prisma),
   providers,
   callbacks: {
+    async signIn() {
+      // Allow all sign ins
+      return true;
+    },
+    async redirect({ url, baseUrl }) {
+      // Handle redirect after sign in
+      if (url.startsWith('/')) return `${baseUrl}${url}`;
+      if (url.startsWith(baseUrl)) return url;
+      return baseUrl;
+    },
     async session({ session, user }) {
       if (session.user) {
         session.user.id = user.id;
 
-        const dbUser = await prisma.user.findUnique({
-          where: { id: user.id },
-          include: { accounts: true },
-        });
+        try {
+          const dbUser = await prisma.user.findUnique({
+            where: { id: user.id },
+            include: { accounts: true },
+          });
 
-        const githubAccount = dbUser?.accounts.find(a => a.provider === 'github');
-        session.user.isAdmin = githubAccount?.providerAccountId === ADMIN_GITHUB_ID;
+          const githubAccount = dbUser?.accounts.find(a => a.provider === 'github');
+          session.user.isAdmin = githubAccount?.providerAccountId === ADMIN_GITHUB_ID;
+        } catch (error) {
+          console.error('Failed to fetch user for session:', error);
+          session.user.isAdmin = false;
+        }
       }
       return session;
     },
