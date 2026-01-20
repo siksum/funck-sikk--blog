@@ -139,7 +139,8 @@ export default function SikkSidebar({
     <aside className="space-y-8">
       {/* Categories */}
       <div
-        className="rounded-2xl backdrop-blur-xl border-2 border-pink-200 dark:border-pink-500/40 p-5 bg-pink-50/80 dark:bg-pink-950/30"
+        className="rounded-2xl backdrop-blur-xl border-2 border-pink-200 dark:border-pink-500/40 p-5"
+        style={{ background: 'var(--card-bg)' }}
       >
         <h3 className="text-lg font-semibold mb-4 text-pink-600 dark:text-pink-400">
           카테고리
@@ -177,7 +178,8 @@ export default function SikkSidebar({
 
       {/* Tags Cloud */}
       <div
-        className="rounded-2xl backdrop-blur-xl border-2 border-pink-200 dark:border-pink-500/40 p-5 bg-pink-50/80 dark:bg-pink-950/30"
+        className="rounded-2xl backdrop-blur-xl border-2 border-pink-200 dark:border-pink-500/40 p-5"
+        style={{ background: 'var(--card-bg)' }}
       >
         <h3 className="text-lg font-semibold mb-4 text-pink-600 dark:text-pink-400">
           태그
