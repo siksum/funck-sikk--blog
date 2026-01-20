@@ -9,6 +9,11 @@ const ADMIN_EMAILS = [
   'sikk@sikk.kr',
 ].filter(Boolean);
 
+// Admin IPs that should not be tracked
+const EXCLUDED_IPS = [
+  '120.142.142.177', // sikk's home IP
+].filter(Boolean);
+
 // Generate a visitor hash from IP and User Agent
 function generateVisitorHash(ip: string, userAgent: string): string {
   const data = `${ip}:${userAgent}`;
@@ -149,6 +154,12 @@ export async function POST(request: NextRequest) {
     }
     const referer = request.headers.get('referer') || '';
     const clientIP = getClientIP(request);
+
+    // Server-side filter: Skip excluded IPs (admin's home IP etc.)
+    if (EXCLUDED_IPS.includes(clientIP)) {
+      return NextResponse.json({ success: true, skipped: 'excluded_ip' });
+    }
+
     const visitorHash = generateVisitorHash(clientIP, userAgent);
 
     const today = new Date();

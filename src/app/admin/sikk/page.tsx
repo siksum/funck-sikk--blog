@@ -281,9 +281,16 @@ export default function SikkPostsManagementPage() {
     try {
       const res = await fetch('/api/sikk?includePrivate=true');
       const data = await res.json();
-      setPosts(data);
+      // Ensure data is an array (API might return error object)
+      if (Array.isArray(data)) {
+        setPosts(data);
+      } else {
+        console.error('API returned non-array:', data);
+        setPosts([]);
+      }
     } catch (error) {
       console.error('Failed to fetch posts:', error);
+      setPosts([]);
     } finally {
       setLoading(false);
     }
@@ -298,9 +305,16 @@ export default function SikkPostsManagementPage() {
     try {
       const res = await fetch('/api/admin/sikk-categories');
       const data = await res.json();
-      setDbCategories(data);
+      // Ensure data is an array
+      if (Array.isArray(data)) {
+        setDbCategories(data);
+      } else {
+        console.error('Categories API returned non-array:', data);
+        setDbCategories([]);
+      }
     } catch (error) {
       console.error('Failed to fetch categories:', error);
+      setDbCategories([]);
     }
   };
 
@@ -309,9 +323,16 @@ export default function SikkPostsManagementPage() {
     try {
       const res = await fetch('/api/admin/sikk-sections');
       const data = await res.json();
-      setDbSections(data);
+      // Ensure data is an array
+      if (Array.isArray(data)) {
+        setDbSections(data);
+      } else {
+        console.error('Sections API returned non-array:', data);
+        setDbSections([]);
+      }
     } catch (error) {
       console.error('Failed to fetch sections:', error);
+      setDbSections([]);
     }
   };
 
