@@ -129,7 +129,7 @@ export default function MapPage() {
   const [locations, setLocations] = useState<MapLocation[]>([]);
   const [loading, setLoading] = useState(true);
   const [editingLocation, setEditingLocation] = useState<MapLocation | null>(null);
-  const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
+  const [selectedCategories, setSelectedCategories] = useState<string[]>([]);
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedMarker, setSelectedMarker] = useState<MapLocation | null>(null);
   const [mapCenter, setMapCenter] = useState(defaultCenter);
@@ -308,14 +308,12 @@ export default function MapPage() {
 
   useEffect(() => {
     fetchLocations();
-  }, [selectedCategory]);
+  }, []);
 
   const fetchLocations = async () => {
     setLoading(true);
     try {
-      const url = selectedCategory
-        ? `/api/my-world/locations?category=${selectedCategory}`
-        : '/api/my-world/locations';
+      const url = '/api/my-world/locations';
       const res = await fetch(url);
       if (res.ok) {
         const data = await res.json();
@@ -445,6 +443,10 @@ export default function MapPage() {
       loc.address?.toLowerCase().includes(searchQuery.toLowerCase()) ||
       loc.tags.some((t) => t.toLowerCase().includes(searchQuery.toLowerCase()));
 
+    // Category filter (multiple selection)
+    const matchesCategory = selectedCategories.length === 0 ||
+      selectedCategories.includes(loc.category);
+
     // Tag filter
     const matchesTags = selectedTags.length === 0 ||
       selectedTags.some((tag) => loc.tags.includes(tag));
@@ -453,7 +455,7 @@ export default function MapPage() {
     const matchesRegion = !selectedRegion ||
       loc.address?.includes(selectedRegion);
 
-    return matchesSearch && matchesTags && matchesRegion;
+    return matchesSearch && matchesCategory && matchesTags && matchesRegion;
   });
 
   // Top N search results for display
@@ -485,179 +487,199 @@ export default function MapPage() {
         <h1 className="text-2xl font-bold text-gray-900 dark:text-white">지도</h1>
       </div>
 
-      {/* Search Section */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 mb-4">
-        {/* Google Places Search */}
-        <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-sm border border-violet-100 dark:border-violet-900/30 p-4">
-          <h4 className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">새 장소 검색</h4>
-          <div className="flex gap-2">
-            <input
-              type="text"
-              value={placeSearchQuery}
-              onChange={(e) => setPlaceSearchQuery(e.target.value)}
-              onKeyDown={(e) => {
-                if (e.key === 'Enter') {
-                  e.preventDefault();
-                  searchPlaces();
-                }
-              }}
-              placeholder="스타벅스, CGV 용산..."
-              className="flex-1 px-3 py-2 rounded-lg border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white text-sm"
-            />
-            <button
-              onClick={searchPlaces}
-              disabled={isSearching || !isLoaded}
-              className="px-3 py-2 bg-violet-600 text-white rounded-lg hover:bg-violet-700 text-sm disabled:opacity-50"
-            >
-              {isSearching ? '...' : '검색'}
-            </button>
+      {/* Search Section - Combined */}
+      <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-sm border border-violet-100 dark:border-violet-900/30 p-4 mb-4">
+        <h3 className="text-sm font-semibold text-gray-900 dark:text-white mb-3">검색</h3>
+
+        {/* Search Inputs Row */}
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 mb-3">
+          {/* Google Places Search */}
+          <div>
+            <label className="text-xs font-medium text-gray-500 dark:text-gray-400 mb-1 block">새 장소</label>
+            <div className="flex gap-2">
+              <input
+                type="text"
+                value={placeSearchQuery}
+                onChange={(e) => setPlaceSearchQuery(e.target.value)}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter') {
+                    e.preventDefault();
+                    searchPlaces();
+                  }
+                }}
+                placeholder="스타벅스, CGV 용산..."
+                className="flex-1 px-3 py-2 rounded-lg border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white text-sm"
+              />
+              <button
+                onClick={searchPlaces}
+                disabled={isSearching || !isLoaded}
+                className="px-3 py-2 bg-violet-600 text-white rounded-lg hover:bg-violet-700 text-sm disabled:opacity-50"
+              >
+                {isSearching ? '...' : '검색'}
+              </button>
+            </div>
           </div>
-          {/* Search Results - up to 10, sorted by distance */}
-          {placeResults.length > 0 && (
-            <div className="mt-3 max-h-[250px] overflow-y-auto space-y-2">
-              <div className="text-xs text-gray-500 dark:text-gray-400 mb-1">
-                가까운 순 ({placeResults.length}개 결과)
-              </div>
-              {placeResults.map((place, idx) => (
-                <div
-                  key={idx}
-                  onClick={() => {
-                    setSearchedPlace(place);
-                    setMapCenter({ lat: place.lat, lng: place.lng });
-                  }}
-                  className={`p-2 rounded-lg border cursor-pointer transition-colors ${
-                    searchedPlace?.lat === place.lat && searchedPlace?.lng === place.lng
-                      ? 'border-violet-500 bg-violet-50 dark:bg-violet-900/30'
-                      : 'border-gray-200 dark:border-gray-600 hover:bg-gray-50 dark:hover:bg-gray-700'
-                  }`}
-                >
-                  <div className="flex items-center justify-between">
-                    <div className="flex-1 min-w-0">
-                      <p className="font-medium text-gray-900 dark:text-white text-sm truncate">{place.name}</p>
-                      <p className="text-xs text-gray-500 dark:text-gray-400 truncate">{place.address}</p>
-                      <div className="flex items-center gap-2 mt-1">
-                        {place.rating && (
-                          <span className="text-xs text-gray-600 dark:text-gray-400">
-                            <span className="text-yellow-400">★</span> {place.rating.toFixed(1)}
-                          </span>
-                        )}
-                        {place.distance !== undefined && (
-                          <span className="text-xs text-blue-600 dark:text-blue-400">
-                            {place.distance < 1
-                              ? `${Math.round(place.distance * 1000)}m`
-                              : `${place.distance.toFixed(1)}km`}
-                          </span>
-                        )}
+
+          {/* My Locations Search */}
+          <div>
+            <label className="text-xs font-medium text-gray-500 dark:text-gray-400 mb-1 block">내 장소</label>
+            <div className="flex gap-2">
+              <input
+                type="text"
+                value={searchQuery}
+                onChange={(e) => {
+                  setSearchQuery(e.target.value);
+                  setShowMyLocationResults(true);
+                }}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter') {
+                    setShowMyLocationResults(true);
+                  }
+                }}
+                placeholder="이름, 주소, 태그로 검색..."
+                className="flex-1 px-3 py-2 rounded-lg border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white text-sm"
+              />
+              <button
+                onClick={() => setShowMyLocationResults(true)}
+                className="px-3 py-2 bg-emerald-600 text-white rounded-lg hover:bg-emerald-700 text-sm"
+              >
+                검색
+              </button>
+            </div>
+          </div>
+        </div>
+
+        {/* Search Results Row */}
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+          {/* Google Places Results */}
+          <div>
+            {placeResults.length > 0 && (
+              <div className="max-h-[200px] overflow-y-auto space-y-2">
+                <div className="text-xs text-gray-500 dark:text-gray-400 mb-1">
+                  가까운 순 ({placeResults.length}개 결과)
+                </div>
+                {placeResults.map((place, idx) => (
+                  <div
+                    key={idx}
+                    onClick={() => {
+                      setSearchedPlace(place);
+                      setMapCenter({ lat: place.lat, lng: place.lng });
+                    }}
+                    className={`p-2 rounded-lg border cursor-pointer transition-colors ${
+                      searchedPlace?.lat === place.lat && searchedPlace?.lng === place.lng
+                        ? 'border-violet-500 bg-violet-50 dark:bg-violet-900/30'
+                        : 'border-gray-200 dark:border-gray-600 hover:bg-gray-50 dark:hover:bg-gray-700'
+                    }`}
+                  >
+                    <div className="flex items-center justify-between">
+                      <div className="flex-1 min-w-0">
+                        <p className="font-medium text-gray-900 dark:text-white text-sm truncate">{place.name}</p>
+                        <p className="text-xs text-gray-500 dark:text-gray-400 truncate">{place.address}</p>
+                        <div className="flex items-center gap-2 mt-1">
+                          {place.rating && (
+                            <span className="text-xs text-gray-600 dark:text-gray-400">
+                              <span className="text-yellow-400">★</span> {place.rating.toFixed(1)}
+                            </span>
+                          )}
+                          {place.distance !== undefined && (
+                            <span className="text-xs text-blue-600 dark:text-blue-400">
+                              {place.distance < 1
+                                ? `${Math.round(place.distance * 1000)}m`
+                                : `${place.distance.toFixed(1)}km`}
+                            </span>
+                          )}
+                        </div>
                       </div>
+                      <button
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          setSearchedPlace(place);
+                          setMapCenter({ lat: place.lat, lng: place.lng });
+                        }}
+                        className="ml-2 px-2 py-1 text-xs bg-violet-600 text-white rounded hover:bg-violet-700"
+                      >
+                        선택
+                      </button>
                     </div>
+                  </div>
+                ))}
+              </div>
+            )}
+            {/* Selected place info */}
+            {searchedPlace && (
+              <div className={`${placeResults.length > 0 ? 'mt-3' : ''} p-3 bg-violet-50 dark:bg-violet-900/20 rounded-lg border border-violet-200 dark:border-violet-800`}>
+                <div className="flex items-center justify-between">
+                  <div className="flex-1 min-w-0">
+                    <p className="font-medium text-gray-900 dark:text-white text-sm truncate">{searchedPlace.name}</p>
+                    <p className="text-xs text-gray-500 dark:text-gray-400 truncate">{searchedPlace.address}</p>
+                    {searchedPlace.rating && (
+                      <div className="flex items-center gap-1 mt-1">
+                        <span className="text-yellow-400 text-xs">★</span>
+                        <span className="text-xs text-gray-600 dark:text-gray-400">{searchedPlace.rating.toFixed(1)}</span>
+                      </div>
+                    )}
+                  </div>
+                  <div className="flex gap-2 ml-2">
                     <button
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        setSearchedPlace(place);
-                        setMapCenter({ lat: place.lat, lng: place.lng });
-                      }}
-                      className="ml-2 px-2 py-1 text-xs bg-violet-600 text-white rounded hover:bg-violet-700"
+                      onClick={() => setSearchedPlace(null)}
+                      className="px-2 py-1 text-xs text-gray-600 dark:text-gray-400 hover:bg-gray-200 dark:hover:bg-gray-700 rounded"
                     >
-                      선택
+                      취소
+                    </button>
+                    <button
+                      onClick={saveSearchedPlace}
+                      className="px-2 py-1 text-xs bg-violet-600 text-white rounded hover:bg-violet-700"
+                    >
+                      추가
                     </button>
                   </div>
                 </div>
-              ))}
-            </div>
-          )}
-          {/* Selected place info */}
-          {searchedPlace && (
-            <div className="mt-3 p-3 bg-violet-50 dark:bg-violet-900/20 rounded-lg border border-violet-200 dark:border-violet-800">
-              <div className="flex items-center justify-between">
-                <div className="flex-1 min-w-0">
-                  <p className="font-medium text-gray-900 dark:text-white text-sm truncate">{searchedPlace.name}</p>
-                  <p className="text-xs text-gray-500 dark:text-gray-400 truncate">{searchedPlace.address}</p>
-                  {searchedPlace.rating && (
-                    <div className="flex items-center gap-1 mt-1">
-                      <span className="text-yellow-400 text-xs">★</span>
-                      <span className="text-xs text-gray-600 dark:text-gray-400">{searchedPlace.rating.toFixed(1)}</span>
-                    </div>
-                  )}
-                </div>
-                <div className="flex gap-2 ml-2">
-                  <button
-                    onClick={() => setSearchedPlace(null)}
-                    className="px-2 py-1 text-xs text-gray-600 dark:text-gray-400 hover:bg-gray-200 dark:hover:bg-gray-700 rounded"
-                  >
-                    취소
-                  </button>
-                  <button
-                    onClick={saveSearchedPlace}
-                    className="px-2 py-1 text-xs bg-violet-600 text-white rounded hover:bg-violet-700"
-                  >
-                    추가
-                  </button>
-                </div>
               </div>
-            </div>
-          )}
-        </div>
-
-        {/* My Locations Search */}
-        <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-sm border border-violet-100 dark:border-violet-900/30 p-4">
-          <h4 className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">내 장소 검색</h4>
-          <div className="flex gap-2">
-            <input
-              type="text"
-              value={searchQuery}
-              onChange={(e) => {
-                setSearchQuery(e.target.value);
-                setShowMyLocationResults(true);
-              }}
-              onKeyDown={(e) => {
-                if (e.key === 'Enter') {
-                  setShowMyLocationResults(true);
-                }
-              }}
-              placeholder="이름, 주소, 태그로 검색..."
-              className="flex-1 px-3 py-2 rounded-lg border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white text-sm"
-            />
-            <button
-              onClick={() => setShowMyLocationResults(true)}
-              className="px-3 py-2 bg-violet-600 text-white rounded-lg hover:bg-violet-700 text-sm"
-            >
-              검색
-            </button>
+            )}
           </div>
-          {showMyLocationResults && searchQuery && (
-            <div className="mt-3 max-h-[200px] overflow-y-auto space-y-2">
-              {searchResults.length === 0 ? (
-                <p className="text-sm text-gray-500 dark:text-gray-400 text-center py-2">검색 결과가 없어요</p>
-              ) : (
-                searchResults.map((loc) => {
-                  const catInfo = getCategoryInfo(loc.category);
-                  return (
-                    <div
-                      key={loc.id}
-                      onClick={() => {
-                        setMapCenter({ lat: loc.latitude, lng: loc.longitude });
-                        setSelectedMarker(loc);
-                        selectLocation(loc);
-                        setShowMyLocationResults(false);
-                      }}
-                      className="flex items-center gap-2 p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 cursor-pointer"
-                    >
-                      <span className="text-lg">{catInfo.icon}</span>
-                      <div className="flex-1 min-w-0">
-                        <p className="text-sm font-medium text-gray-900 dark:text-white truncate">{loc.name}</p>
-                        <p className="text-xs text-gray-500 dark:text-gray-400 truncate">{loc.address}</p>
-                      </div>
+
+          {/* My Locations Results */}
+          <div>
+            {showMyLocationResults && searchQuery && (
+              <div className="max-h-[200px] overflow-y-auto space-y-2">
+                {searchResults.length === 0 ? (
+                  <p className="text-sm text-gray-500 dark:text-gray-400 text-center py-2">검색 결과가 없어요</p>
+                ) : (
+                  <>
+                    <div className="text-xs text-gray-500 dark:text-gray-400 mb-1">
+                      내 장소 ({searchResults.length}개 결과)
                     </div>
-                  );
-                })
-              )}
-              {searchResults.length > 0 && filteredLocations.length > 5 && (
-                <p className="text-xs text-gray-500 dark:text-gray-400 text-center">
-                  +{filteredLocations.length - 5}개 더 있음
-                </p>
-              )}
-            </div>
-          )}
+                    {searchResults.map((loc) => {
+                      const catInfo = getCategoryInfo(loc.category);
+                      return (
+                        <div
+                          key={loc.id}
+                          onClick={() => {
+                            setMapCenter({ lat: loc.latitude, lng: loc.longitude });
+                            setSelectedMarker(loc);
+                            selectLocation(loc);
+                            setShowMyLocationResults(false);
+                          }}
+                          className="flex items-center gap-2 p-2 rounded-lg border border-gray-200 dark:border-gray-600 hover:bg-gray-100 dark:hover:bg-gray-700 cursor-pointer"
+                        >
+                          <span className="text-lg">{catInfo.icon}</span>
+                          <div className="flex-1 min-w-0">
+                            <p className="text-sm font-medium text-gray-900 dark:text-white truncate">{loc.name}</p>
+                            <p className="text-xs text-gray-500 dark:text-gray-400 truncate">{loc.address}</p>
+                          </div>
+                        </div>
+                      );
+                    })}
+                    {filteredLocations.length > 5 && (
+                      <p className="text-xs text-gray-500 dark:text-gray-400 text-center">
+                        +{filteredLocations.length - 5}개 더 있음
+                      </p>
+                    )}
+                  </>
+                )}
+              </div>
+            )}
+          </div>
         </div>
       </div>
 
@@ -1014,14 +1036,14 @@ export default function MapPage() {
       <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-sm border border-violet-100 dark:border-violet-900/30 p-4 mb-6">
         <h3 className="text-sm font-semibold text-gray-900 dark:text-white mb-3">필터</h3>
         <div className="max-h-[200px] overflow-y-auto space-y-3">
-          {/* Category Filter */}
+          {/* Category Filter (Multiple Selection) */}
           <div>
             <span className="text-xs font-medium text-gray-500 dark:text-gray-400 mr-2">카테고리:</span>
             <div className="inline-flex gap-1 flex-wrap">
               <button
-                onClick={() => setSelectedCategory(null)}
+                onClick={() => setSelectedCategories([])}
                 className={`px-2 py-0.5 rounded-full text-xs transition-colors ${
-                  !selectedCategory
+                  selectedCategories.length === 0
                     ? 'bg-violet-600 text-white'
                     : 'bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300'
                 }`}
@@ -1031,9 +1053,15 @@ export default function MapPage() {
               {categories.map((cat) => (
                 <button
                   key={cat.value}
-                  onClick={() => setSelectedCategory(cat.value === selectedCategory ? null : cat.value)}
+                  onClick={() => {
+                    setSelectedCategories((prev) =>
+                      prev.includes(cat.value)
+                        ? prev.filter((c) => c !== cat.value)
+                        : [...prev, cat.value]
+                    );
+                  }}
                   className={`px-2 py-0.5 rounded-full text-xs transition-colors ${
-                    selectedCategory === cat.value
+                    selectedCategories.includes(cat.value)
                       ? 'bg-violet-600 text-white'
                       : 'bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300'
                   }`}
