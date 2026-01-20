@@ -186,6 +186,20 @@ export default function MyWorldDashboard() {
   const [showDailyList, setShowDailyList] = useState(false);
   const [allDailyEntries, setAllDailyEntries] = useState<DailyEntry[]>([]);
 
+  // Todo archive state
+  const [showTodoArchive, setShowTodoArchive] = useState(false);
+  const [archiveTodos, setArchiveTodos] = useState<Todo[]>([]);
+  const [archiveStartDate, setArchiveStartDate] = useState(() => {
+    const d = new Date();
+    d.setDate(d.getDate() - 30);
+    return d.toISOString().split('T')[0];
+  });
+  const [archiveEndDate, setArchiveEndDate] = useState(() => new Date().toISOString().split('T')[0]);
+  const [archiveCategory, setArchiveCategory] = useState<string>('all');
+
+  // Drag and drop state for calendar events
+  const [draggingEvent, setDraggingEvent] = useState<CalendarEvent | null>(null);
+
   const today = new Date();
   const todayStr = today.toISOString().split('T')[0];
 
@@ -344,6 +358,50 @@ export default function MyWorldDashboard() {
       fetchAllDailyEntries();
     }
   }, [showDailyList]);
+
+  // Delete daily entry
+  const deleteDailyEntry = async (date: string, e: React.MouseEvent) => {
+    e.stopPropagation();
+    if (!confirm('이 기록을 삭제하시겠습니까?')) return;
+
+    try {
+      const res = await fetch(`/api/my-world/daily/${date.split('T')[0]}`, {
+        method: 'DELETE',
+      });
+      if (res.ok) {
+        setAllDailyEntries(prev => prev.filter(entry => entry.date !== date));
+      }
+    } catch (error) {
+      console.error('Failed to delete daily entry:', error);
+    }
+  };
+
+  // Fetch archived todos
+  const fetchArchiveTodos = async () => {
+    try {
+      const params = new URLSearchParams({
+        startDate: archiveStartDate,
+        endDate: archiveEndDate,
+        completedOnly: 'true',
+      });
+      if (archiveCategory !== 'all') {
+        params.append('category', archiveCategory);
+      }
+      const res = await fetch(`/api/my-world/todos/archive?${params}`);
+      if (res.ok) {
+        const data = await res.json();
+        setArchiveTodos(data.todos);
+      }
+    } catch (error) {
+      console.error('Failed to fetch archived todos:', error);
+    }
+  };
+
+  useEffect(() => {
+    if (showTodoArchive) {
+      fetchArchiveTodos();
+    }
+  }, [showTodoArchive, archiveStartDate, archiveEndDate, archiveCategory]);
 
   const addTodo = async (category: 'personal' | 'research', content: string) => {
     if (!content.trim()) return;
@@ -803,6 +861,65 @@ export default function MyWorldDashboard() {
     }
   };
 
+  // Drag and drop handlers for calendar events
+  const handleDragStart = (event: CalendarEvent, e: React.DragEvent) => {
+    setDraggingEvent(event);
+    e.dataTransfer.effectAllowed = 'move';
+    e.dataTransfer.setData('text/plain', event.id);
+  };
+
+  const handleDragEnd = () => {
+    setDraggingEvent(null);
+  };
+
+  const handleDragOver = (e: React.DragEvent) => {
+    e.preventDefault();
+    e.dataTransfer.dropEffect = 'move';
+  };
+
+  const handleDrop = async (targetDate: Date, e: React.DragEvent) => {
+    e.preventDefault();
+    if (!draggingEvent) return;
+
+    const originalStart = new Date(draggingEvent.date.split('T')[0]);
+    const originalEnd = draggingEvent.endDate ? new Date(draggingEvent.endDate.split('T')[0]) : null;
+
+    // Calculate duration in days
+    const duration = originalEnd ? Math.round((originalEnd.getTime() - originalStart.getTime()) / (1000 * 60 * 60 * 24)) : 0;
+
+    // Calculate new dates
+    const newStartDate = new Date(targetDate);
+    newStartDate.setHours(0, 0, 0, 0);
+    const newEndDate = duration > 0 ? new Date(newStartDate.getTime() + duration * 24 * 60 * 60 * 1000) : null;
+
+    // Format dates for API
+    const newDateStr = newStartDate.toISOString();
+    const newEndDateStr = newEndDate ? newEndDate.toISOString() : null;
+
+    try {
+      const res = await fetch(`/api/my-world/calendar/${draggingEvent.id}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          ...draggingEvent,
+          date: newDateStr,
+          endDate: newEndDateStr,
+        }),
+      });
+
+      if (res.ok) {
+        fetchMonthData();
+      } else {
+        alert('일정 이동에 실패했습니다');
+      }
+    } catch (error) {
+      console.error('Failed to move event:', error);
+      alert('일정 이동에 실패했습니다');
+    } finally {
+      setDraggingEvent(null);
+    }
+  };
+
   // Category management
   const addEventType = () => {
     if (!newTypeName.trim()) return;
@@ -963,6 +1080,13 @@ export default function MyWorldDashboard() {
     return weekStart.getTime() === weekStartDate.getTime();
   };
 
+  // Helper to calculate day difference without timezone issues
+  const getDaysDiff = (date1: Date, date2: Date): number => {
+    const utc1 = Date.UTC(date1.getFullYear(), date1.getMonth(), date1.getDate());
+    const utc2 = Date.UTC(date2.getFullYear(), date2.getMonth(), date2.getDate());
+    return Math.round((utc1 - utc2) / (1000 * 60 * 60 * 24));
+  };
+
   // Get multi-day event bars for weekly view
   const getWeeklyMultiDayEventBars = useMemo(() => {
     interface WeeklyEventBar {
@@ -992,17 +1116,21 @@ export default function MyWorldDashboard() {
       weekEnd.setDate(weekStartDate.getDate() + 6);
 
       if (eventEnd >= weekStartDate && eventStart <= weekEnd) {
-        // Calculate start column (0-6)
+        // Calculate start column (0-6) using UTC comparison
         let startCol = 0;
         if (eventStart > weekStartDate) {
-          startCol = Math.floor((eventStart.getTime() - weekStartDate.getTime()) / (1000 * 60 * 60 * 24));
+          startCol = getDaysDiff(eventStart, weekStartDate);
         }
 
-        // Calculate end column (0-6)
+        // Calculate end column (0-6) using UTC comparison
         let endCol = 6;
         if (eventEnd < weekEnd) {
-          endCol = Math.floor((eventEnd.getTime() - weekStartDate.getTime()) / (1000 * 60 * 60 * 24));
+          endCol = getDaysDiff(eventEnd, weekStartDate);
         }
+
+        // Clamp values to valid range
+        startCol = Math.max(0, Math.min(6, startCol));
+        endCol = Math.max(0, Math.min(6, endCol));
 
         if (startCol <= endCol) {
           bars.push({
@@ -1054,15 +1182,119 @@ export default function MyWorldDashboard() {
               {todoDate === todayStr && ' (오늘)'}
             </span>
           </div>
-          {selectedDate && selectedDate !== todayStr && (
+          <div className="flex items-center gap-2">
+            {selectedDate && selectedDate !== todayStr && (
+              <button
+                onClick={() => setSelectedDate(null)}
+                className="text-xs text-gray-500 hover:text-violet-600 dark:hover:text-violet-400"
+              >
+                오늘로 돌아가기
+              </button>
+            )}
             <button
-              onClick={() => setSelectedDate(null)}
-              className="text-xs text-gray-500 hover:text-violet-600 dark:hover:text-violet-400"
+              onClick={() => setShowTodoArchive(!showTodoArchive)}
+              className={`text-xs px-2 py-1 rounded-lg transition-colors ${
+                showTodoArchive
+                  ? 'bg-violet-500 text-white'
+                  : 'bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300 hover:bg-violet-100 dark:hover:bg-violet-900/30'
+              }`}
             >
-              오늘로 돌아가기
+              📁 아카이브
             </button>
-          )}
+          </div>
         </div>
+        {/* Archive View */}
+        {showTodoArchive ? (
+          <div className="bg-white dark:bg-gray-800 p-4 rounded-2xl shadow-sm border border-violet-100 dark:border-violet-900/30">
+            {/* Archive Filters */}
+            <div className="flex flex-wrap items-center gap-3 mb-4 pb-4 border-b border-gray-200 dark:border-gray-700">
+              <div className="flex items-center gap-2">
+                <label className="text-xs text-gray-500">시작일</label>
+                <input
+                  type="date"
+                  value={archiveStartDate}
+                  onChange={(e) => setArchiveStartDate(e.target.value)}
+                  className="text-sm px-2 py-1 rounded-lg border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-900"
+                />
+              </div>
+              <div className="flex items-center gap-2">
+                <label className="text-xs text-gray-500">종료일</label>
+                <input
+                  type="date"
+                  value={archiveEndDate}
+                  onChange={(e) => setArchiveEndDate(e.target.value)}
+                  className="text-sm px-2 py-1 rounded-lg border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-900"
+                />
+              </div>
+              <div className="flex items-center gap-2">
+                <label className="text-xs text-gray-500">카테고리</label>
+                <select
+                  value={archiveCategory}
+                  onChange={(e) => setArchiveCategory(e.target.value)}
+                  className="text-sm px-2 py-1 rounded-lg border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-900"
+                >
+                  <option value="all">전체</option>
+                  <option value="personal">개인</option>
+                  <option value="research">연구</option>
+                </select>
+              </div>
+              <span className="text-xs text-gray-400 ml-auto">
+                총 {archiveTodos.length}개 완료
+              </span>
+            </div>
+            {/* Archive List */}
+            <div className="max-h-[400px] overflow-y-auto space-y-4">
+              {archiveTodos.length === 0 ? (
+                <div className="text-center py-8 text-gray-400">
+                  완료된 할 일이 없습니다
+                </div>
+              ) : (
+                Object.entries(
+                  archiveTodos.reduce((acc, todo) => {
+                    const dateKey = new Date(todo.date).toISOString().split('T')[0];
+                    if (!acc[dateKey]) acc[dateKey] = [];
+                    acc[dateKey].push(todo);
+                    return acc;
+                  }, {} as Record<string, Todo[]>)
+                )
+                  .sort(([a], [b]) => b.localeCompare(a))
+                  .map(([dateKey, todos]) => (
+                    <div key={dateKey}>
+                      <div className="text-xs font-medium text-gray-500 dark:text-gray-400 mb-2">
+                        {new Date(dateKey).toLocaleDateString('ko-KR', {
+                          year: 'numeric',
+                          month: 'short',
+                          day: 'numeric',
+                          weekday: 'short',
+                        })}
+                        <span className="ml-2 text-violet-500">({todos.length}개)</span>
+                      </div>
+                      <div className="space-y-1 pl-2 border-l-2 border-violet-200 dark:border-violet-800">
+                        {todos.map((todo) => (
+                          <div
+                            key={todo.id}
+                            className="flex items-center gap-2 text-sm text-gray-600 dark:text-gray-400"
+                          >
+                            <span
+                              className={`w-2 h-2 rounded-full ${
+                                todo.category === 'personal'
+                                  ? 'bg-violet-400'
+                                  : 'bg-pink-400'
+                              }`}
+                            />
+                            <span className="line-through">{todo.content}</span>
+                            <span className="text-xs text-gray-400 ml-auto">
+                              {todo.category === 'personal' ? '개인' : '연구'}
+                            </span>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  ))
+              )}
+            </div>
+          </div>
+        ) : (
         <div className="grid md:grid-cols-2 gap-4">
           {/* Personal Todo */}
           <div className="bg-white dark:bg-gray-800 p-4 rounded-2xl shadow-sm border border-violet-100 dark:border-violet-900/30">
@@ -1198,6 +1430,7 @@ export default function MyWorldDashboard() {
           </form>
         </div>
         </div>
+        )}
       </div>
 
       {/* Calendar Section */}
@@ -1410,10 +1643,14 @@ export default function MyWorldDashboard() {
                       // Count multi-day events for this row that start before or on this day
                       const multiDayBarsInRow = getMultiDayEventBars.filter(bar => bar.row === row && bar.startCol <= dayOfWeek);
 
+                      const cellDate = new Date(currentMonth.getFullYear(), currentMonth.getMonth(), day);
+
                       return (
                         <button
                           key={day}
                           onClick={() => setSelectedDate(dateStr)}
+                          onDragOver={handleDragOver}
+                          onDrop={(e) => handleDrop(cellDate, e)}
                           className={`p-1 transition-all relative min-h-[80px] flex flex-col items-start justify-start ${
                             !isLastRow ? 'border-b' : ''
                           } ${
@@ -1428,6 +1665,8 @@ export default function MyWorldDashboard() {
                               : isHoliday
                                 ? 'bg-red-50 dark:bg-red-900/20 hover:bg-red-100 dark:hover:bg-red-900/30'
                                 : 'hover:bg-gray-50 dark:hover:bg-gray-700/50'
+                          } ${
+                            draggingEvent ? 'hover:bg-violet-50 dark:hover:bg-violet-900/30' : ''
                           }`}
                         >
                           <div className="w-full flex items-start justify-between">
@@ -1456,9 +1695,18 @@ export default function MyWorldDashboard() {
                               {singleDayEvents.slice(0, holiday ? 1 : 2).map((event) => (
                                 <div
                                   key={event.id}
-                                  className="text-xs px-1 py-0.5 rounded truncate font-medium"
+                                  draggable
+                                  onDragStart={(e) => handleDragStart(event, e)}
+                                  onDragEnd={handleDragEnd}
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    openEventModal(event);
+                                  }}
+                                  className={`text-xs px-1 py-0.5 rounded truncate font-medium cursor-grab hover:opacity-80 ${
+                                    draggingEvent?.id === event.id ? 'opacity-50' : ''
+                                  }`}
                                   style={{ backgroundColor: getPastelColor(event.color), color: '#374151' }}
-                                  title={`${event.title}${event.location ? ` - ${event.location}` : ''}${event.url ? ' (링크)' : ''}`}
+                                  title={`${event.title}${event.location ? ` - ${event.location}` : ''}${event.url ? ' (링크)' : ''} (드래그하여 이동)`}
                                 >
                                   {event.title}
                                 </div>
@@ -1492,7 +1740,12 @@ export default function MyWorldDashboard() {
                       return (
                         <div
                           key={`${bar.event.id}-${bar.row}`}
-                          className="absolute text-xs truncate px-1.5 py-0.5 cursor-pointer pointer-events-auto hover:opacity-80 transition-opacity font-medium"
+                          draggable
+                          onDragStart={(e) => handleDragStart(bar.event, e)}
+                          onDragEnd={handleDragEnd}
+                          className={`absolute text-xs truncate px-1.5 py-0.5 cursor-grab pointer-events-auto hover:opacity-80 transition-opacity font-medium ${
+                            draggingEvent?.id === bar.event.id ? 'opacity-50' : ''
+                          }`}
                           style={{
                             left: `calc(${bar.startCol * colWidth}% + 2px)`,
                             width: `calc(${bar.span * colWidth}% - 4px)`,
@@ -1502,7 +1755,7 @@ export default function MyWorldDashboard() {
                             color: '#374151',
                             borderRadius: bar.isStart && bar.isEnd ? '4px' : bar.isStart ? '4px 0 0 4px' : bar.isEnd ? '0 4px 4px 0' : '0',
                           }}
-                          title={bar.event.title}
+                          title={`${bar.event.title} (드래그하여 이동)`}
                           onClick={(e) => {
                             e.stopPropagation();
                             openEventModal(bar.event);
@@ -1554,9 +1807,11 @@ export default function MyWorldDashboard() {
                     <button
                       key={index}
                       onClick={() => setSelectedDate(dateStr)}
+                      onDragOver={handleDragOver}
+                      onDrop={(e) => handleDrop(date, e)}
                       className={`py-2 text-center transition-colors ${
                         isSelected ? 'bg-violet-100 dark:bg-violet-900/50' : isHoliday ? 'bg-red-50 dark:bg-red-900/20' : 'hover:bg-gray-50 dark:hover:bg-gray-700/50'
-                      }`}
+                      } ${draggingEvent ? 'hover:bg-violet-50 dark:hover:bg-violet-900/30' : ''}`}
                     >
                       <div className={`text-xs ${
                         isHoliday || isSunday ? 'text-red-500' : isSaturday ? 'text-blue-500' : 'text-gray-500 dark:text-gray-400'
@@ -1593,16 +1848,30 @@ export default function MyWorldDashboard() {
                   {getWeekDates.map((date, index) => {
                     const singleDayEvents = getSingleDayAllDayEventsForWeekDate(date);
                     return (
-                      <div key={index} className="border-l border-gray-100 dark:border-gray-700 p-1 relative" style={{ paddingTop: `${getWeeklyMultiDayEventBars.length * 22 + 4}px` }}>
+                      <div
+                        key={index}
+                        onDragOver={handleDragOver}
+                        onDrop={(e) => handleDrop(date, e)}
+                        className={`border-l border-gray-100 dark:border-gray-700 p-1 relative ${
+                          draggingEvent ? 'hover:bg-violet-50 dark:hover:bg-violet-900/30' : ''
+                        }`}
+                        style={{ paddingTop: `${getWeeklyMultiDayEventBars.length * 22 + 4}px` }}
+                      >
                         {singleDayEvents.slice(0, 2).map((event) => (
                           <div
                             key={event.id}
+                            draggable
+                            onDragStart={(e) => handleDragStart(event, e)}
+                            onDragEnd={handleDragEnd}
                             onClick={() => {
                               setSelectedDate(date.toISOString().split('T')[0]);
                               openEventModal(event);
                             }}
-                            className="text-xs px-1 py-0.5 rounded truncate cursor-pointer hover:opacity-80 font-medium mb-0.5"
+                            className={`text-xs px-1 py-0.5 rounded truncate cursor-grab hover:opacity-80 font-medium mb-0.5 ${
+                              draggingEvent?.id === event.id ? 'opacity-50' : ''
+                            }`}
                             style={{ backgroundColor: getPastelColor(event.color), color: '#374151' }}
+                            title={`${event.title} (드래그하여 이동)`}
                           >
                             {event.title}
                           </div>
@@ -1621,7 +1890,12 @@ export default function MyWorldDashboard() {
                     return (
                       <div
                         key={`weekly-${bar.event.id}`}
-                        className="absolute text-xs truncate px-1.5 py-0.5 cursor-pointer pointer-events-auto hover:opacity-80 transition-opacity font-medium"
+                        draggable
+                        onDragStart={(e) => handleDragStart(bar.event, e)}
+                        onDragEnd={handleDragEnd}
+                        className={`absolute text-xs truncate px-1.5 py-0.5 cursor-grab pointer-events-auto hover:opacity-80 transition-opacity font-medium ${
+                          draggingEvent?.id === bar.event.id ? 'opacity-50' : ''
+                        }`}
                         style={{
                           left: `calc(${bar.startCol * colWidth}% + 2px)`,
                           width: `calc(${bar.span * colWidth}% - 4px)`,
@@ -1631,7 +1905,7 @@ export default function MyWorldDashboard() {
                           color: '#374151',
                           borderRadius: bar.isStart && bar.isEnd ? '4px' : bar.isStart ? '4px 0 0 4px' : bar.isEnd ? '0 4px 4px 0' : '0',
                         }}
-                        title={bar.event.title}
+                        title={`${bar.event.title} (드래그하여 이동)`}
                         onClick={(e) => {
                           e.stopPropagation();
                           openEventModal(bar.event);
@@ -1910,7 +2184,7 @@ export default function MyWorldDashboard() {
                               setSelectedDate(entry.date.split('T')[0]);
                               setShowDailyList(false);
                             }}
-                            className="p-3 bg-gray-50 dark:bg-gray-700/50 rounded-lg cursor-pointer hover:bg-violet-50 dark:hover:bg-violet-900/30 transition-colors"
+                            className="group p-3 bg-gray-50 dark:bg-gray-700/50 rounded-lg cursor-pointer hover:bg-violet-50 dark:hover:bg-violet-900/30 transition-colors"
                           >
                             <div className="flex items-center justify-between mb-1">
                               <span className="text-sm font-medium text-gray-900 dark:text-white">
@@ -1927,6 +2201,15 @@ export default function MyWorldDashboard() {
                                     {entry.dayScore}점
                                   </span>
                                 )}
+                                <button
+                                  onClick={(e) => deleteDailyEntry(entry.date, e)}
+                                  className="p-1 text-gray-400 hover:text-red-500 dark:hover:text-red-400 transition-colors opacity-0 group-hover:opacity-100"
+                                  title="삭제"
+                                >
+                                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                                  </svg>
+                                </button>
                               </div>
                             </div>
                             <div className="flex flex-wrap gap-1 text-xs text-gray-500 dark:text-gray-400">
