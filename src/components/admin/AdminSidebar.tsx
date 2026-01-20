@@ -98,10 +98,11 @@ export default function AdminSidebar({ user }: AdminSidebarProps) {
       {/* Sidebar */}
       <aside
         className={`
-          fixed lg:static inset-y-0 left-0 z-50
-          w-64 bg-gray-900 text-white min-h-screen flex flex-col
+          fixed inset-y-0 left-0 z-50
+          w-64 bg-gray-900 text-white h-screen flex flex-col
           transform transition-transform duration-300 ease-in-out
           ${isOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0'}
+          lg:top-0
         `}
       >
         <div className="p-4 border-b border-gray-700 flex items-center justify-between">

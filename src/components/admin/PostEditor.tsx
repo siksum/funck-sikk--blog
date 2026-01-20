@@ -52,7 +52,9 @@ interface ToolbarButton {
 export default function PostEditor({ initialData = {}, isEdit = false }: PostEditorProps) {
   const router = useRouter();
   const textareaRef = useRef<HTMLTextAreaElement>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
   const [saving, setSaving] = useState(false);
+  const [uploading, setUploading] = useState(false);
   const [activeTab, setActiveTab] = useState<'edit' | 'preview' | 'split'>('split');
   const [showTableEditor, setShowTableEditor] = useState(false);
   const [showDatabaseEditor, setShowDatabaseEditor] = useState(false);
@@ -270,6 +272,82 @@ export default function PostEditor({ initialData = {}, isEdit = false }: PostEdi
     }, 0);
   };
 
+  // Image upload function
+  const uploadImage = async (file: File) => {
+    setUploading(true);
+    try {
+      const formDataUpload = new FormData();
+      formDataUpload.append('file', file);
+
+      const response = await fetch('/api/upload', {
+        method: 'POST',
+        body: formDataUpload,
+      });
+
+      if (!response.ok) {
+        const error = await response.json();
+        throw new Error(error.error || 'Upload failed');
+      }
+
+      const data = await response.json();
+      const markdown = `![${file.name}](${data.url})`;
+      insertMarkdown(markdown);
+    } catch (error) {
+      alert(error instanceof Error ? error.message : '이미지 업로드에 실패했습니다.');
+    } finally {
+      setUploading(false);
+    }
+  };
+
+  // Handle file input change
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      uploadImage(file);
+    }
+    // Reset input
+    if (fileInputRef.current) {
+      fileInputRef.current.value = '';
+    }
+  };
+
+  // Handle paste (for clipboard images)
+  const handlePaste = (e: React.ClipboardEvent) => {
+    const items = e.clipboardData?.items;
+    if (!items) return;
+
+    for (const item of items) {
+      if (item.type.startsWith('image/')) {
+        e.preventDefault();
+        const file = item.getAsFile();
+        if (file) {
+          uploadImage(file);
+        }
+        break;
+      }
+    }
+  };
+
+  // Handle drag over
+  const handleDragOver = (e: React.DragEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+  };
+
+  // Handle drop
+  const handleDrop = (e: React.DragEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+
+    const files = e.dataTransfer?.files;
+    if (!files || files.length === 0) return;
+
+    const file = files[0];
+    if (file.type.startsWith('image/')) {
+      uploadImage(file);
+    }
+  };
+
   const toolbarButtons: ToolbarButton[] = [
     {
       icon: <span className="font-bold">B</span>,
@@ -356,8 +434,8 @@ export default function PostEditor({ initialData = {}, isEdit = false }: PostEdi
           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
         </svg>
       ),
-      label: '이미지',
-      action: () => insertText('![alt](', ')'),
+      label: '이미지 업로드',
+      action: () => fileInputRef.current?.click(),
     },
     {
       icon: (
@@ -705,7 +783,7 @@ export default function PostEditor({ initialData = {}, isEdit = false }: PostEdi
       >
         {/* Editor */}
         {(activeTab === 'edit' || activeTab === 'split') && (
-          <div>
+          <div className="relative">
             <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
               내용 (Markdown)
             </label>
@@ -743,12 +821,37 @@ export default function PostEditor({ initialData = {}, isEdit = false }: PostEdi
               </div>
             </div>
 
+            {/* Hidden file input for image upload */}
+            <input
+              ref={fileInputRef}
+              type="file"
+              accept="image/*"
+              onChange={handleFileChange}
+              className="hidden"
+            />
+
+            {/* Upload indicator */}
+            {uploading && (
+              <div className="absolute inset-0 bg-white/80 dark:bg-gray-700/80 flex items-center justify-center z-10 rounded-b-lg">
+                <div className="flex items-center gap-2 text-blue-600 dark:text-blue-400">
+                  <svg className="animate-spin w-5 h-5" fill="none" viewBox="0 0 24 24">
+                    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+                    <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
+                  </svg>
+                  <span className="text-sm font-medium">이미지 업로드 중...</span>
+                </div>
+              </div>
+            )}
+
             <textarea
               ref={textareaRef}
               value={formData.content}
               onChange={(e) => setFormData({ ...formData, content: e.target.value })}
+              onPaste={handlePaste}
+              onDragOver={handleDragOver}
+              onDrop={handleDrop}
               className="w-full h-[450px] px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-b-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500 font-mono text-sm resize-none"
-              placeholder="# 포스트 내용을 작성하세요..."
+              placeholder="# 포스트 내용을 작성하세요... (이미지를 붙여넣거나 드래그앤드롭하세요)"
             />
           </div>
         )}
