@@ -5,7 +5,7 @@ import { PrismaAdapter } from '@auth/prisma-adapter';
 import { prisma } from './db';
 
 const ADMIN_GITHUB_ID = process.env.ADMIN_GITHUB_ID;
-const ADMIN_EMAIL = process.env.ADMIN_EMAIL;
+const ADMIN_EMAIL = process.env.ADMIN_EMAIL || 'namyoung0718@gmail.com';
 
 // Build providers array dynamically based on available credentials
 const providers = [];
