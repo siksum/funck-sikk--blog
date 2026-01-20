@@ -1,4 +1,4 @@
-import { getSikkPostBySlug } from '@/lib/sikk';
+import { getSikkPostBySlugAsync } from '@/lib/sikk';
 import { notFound } from 'next/navigation';
 import SikkPostEditor from '@/components/admin/SikkPostEditor';
 import Link from 'next/link';
@@ -9,7 +9,7 @@ interface EditSikkPostPageProps {
 
 export default async function EditSikkPostPage({ params }: EditSikkPostPageProps) {
   const { slug } = await params;
-  const post = getSikkPostBySlug(slug);
+  const post = await getSikkPostBySlugAsync(slug);
 
   if (!post) {
     notFound();
