@@ -1305,6 +1305,28 @@ export default function MyWorldDashboard() {
                 {personalTodos.filter(t => t.completed).length}/{personalTodos.length}
               </span>
             </div>
+          <form
+            onSubmit={(e) => {
+              e.preventDefault();
+              addTodo('personal', newPersonalTodo);
+            }}
+            className="mb-3 flex gap-2"
+          >
+            <input
+              type="text"
+              value={newPersonalTodo}
+              onChange={(e) => setNewPersonalTodo(e.target.value)}
+              placeholder="할 일 추가..."
+              className="flex-1 text-sm px-3 py-1.5 rounded-lg border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-900 focus:outline-none focus:ring-2 focus:ring-violet-500"
+            />
+            <button
+              type="submit"
+              disabled={!newPersonalTodo.trim()}
+              className="px-3 py-1.5 text-sm bg-violet-500 text-white rounded-lg hover:bg-violet-600 disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              추가
+            </button>
+          </form>
           <div className="space-y-2 max-h-[200px] overflow-y-auto">
             {personalTodos.map((todo) => (
               <div
@@ -1339,28 +1361,6 @@ export default function MyWorldDashboard() {
               </div>
             ))}
           </div>
-          <form
-            onSubmit={(e) => {
-              e.preventDefault();
-              addTodo('personal', newPersonalTodo);
-            }}
-            className="mt-3 flex gap-2"
-          >
-            <input
-              type="text"
-              value={newPersonalTodo}
-              onChange={(e) => setNewPersonalTodo(e.target.value)}
-              placeholder="할 일 추가..."
-              className="flex-1 text-sm px-3 py-1.5 rounded-lg border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-900 focus:outline-none focus:ring-2 focus:ring-violet-500"
-            />
-            <button
-              type="submit"
-              disabled={!newPersonalTodo.trim()}
-              className="px-3 py-1.5 text-sm bg-violet-500 text-white rounded-lg hover:bg-violet-600 disabled:opacity-50 disabled:cursor-not-allowed"
-            >
-              추가
-            </button>
-          </form>
         </div>
 
         {/* Research Todo */}
@@ -1372,6 +1372,28 @@ export default function MyWorldDashboard() {
               {researchTodos.filter(t => t.completed).length}/{researchTodos.length}
             </span>
           </div>
+          <form
+            onSubmit={(e) => {
+              e.preventDefault();
+              addTodo('research', newResearchTodo);
+            }}
+            className="mb-3 flex gap-2"
+          >
+            <input
+              type="text"
+              value={newResearchTodo}
+              onChange={(e) => setNewResearchTodo(e.target.value)}
+              placeholder="할 일 추가..."
+              className="flex-1 text-sm px-3 py-1.5 rounded-lg border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-900 focus:outline-none focus:ring-2 focus:ring-pink-500"
+            />
+            <button
+              type="submit"
+              disabled={!newResearchTodo.trim()}
+              className="px-3 py-1.5 text-sm bg-pink-500 text-white rounded-lg hover:bg-pink-600 disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              추가
+            </button>
+          </form>
           <div className="space-y-2 max-h-[200px] overflow-y-auto">
             {researchTodos.map((todo) => (
               <div
@@ -1406,28 +1428,6 @@ export default function MyWorldDashboard() {
               </div>
             ))}
           </div>
-          <form
-            onSubmit={(e) => {
-              e.preventDefault();
-              addTodo('research', newResearchTodo);
-            }}
-            className="mt-3 flex gap-2"
-          >
-            <input
-              type="text"
-              value={newResearchTodo}
-              onChange={(e) => setNewResearchTodo(e.target.value)}
-              placeholder="할 일 추가..."
-              className="flex-1 text-sm px-3 py-1.5 rounded-lg border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-900 focus:outline-none focus:ring-2 focus:ring-pink-500"
-            />
-            <button
-              type="submit"
-              disabled={!newResearchTodo.trim()}
-              className="px-3 py-1.5 text-sm bg-pink-500 text-white rounded-lg hover:bg-pink-600 disabled:opacity-50 disabled:cursor-not-allowed"
-            >
-              추가
-            </button>
-          </form>
         </div>
         </div>
         )}
