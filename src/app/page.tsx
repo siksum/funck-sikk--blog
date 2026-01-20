@@ -2,12 +2,14 @@ import HeroSection from '@/components/home/HeroSection';
 import AboutPreview from '@/components/home/AboutPreview';
 import BlogShortcut from '@/components/home/BlogShortcut';
 import GithubGrass from '@/components/home/GithubGrass';
-import { getAllPosts, getAllCategories, getAllTags } from '@/lib/posts';
+import { getAllPostsAsync, getAllCategoriesAsync, getAllTagsAsync } from '@/lib/posts';
 
-export default function Home() {
-  const posts = getAllPosts();
-  const categories = getAllCategories();
-  const tags = getAllTags();
+export default async function Home() {
+  const [posts, categories, tags] = await Promise.all([
+    getAllPostsAsync(),
+    getAllCategoriesAsync(),
+    getAllTagsAsync(),
+  ]);
 
   // Extract post dates for GithubGrass
   const postDates = posts.map((post) => post.date);

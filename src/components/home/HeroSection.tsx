@@ -1,4 +1,4 @@
-import { getAllPosts } from '@/lib/posts';
+import { getAllPostsAsync } from '@/lib/posts';
 import { prisma } from '@/lib/db';
 import HeroClient from './HeroClient';
 import { unstable_noStore as noStore } from 'next/cache';
@@ -10,7 +10,7 @@ export default async function HeroSection() {
   // Disable caching to always show fresh visitor count
   noStore();
 
-  const posts = getAllPosts();
+  const posts = await getAllPostsAsync();
 
   // Get total unique visitors from DailyVisit (not page views)
   let totalVisitors = 0;

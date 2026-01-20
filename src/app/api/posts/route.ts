@@ -1,140 +1,75 @@
 import { NextRequest, NextResponse } from 'next/server';
-import fs from 'fs';
-import path from 'path';
-import matter from 'gray-matter';
-import { commitFile, getFileContent, listFiles } from '@/lib/github';
+import { prisma } from '@/lib/db';
 
-// Force dynamic rendering - no caching
 export const dynamic = 'force-dynamic';
 
-const postsDirectory = path.join(process.cwd(), 'content/posts');
-
-// Helper to check environment at runtime (not build time)
-const getEnvFlags = () => ({
-  useGithub: !!process.env.GITHUB_TOKEN,
-  isProduction: process.env.NODE_ENV === 'production' || process.env.VERCEL === '1',
-});
-
-// GET: 모든 포스트 조회
-export async function GET() {
+export async function GET(request: NextRequest) {
   try {
-    const { useGithub } = getEnvFlags();
-    const gitDirPath = 'content/posts';
+    const { searchParams } = new URL(request.url);
+    const includePrivate = searchParams.get('includePrivate') === 'true';
 
-    // Try to read from GitHub first if available
-    if (useGithub) {
-      const githubFiles = await listFiles(gitDirPath);
-      if (githubFiles && githubFiles.length > 0) {
-        const posts = await Promise.all(
-          githubFiles.map(async (filename) => {
-            const gitPath = `${gitDirPath}/${filename}`;
-            const fileContents = await getFileContent(gitPath);
-            if (!fileContents) return null;
-
-            const { data, content } = matter(fileContents);
-            return {
-              slug: filename.replace('.mdx', ''),
-              ...data,
-              content,
-            };
-          })
-        );
-
-        return NextResponse.json(posts.filter(Boolean));
-      }
-    }
-
-    // Fallback to local filesystem
-    if (!fs.existsSync(postsDirectory)) {
-      fs.mkdirSync(postsDirectory, { recursive: true });
-    }
-
-    const files = fs.readdirSync(postsDirectory).filter((f) => f.endsWith('.mdx'));
-    const posts = files.map((filename) => {
-      const filePath = path.join(postsDirectory, filename);
-      const fileContents = fs.readFileSync(filePath, 'utf8');
-      const { data, content } = matter(fileContents);
-
-      return {
-        slug: filename.replace('.mdx', ''),
-        ...data,
-        content,
-      };
+    const posts = await prisma.blogPost.findMany({
+      where: includePrivate ? {} : { isPublic: true },
+      orderBy: { date: 'desc' },
     });
 
-    return NextResponse.json(posts);
+    // Transform to match existing format
+    const formattedPosts = posts.map((post) => ({
+      slug: post.slug,
+      title: post.title,
+      description: post.description || '',
+      date: post.date.toISOString().split('T')[0],
+      category: post.category || '',
+      tags: post.tags,
+      thumbnail: post.thumbnail || undefined,
+      isPublic: post.isPublic,
+      content: post.content,
+    }));
+
+    return NextResponse.json(formattedPosts);
   } catch (error) {
     console.error('Failed to fetch posts:', error);
     return NextResponse.json({ error: 'Failed to fetch posts' }, { status: 500 });
   }
 }
 
-// POST: 새 포스트 생성
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
-    const { slug, title, description, category, tags, content, isPublic } = body;
+    const { slug, title, description, category, tags, content, date, isPublic, thumbnail } = body;
 
     if (!slug || !title) {
       return NextResponse.json({ error: 'Slug and title are required' }, { status: 400 });
     }
 
-    const gitPath = `content/posts/${slug}.mdx`;
+    // Check if post already exists
+    const existing = await prisma.blogPost.findUnique({
+      where: { slug },
+    });
 
-    // Use local date to avoid UTC timezone issues
-    const now = new Date();
-    const date = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`;
-    const frontmatter = {
-      title,
-      description: description || '',
-      date,
-      category: category || 'Uncategorized',
-      tags: tags || [],
-      isPublic: isPublic !== false, // Default to true
-    };
-
-    const fileContent = matter.stringify(content || '', frontmatter);
-    const { useGithub, isProduction } = getEnvFlags();
-
-    console.log('[POST] Environment flags:', { useGithub, isProduction, hasToken: !!process.env.GITHUB_TOKEN });
-
-    // In production/GitHub mode, skip local filesystem operations
-    if (useGithub) {
-      console.log('[POST] Attempting GitHub commit for:', gitPath);
-      const success = await commitFile(
-        { path: gitPath, content: fileContent },
-        `post: Create "${title}"`
-      );
-      if (!success) {
-        console.error('[POST] GitHub commit failed');
-        return NextResponse.json({ error: 'GitHub 커밋 실패. GITHUB_TOKEN 권한을 확인하세요.' }, { status: 500 });
-      }
-      console.log('[POST] GitHub commit successful');
-      return NextResponse.json({ success: true, slug, committed: true });
-    }
-
-    // Production without GitHub: cannot write files
-    if (isProduction) {
-      console.error('[POST] No GITHUB_TOKEN in production');
-      return NextResponse.json({
-        error: 'GITHUB_TOKEN이 설정되지 않았습니다. Vercel 환경 변수를 확인하세요.'
-      }, { status: 500 });
-    }
-
-    // Local development only - use filesystem
-    if (!fs.existsSync(postsDirectory)) {
-      fs.mkdirSync(postsDirectory, { recursive: true });
-    }
-
-    const filePath = path.join(postsDirectory, `${slug}.mdx`);
-
-    if (fs.existsSync(filePath)) {
+    if (existing) {
       return NextResponse.json({ error: 'Post already exists' }, { status: 409 });
     }
 
-    fs.writeFileSync(filePath, fileContent);
+    // Parse date
+    const postDate = date ? new Date(date) : new Date();
 
-    return NextResponse.json({ success: true, slug, committed: false });
+    // Create post in database
+    const post = await prisma.blogPost.create({
+      data: {
+        slug,
+        title,
+        description: description || '',
+        content: content || '',
+        category: category || '',
+        tags: tags || [],
+        thumbnail: thumbnail || null,
+        isPublic: isPublic !== false,
+        date: postDate,
+      },
+    });
+
+    return NextResponse.json({ success: true, slug: post.slug, id: post.id });
   } catch (error) {
     console.error('Failed to create post:', error);
     return NextResponse.json({ error: 'Failed to create post' }, { status: 500 });

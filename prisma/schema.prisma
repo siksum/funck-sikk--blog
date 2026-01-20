@@ -233,6 +233,27 @@ model SikkPost {
   @@index([isPublic])
 }
 
+// ============ BLOG POSTS ============
+
+model BlogPost {
+  id          String   @id @default(cuid())
+  slug        String   @unique
+  title       String
+  description String?
+  content     String   // MDX content
+  category    String?  // Category path (e.g., "개발/React")
+  tags        String[] @default([])
+  thumbnail   String?  // Thumbnail image URL
+  isPublic    Boolean  @default(true)
+  date        DateTime @default(now())
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@index([category])
+  @@index([date])
+  @@index([isPublic])
+}
+
 // ============ MY WORLD - DAILY TRACKER ============
 
 model DailyEntry {
