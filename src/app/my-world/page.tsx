@@ -2856,31 +2856,6 @@ export default function MyWorldDashboard() {
         </div>
       </div>
 
-      {/* Map Link */}
-      <div className="mb-8">
-        <a
-          href="/my-world/map"
-          className="block bg-white dark:bg-gray-800 p-6 rounded-2xl shadow-sm border border-violet-100 dark:border-violet-900/30 hover:border-violet-300 dark:hover:border-violet-700 transition-colors group"
-        >
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-3">
-              <span className="text-2xl">🗺️</span>
-              <div>
-                <h2 className="text-lg font-semibold text-gray-900 dark:text-white group-hover:text-violet-600 dark:group-hover:text-violet-400 transition-colors">
-                  내 지도
-                </h2>
-                <p className="text-sm text-gray-500 dark:text-gray-400">
-                  방문한 장소와 여행 기록
-                </p>
-              </div>
-            </div>
-            <svg className="w-5 h-5 text-gray-400 group-hover:text-violet-500 transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
-            </svg>
-          </div>
-        </a>
-      </div>
-
       {/* Event Modal */}
       {showEventModal && (
         <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
