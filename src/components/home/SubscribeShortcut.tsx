@@ -1,15 +1,15 @@
 'use client';
 
 import { useState } from 'react';
+import { useSession, signIn } from 'next-auth/react';
 
 export default function SubscribeShortcut() {
-  const [email, setEmail] = useState('');
+  const { data: session, status: sessionStatus } = useSession();
   const [status, setStatus] = useState<'idle' | 'loading' | 'success' | 'error'>('idle');
   const [message, setMessage] = useState('');
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!email.trim()) return;
+  const handleSubscribe = async () => {
+    if (!session?.user?.email) return;
 
     setStatus('loading');
 
@@ -17,7 +17,7 @@ export default function SubscribeShortcut() {
       const res = await fetch('/api/subscribe/email', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email }),
+        body: JSON.stringify({ email: session.user.email }),
       });
 
       const data = await res.json();
@@ -25,7 +25,6 @@ export default function SubscribeShortcut() {
       if (res.ok) {
         setStatus('success');
         setMessage(data.message || '구독해 주셔서 감사합니다!');
-        setEmail('');
       } else {
         setStatus('error');
         setMessage(data.error || '오류가 발생했습니다.');
@@ -98,7 +97,7 @@ export default function SubscribeShortcut() {
           </p>
         </div>
 
-        {/* Subscribe Form */}
+        {/* Subscribe Button */}
         <div className="w-full md:w-auto">
           {status === 'success' ? (
             <div className="flex items-center gap-2 text-green-600 dark:text-green-400 py-3">
@@ -107,30 +106,30 @@ export default function SubscribeShortcut() {
               </svg>
               <span className="font-medium">{message}</span>
             </div>
-          ) : (
-            <form onSubmit={handleSubmit} className="flex flex-col sm:flex-row gap-3">
-              <input
-                type="email"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                placeholder="your@email.com"
-                className="flex-1 min-w-[240px] px-4 py-3 rounded-xl border text-sm focus:outline-none focus:ring-2 focus:ring-violet-500 focus:border-transparent transition-all"
-                style={{
-                  background: 'var(--card-bg)',
-                  borderColor: 'var(--card-border)',
-                  color: 'var(--foreground)',
-                }}
-                disabled={status === 'loading'}
-                required
-              />
+          ) : sessionStatus === 'loading' ? (
+            <div className="py-3 text-sm" style={{ color: 'var(--foreground-muted)' }}>
+              로딩 중...
+            </div>
+          ) : session?.user?.email ? (
+            <div className="flex flex-col gap-2">
+              <p className="text-sm" style={{ color: 'var(--foreground-muted)' }}>
+                {session.user.email}
+              </p>
               <button
-                type="submit"
-                disabled={status === 'loading' || !email.trim()}
+                onClick={handleSubscribe}
+                disabled={status === 'loading'}
                 className="px-6 py-3 bg-gradient-to-r from-violet-600 to-indigo-500 text-white rounded-xl text-sm font-medium hover:from-violet-700 hover:to-indigo-600 transition-all disabled:opacity-50 disabled:cursor-not-allowed whitespace-nowrap"
               >
                 {status === 'loading' ? '구독 중...' : '구독하기'}
               </button>
-            </form>
+            </div>
+          ) : (
+            <button
+              onClick={() => signIn()}
+              className="px-6 py-3 bg-gradient-to-r from-violet-600 to-indigo-500 text-white rounded-xl text-sm font-medium hover:from-violet-700 hover:to-indigo-600 transition-all whitespace-nowrap"
+            >
+              로그인 후 구독하기
+            </button>
           )}
           {status === 'error' && (
             <p className="text-sm text-red-500 mt-2">{message}</p>
