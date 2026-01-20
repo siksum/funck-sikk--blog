@@ -33,7 +33,7 @@ const categories = [
 
 const mapContainerStyle = {
   width: '100%',
-  height: '400px',
+  height: '100%',
 };
 
 const defaultCenter = {
@@ -126,7 +126,6 @@ const darkMapStyles: google.maps.MapTypeStyle[] = [
 export default function MapPage() {
   const [locations, setLocations] = useState<MapLocation[]>([]);
   const [loading, setLoading] = useState(true);
-  const [showModal, setShowModal] = useState(false);
   const [editingLocation, setEditingLocation] = useState<MapLocation | null>(null);
   const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
   const [searchQuery, setSearchQuery] = useState('');
@@ -188,16 +187,6 @@ export default function MapPage() {
     }
   };
 
-  const onMapClick = useCallback((e: google.maps.MapMouseEvent) => {
-    if (e.latLng) {
-      setForm((prev) => ({
-        ...prev,
-        latitude: e.latLng!.lat(),
-        longitude: e.latLng!.lng(),
-      }));
-    }
-  }, []);
-
   const onAutocompleteLoad = useCallback((autocomplete: google.maps.places.Autocomplete) => {
     autocompleteRef.current = autocomplete;
   }, []);
@@ -223,6 +212,7 @@ export default function MapPage() {
 
   const saveSearchedPlace = () => {
     if (searchedPlace) {
+      setEditingLocation(null);
       setForm({
         name: searchedPlace.name,
         address: searchedPlace.address,
@@ -234,47 +224,40 @@ export default function MapPage() {
         visitDate: '',
         notes: '',
       });
-      setShowModal(true);
       setSearchedPlace(null);
       setPlaceSearchQuery('');
     }
   };
 
-  const openModal = (location?: MapLocation) => {
-    if (location) {
-      setEditingLocation(location);
-      setForm({
-        name: location.name,
-        address: location.address || '',
-        latitude: location.latitude,
-        longitude: location.longitude,
-        category: location.category,
-        tags: location.tags.join(', '),
-        rating: location.rating || 0,
-        visitDate: location.visitDate?.split('T')[0] || '',
-        notes: location.notes || '',
-      });
-      setMapCenter({ lat: location.latitude, lng: location.longitude });
-    } else {
-      setEditingLocation(null);
-      setForm({
-        name: '',
-        address: '',
-        latitude: mapCenter.lat,
-        longitude: mapCenter.lng,
-        category: '맛집',
-        tags: '',
-        rating: 0,
-        visitDate: '',
-        notes: '',
-      });
-    }
-    setShowModal(true);
+  const selectLocation = (location: MapLocation) => {
+    setEditingLocation(location);
+    setForm({
+      name: location.name,
+      address: location.address || '',
+      latitude: location.latitude,
+      longitude: location.longitude,
+      category: location.category,
+      tags: location.tags.join(', '),
+      rating: location.rating || 0,
+      visitDate: location.visitDate?.split('T')[0] || '',
+      notes: location.notes || '',
+    });
+    setMapCenter({ lat: location.latitude, lng: location.longitude });
   };
 
-  const closeModal = () => {
-    setShowModal(false);
+  const resetForm = () => {
     setEditingLocation(null);
+    setForm({
+      name: '',
+      address: '',
+      latitude: mapCenter.lat,
+      longitude: mapCenter.lng,
+      category: '맛집',
+      tags: '',
+      rating: 0,
+      visitDate: '',
+      notes: '',
+    });
     setSelectedMarker(null);
   };
 
@@ -302,7 +285,7 @@ export default function MapPage() {
 
       if (res.ok) {
         fetchLocations();
-        closeModal();
+        resetForm();
       } else {
         alert('저장에 실패했습니다');
       }
@@ -322,7 +305,7 @@ export default function MapPage() {
 
       if (res.ok) {
         fetchLocations();
-        closeModal();
+        resetForm();
       } else {
         alert('삭제에 실패했습니다');
       }
@@ -343,16 +326,10 @@ export default function MapPage() {
   );
 
   return (
-    <div className="max-w-6xl mx-auto">
+    <div className="max-w-7xl mx-auto">
       {/* Header */}
       <div className="flex items-center justify-between mb-6">
         <h1 className="text-2xl font-bold text-gray-900 dark:text-white">지도</h1>
-        <button
-          onClick={() => openModal()}
-          className="px-4 py-2 bg-violet-600 text-white rounded-lg hover:bg-violet-700 transition-colors"
-        >
-          장소 추가
-        </button>
       </div>
 
       {/* Google Places Search */}
@@ -458,212 +435,129 @@ export default function MapPage() {
         </div>
       </div>
 
-      {/* Google Map */}
-      <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-sm border border-violet-100 dark:border-violet-900/30 overflow-hidden mb-6">
-        {isLoaded ? (
-          <GoogleMap
-            mapContainerStyle={mapContainerStyle}
-            center={mapCenter}
-            zoom={12}
-            onClick={onMapClick}
-            options={{
-              streetViewControl: false,
-              mapTypeControl: false,
-              styles: mounted && theme === 'dark' ? darkMapStyles : undefined,
-            }}
-          >
-            {filteredLocations.map((location) => {
-              const catInfo = getCategoryInfo(location.category);
-              return (
+      {/* Main Content: Map + Form */}
+      <div className="flex flex-col lg:flex-row gap-6 mb-6">
+        {/* Left: Map */}
+        <div className="lg:w-1/3">
+          <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-sm border border-violet-100 dark:border-violet-900/30 overflow-hidden h-[500px]">
+            {isLoaded ? (
+              <GoogleMap
+                mapContainerStyle={mapContainerStyle}
+                center={mapCenter}
+                zoom={12}
+                onClick={(e) => {
+                  if (e.latLng) {
+                    setForm({
+                      ...form,
+                      latitude: e.latLng.lat(),
+                      longitude: e.latLng.lng(),
+                    });
+                    setMapCenter({ lat: e.latLng.lat(), lng: e.latLng.lng() });
+                  }
+                }}
+                options={{
+                  streetViewControl: false,
+                  mapTypeControl: false,
+                  styles: mounted && theme === 'dark' ? darkMapStyles : undefined,
+                }}
+              >
+                {filteredLocations.map((location) => {
+                  const catInfo = getCategoryInfo(location.category);
+                  return (
+                    <Marker
+                      key={location.id}
+                      position={{ lat: location.latitude, lng: location.longitude }}
+                      onClick={() => {
+                        setSelectedMarker(location);
+                        selectLocation(location);
+                      }}
+                      label={{
+                        text: catInfo.icon,
+                        fontSize: '20px',
+                      }}
+                    />
+                  );
+                })}
+
+                {searchedPlace && (
+                  <Marker
+                    position={{ lat: searchedPlace.lat, lng: searchedPlace.lng }}
+                    icon={{
+                      url: 'https://maps.google.com/mapfiles/ms/icons/blue-dot.png',
+                    }}
+                  />
+                )}
+
+                {/* Current form position marker */}
                 <Marker
-                  key={location.id}
-                  position={{ lat: location.latitude, lng: location.longitude }}
-                  onClick={() => setSelectedMarker(location)}
-                  label={{
-                    text: catInfo.icon,
-                    fontSize: '20px',
+                  position={{ lat: form.latitude, lng: form.longitude }}
+                  icon={{
+                    url: 'https://maps.google.com/mapfiles/ms/icons/red-dot.png',
                   }}
                 />
-              );
-            })}
 
-            {searchedPlace && (
-              <Marker
-                position={{ lat: searchedPlace.lat, lng: searchedPlace.lng }}
-                icon={{
-                  url: 'https://maps.google.com/mapfiles/ms/icons/blue-dot.png',
-                }}
-              />
-            )}
-
-            {selectedMarker && (
-              <InfoWindow
-                position={{ lat: selectedMarker.latitude, lng: selectedMarker.longitude }}
-                onCloseClick={() => setSelectedMarker(null)}
-              >
-                <div className="p-2 min-w-[150px]">
-                  <h3 className="font-semibold text-gray-900">{selectedMarker.name}</h3>
-                  {selectedMarker.address && (
-                    <p className="text-sm text-gray-500">{selectedMarker.address}</p>
-                  )}
-                  {selectedMarker.rating && (
-                    <div className="flex items-center gap-1 mt-1">
-                      {Array.from({ length: 5 }).map((_, i) => (
-                        <span
-                          key={i}
-                          className={`text-sm ${
-                            i < selectedMarker.rating! ? 'text-yellow-400' : 'text-gray-300'
-                          }`}
-                        >
-                          ★
-                        </span>
-                      ))}
+                {selectedMarker && (
+                  <InfoWindow
+                    position={{ lat: selectedMarker.latitude, lng: selectedMarker.longitude }}
+                    onCloseClick={() => setSelectedMarker(null)}
+                  >
+                    <div className="p-2 min-w-[150px]">
+                      <h3 className="font-semibold text-gray-900">{selectedMarker.name}</h3>
+                      {selectedMarker.address && (
+                        <p className="text-sm text-gray-500">{selectedMarker.address}</p>
+                      )}
+                      {selectedMarker.rating && (
+                        <div className="flex items-center gap-1 mt-1">
+                          {Array.from({ length: 5 }).map((_, i) => (
+                            <span
+                              key={i}
+                              className={`text-sm ${
+                                i < selectedMarker.rating! ? 'text-yellow-400' : 'text-gray-300'
+                              }`}
+                            >
+                              ★
+                            </span>
+                          ))}
+                        </div>
+                      )}
+                      <button
+                        onClick={() => selectLocation(selectedMarker)}
+                        className="mt-2 text-sm text-violet-600 hover:underline"
+                      >
+                        수정하기
+                      </button>
                     </div>
-                  )}
-                  <button
-                    onClick={() => openModal(selectedMarker)}
-                    className="mt-2 text-sm text-violet-600 hover:underline"
-                  >
-                    수정하기
-                  </button>
-                </div>
-              </InfoWindow>
-            )}
-          </GoogleMap>
-        ) : (
-          <div className="h-[400px] flex items-center justify-center bg-gray-100 dark:bg-gray-700">
-            <p className="text-gray-500">지도 로딩 중...</p>
-          </div>
-        )}
-      </div>
-
-      {/* Locations Grid */}
-      {loading ? (
-        <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-4">
-          {Array.from({ length: 6 }).map((_, i) => (
-            <div key={i} className="bg-white dark:bg-gray-800 rounded-xl p-4 animate-pulse">
-              <div className="h-4 bg-gray-200 dark:bg-gray-700 rounded w-3/4 mb-2"></div>
-              <div className="h-3 bg-gray-200 dark:bg-gray-700 rounded w-1/2"></div>
-            </div>
-          ))}
-        </div>
-      ) : filteredLocations.length === 0 ? (
-        <div className="text-center py-12">
-          <div className="text-6xl mb-4">📍</div>
-          <p className="text-gray-500 dark:text-gray-400">
-            {searchQuery ? '검색 결과가 없어요' : '저장된 장소가 없어요'}
-          </p>
-          <button
-            onClick={() => openModal()}
-            className="mt-4 px-4 py-2 bg-violet-600 text-white rounded-lg hover:bg-violet-700"
-          >
-            첫 장소 추가하기
-          </button>
-        </div>
-      ) : (
-        <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-4">
-          {filteredLocations.map((location) => {
-            const catInfo = getCategoryInfo(location.category);
-            return (
-              <div
-                key={location.id}
-                onClick={() => {
-                  setMapCenter({ lat: location.latitude, lng: location.longitude });
-                  setSelectedMarker(location);
-                }}
-                className="bg-white dark:bg-gray-800 rounded-xl p-4 shadow-sm border border-violet-100 dark:border-violet-900/30 cursor-pointer hover:shadow-md transition-all"
-              >
-                <div className="flex items-start gap-3">
-                  <div
-                    className="w-10 h-10 rounded-lg flex items-center justify-center text-white text-xl"
-                    style={{ backgroundColor: catInfo.color }}
-                  >
-                    {catInfo.icon}
-                  </div>
-                  <div className="flex-1 min-w-0">
-                    <h3 className="font-semibold text-gray-900 dark:text-white truncate">
-                      {location.name}
-                    </h3>
-                    {location.address && (
-                      <p className="text-sm text-gray-500 dark:text-gray-400 truncate">
-                        {location.address}
-                      </p>
-                    )}
-                    {location.rating && (
-                      <div className="flex items-center gap-1 mt-1">
-                        {Array.from({ length: 5 }).map((_, i) => (
-                          <span
-                            key={i}
-                            className={`text-sm ${
-                              i < location.rating! ? 'text-yellow-400' : 'text-gray-300'
-                            }`}
-                          >
-                            ★
-                          </span>
-                        ))}
-                      </div>
-                    )}
-                    {location.tags.length > 0 && (
-                      <div className="flex gap-1 mt-2 flex-wrap">
-                        {location.tags.slice(0, 3).map((tag) => (
-                          <span
-                            key={tag}
-                            className="px-2 py-0.5 bg-violet-100 dark:bg-violet-900/30 text-violet-700 dark:text-violet-300 rounded-full text-xs"
-                          >
-                            {tag}
-                          </span>
-                        ))}
-                      </div>
-                    )}
-                  </div>
-                </div>
+                  </InfoWindow>
+                )}
+              </GoogleMap>
+            ) : (
+              <div className="h-full flex items-center justify-center bg-gray-100 dark:bg-gray-700">
+                <p className="text-gray-500">지도 로딩 중...</p>
               </div>
-            );
-          })}
+            )}
+          </div>
+          <p className="text-xs text-gray-500 dark:text-gray-400 mt-2 text-center">
+            지도를 클릭해서 위치를 선택하세요
+          </p>
         </div>
-      )}
 
-      {/* Location Modal */}
-      {showModal && (
-        <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
-          <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-xl w-full max-w-lg max-h-[90vh] overflow-y-auto">
-            <div className="p-6 border-b border-gray-200 dark:border-gray-700">
+        {/* Right: Form */}
+        <div className="lg:w-2/3">
+          <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-sm border border-violet-100 dark:border-violet-900/30 p-6">
+            <div className="flex items-center justify-between mb-4">
               <h3 className="text-lg font-semibold text-gray-900 dark:text-white">
                 {editingLocation ? '장소 수정' : '새 장소'}
               </h3>
-            </div>
-            <div className="p-6 space-y-4">
-              {/* Mini Map for selecting location */}
-              {isLoaded && (
-                <div className="rounded-lg overflow-hidden border border-gray-200 dark:border-gray-600">
-                  <GoogleMap
-                    mapContainerStyle={{ width: '100%', height: '200px' }}
-                    center={{ lat: form.latitude, lng: form.longitude }}
-                    zoom={15}
-                    onClick={(e) => {
-                      if (e.latLng) {
-                        setForm({
-                          ...form,
-                          latitude: e.latLng.lat(),
-                          longitude: e.latLng.lng(),
-                        });
-                      }
-                    }}
-                    options={{
-                      streetViewControl: false,
-                      mapTypeControl: false,
-                      fullscreenControl: false,
-                      styles: mounted && theme === 'dark' ? darkMapStyles : undefined,
-                    }}
-                  >
-                    <Marker position={{ lat: form.latitude, lng: form.longitude }} />
-                  </GoogleMap>
-                  <p className="text-xs text-gray-500 dark:text-gray-400 p-2 bg-gray-50 dark:bg-gray-700">
-                    지도를 클릭해서 위치를 선택하세요
-                  </p>
-                </div>
+              {editingLocation && (
+                <button
+                  onClick={resetForm}
+                  className="text-sm text-gray-500 hover:text-gray-700 dark:hover:text-gray-300"
+                >
+                  새로 작성
+                </button>
               )}
-
+            </div>
+            <div className="space-y-4">
               <div>
                 <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
                   이름 *
@@ -710,17 +604,30 @@ export default function MapPage() {
                   ))}
                 </div>
               </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                  태그 (쉼표로 구분)
-                </label>
-                <input
-                  type="text"
-                  value={form.tags}
-                  onChange={(e) => setForm({ ...form, tags: e.target.value })}
-                  className="w-full px-3 py-2 rounded-lg border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
-                  placeholder="데이트, 혼밥, 뷰맛집"
-                />
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                    태그 (쉼표로 구분)
+                  </label>
+                  <input
+                    type="text"
+                    value={form.tags}
+                    onChange={(e) => setForm({ ...form, tags: e.target.value })}
+                    className="w-full px-3 py-2 rounded-lg border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
+                    placeholder="데이트, 혼밥, 뷰맛집"
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                    방문일
+                  </label>
+                  <input
+                    type="date"
+                    value={form.visitDate}
+                    onChange={(e) => setForm({ ...form, visitDate: e.target.value })}
+                    className="w-full px-3 py-2 rounded-lg border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
+                  />
+                </div>
               </div>
               <div>
                 <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
@@ -752,17 +659,6 @@ export default function MapPage() {
               </div>
               <div>
                 <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                  방문일
-                </label>
-                <input
-                  type="date"
-                  value={form.visitDate}
-                  onChange={(e) => setForm({ ...form, visitDate: e.target.value })}
-                  className="w-full px-3 py-2 rounded-lg border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
-                />
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
                   메모
                 </label>
                 <textarea
@@ -773,31 +669,105 @@ export default function MapPage() {
                   placeholder="메모"
                 />
               </div>
-            </div>
-            <div className="p-6 border-t border-gray-200 dark:border-gray-700 flex gap-3">
-              {editingLocation && (
+              <div className="flex gap-3 pt-2">
+                {editingLocation && (
+                  <button
+                    onClick={handleDelete}
+                    className="px-4 py-2 text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg"
+                  >
+                    삭제
+                  </button>
+                )}
+                <div className="flex-1" />
+                {editingLocation && (
+                  <button
+                    onClick={resetForm}
+                    className="px-4 py-2 text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg"
+                  >
+                    취소
+                  </button>
+                )}
                 <button
-                  onClick={handleDelete}
-                  className="px-4 py-2 text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg"
+                  onClick={handleSubmit}
+                  className="px-6 py-2 bg-violet-600 text-white rounded-lg hover:bg-violet-700"
                 >
-                  삭제
+                  {editingLocation ? '수정' : '저장'}
                 </button>
-              )}
-              <div className="flex-1" />
-              <button
-                onClick={closeModal}
-                className="px-4 py-2 text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg"
-              >
-                취소
-              </button>
-              <button
-                onClick={handleSubmit}
-                className="px-4 py-2 bg-violet-600 text-white rounded-lg hover:bg-violet-700"
-              >
-                저장
-              </button>
+              </div>
             </div>
           </div>
+        </div>
+      </div>
+
+      {/* Locations Grid */}
+      {loading ? (
+        <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-4">
+          {Array.from({ length: 4 }).map((_, i) => (
+            <div key={i} className="bg-white dark:bg-gray-800 rounded-xl p-4 animate-pulse">
+              <div className="h-4 bg-gray-200 dark:bg-gray-700 rounded w-3/4 mb-2"></div>
+              <div className="h-3 bg-gray-200 dark:bg-gray-700 rounded w-1/2"></div>
+            </div>
+          ))}
+        </div>
+      ) : filteredLocations.length === 0 ? (
+        <div className="text-center py-8">
+          <p className="text-gray-500 dark:text-gray-400">
+            {searchQuery ? '검색 결과가 없어요' : '저장된 장소가 없어요. 위에서 장소를 검색하거나 지도를 클릭해서 추가해보세요!'}
+          </p>
+        </div>
+      ) : (
+        <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-4">
+          {filteredLocations.map((location) => {
+            const catInfo = getCategoryInfo(location.category);
+            return (
+              <div
+                key={location.id}
+                onClick={() => {
+                  setMapCenter({ lat: location.latitude, lng: location.longitude });
+                  setSelectedMarker(location);
+                  selectLocation(location);
+                }}
+                className={`bg-white dark:bg-gray-800 rounded-xl p-4 shadow-sm border cursor-pointer hover:shadow-md transition-all ${
+                  editingLocation?.id === location.id
+                    ? 'border-violet-500 ring-2 ring-violet-500/20'
+                    : 'border-violet-100 dark:border-violet-900/30'
+                }`}
+              >
+                <div className="flex items-start gap-3">
+                  <div
+                    className="w-10 h-10 rounded-lg flex items-center justify-center text-white text-xl flex-shrink-0"
+                    style={{ backgroundColor: catInfo.color }}
+                  >
+                    {catInfo.icon}
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <h3 className="font-semibold text-gray-900 dark:text-white truncate">
+                      {location.name}
+                    </h3>
+                    {location.address && (
+                      <p className="text-sm text-gray-500 dark:text-gray-400 truncate">
+                        {location.address}
+                      </p>
+                    )}
+                    {location.rating && (
+                      <div className="flex items-center gap-1 mt-1">
+                        {Array.from({ length: 5 }).map((_, i) => (
+                          <span
+                            key={i}
+                            className={`text-xs ${
+                              i < location.rating! ? 'text-yellow-400' : 'text-gray-300'
+                            }`}
+                          >
+                            ★
+                          </span>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                </div>
+              </div>
+            );
+          })}
         </div>
       )}
     </div>
