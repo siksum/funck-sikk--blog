@@ -167,7 +167,10 @@ export default function AdminSidebar({ user }: AdminSidebarProps) {
               <p className="px-4 text-xs font-semibold text-pink-400 uppercase tracking-wider mb-2">Sikk</p>
               <ul className="space-y-2">
                 {sikkMenuItems.map((item) => {
-                  const isActive = pathname === item.href || pathname.startsWith(item.href + '/');
+                  // For /admin/sikk, only active on exact match or /admin/sikk/edit/* (not /admin/sikk/new)
+                  const isActive = item.href === '/admin/sikk'
+                    ? pathname === item.href || pathname.startsWith('/admin/sikk/edit/')
+                    : pathname === item.href;
                   return (
                     <li key={item.href}>
                       <Link

@@ -83,6 +83,12 @@ export default function PostEditor({ initialData = {}, isEdit = false }: PostEdi
   const [selectedParentCategory, setSelectedParentCategory] = useState(initialCategoryParsed.parent);
   const [selectedSubCategory, setSelectedSubCategory] = useState(initialCategoryParsed.sub);
 
+  // Get local date string to avoid UTC timezone issues
+  const getLocalDateStr = () => {
+    const now = new Date();
+    return `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`;
+  };
+
   const [formData, setFormData] = useState({
     slug: initialData.slug || '',
     title: initialData.title || '',
@@ -90,7 +96,7 @@ export default function PostEditor({ initialData = {}, isEdit = false }: PostEdi
     category: initialData.category || '',
     tags: initialData.tags?.join(', ') || '',
     content: initialData.content || '',
-    date: initialData.date || '',
+    date: initialData.date || getLocalDateStr(),
   });
 
   // Update formData.category when parent or sub category changes
@@ -763,7 +769,7 @@ export default function PostEditor({ initialData = {}, isEdit = false }: PostEdi
           </label>
           <input
             type="date"
-            value={formData.date || new Date().toISOString().split('T')[0]}
+            value={formData.date || getLocalDateStr()}
             onChange={(e) => setFormData({ ...formData, date: e.target.value })}
             className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
           />
@@ -905,35 +911,34 @@ export default function PostEditor({ initialData = {}, isEdit = false }: PostEdi
             </label>
             <div className="h-[500px] border border-gray-300 dark:border-gray-600 rounded-lg bg-gray-50 dark:bg-gray-900 overflow-y-auto">
               {formData.content || formData.title ? (
-                <div className="p-6">
+                <div className="p-6 text-gray-900 dark:text-gray-100">
                   {/* Post Header Preview */}
                   <header className="mb-6 pb-6 border-b-2 border-violet-400 dark:border-violet-500">
                     {formData.category && (
-                      <div className="flex items-center text-sm mb-3" style={{ color: 'var(--foreground)', opacity: 0.7 }}>
+                      <div className="flex items-center text-sm mb-3 text-gray-600 dark:text-gray-400">
                         <span>Blog</span>
                         <span className="mx-2">/</span>
                         <span className="text-violet-600 dark:text-violet-400">{formData.category}</span>
                       </div>
                     )}
                     {formData.title && (
-                      <h1 className="text-2xl md:text-3xl font-bold mb-3" style={{ color: 'var(--foreground)' }}>
+                      <h1 className="text-2xl md:text-3xl font-bold mb-3 text-gray-900 dark:text-white">
                         {formData.title}
                       </h1>
                     )}
                     {formData.description && (
-                      <p className="text-base mb-4" style={{ color: 'var(--foreground)', opacity: 0.8 }}>
+                      <p className="text-base mb-4 text-gray-700 dark:text-gray-300">
                         {formData.description}
                       </p>
                     )}
-                    <div className="flex flex-wrap items-center gap-3 text-sm" style={{ color: 'var(--foreground)', opacity: 0.7 }}>
+                    <div className="flex flex-wrap items-center gap-3 text-sm text-gray-600 dark:text-gray-400">
                       <time>{formData.date || new Date().toLocaleDateString('ko-KR')}</time>
                       {formData.tags && (
                         <div className="flex flex-wrap gap-2">
                           {formData.tags.split(',').filter(Boolean).map((tag, i) => (
                             <span
                               key={i}
-                              className="px-2 py-0.5 rounded text-xs"
-                              style={{ backgroundColor: 'var(--tag-bg)', color: 'var(--tag-text)' }}
+                              className="px-2 py-0.5 rounded text-xs bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-300"
                             >
                               #{tag.trim()}
                             </span>

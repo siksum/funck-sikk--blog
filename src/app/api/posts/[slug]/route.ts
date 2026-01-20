@@ -67,10 +67,13 @@ export async function PUT(
       return NextResponse.json({ error: 'Post not found' }, { status: 404 });
     }
 
+    // Use local date to avoid UTC timezone issues
+    const now = new Date();
+    const localDateStr = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`;
     const frontmatter = {
       title,
       description: description || '',
-      date: date || new Date().toISOString().split('T')[0],
+      date: date || localDateStr,
       category: category || 'Uncategorized',
       tags: tags || [],
       isPublic: isPublic !== false, // Default to true

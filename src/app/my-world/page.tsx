@@ -100,6 +100,11 @@ const getPastelColor = (color: string | null | undefined): string => {
   return colorToPastel[color.toLowerCase()] || color;
 };
 
+// Helper function to get local date string (YYYY-MM-DD) to avoid UTC timezone issues
+const getLocalDateStr = (date: Date): string => {
+  return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`;
+};
+
 const DEFAULT_EVENT_TYPES = ['일정', '기념일', '생일', '약속', '회의', '기타'];
 
 export default function MyWorldDashboard() {
@@ -201,9 +206,9 @@ export default function MyWorldDashboard() {
   const [archiveStartDate, setArchiveStartDate] = useState(() => {
     const d = new Date();
     d.setDate(d.getDate() - 7);
-    return d.toISOString().split('T')[0];
+    return getLocalDateStr(d);
   });
-  const [archiveEndDate, setArchiveEndDate] = useState(() => new Date().toISOString().split('T')[0]);
+  const [archiveEndDate, setArchiveEndDate] = useState(() => getLocalDateStr(new Date()));
   const [archiveCategory, setArchiveCategory] = useState<string>('all');
   const [archiveStatus, setArchiveStatus] = useState<string>('all');
   const [archiveSortOrder, setArchiveSortOrder] = useState<'desc' | 'asc'>('desc');
@@ -211,7 +216,7 @@ export default function MyWorldDashboard() {
   // Update archive dates when period changes
   const updateArchiveDates = (period: 'day' | 'week' | 'month' | 'custom') => {
     const now = new Date();
-    const end = now.toISOString().split('T')[0];
+    const end = getLocalDateStr(now);
     let start = end;
 
     if (period === 'day') {
@@ -219,11 +224,11 @@ export default function MyWorldDashboard() {
     } else if (period === 'week') {
       const d = new Date(now);
       d.setDate(d.getDate() - 7);
-      start = d.toISOString().split('T')[0];
+      start = getLocalDateStr(d);
     } else if (period === 'month') {
       const d = new Date(now);
       d.setMonth(d.getMonth() - 1);
-      start = d.toISOString().split('T')[0];
+      start = getLocalDateStr(d);
     }
 
     setArchivePeriod(period);
@@ -240,7 +245,7 @@ export default function MyWorldDashboard() {
   const [statsPeriod, setStatsPeriod] = useState<'daily' | 'weekly' | 'monthly'>('monthly');
 
   const today = new Date();
-  const todayStr = today.toISOString().split('T')[0];
+  const todayStr = getLocalDateStr(today);
 
   // Load custom event types from localStorage
   useEffect(() => {
@@ -386,6 +391,12 @@ export default function MyWorldDashboard() {
     }
   };
 
+  // Fetch all daily entries on initial load (for statistics)
+  useEffect(() => {
+    fetchAllDailyEntries();
+  }, []);
+
+  // Refetch when daily list is opened
   useEffect(() => {
     if (showDailyList) {
       fetchAllDailyEntries();
@@ -1078,7 +1089,7 @@ export default function MyWorldDashboard() {
   }, [dailyListWeekStart]);
 
   const getEventsForWeekDate = (date: Date) => {
-    const dateStr = date.toISOString().split('T')[0];
+    const dateStr = getLocalDateStr(date);
     return monthEvents.filter(e => {
       const eventStart = e.date.split('T')[0];
       const eventEnd = e.endDate ? e.endDate.split('T')[0] : eventStart;
@@ -1131,21 +1142,21 @@ export default function MyWorldDashboard() {
     let filteredEntries: DailyEntry[] = [];
 
     if (statsPeriod === 'daily') {
-      const todayStr = now.toISOString().split('T')[0];
+      const todayStr = getLocalDateStr(now);
       filteredEntries = allDailyEntries.filter(e => e.date === todayStr);
     } else if (statsPeriod === 'weekly') {
       const weekStart = new Date(now);
       weekStart.setDate(weekStart.getDate() - weekStart.getDay());
       const weekEnd = new Date(weekStart);
       weekEnd.setDate(weekEnd.getDate() + 6);
-      const startStr = weekStart.toISOString().split('T')[0];
-      const endStr = weekEnd.toISOString().split('T')[0];
+      const startStr = getLocalDateStr(weekStart);
+      const endStr = getLocalDateStr(weekEnd);
       filteredEntries = allDailyEntries.filter(e => e.date >= startStr && e.date <= endStr);
     } else {
       const monthStart = new Date(now.getFullYear(), now.getMonth(), 1);
       const monthEnd = new Date(now.getFullYear(), now.getMonth() + 1, 0);
-      const startStr = monthStart.toISOString().split('T')[0];
-      const endStr = monthEnd.toISOString().split('T')[0];
+      const startStr = getLocalDateStr(monthStart);
+      const endStr = getLocalDateStr(monthEnd);
       filteredEntries = allDailyEntries.filter(e => e.date >= startStr && e.date <= endStr);
     }
 
@@ -1317,7 +1328,7 @@ export default function MyWorldDashboard() {
 
   // Get single-day all-day events for weekly view
   const getSingleDayAllDayEventsForWeekDate = (date: Date) => {
-    const dateStr = date.toISOString().split('T')[0];
+    const dateStr = getLocalDateStr(date);
     return monthEvents.filter(e => {
       if (!e.isAllDay) return false;
       const eventStart = e.date.split('T')[0];
@@ -1463,7 +1474,7 @@ export default function MyWorldDashboard() {
               ) : (
                 Object.entries(
                   archiveTodos.reduce((acc, todo) => {
-                    const dateKey = new Date(todo.date).toISOString().split('T')[0];
+                    const dateKey = todo.date.split('T')[0];
                     if (!acc[dateKey]) acc[dateKey] = { personal: [], research: [] };
                     if (todo.category === 'personal') {
                       acc[dateKey].personal.push(todo);
@@ -2031,7 +2042,7 @@ export default function MyWorldDashboard() {
                   const dayOfWeek = date.getDay();
                   const isSunday = dayOfWeek === 0;
                   const isSaturday = dayOfWeek === 6;
-                  const dateStr = date.toISOString().split('T')[0];
+                  const dateStr = getLocalDateStr(date);
                   const isSelected = selectedDate === dateStr;
                   const holiday = holidays.find(h => h.date === dateStr);
                   const isHoliday = !!holiday;
@@ -2097,7 +2108,7 @@ export default function MyWorldDashboard() {
                             onDragStart={(e) => handleDragStart(event, e)}
                             onDragEnd={handleDragEnd}
                             onClick={() => {
-                              setSelectedDate(date.toISOString().split('T')[0]);
+                              setSelectedDate(getLocalDateStr(date));
                               openEventModal(event);
                             }}
                             className={`text-xs px-1 py-0.5 rounded truncate cursor-grab active:cursor-grabbing
@@ -2176,7 +2187,7 @@ export default function MyWorldDashboard() {
                   {/* Day columns */}
                   {getWeekDates.map((date, dayIndex) => {
                     const events = getEventsForWeekDate(date).filter(e => !e.isAllDay);
-                    const dateStr = date.toISOString().split('T')[0];
+                    const dateStr = getLocalDateStr(date);
 
                     return (
                       <div

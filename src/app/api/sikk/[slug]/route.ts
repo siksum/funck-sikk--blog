@@ -68,7 +68,10 @@ export async function PUT(request: NextRequest, context: RouteContext) {
     const gitPath = `content/sikk/${slug}.mdx`;
     const { useGithub, isProduction } = getEnvFlags();
 
-    const postDate = date || new Date().toISOString().split('T')[0];
+    // Use local date to avoid UTC timezone issues
+    const now = new Date();
+    const localDateStr = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`;
+    const postDate = date || localDateStr;
     const frontmatter = {
       title,
       description: description || '',
