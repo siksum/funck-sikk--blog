@@ -41,6 +41,43 @@ async function getFileSha(path: string): Promise<string | null> {
   }
 }
 
+// Read file content from GitHub
+export async function getFileContent(path: string): Promise<string | null> {
+  const { token, owner, repo, branch } = getGithubConfig();
+  if (!token) {
+    return null;
+  }
+
+  try {
+    const data = await githubApi(`/repos/${owner}/${repo}/contents/${path}?ref=${branch}`);
+    // GitHub returns base64 encoded content
+    const content = Buffer.from(data.content, 'base64').toString('utf8');
+    return content;
+  } catch {
+    return null;
+  }
+}
+
+// List files in a directory from GitHub
+export async function listFiles(dirPath: string): Promise<string[] | null> {
+  const { token, owner, repo, branch } = getGithubConfig();
+  if (!token) {
+    return null;
+  }
+
+  try {
+    const data = await githubApi(`/repos/${owner}/${repo}/contents/${dirPath}?ref=${branch}`);
+    if (Array.isArray(data)) {
+      return data
+        .filter((item: { type: string; name: string }) => item.type === 'file' && item.name.endsWith('.mdx'))
+        .map((item: { name: string }) => item.name);
+    }
+    return null;
+  } catch {
+    return null;
+  }
+}
+
 async function getLatestCommitSha(): Promise<string> {
   const { owner, repo, branch } = getGithubConfig();
   const data = await githubApi(`/repos/${owner}/${repo}/git/ref/heads/${branch}`);

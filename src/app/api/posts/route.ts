@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import fs from 'fs';
 import path from 'path';
 import matter from 'gray-matter';
-import { commitFile } from '@/lib/github';
+import { commitFile, getFileContent, listFiles } from '@/lib/github';
 
 // Force dynamic rendering - no caching
 export const dynamic = 'force-dynamic';
@@ -18,6 +18,33 @@ const getEnvFlags = () => ({
 // GET: 모든 포스트 조회
 export async function GET() {
   try {
+    const { useGithub } = getEnvFlags();
+    const gitDirPath = 'content/posts';
+
+    // Try to read from GitHub first if available
+    if (useGithub) {
+      const githubFiles = await listFiles(gitDirPath);
+      if (githubFiles && githubFiles.length > 0) {
+        const posts = await Promise.all(
+          githubFiles.map(async (filename) => {
+            const gitPath = `${gitDirPath}/${filename}`;
+            const fileContents = await getFileContent(gitPath);
+            if (!fileContents) return null;
+
+            const { data, content } = matter(fileContents);
+            return {
+              slug: filename.replace('.mdx', ''),
+              ...data,
+              content,
+            };
+          })
+        );
+
+        return NextResponse.json(posts.filter(Boolean));
+      }
+    }
+
+    // Fallback to local filesystem
     if (!fs.existsSync(postsDirectory)) {
       fs.mkdirSync(postsDirectory, { recursive: true });
     }
@@ -37,6 +64,7 @@ export async function GET() {
 
     return NextResponse.json(posts);
   } catch (error) {
+    console.error('Failed to fetch posts:', error);
     return NextResponse.json({ error: 'Failed to fetch posts' }, { status: 500 });
   }
 }

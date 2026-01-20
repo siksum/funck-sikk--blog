@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import fs from 'fs';
 import path from 'path';
 import matter from 'gray-matter';
-import { commitFile, deleteFile } from '@/lib/github';
+import { commitFile, deleteFile, getFileContent } from '@/lib/github';
 
 // Force dynamic rendering - no caching
 export const dynamic = 'force-dynamic';
@@ -22,17 +22,30 @@ export async function GET(
 ) {
   try {
     const { slug } = await params;
+    const { useGithub } = getEnvFlags();
+    const gitPath = `content/posts/${slug}.mdx`;
     const filePath = path.join(postsDirectory, `${slug}.mdx`);
 
-    if (!fs.existsSync(filePath)) {
-      return NextResponse.json({ error: 'Post not found' }, { status: 404 });
+    let fileContents: string | null = null;
+
+    // Try to read from GitHub first if available
+    if (useGithub) {
+      fileContents = await getFileContent(gitPath);
     }
 
-    const fileContents = fs.readFileSync(filePath, 'utf8');
+    // Fallback to local filesystem
+    if (!fileContents) {
+      if (!fs.existsSync(filePath)) {
+        return NextResponse.json({ error: 'Post not found' }, { status: 404 });
+      }
+      fileContents = fs.readFileSync(filePath, 'utf8');
+    }
+
     const { data, content } = matter(fileContents);
 
     return NextResponse.json({ slug, ...data, content });
   } catch (error) {
+    console.error('Failed to fetch post:', error);
     return NextResponse.json({ error: 'Failed to fetch post' }, { status: 500 });
   }
 }
