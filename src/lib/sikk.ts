@@ -271,3 +271,144 @@ export async function getAdjacentSikkPostsAsync(currentSlug: string): Promise<{ 
 export async function getSikkPostsByTagAsync(tag: string): Promise<Post[]> {
   return getSikkPostsByTag(tag);
 }
+
+// Category helper functions
+export function getSikkCategoryBySlugPath(slugPath: string[]): CategoryTreeNode | null {
+  const tree = buildSikkCategoryTree();
+  let current = tree;
+
+  for (const slug of slugPath) {
+    if (!current.children[slug]) {
+      return null;
+    }
+    current = current.children[slug];
+  }
+
+  return current;
+}
+
+export function getAllSikkCategoriesHierarchical(): Category[] {
+  const tree = buildSikkCategoryTree();
+  const categories: Category[] = [];
+
+  function traverse(node: CategoryTreeNode, depth: number = 0) {
+    Object.values(node.children).forEach((child) => {
+      const childCategories = Object.values(child.children);
+      categories.push({
+        name: child.name,
+        slug: child.slug,
+        count: child.count,
+        path: child.path,
+        slugPath: child.slugPath,
+        depth,
+        children:
+          childCategories.length > 0
+            ? childCategories.map((c) => ({
+                name: c.name,
+                slug: c.slug,
+                count: c.count,
+                path: c.path,
+                slugPath: c.slugPath,
+                depth: depth + 1,
+              }))
+            : undefined,
+      });
+      traverse(child, depth + 1);
+    });
+  }
+
+  traverse(tree);
+  return categories;
+}
+
+export function getSikkPostsByCategoryPath(
+  slugPath: string[],
+  includeChildren: boolean = true
+): Post[] {
+  const posts = getAllSikkPosts();
+
+  return posts.filter((post) => {
+    if (includeChildren) {
+      return slugPath.every((slug, index) => post.categorySlugPath[index] === slug);
+    } else {
+      return (
+        post.categorySlugPath.length === slugPath.length &&
+        slugPath.every((slug, index) => post.categorySlugPath[index] === slug)
+      );
+    }
+  });
+}
+
+export function getSikkChildCategories(slugPath: string[]): Category[] {
+  const category = getSikkCategoryBySlugPath(slugPath);
+  if (!category) return [];
+
+  return Object.values(category.children)
+    .map((child) => ({
+      name: child.name,
+      slug: child.slug,
+      count: child.count,
+      path: child.path,
+      slugPath: child.slugPath,
+      depth: slugPath.length,
+    }))
+    .sort((a, b) => a.name.localeCompare(b.name, 'ko'));
+}
+
+export function getSikkChildCategoriesWithTags(slugPath: string[]): {
+  name: string;
+  count: number;
+  tags: string[];
+  slugPath: string[];
+}[] {
+  const childCategories = getSikkChildCategories(slugPath);
+  const posts = getAllSikkPosts();
+
+  return childCategories
+    .map((cat) => {
+      const categoryPosts = posts.filter((post) =>
+        cat.slugPath.every((slug, index) => post.categorySlugPath[index] === slug)
+      );
+      const tagSet = new Set<string>();
+      categoryPosts.forEach((post) => {
+        post.tags.forEach((tag) => tagSet.add(tag));
+      });
+
+      return {
+        name: cat.name,
+        count: cat.count,
+        tags: Array.from(tagSet),
+        slugPath: cat.slugPath,
+      };
+    })
+    .sort((a, b) => a.name.localeCompare(b.name, 'ko'));
+}
+
+// Async versions of new functions
+export async function getSikkCategoryBySlugPathAsync(slugPath: string[]): Promise<CategoryTreeNode | null> {
+  return getSikkCategoryBySlugPath(slugPath);
+}
+
+export async function getAllSikkCategoriesHierarchicalAsync(): Promise<Category[]> {
+  return getAllSikkCategoriesHierarchical();
+}
+
+export async function getSikkPostsByCategoryPathAsync(
+  slugPath: string[],
+  includeChildren: boolean = true
+): Promise<Post[]> {
+  return getSikkPostsByCategoryPath(slugPath, includeChildren);
+}
+
+export async function getSikkChildCategoriesAsync(slugPath: string[]): Promise<Category[]> {
+  return getSikkChildCategories(slugPath);
+}
+
+export async function getSikkChildCategoriesWithTagsAsync(slugPath: string[]): Promise<{
+  name: string;
+  count: number;
+  tags: string[];
+  slugPath: string[];
+}[]> {
+  return getSikkChildCategoriesWithTags(slugPath);
+}
