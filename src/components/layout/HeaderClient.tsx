@@ -12,12 +12,12 @@ import SearchModal from '@/components/search/SearchModal';
 
 const publicNavigation: NavItem[] = [
   {
-    label: 'Blog',
-    href: '/blog',
-  },
-  {
     label: 'About',
     href: '/about',
+  },
+  {
+    label: 'Blog',
+    href: '/blog',
   },
 ];
 
