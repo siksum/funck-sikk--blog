@@ -10,18 +10,25 @@ import ThemeToggle from '@/components/ui/ThemeToggle';
 import HeaderStatus from '@/components/ui/HeaderStatus';
 import SearchModal from '@/components/search/SearchModal';
 
-const navigation: NavItem[] = [
+const publicNavigation: NavItem[] = [
   {
     label: 'Blog',
     href: '/blog',
   },
   {
+    label: 'About',
+    href: '/about',
+  },
+];
+
+const adminNavigation: NavItem[] = [
+  {
     label: 'Sikk',
     href: '/sikk',
   },
   {
-    label: 'About',
-    href: '/about',
+    label: 'My World',
+    href: '/my-world',
   },
 ];
 
@@ -45,7 +52,7 @@ export default function HeaderClient({ posts }: HeaderClientProps) {
       }}
     >
       <div className="w-full px-4 sm:px-6 lg:px-12 xl:px-16">
-        <div className="flex justify-between items-center h-16">
+        <div className="flex items-center h-16">
           {/* Logo */}
           <Link href="/" className="flex items-center space-x-2 group">
             <span className="text-xl font-bold">
@@ -60,9 +67,9 @@ export default function HeaderClient({ posts }: HeaderClientProps) {
             </span>
           </Link>
 
-          {/* Desktop Navigation */}
-          <nav className="hidden md:flex items-center space-x-2">
-            {navigation.map((item) => (
+          {/* Desktop Navigation - Centered */}
+          <nav className="hidden md:flex flex-1 justify-center items-center space-x-2">
+            {publicNavigation.map((item) => (
               <Link
                 key={item.href}
                 href={item.href}
@@ -71,14 +78,15 @@ export default function HeaderClient({ posts }: HeaderClientProps) {
                 {item.label}
               </Link>
             ))}
-            {session?.user?.isAdmin && (
+            {session?.user?.isAdmin && adminNavigation.map((item) => (
               <Link
-                href="/my-world"
+                key={item.href}
+                href={item.href}
                 className="nav-link px-3 py-2 rounded-lg text-sm font-medium transition-all hover:bg-violet-100 dark:hover:bg-violet-500/20"
               >
-                My World
+                {item.label}
               </Link>
-            )}
+            ))}
           </nav>
 
           {/* Actions */}
@@ -219,7 +227,7 @@ export default function HeaderClient({ posts }: HeaderClientProps) {
         {/* Mobile Navigation */}
         {isMenuOpen && (
           <nav className="md:hidden py-4 border-t" style={{ borderColor: 'var(--card-border)' }}>
-            {navigation.map((item) => (
+            {publicNavigation.map((item) => (
               <Link
                 key={item.href}
                 href={item.href}
@@ -229,15 +237,16 @@ export default function HeaderClient({ posts }: HeaderClientProps) {
                 {item.label}
               </Link>
             ))}
-            {session?.user?.isAdmin && (
+            {session?.user?.isAdmin && adminNavigation.map((item) => (
               <Link
-                href="/my-world"
+                key={item.href}
+                href={item.href}
                 className="nav-link block py-3 px-2 rounded-lg transition-all hover:bg-violet-100 dark:hover:bg-violet-500/20"
                 onClick={() => setIsMenuOpen(false)}
               >
-                My World
+                {item.label}
               </Link>
-            )}
+            ))}
           </nav>
         )}
       </div>
