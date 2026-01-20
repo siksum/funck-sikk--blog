@@ -977,11 +977,16 @@ export default function MyWorldDashboard() {
   };
 
   const removeEventType = (type: string) => {
-    if (DEFAULT_EVENT_TYPES.includes(type)) {
-      alert('기본 유형은 삭제할 수 없습니다');
+    if (eventTypes.length <= 1) {
+      alert('최소 1개의 유형이 필요합니다');
       return;
     }
-    saveEventTypes(eventTypes.filter(t => t !== type));
+    const newTypes = eventTypes.filter(t => t !== type);
+    saveEventTypes(newTypes);
+    // If the deleted type was selected, reset to the first available type
+    if (eventForm.type === type && newTypes.length > 0) {
+      setEventForm({ ...eventForm, type: newTypes[0] });
+    }
   };
 
   const formatEventTime = (event: CalendarEvent) => {
@@ -1465,7 +1470,7 @@ export default function MyWorldDashboard() {
                     {statusConfig.label}
                   </button>
                   <span className={`flex-1 text-sm ${status === 'completed' ? 'line-through text-gray-400' : 'text-gray-700 dark:text-gray-300'}`}>
-                    {todo.content}
+                    • {todo.content}
                   </span>
                   <button
                     onClick={() => deleteTodo(todo.id, 'personal')}
@@ -1529,7 +1534,7 @@ export default function MyWorldDashboard() {
                     {statusConfig.label}
                   </button>
                   <span className={`flex-1 text-sm ${status === 'completed' ? 'line-through text-gray-400' : 'text-gray-700 dark:text-gray-300'}`}>
-                    {todo.content}
+                    • {todo.content}
                   </span>
                   <button
                     onClick={() => deleteTodo(todo.id, 'research')}
@@ -1884,23 +1889,16 @@ export default function MyWorldDashboard() {
                 </div>
 
                 {/* Legend */}
-                <div className="mt-3 flex items-center gap-4 text-xs text-gray-500 dark:text-gray-400 flex-shrink-0">
-                  <div className="flex items-center gap-1">
-                    <div className="w-2 h-2 rounded-full bg-green-500" />
-                    <span>좋음 (8+)</span>
-                  </div>
-                  <div className="flex items-center gap-1">
-                    <div className="w-2 h-2 rounded-full bg-yellow-400" />
-                    <span>보통 (4-7)</span>
-                  </div>
-                  <div className="flex items-center gap-1">
-                    <div className="w-2 h-2 rounded-full bg-red-400" />
-                    <span>나쁨 (1-3)</span>
-                  </div>
-                  <div className="flex items-center gap-1">
-                    <div className="w-1.5 h-1.5 rounded-full bg-violet-500" />
-                    <span>일정</span>
-                  </div>
+                <div className="mt-3 flex items-center gap-4 text-xs text-gray-500 dark:text-gray-400 flex-shrink-0 flex-wrap">
+                  {eventTypes.slice(0, 7).map((type, index) => (
+                    <div key={type} className="flex items-center gap-1">
+                      <div
+                        className="w-2 h-2 rounded-full"
+                        style={{ backgroundColor: eventColors[index % eventColors.length].value }}
+                      />
+                      <span>{type}</span>
+                    </div>
+                  ))}
                 </div>
               </>
             ) : (
@@ -1999,37 +1997,40 @@ export default function MyWorldDashboard() {
                   })}
                 </div>
                 {/* Multi-day event bars overlay */}
-                <div className="absolute top-0 left-0 right-0 pointer-events-none" style={{ paddingLeft: 'calc(14.285714% + 0px)' }}>
-                  {getWeeklyMultiDayEventBars.map((bar, barIndex) => {
-                    const colWidth = 100 / 7;
-                    return (
-                      <div
-                        key={`weekly-${bar.event.id}`}
-                        draggable
-                        onDragStart={(e) => handleDragStart(bar.event, e)}
-                        onDragEnd={handleDragEnd}
-                        className={`absolute text-xs truncate px-1.5 py-0.5 cursor-grab pointer-events-auto hover:opacity-80 transition-opacity font-medium ${
-                          draggingEvent?.id === bar.event.id ? 'opacity-50' : ''
-                        }`}
-                        style={{
-                          left: `calc(${bar.startCol * colWidth}% + 2px)`,
-                          width: `calc(${bar.span * colWidth}% - 4px)`,
-                          top: `${4 + barIndex * 22}px`,
-                          height: '20px',
-                          backgroundColor: getPastelColor(bar.event.color),
-                          color: '#374151',
-                          borderRadius: bar.isStart && bar.isEnd ? '4px' : bar.isStart ? '4px 0 0 4px' : bar.isEnd ? '0 4px 4px 0' : '0',
-                        }}
-                        title={`${bar.event.title} (드래그하여 이동)`}
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          openEventModal(bar.event);
-                        }}
-                      >
-                        {bar.isStart && bar.event.title}
-                      </div>
-                    );
-                  })}
+                <div className="absolute top-0 left-0 right-0 pointer-events-none grid grid-cols-8">
+                  <div className="w-14"></div>
+                  <div className="col-span-7 relative">
+                    {getWeeklyMultiDayEventBars.map((bar, barIndex) => {
+                      const colWidth = 100 / 7;
+                      return (
+                        <div
+                          key={`weekly-${bar.event.id}`}
+                          draggable
+                          onDragStart={(e) => handleDragStart(bar.event, e)}
+                          onDragEnd={handleDragEnd}
+                          className={`absolute text-xs truncate px-1.5 py-0.5 cursor-grab pointer-events-auto hover:opacity-80 transition-opacity font-medium ${
+                            draggingEvent?.id === bar.event.id ? 'opacity-50' : ''
+                          }`}
+                          style={{
+                            left: `calc(${bar.startCol * colWidth}% + 2px)`,
+                            width: `calc(${bar.span * colWidth}% - 4px)`,
+                            top: `${4 + barIndex * 22}px`,
+                            height: '20px',
+                            backgroundColor: getPastelColor(bar.event.color),
+                            color: '#374151',
+                            borderRadius: bar.isStart && bar.isEnd ? '4px' : bar.isStart ? '4px 0 0 4px' : bar.isEnd ? '0 4px 4px 0' : '0',
+                          }}
+                          title={`${bar.event.title} (드래그하여 이동)`}
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            openEventModal(bar.event);
+                          }}
+                        >
+                          {bar.isStart && bar.event.title}
+                        </div>
+                      );
+                    })}
+                  </div>
                 </div>
               </div>
 
@@ -2928,7 +2929,7 @@ export default function MyWorldDashboard() {
                       </button>
                     </div>
                     <div className="flex flex-wrap gap-1">
-                      {eventTypes.filter(t => !DEFAULT_EVENT_TYPES.includes(t)).map((type) => (
+                      {eventTypes.map((type) => (
                         <span
                           key={type}
                           className="inline-flex items-center gap-1 px-2 py-0.5 bg-gray-200 dark:bg-gray-600 rounded-full text-xs"
