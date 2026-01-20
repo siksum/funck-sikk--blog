@@ -4,6 +4,7 @@ import { useState } from 'react';
 import Link from 'next/link';
 import { Post, Category } from '@/types';
 import PostCard from '@/components/post/PostCard';
+import SubscribeForm from '@/components/subscribe/SubscribeForm';
 
 interface DBSection {
   id: string;
@@ -229,7 +230,7 @@ export default function Sidebar({
         </div>
       </div>
 
-      {/* Tags Cloud - Last */}
+      {/* Tags Cloud */}
       <div
         className="rounded-2xl backdrop-blur-xl border p-5"
         style={{ background: 'var(--card-bg)', borderColor: 'var(--card-border)' }}
@@ -257,6 +258,9 @@ export default function Sidebar({
           </Link>
         )}
       </div>
+
+      {/* Subscribe Form */}
+      <SubscribeForm />
     </aside>
   );
 }
