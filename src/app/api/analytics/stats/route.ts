@@ -185,47 +185,62 @@ export async function GET(request: NextRequest) {
     return result;
   };
 
-  // For weekly view: show all days from start of week to today
+  // For weekly view: aggregate by weeks within the current month
   const fillWeeklyData = () => {
-    const dataMap = new Map(dailyData.map(d => [d.date.toISOString().split('T')[0], d.count]));
-    const result = [];
-    // Start from the beginning of the week (Monday = 1, Sunday = 0)
-    const weekStart = new Date(today);
-    const dayOfWeek = weekStart.getDay();
-    // Adjust to Monday (if Sunday, go back 6 days; otherwise go back (dayOfWeek - 1) days)
-    const daysToSubtract = dayOfWeek === 0 ? 6 : dayOfWeek - 1;
-    weekStart.setDate(weekStart.getDate() - daysToSubtract);
-    weekStart.setUTCHours(0, 0, 0, 0);
+    const currentMonth = today.getMonth();
+    const currentYear = today.getFullYear();
 
-    const current = new Date(weekStart);
-    while (current <= today) {
-      const dateStr = current.toISOString().split('T')[0];
-      result.push({
-        date: new Date(current),
-        count: dataMap.get(dateStr) || 0,
-      });
-      current.setDate(current.getDate() + 1);
-    }
-    return result;
+    // Get number of weeks in current month
+    const firstDay = new Date(currentYear, currentMonth, 1);
+    const lastDay = new Date(currentYear, currentMonth + 1, 0);
+    const totalWeeks = Math.ceil((lastDay.getDate() + firstDay.getDay()) / 7);
+
+    // Aggregate daily data by week of month
+    const weekTotals: number[] = new Array(totalWeeks).fill(0);
+
+    dailyData.forEach(d => {
+      const date = new Date(d.date);
+      if (date.getMonth() === currentMonth && date.getFullYear() === currentYear) {
+        // Calculate which week of the month this date falls into (0-indexed)
+        const weekOfMonth = Math.floor((date.getDate() - 1 + firstDay.getDay()) / 7);
+        if (weekOfMonth < totalWeeks) {
+          weekTotals[weekOfMonth] += d.count;
+        }
+      }
+    });
+
+    // Get current week of month to limit display
+    const currentWeekOfMonth = Math.floor((today.getDate() - 1 + firstDay.getDay()) / 7);
+
+    // Return only weeks up to current week
+    return weekTotals.slice(0, currentWeekOfMonth + 1).map((count, index) => ({
+      date: new Date(currentYear, currentMonth, 1),
+      count,
+      week: index + 1,
+    }));
   };
 
-  // For monthly view: show all days from start of month to today
+  // For monthly view: aggregate by months within the current year
   const fillMonthlyData = () => {
-    const dataMap = new Map(dailyData.map(d => [d.date.toISOString().split('T')[0], d.count]));
-    const result = [];
-    const monthStart = new Date(today.getFullYear(), today.getMonth(), 1);
-    monthStart.setUTCHours(0, 0, 0, 0);
+    const currentYear = today.getFullYear();
+    const currentMonth = today.getMonth();
 
-    const current = new Date(monthStart);
-    while (current <= today) {
-      const dateStr = current.toISOString().split('T')[0];
-      result.push({
-        date: new Date(current),
-        count: dataMap.get(dateStr) || 0,
-      });
-      current.setDate(current.getDate() + 1);
-    }
-    return result;
+    // Aggregate daily data by month
+    const monthTotals: number[] = new Array(12).fill(0);
+
+    dailyData.forEach(d => {
+      const date = new Date(d.date);
+      if (date.getFullYear() === currentYear) {
+        monthTotals[date.getMonth()] += d.count;
+      }
+    });
+
+    // Return only months up to current month
+    return monthTotals.slice(0, currentMonth + 1).map((count, index) => ({
+      date: new Date(currentYear, index, 1),
+      count,
+      month: index + 1,
+    }));
   };
 
   return NextResponse.json({
@@ -235,8 +250,8 @@ export async function GET(request: NextRequest) {
     thisMonth: thisMonthTotal,
     totalViews: totalVisitorsResult._sum.count || 0,
     daily: fillDailyData().map(d => ({ date: d.date, count: d.count })),
-    weekly: fillWeeklyData().map(d => ({ date: d.date, count: d.count })),
-    monthly: fillMonthlyData().map(d => ({ date: d.date, count: d.count })),
+    weekly: fillWeeklyData().map(d => ({ date: d.date, count: d.count, week: d.week })),
+    monthly: fillMonthlyData().map(d => ({ date: d.date, count: d.count, month: d.month })),
     topPosts: topPosts.map((p) => ({ slug: p.slug, count: p._count.slug })),
     recentVisitors: recentVisitors.map(v => ({
       path: v.path,
