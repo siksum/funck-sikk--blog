@@ -170,8 +170,15 @@ export default function MapPage() {
 
   // Remove category
   const removeCategory = (value: string) => {
-    if (defaultCategories.some(c => c.value === value)) return; // Can't remove default
+    if (categories.length <= 1) return; // Keep at least one category
     setCategories(categories.filter(c => c.value !== value));
+    // If current form category is removed, set to first available
+    if (form.category === value) {
+      const remaining = categories.filter(c => c.value !== value);
+      if (remaining.length > 0) {
+        setForm(prev => ({ ...prev, category: remaining[0].value }));
+      }
+    }
   };
 
   // Extract unique tags and regions from all locations
@@ -891,7 +898,7 @@ export default function MapPage() {
                     >
                       <span>{cat.icon}</span>
                       <span className="text-gray-700 dark:text-gray-300">{cat.value}</span>
-                      {showCategoryEditor && !defaultCategories.some(c => c.value === cat.value) && (
+                      {showCategoryEditor && categories.length > 1 && (
                         <span
                           onClick={(e) => {
                             e.stopPropagation();
