@@ -2,7 +2,7 @@ import HeroSection from '@/components/home/HeroSection';
 import AboutPreview from '@/components/home/AboutPreview';
 import BlogShortcut from '@/components/home/BlogShortcut';
 import GithubGrass from '@/components/home/GithubGrass';
-// import SubscribeForm from '@/components/subscribe/SubscribeForm';
+import SubscribeShortcut from '@/components/home/SubscribeShortcut';
 import { getAllPosts, getAllCategories, getAllTags } from '@/lib/posts';
 
 export default function Home() {
@@ -30,11 +30,8 @@ export default function Home() {
         {/* GitHub Grass */}
         <GithubGrass postDates={postDates} />
 
-        {/* Subscribe Section - 임시 비활성화
-        <div className="mt-4">
-          <SubscribeForm />
-        </div>
-        */}
+        {/* Subscribe Section */}
+        <SubscribeShortcut />
       </div>
     </>
   );
