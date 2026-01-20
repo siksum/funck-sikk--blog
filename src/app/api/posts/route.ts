@@ -72,20 +72,26 @@ export async function POST(request: NextRequest) {
     const fileContent = matter.stringify(content || '', frontmatter);
     const { useGithub, isProduction } = getEnvFlags();
 
+    console.log('[POST] Environment flags:', { useGithub, isProduction, hasToken: !!process.env.GITHUB_TOKEN });
+
     if (useGithub) {
+      console.log('[POST] Attempting GitHub commit for:', gitPath);
       const success = await commitFile(
         { path: gitPath, content: fileContent },
         `post: Create "${title}"`
       );
       if (!success) {
+        console.error('[POST] GitHub commit failed');
         return NextResponse.json({ error: 'GitHub 커밋 실패. GITHUB_TOKEN 권한을 확인하세요.' }, { status: 500 });
       }
+      console.log('[POST] GitHub commit successful');
       // GitHub mode: skip local file write (Vercel has read-only filesystem)
       return NextResponse.json({ success: true, slug, committed: true });
     }
 
     // Production without GitHub: cannot write files
     if (isProduction) {
+      console.error('[POST] No GITHUB_TOKEN in production');
       return NextResponse.json({
         error: 'GITHUB_TOKEN이 설정되지 않았습니다. Vercel 환경 변수를 확인하세요.'
       }, { status: 500 });

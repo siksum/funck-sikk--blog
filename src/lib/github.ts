@@ -55,13 +55,16 @@ async function getTreeSha(commitSha: string): Promise<string> {
 
 export async function commitFile(file: GitHubFile, message: string): Promise<boolean> {
   const { token, owner, repo, branch } = getGithubConfig();
+  console.log('[commitFile] Config:', { hasToken: !!token, owner, repo, branch, path: file.path });
+
   if (!token) {
-    console.error('GITHUB_TOKEN is not set');
+    console.error('[commitFile] GITHUB_TOKEN is not set');
     return false;
   }
 
   try {
     const existingSha = await getFileSha(file.path);
+    console.log('[commitFile] Existing SHA:', existingSha);
     const encodedContent = Buffer.from(file.content).toString('base64');
 
     await githubApi(`/repos/${owner}/${repo}/contents/${file.path}`, {
@@ -74,9 +77,10 @@ export async function commitFile(file: GitHubFile, message: string): Promise<boo
       }),
     });
 
+    console.log('[commitFile] Success');
     return true;
   } catch (error) {
-    console.error('Failed to commit file:', error);
+    console.error('[commitFile] Failed:', error);
     return false;
   }
 }
