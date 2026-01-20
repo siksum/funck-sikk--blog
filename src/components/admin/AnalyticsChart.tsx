@@ -5,6 +5,8 @@ import { useState } from 'react';
 interface DataPoint {
   date: string;
   count: number;
+  week?: number;
+  month?: number;
 }
 
 interface AnalyticsChartProps {
@@ -30,13 +32,13 @@ export default function AnalyticsChart({ data, viewMode }: AnalyticsChartProps) 
   const graphWidth = chartWidth - padding.left - padding.right;
   const graphHeight = chartHeight - padding.top - padding.bottom;
 
-  const formatDate = (dateStr: string) => {
-    const date = new Date(dateStr);
-    if (viewMode === 'monthly') {
-      return `${date.getMonth() + 1}월`;
-    } else if (viewMode === 'weekly') {
-      return `${date.getMonth() + 1}/${date.getDate()}`;
+  const formatLabel = (point: DataPoint) => {
+    if (viewMode === 'monthly' && point.month !== undefined) {
+      return `${point.month}월`;
+    } else if (viewMode === 'weekly' && point.week !== undefined) {
+      return `${point.week}주`;
     }
+    const date = new Date(point.date);
     return `${date.getMonth() + 1}/${date.getDate()}`;
   };
 
@@ -58,8 +60,8 @@ export default function AnalyticsChart({ data, viewMode }: AnalyticsChartProps) 
   // Generate Y-axis labels
   const yAxisLabels = [0, Math.round(maxCount / 4), Math.round(maxCount / 2), Math.round((maxCount * 3) / 4), maxCount];
 
-  // Generate X-axis labels (show every few labels to avoid crowding)
-  const xLabelStep = Math.ceil(data.length / 8);
+  // Generate X-axis labels (show all labels for weekly/monthly, every few for daily)
+  const xLabelStep = (viewMode === 'weekly' || viewMode === 'monthly') ? 1 : Math.ceil(data.length / 8);
 
   return (
     <div className="h-64 w-full">
@@ -166,7 +168,7 @@ export default function AnalyticsChart({ data, viewMode }: AnalyticsChartProps) 
               className="text-xs fill-gray-500 dark:fill-gray-400"
               style={{ fontSize: '10px' }}
             >
-              {formatDate(point.date)}
+              {formatLabel(point)}
             </text>
           );
         })}

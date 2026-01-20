@@ -7,6 +7,8 @@ import AnalyticsChart from '@/components/admin/AnalyticsChart';
 interface DataPoint {
   date: string;
   count: number;
+  week?: number;
+  month?: number;
 }
 
 interface TopPost {
