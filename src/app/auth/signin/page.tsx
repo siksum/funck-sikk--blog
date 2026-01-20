@@ -37,7 +37,17 @@ function SignInContent() {
   // Auto-trigger login if redirected after signout
   useEffect(() => {
     const provider = searchParams.get('provider');
+
+    // If already logged in and on signin page, redirect to home
+    if (session && status === 'authenticated') {
+      window.location.href = callbackUrl;
+      return;
+    }
+
+    // Auto-trigger login only when unauthenticated and provider param exists
     if (provider && !session && status === 'unauthenticated') {
+      // Clear the URL params first to prevent loops
+      window.history.replaceState({}, '', '/auth/signin');
       // Small delay to ensure session is fully cleared
       const timer = setTimeout(() => {
         signIn(provider, { callbackUrl });

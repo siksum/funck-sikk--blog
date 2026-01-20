@@ -2,11 +2,20 @@
 
 import Link from 'next/link';
 import { useSearchParams } from 'next/navigation';
-import { Suspense } from 'react';
+import { Suspense, useEffect } from 'react';
+import { useSession } from 'next-auth/react';
 
 function ErrorContent() {
+  const { data: session, status } = useSession();
   const searchParams = useSearchParams();
   const error = searchParams.get('error');
+
+  // If user is already logged in, redirect to home
+  useEffect(() => {
+    if (session && status === 'authenticated') {
+      window.location.href = '/';
+    }
+  }, [session, status]);
 
   const errorMessages: Record<string, string> = {
     Configuration: '서버 설정 오류가 발생했습니다.',
@@ -16,6 +25,24 @@ function ErrorContent() {
   };
 
   const message = errorMessages[error || ''] || errorMessages.Default;
+
+  // Show loading while checking session
+  if (status === 'loading') {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <div style={{ color: 'var(--foreground)', opacity: 0.5 }}>확인 중...</div>
+      </div>
+    );
+  }
+
+  // If authenticated, will redirect (handled by useEffect)
+  if (session) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <div style={{ color: 'var(--foreground)', opacity: 0.5 }}>홈으로 이동 중...</div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen flex items-center justify-center px-4">
