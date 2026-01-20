@@ -194,6 +194,14 @@ export default function MyWorldDashboard() {
   // Daily list view state
   const [showDailyList, setShowDailyList] = useState(false);
   const [allDailyEntries, setAllDailyEntries] = useState<DailyEntry[]>([]);
+  const [dailyListWeekStart, setDailyListWeekStart] = useState(() => {
+    const now = new Date();
+    const dayOfWeek = now.getDay();
+    const start = new Date(now);
+    start.setDate(now.getDate() - dayOfWeek);
+    start.setHours(0, 0, 0, 0);
+    return start;
+  });
 
   // Todo archive state
   const [showTodoArchive, setShowTodoArchive] = useState(false);
@@ -1033,6 +1041,41 @@ export default function MyWorldDashboard() {
     start.setHours(0, 0, 0, 0);
     setWeekStartDate(start);
   };
+
+  // Daily list week navigation
+  const navigateDailyListWeek = (direction: number) => {
+    const newStart = new Date(dailyListWeekStart);
+    newStart.setDate(dailyListWeekStart.getDate() + direction * 7);
+    setDailyListWeekStart(newStart);
+  };
+
+  const goToCurrentDailyListWeek = () => {
+    const now = new Date();
+    const dayOfWeek = now.getDay();
+    const start = new Date(now);
+    start.setDate(now.getDate() - dayOfWeek);
+    start.setHours(0, 0, 0, 0);
+    setDailyListWeekStart(start);
+  };
+
+  // Filter daily entries for current week
+  const filteredDailyEntries = useMemo(() => {
+    const weekEnd = new Date(dailyListWeekStart);
+    weekEnd.setDate(dailyListWeekStart.getDate() + 6);
+    weekEnd.setHours(23, 59, 59, 999);
+
+    return allDailyEntries.filter(entry => {
+      const entryDate = new Date(entry.date);
+      return entryDate >= dailyListWeekStart && entryDate <= weekEnd;
+    });
+  }, [allDailyEntries, dailyListWeekStart]);
+
+  // Format daily list week range
+  const dailyListWeekRange = useMemo(() => {
+    const weekEnd = new Date(dailyListWeekStart);
+    weekEnd.setDate(dailyListWeekStart.getDate() + 6);
+    return `${dailyListWeekStart.toLocaleDateString('ko-KR', { month: 'short', day: 'numeric' })} - ${weekEnd.toLocaleDateString('ko-KR', { month: 'short', day: 'numeric' })}`;
+  }, [dailyListWeekStart]);
 
   const getEventsForWeekDate = (date: Date) => {
     const dateStr = date.toISOString().split('T')[0];
@@ -2279,86 +2322,121 @@ export default function MyWorldDashboard() {
 
                 {showDailyList ? (
                   /* Daily Entries List View */
-                  <div className="space-y-2 max-h-[500px] overflow-y-auto">
-                    {allDailyEntries.length === 0 ? (
-                      <div className="text-center py-8 text-gray-500 dark:text-gray-400 text-sm">
-                        기록된 데이터가 없어요
+                  <div>
+                    {/* Week Navigation */}
+                    <div className="flex items-center justify-between mb-3 pb-2 border-b border-gray-200 dark:border-gray-700">
+                      <button
+                        onClick={() => navigateDailyListWeek(-1)}
+                        className="p-1 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
+                        title="이전 주"
+                      >
+                        <svg className="w-5 h-5 text-gray-600 dark:text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+                        </svg>
+                      </button>
+                      <div className="flex items-center gap-2">
+                        <span className="text-sm font-medium text-gray-700 dark:text-gray-300">
+                          {dailyListWeekRange}
+                        </span>
+                        <button
+                          onClick={goToCurrentDailyListWeek}
+                          className="px-2 py-0.5 text-xs bg-violet-100 text-violet-600 dark:bg-violet-900/50 dark:text-violet-400 rounded hover:bg-violet-200 dark:hover:bg-violet-900/70 transition-colors"
+                        >
+                          오늘
+                        </button>
                       </div>
-                    ) : (
-                      allDailyEntries.map((entry) => {
-                        const entryDate = new Date(entry.date);
-                        const dateStr = entryDate.toLocaleDateString('ko-KR', {
-                          year: 'numeric',
-                          month: 'short',
-                          day: 'numeric',
-                          weekday: 'short'
-                        });
-                        return (
-                          <div
-                            key={entry.id || entry.date}
-                            onClick={() => {
-                              setSelectedDate(entry.date.split('T')[0]);
-                              setShowDailyList(false);
-                            }}
-                            className="group p-3 bg-gray-50 dark:bg-gray-700/50 rounded-lg cursor-pointer hover:bg-violet-50 dark:hover:bg-violet-900/30 transition-colors"
-                          >
-                            <div className="flex items-center justify-between mb-1">
-                              <span className="text-sm font-medium text-gray-900 dark:text-white">
-                                {dateStr}
-                              </span>
-                              <div className="flex items-center gap-2">
-                                {entry.weather && <span className="text-sm">{entry.weather}</span>}
-                                {entry.dayScore !== null && (
-                                  <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${
-                                    entry.dayScore >= 70 ? 'bg-green-100 text-green-700 dark:bg-green-900/50 dark:text-green-400' :
-                                    entry.dayScore >= 40 ? 'bg-yellow-100 text-yellow-700 dark:bg-yellow-900/50 dark:text-yellow-400' :
-                                    'bg-red-100 text-red-700 dark:bg-red-900/50 dark:text-red-400'
-                                  }`}>
-                                    {entry.dayScore}점
+                      <button
+                        onClick={() => navigateDailyListWeek(1)}
+                        className="p-1 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
+                        title="다음 주"
+                      >
+                        <svg className="w-5 h-5 text-gray-600 dark:text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                        </svg>
+                      </button>
+                    </div>
+
+                    {/* Entries List */}
+                    <div className="space-y-2 max-h-[450px] overflow-y-auto">
+                      {filteredDailyEntries.length === 0 ? (
+                        <div className="text-center py-8 text-gray-500 dark:text-gray-400 text-sm">
+                          이 주의 기록이 없어요
+                        </div>
+                      ) : (
+                        filteredDailyEntries.map((entry) => {
+                          const entryDate = new Date(entry.date);
+                          const dateStr = entryDate.toLocaleDateString('ko-KR', {
+                            month: 'short',
+                            day: 'numeric',
+                            weekday: 'short'
+                          });
+                          return (
+                            <div
+                              key={entry.id || entry.date}
+                              onClick={() => {
+                                setSelectedDate(entry.date.split('T')[0]);
+                                setShowDailyList(false);
+                              }}
+                              className="group p-3 bg-gray-50 dark:bg-gray-700/50 rounded-lg cursor-pointer hover:bg-violet-50 dark:hover:bg-violet-900/30 transition-colors"
+                            >
+                              <div className="flex items-center justify-between mb-1">
+                                <span className="text-sm font-medium text-gray-900 dark:text-white">
+                                  {dateStr}
+                                </span>
+                                <div className="flex items-center gap-2">
+                                  {entry.weather && <span className="text-sm">{entry.weather}</span>}
+                                  {entry.dayScore !== null && (
+                                    <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${
+                                      entry.dayScore >= 70 ? 'bg-green-100 text-green-700 dark:bg-green-900/50 dark:text-green-400' :
+                                      entry.dayScore >= 40 ? 'bg-yellow-100 text-yellow-700 dark:bg-yellow-900/50 dark:text-yellow-400' :
+                                      'bg-red-100 text-red-700 dark:bg-red-900/50 dark:text-red-400'
+                                    }`}>
+                                      {entry.dayScore}점
+                                    </span>
+                                  )}
+                                  <button
+                                    onClick={(e) => deleteDailyEntry(entry.date, e)}
+                                    className="p-1 text-gray-400 hover:text-red-500 dark:hover:text-red-400 transition-colors opacity-0 group-hover:opacity-100"
+                                    title="삭제"
+                                  >
+                                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                                    </svg>
+                                  </button>
+                                </div>
+                              </div>
+                              <div className="flex flex-wrap gap-1 text-xs text-gray-500 dark:text-gray-400">
+                                {entry.condition && (
+                                  <span className="px-1.5 py-0.5 bg-gray-100 dark:bg-gray-600 rounded">
+                                    {entry.condition}
                                   </span>
                                 )}
-                                <button
-                                  onClick={(e) => deleteDailyEntry(entry.date, e)}
-                                  className="p-1 text-gray-400 hover:text-red-500 dark:hover:text-red-400 transition-colors opacity-0 group-hover:opacity-100"
-                                  title="삭제"
-                                >
-                                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-                                  </svg>
-                                </button>
+                                {entry.sleepHours && (
+                                  <span className="px-1.5 py-0.5 bg-gray-100 dark:bg-gray-600 rounded">
+                                    😴 {entry.sleepHours}h
+                                  </span>
+                                )}
+                                {(entry.expense > 0) && (
+                                  <span className="px-1.5 py-0.5 bg-red-50 dark:bg-red-900/30 text-red-600 dark:text-red-400 rounded">
+                                    -{entry.expense.toLocaleString()}원
+                                  </span>
+                                )}
+                                {(entry.income > 0) && (
+                                  <span className="px-1.5 py-0.5 bg-green-50 dark:bg-green-900/30 text-green-600 dark:text-green-400 rounded">
+                                    +{entry.income.toLocaleString()}원
+                                  </span>
+                                )}
                               </div>
-                            </div>
-                            <div className="flex flex-wrap gap-1 text-xs text-gray-500 dark:text-gray-400">
-                              {entry.condition && (
-                                <span className="px-1.5 py-0.5 bg-gray-100 dark:bg-gray-600 rounded">
-                                  {entry.condition}
-                                </span>
-                              )}
-                              {entry.sleepHours && (
-                                <span className="px-1.5 py-0.5 bg-gray-100 dark:bg-gray-600 rounded">
-                                  😴 {entry.sleepHours}h
-                                </span>
-                              )}
-                              {(entry.expense > 0) && (
-                                <span className="px-1.5 py-0.5 bg-red-50 dark:bg-red-900/30 text-red-600 dark:text-red-400 rounded">
-                                  -{entry.expense.toLocaleString()}원
-                                </span>
-                              )}
-                              {(entry.income > 0) && (
-                                <span className="px-1.5 py-0.5 bg-green-50 dark:bg-green-900/30 text-green-600 dark:text-green-400 rounded">
-                                  +{entry.income.toLocaleString()}원
-                                </span>
+                              {entry.notes && (
+                                <p className="mt-1 text-xs text-gray-500 dark:text-gray-400 truncate">
+                                  {entry.notes}
+                                </p>
                               )}
                             </div>
-                            {entry.notes && (
-                              <p className="mt-1 text-xs text-gray-500 dark:text-gray-400 truncate">
-                                {entry.notes}
-                              </p>
-                            )}
-                          </div>
-                        );
-                      })
-                    )}
+                          );
+                        })
+                      )}
+                    </div>
                   </div>
                 ) : (
                 /* Accordion Sections */
