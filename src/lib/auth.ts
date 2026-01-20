@@ -5,6 +5,7 @@ import { PrismaAdapter } from '@auth/prisma-adapter';
 import { prisma } from './db';
 
 const ADMIN_GITHUB_ID = process.env.ADMIN_GITHUB_ID;
+const ADMIN_EMAIL = process.env.ADMIN_EMAIL;
 
 // Build providers array dynamically based on available credentials
 const providers = [];
@@ -65,24 +66,17 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
         token.picture = (profileData.picture as string) || (profileData.avatar_url as string);
         token.provider = account.provider;
         token.providerAccountId = account.providerAccountId;
+
+        // Check admin by email (works for all providers)
+        const isAdminByEmail = ADMIN_EMAIL && profile.email === ADMIN_EMAIL;
+        // Check admin by GitHub ID (legacy support)
+        const isAdminByGitHub = account.provider === 'github' && account.providerAccountId === ADMIN_GITHUB_ID;
+        token.isAdmin = isAdminByEmail || isAdminByGitHub;
       }
 
-      // Initial sign in - add user info to token
+      // Initial sign in - add user id to token
       if (user) {
         token.id = user.id;
-
-        try {
-          const dbUser = await prisma.user.findUnique({
-            where: { id: user.id },
-            include: { accounts: true },
-          });
-
-          const githubAccount = dbUser?.accounts.find(a => a.provider === 'github');
-          token.isAdmin = githubAccount?.providerAccountId === ADMIN_GITHUB_ID;
-        } catch (error) {
-          console.error('Failed to fetch user for jwt:', error);
-          token.isAdmin = false;
-        }
       }
       return token;
     },
