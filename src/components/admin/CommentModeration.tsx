@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 
 interface Author {
   id: string;
@@ -38,16 +38,43 @@ interface CommentsData {
   totalComments: number;
 }
 
+interface DBSection {
+  id: string;
+  title: string;
+  description: string | null;
+  order: number;
+  categories: DBCategory[];
+}
+
+interface DBCategory {
+  id: string;
+  name: string;
+  slug: string;
+  parentId: string | null;
+  sectionId: string | null;
+  section: DBSection | null;
+  order: number;
+  children: DBCategory[];
+}
+
 export default function CommentModeration() {
   const [data, setData] = useState<CommentsData | null>(null);
   const [loading, setLoading] = useState(true);
-  const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
+  const [selectedCategory, setSelectedCategory] = useState<string>('all');
+  const [selectedSubcategory, setSelectedSubcategory] = useState<string | null>(null);
+  const [expandedCategories, setExpandedCategories] = useState<Set<string>>(new Set());
   const [replyingTo, setReplyingTo] = useState<string | null>(null);
   const [replyContent, setReplyContent] = useState('');
   const [submitting, setSubmitting] = useState(false);
 
+  // Category data from DB
+  const [dbCategories, setDbCategories] = useState<DBCategory[]>([]);
+  const [dbSections, setDbSections] = useState<DBSection[]>([]);
+
   useEffect(() => {
     fetchComments();
+    fetchCategories();
+    fetchSections();
   }, []);
 
   const fetchComments = async () => {
@@ -63,6 +90,103 @@ export default function CommentModeration() {
       setLoading(false);
     }
   };
+
+  const fetchCategories = async () => {
+    try {
+      const res = await fetch('/api/admin/categories');
+      if (res.ok) {
+        const result = await res.json();
+        setDbCategories(result);
+      }
+    } catch (error) {
+      console.error('Failed to fetch categories:', error);
+    }
+  };
+
+  const fetchSections = async () => {
+    try {
+      const res = await fetch('/api/admin/sections');
+      if (res.ok) {
+        const result = await res.json();
+        setDbSections(result);
+      }
+    } catch (error) {
+      console.error('Failed to fetch sections:', error);
+    }
+  };
+
+  const toggleCategory = (category: string) => {
+    setExpandedCategories((prev) => {
+      const next = new Set(prev);
+      if (next.has(category)) {
+        next.delete(category);
+      } else {
+        next.add(category);
+      }
+      return next;
+    });
+  };
+
+  // Build comment count map from posts
+  const commentCountMap = useMemo(() => {
+    if (!data) return new Map<string, { total: number; subs: Map<string, number> }>();
+    const countMap = new Map<string, { total: number; subs: Map<string, number> }>();
+
+    data.posts.forEach((post) => {
+      const parts = post.category.split('/');
+      const mainCategory = parts[0];
+      const subCategory = parts[1] || null;
+      const commentCount = post.comments.length + post.comments.reduce((acc, c) => acc + (c.replies?.length || 0), 0);
+
+      if (!countMap.has(mainCategory)) {
+        countMap.set(mainCategory, { total: 0, subs: new Map() });
+      }
+      const cat = countMap.get(mainCategory)!;
+      cat.total += commentCount;
+
+      if (subCategory) {
+        cat.subs.set(subCategory, (cat.subs.get(subCategory) || 0) + commentCount);
+      }
+    });
+
+    return countMap;
+  }, [data]);
+
+  // Merge DB categories with comment counts
+  const sidebarCategories = useMemo(() => {
+    return dbCategories.map((cat) => {
+      const commentData = commentCountMap.get(cat.name);
+      return {
+        ...cat,
+        commentCount: commentData?.total || 0,
+        children: cat.children.map((sub) => ({
+          ...sub,
+          commentCount: commentData?.subs.get(sub.name) || 0,
+        })),
+      };
+    });
+  }, [dbCategories, commentCountMap]);
+
+  // Group categories by section
+  const categoriesBySection = useMemo(() => {
+    const grouped: { section: DBSection | null; categories: typeof sidebarCategories }[] = [];
+
+    dbSections.forEach((section) => {
+      const sectionCategories = sidebarCategories.filter(
+        (cat) => cat.sectionId === section.id
+      );
+      if (sectionCategories.length > 0) {
+        grouped.push({ section, categories: sectionCategories });
+      }
+    });
+
+    const uncategorized = sidebarCategories.filter((cat) => !cat.sectionId);
+    if (uncategorized.length > 0) {
+      grouped.push({ section: null, categories: uncategorized });
+    }
+
+    return grouped;
+  }, [sidebarCategories, dbSections]);
 
   const handleDelete = async (id: string, isReply: boolean = false) => {
     if (!confirm('이 댓글을 삭제하시겠습니까?')) return;
@@ -124,42 +248,110 @@ export default function CommentModeration() {
   }
 
   // Filter posts by selected category
-  const filteredPosts = selectedCategory
-    ? data.posts.filter((post) => post.category.split('/')[0] === selectedCategory)
-    : data.posts;
-
-  // Get sorted categories
-  const sortedCategories = Object.entries(data.categoryStats).sort((a, b) => b[1] - a[1]);
+  const filteredPosts = useMemo(() => {
+    if (!data) return [];
+    return data.posts.filter((post) => {
+      const parts = post.category.split('/');
+      const mainCategory = parts[0];
+      const subCategory = parts[1] || null;
+      const matchesCategory = selectedCategory === 'all' || mainCategory === selectedCategory;
+      const matchesSubcategory = !selectedSubcategory || subCategory === selectedSubcategory;
+      return matchesCategory && matchesSubcategory;
+    });
+  }, [data, selectedCategory, selectedSubcategory]);
 
   return (
     <div className="flex gap-6">
       {/* Category Sidebar */}
-      <div className="w-48 flex-shrink-0">
-        <div className="sticky top-4">
-          <h3 className="text-sm font-medium text-gray-500 dark:text-gray-400 mb-3">카테고리</h3>
+      <div className="w-56 flex-shrink-0">
+        <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-violet-200 dark:border-violet-800/50 p-5">
+          <h2 className="text-base font-semibold mb-4 text-gray-900 dark:text-white">
+            카테고리
+          </h2>
+
+          {/* Category Tree */}
           <div className="space-y-1">
+            {/* All Comments */}
             <button
-              onClick={() => setSelectedCategory(null)}
-              className={`w-full text-left px-3 py-2 rounded-lg text-sm transition-colors ${
-                selectedCategory === null
-                  ? 'bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300 font-medium'
-                  : 'text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800'
+              onClick={() => {
+                setSelectedCategory('all');
+                setSelectedSubcategory(null);
+              }}
+              className={`w-full flex items-center justify-between py-2 text-sm transition-colors ${
+                selectedCategory === 'all'
+                  ? 'text-violet-600 dark:text-violet-400 font-medium'
+                  : 'text-gray-900 dark:text-white hover:text-violet-600 dark:hover:text-violet-400'
               }`}
             >
-              전체 ({data.totalComments})
+              <span>전체보기</span>
+              <span className="text-xs text-gray-400 dark:text-gray-500">
+                {data?.totalComments || 0}
+              </span>
             </button>
-            {sortedCategories.map(([category, count]) => (
-              <button
-                key={category}
-                onClick={() => setSelectedCategory(category)}
-                className={`w-full text-left px-3 py-2 rounded-lg text-sm transition-colors ${
-                  selectedCategory === category
-                    ? 'bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300 font-medium'
-                    : 'text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800'
-                }`}
-              >
-                {category} ({count})
-              </button>
+
+            {/* Categories grouped by section */}
+            {categoriesBySection.map(({ section, categories }) => (
+              <div key={section?.id || 'uncategorized'} className="mt-3">
+                {/* Section header */}
+                <div className="text-xs font-semibold text-indigo-600 dark:text-indigo-400 uppercase tracking-wider mb-2 pb-1 border-b border-indigo-200 dark:border-indigo-800">
+                  {section?.title || '미분류'}
+                </div>
+
+                {/* Categories in this section */}
+                {categories.map((category) => (
+                  <div key={category.id}>
+                    <button
+                      onClick={() => {
+                        toggleCategory(category.name);
+                        setSelectedCategory(category.name);
+                        setSelectedSubcategory(null);
+                      }}
+                      className={`w-full flex items-center justify-between py-2 text-sm transition-colors ${
+                        selectedCategory === category.name && !selectedSubcategory
+                          ? 'text-violet-600 dark:text-violet-400 font-medium'
+                          : 'text-gray-900 dark:text-white hover:text-violet-600 dark:hover:text-violet-400'
+                      }`}
+                    >
+                      <span className="flex items-center gap-2">
+                        {category.children.length > 0 && (
+                          <span className={`text-gray-400 text-xs transition-transform ${expandedCategories.has(category.name) ? '' : '-rotate-90'}`}>
+                            ∨
+                          </span>
+                        )}
+                        {category.name}
+                      </span>
+                      <span className="text-xs text-gray-400 dark:text-gray-500">
+                        {category.commentCount}
+                      </span>
+                    </button>
+
+                    {/* Subcategories */}
+                    {expandedCategories.has(category.name) && category.children.length > 0 && (
+                      <div className="ml-6 space-y-1">
+                        {category.children.map((sub) => (
+                          <button
+                            key={sub.id}
+                            onClick={() => {
+                              setSelectedCategory(category.name);
+                              setSelectedSubcategory(sub.name);
+                            }}
+                            className={`w-full flex items-center justify-between py-1.5 text-sm transition-colors ${
+                              selectedCategory === category.name && selectedSubcategory === sub.name
+                                ? 'text-violet-600 dark:text-violet-400 font-medium'
+                                : 'text-gray-500 dark:text-gray-400 hover:text-violet-600 dark:hover:text-violet-400'
+                            }`}
+                          >
+                            <span>{sub.name}</span>
+                            <span className="text-xs text-gray-400 dark:text-gray-500">
+                              {sub.commentCount}
+                            </span>
+                          </button>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                ))}
+              </div>
             ))}
           </div>
         </div>
