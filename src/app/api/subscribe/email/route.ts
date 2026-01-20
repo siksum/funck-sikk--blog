@@ -23,8 +23,11 @@ export async function POST(request: NextRequest) {
 
     if (process.env.RESEND_API_KEY) {
       const resend = new Resend(process.env.RESEND_API_KEY);
-      await resend.emails.send({
-        from: 'func(sikk) <noreply@sikk.com>',
+      // Use custom domain if set, otherwise use Resend's test domain
+      const fromEmail = process.env.RESEND_FROM_EMAIL || 'func(sikk) <onboarding@resend.dev>';
+
+      const result = await resend.emails.send({
+        from: fromEmail,
         to: email,
         subject: '구독 확인 - func(sikk)',
         html: `
@@ -41,6 +44,13 @@ export async function POST(request: NextRequest) {
           </div>
         `,
       });
+
+      if (result.error) {
+        console.error('Resend error:', result.error);
+        return NextResponse.json({ error: '이메일 전송에 실패했습니다.' }, { status: 500 });
+      }
+    } else {
+      console.warn('RESEND_API_KEY is not set');
     }
 
     return NextResponse.json({ success: true, message: '확인 이메일을 전송했습니다.' });
