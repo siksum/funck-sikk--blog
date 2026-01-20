@@ -83,14 +83,6 @@ export default function SikkPageContent({
   }, [rootCategoriesWithTags, sections]);
 
   const renderCategoryCards = (sectionCategories: CategoryWithTags[]) => {
-    if (sectionCategories.length === 0) {
-      return (
-        <p className="text-sm" style={{ color: 'var(--foreground-muted)' }}>
-          아직 등록된 카테고리가 없습니다.
-        </p>
-      );
-    }
-
     if (viewMode === 'list') {
       return (
         <div className="space-y-3">
@@ -194,8 +186,6 @@ export default function SikkPageContent({
           {/* Sidebar - Left */}
           <div className="mb-8 lg:mb-0 lg:col-span-1 lg:order-first">
             <SikkSidebar
-              recentPosts={recentPosts}
-              popularPosts={recentPosts}
               categories={categories}
               tags={tags}
               sections={sections}
@@ -206,17 +196,23 @@ export default function SikkPageContent({
           <div className="lg:col-span-3 lg:order-last space-y-16">
             {groupedCategories.map(({ section, categories: sectionCategories }) => (
               <section key={section.title}>
-                <div className="mb-8 pb-4 border-b-2 border-pink-300 dark:border-pink-500">
+                <div className="mb-8">
                   <h2 className="text-3xl md:text-4xl font-extrabold mb-2 text-transparent bg-clip-text bg-gradient-to-r from-pink-600 to-rose-500 dark:from-pink-300 dark:to-rose-400">
                     {section.title}
                   </h2>
                   {section.description && (
-                    <p className="text-sm" style={{ color: 'var(--foreground-muted)' }}>
+                    <p className="text-sm mb-2" style={{ color: 'var(--foreground-muted)' }}>
                       {section.description}
                     </p>
                   )}
+                  {sectionCategories.length === 0 && (
+                    <p className="text-sm mb-4" style={{ color: 'var(--foreground-muted)' }}>
+                      아직 등록된 카테고리가 없습니다.
+                    </p>
+                  )}
+                  <div className="border-b-2 border-pink-300 dark:border-pink-500" />
                 </div>
-                {renderCategoryCards(sectionCategories)}
+                {sectionCategories.length > 0 && renderCategoryCards(sectionCategories)}
               </section>
             ))}
           </div>
