@@ -34,6 +34,7 @@ if (process.env.GOOGLE_ID && process.env.GOOGLE_SECRET) {
           prompt: 'select_account',
         },
       },
+      allowDangerousEmailAccountLinking: true,
     })
   );
 }
