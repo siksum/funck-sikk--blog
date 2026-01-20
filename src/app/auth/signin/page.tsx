@@ -22,16 +22,29 @@ function SignInContent() {
   // Handle login with account switching
   const handleSignIn = async (provider: string) => {
     if (session) {
-      // If already logged in, sign out first then sign in with new account
-      await signOut({ redirect: false });
+      // If already logged in, sign out and redirect to signin with provider param
+      // This ensures full session clear before new login
+      await signOut({
+        redirect: true,
+        callbackUrl: `/auth/signin?provider=${provider}&callbackUrl=${encodeURIComponent(callbackUrl)}`
+      });
+      return;
     }
-    // Use prompt: 'select_account' for Google to force account selection
-    if (provider === 'google') {
-      signIn(provider, { callbackUrl }, { prompt: 'select_account' });
-    } else {
-      signIn(provider, { callbackUrl });
-    }
+    // Proceed with sign in
+    signIn(provider, { callbackUrl });
   };
+
+  // Auto-trigger login if redirected after signout
+  useEffect(() => {
+    const provider = searchParams.get('provider');
+    if (provider && !session && status === 'unauthenticated') {
+      // Small delay to ensure session is fully cleared
+      const timer = setTimeout(() => {
+        signIn(provider, { callbackUrl });
+      }, 100);
+      return () => clearTimeout(timer);
+    }
+  }, [session, status, searchParams, callbackUrl]);
 
   if (status === 'loading') {
     return (
