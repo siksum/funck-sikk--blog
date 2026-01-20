@@ -38,8 +38,6 @@ export default function PostsManagementPage() {
   const [selectedCategory, setSelectedCategory] = useState<string>('all');
   const [selectedSubcategory, setSelectedSubcategory] = useState<string | null>(null);
   const [searchTerm, setSearchTerm] = useState('');
-  const [notifySlug, setNotifySlug] = useState<string | null>(null);
-  const [notifyStatus, setNotifyStatus] = useState<'idle' | 'sending' | 'success' | 'error'>('idle');
   const [expandedCategories, setExpandedCategories] = useState<Set<string>>(new Set());
 
   // Sorting state
@@ -431,36 +429,6 @@ export default function PostsManagementPage() {
     }
   };
 
-  const handleNotify = async (post: Post) => {
-    setNotifySlug(post.slug);
-    setNotifyStatus('sending');
-
-    try {
-      const res = await fetch('/api/notify', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          title: post.title,
-          slug: post.slug,
-          description: post.description,
-        }),
-      });
-
-      if (res.ok) {
-        setNotifyStatus('success');
-      } else {
-        setNotifyStatus('error');
-      }
-    } catch {
-      setNotifyStatus('error');
-    }
-
-    setTimeout(() => {
-      setNotifySlug(null);
-      setNotifyStatus('idle');
-    }, 3000);
-  };
-
   const handleToggleVisibility = async (post: Post) => {
     try {
       const response = await fetch(`/api/posts/${post.slug}`, {
@@ -764,29 +732,6 @@ export default function PostsManagementPage() {
                             >
                               수정
                             </Link>
-                            <button
-                              onClick={() => handleNotify(post)}
-                              disabled={notifySlug === post.slug}
-                              className={`px-2 py-1 rounded ${
-                                notifySlug === post.slug
-                                  ? notifyStatus === 'success'
-                                    ? 'text-green-600 bg-green-50 dark:bg-green-900/20'
-                                    : notifyStatus === 'error'
-                                    ? 'text-red-600 bg-red-50 dark:bg-red-900/20'
-                                    : 'text-gray-400'
-                                  : 'text-purple-600 hover:text-purple-900 dark:text-purple-400 dark:hover:text-purple-300 hover:bg-purple-50 dark:hover:bg-purple-900/20'
-                              }`}
-                            >
-                              {notifySlug === post.slug
-                                ? notifyStatus === 'sending'
-                                  ? '전송중...'
-                                  : notifyStatus === 'success'
-                                  ? '완료!'
-                                  : notifyStatus === 'error'
-                                  ? '실패'
-                                  : '알림'
-                                : '알림'}
-                            </button>
                             <button
                               onClick={() => handleDelete(post.slug)}
                               className="px-2 py-1 text-red-600 hover:text-red-900 dark:text-red-400 dark:hover:text-red-300 rounded hover:bg-red-50 dark:hover:bg-red-900/20"
