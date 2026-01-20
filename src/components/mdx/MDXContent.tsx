@@ -13,8 +13,18 @@ import Callout from './Callout';
 import YouTube from './YouTube';
 import { CodeTabs, Tab } from './CodeTabs';
 import Mermaid from './Mermaid';
+import Private from './Private';
 import 'katex/dist/katex.min.css';
 import 'highlight.js/styles/github-dark.css';
+
+// Preprocess content to convert :::private blocks to <Private> components
+function preprocessContent(content: string): string {
+  // Match :::private ... ::: blocks (with optional newlines)
+  return content.replace(
+    /:::private\s*\n([\s\S]*?)\n:::/g,
+    '<div class="private-content">$1</div>'
+  );
+}
 
 interface MDXContentProps {
   content: string;
@@ -86,6 +96,7 @@ export const mdxComponents = {
   CodeTabs,
   Tab,
   Mermaid,
+  Private,
 };
 
 export default function MDXContent({ content }: MDXContentProps) {
@@ -225,6 +236,10 @@ export default function MDXContent({ content }: MDXContentProps) {
                 const type = className.replace('callout-', '') as 'info' | 'warning' | 'tip' | 'danger' | 'note';
                 return <Callout type={type}>{children}</Callout>;
               }
+              // Check for private content
+              if (className === 'private-content') {
+                return <Private>{children}</Private>;
+              }
               return (
                 <div className={className} {...props}>
                   {children}
@@ -313,7 +328,7 @@ export default function MDXContent({ content }: MDXContentProps) {
             },
           }}
         >
-          {content}
+          {preprocessContent(content)}
         </ReactMarkdown>
       </article>
 
