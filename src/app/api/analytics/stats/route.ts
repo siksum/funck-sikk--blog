@@ -169,15 +169,74 @@ export async function GET(request: NextRequest) {
     }
   };
 
+  // Fill in missing dates with 0 for daily data
+  const fillDailyData = () => {
+    const dataMap = new Map(dailyData.map(d => [d.date.toISOString().split('T')[0], d.count]));
+    const result = [];
+    const current = new Date(fromDate);
+    while (current <= today) {
+      const dateStr = current.toISOString().split('T')[0];
+      result.push({
+        date: new Date(current),
+        count: dataMap.get(dateStr) || 0,
+      });
+      current.setDate(current.getDate() + 1);
+    }
+    return result;
+  };
+
+  // For weekly view: show all days from start of week to today
+  const fillWeeklyData = () => {
+    const dataMap = new Map(dailyData.map(d => [d.date.toISOString().split('T')[0], d.count]));
+    const result = [];
+    // Start from the beginning of the week (Monday = 1, Sunday = 0)
+    const weekStart = new Date(today);
+    const dayOfWeek = weekStart.getDay();
+    // Adjust to Monday (if Sunday, go back 6 days; otherwise go back (dayOfWeek - 1) days)
+    const daysToSubtract = dayOfWeek === 0 ? 6 : dayOfWeek - 1;
+    weekStart.setDate(weekStart.getDate() - daysToSubtract);
+    weekStart.setUTCHours(0, 0, 0, 0);
+
+    const current = new Date(weekStart);
+    while (current <= today) {
+      const dateStr = current.toISOString().split('T')[0];
+      result.push({
+        date: new Date(current),
+        count: dataMap.get(dateStr) || 0,
+      });
+      current.setDate(current.getDate() + 1);
+    }
+    return result;
+  };
+
+  // For monthly view: show all days from start of month to today
+  const fillMonthlyData = () => {
+    const dataMap = new Map(dailyData.map(d => [d.date.toISOString().split('T')[0], d.count]));
+    const result = [];
+    const monthStart = new Date(today.getFullYear(), today.getMonth(), 1);
+    monthStart.setUTCHours(0, 0, 0, 0);
+
+    const current = new Date(monthStart);
+    while (current <= today) {
+      const dateStr = current.toISOString().split('T')[0];
+      result.push({
+        date: new Date(current),
+        count: dataMap.get(dateStr) || 0,
+      });
+      current.setDate(current.getDate() + 1);
+    }
+    return result;
+  };
+
   return NextResponse.json({
     today: todayCount?.count || 0,
     yesterday: yesterdayCount?.count || 0,
     thisWeek: thisWeekTotal,
     thisMonth: thisMonthTotal,
     totalViews: totalVisitorsResult._sum.count || 0,
-    daily: dailyData.map(d => ({ date: d.date, count: d.count })),
-    weekly: weeklyData.map(w => ({ date: w.week_start, count: Number(w.total) })),
-    monthly: monthlyData.map(m => ({ date: m.month_start, count: Number(m.total) })),
+    daily: fillDailyData().map(d => ({ date: d.date, count: d.count })),
+    weekly: fillWeeklyData().map(d => ({ date: d.date, count: d.count })),
+    monthly: fillMonthlyData().map(d => ({ date: d.date, count: d.count })),
     topPosts: topPosts.map((p) => ({ slug: p.slug, count: p._count.slug })),
     recentVisitors: recentVisitors.map(v => ({
       path: v.path,
