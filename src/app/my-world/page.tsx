@@ -147,6 +147,7 @@ export default function MyWorldDashboard() {
     type: 'empty' | 'event';
     date?: string;
     hour?: number;
+    isAllDay?: boolean;
     event?: CalendarEvent;
   } | null>(null);
 
@@ -1987,6 +1988,7 @@ export default function MyWorldDashboard() {
                               type: 'empty',
                               date: dateStr,
                               hour: 9,
+                              isAllDay: true,
                             });
                           }}
                           className={`p-1 transition-all relative min-h-[80px] flex flex-col items-start justify-start ${
@@ -2215,6 +2217,7 @@ export default function MyWorldDashboard() {
                             type: 'empty',
                             date: dateStr,
                             hour: 9,
+                            isAllDay: true,
                           });
                         }}
                         className={`border-l border-gray-100 dark:border-gray-700 p-1 relative ${
@@ -3364,7 +3367,7 @@ export default function MyWorldDashboard() {
                     description: '',
                     type: '일정',
                     color: '#c4b5fd',
-                    isAllDay: false,
+                    isAllDay: contextMenu.isAllDay ?? false,
                     startDate: contextMenu.date || '',
                     endDate: contextMenu.date || '',
                     startTime: `${hour}:00`,
