@@ -308,13 +308,17 @@ code, pre, .font-mono {
   pointer-events: none;
 }
 
-/* Navigation link hover - force black text on hover */
+/* Navigation link styles */
 .nav-link {
   color: var(--foreground-muted);
 }
 
 .nav-link:hover {
   color: #171717 !important;
+}
+
+.dark .nav-link:hover {
+  color: #f5f5f5 !important;
 }
 
 /* Footer link styles */
