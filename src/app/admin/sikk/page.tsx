@@ -123,6 +123,7 @@ export default function SikkPostsManagementPage() {
   const [loading, setLoading] = useState(true);
   const [selectedCategory, setSelectedCategory] = useState<string>('all');
   const [selectedSubcategory, setSelectedSubcategory] = useState<string | null>(null);
+  const [selectedSection, setSelectedSection] = useState<string | null>(null);
   const [searchTerm, setSearchTerm] = useState('');
   const [expandedCategories, setExpandedCategories] = useState<Set<string>>(new Set());
 
@@ -196,14 +197,12 @@ export default function SikkPostsManagementPage() {
   const categoriesBySection = useMemo(() => {
     const grouped: { section: DBSection | null; categories: typeof sidebarCategories }[] = [];
 
-    // Group categories by section
+    // Group categories by section (always show sections, even without categories)
     dbSections.forEach((section) => {
       const sectionCategories = sidebarCategories.filter(
         (cat) => cat.sectionId === section.id
       );
-      if (sectionCategories.length > 0) {
-        grouped.push({ section, categories: sectionCategories });
-      }
+      grouped.push({ section, categories: sectionCategories });
     });
 
     // Add categories without section
@@ -246,7 +245,17 @@ export default function SikkPostsManagementPage() {
       const matchesStartDate = !startDate || postDate >= new Date(startDate);
       const matchesEndDate = !endDate || postDate <= new Date(endDate + 'T23:59:59');
 
-      return matchesCategory && matchesSubcategory && matchesSearch && matchesStartDate && matchesEndDate;
+      // Section filter
+      let matchesSection = true;
+      if (selectedSection) {
+        const section = dbSections.find(s => s.id === selectedSection);
+        if (section) {
+          const sectionCategoryNames = section.categories?.map(c => c.name) || [];
+          matchesSection = sectionCategoryNames.includes(mainCategory);
+        }
+      }
+
+      return matchesCategory && matchesSubcategory && matchesSearch && matchesStartDate && matchesEndDate && matchesSection;
     });
 
     // Sort
@@ -265,7 +274,7 @@ export default function SikkPostsManagementPage() {
       }
       return sortOrder === 'asc' ? comparison : -comparison;
     });
-  }, [posts, selectedCategory, selectedSubcategory, searchTerm, sortBy, sortOrder, startDate, endDate]);
+  }, [posts, selectedCategory, selectedSubcategory, searchTerm, sortBy, sortOrder, startDate, endDate, selectedSection, dbSections]);
 
   // Toggle sort
   const handleSort = (column: 'date' | 'title' | 'category') => {
@@ -647,9 +656,10 @@ export default function SikkPostsManagementPage() {
                 onClick={() => {
                   setSelectedCategory('all');
                   setSelectedSubcategory(null);
+                  setSelectedSection(null);
                 }}
                 className={`w-full flex items-center justify-between py-2 text-sm transition-colors ${
-                  selectedCategory === 'all'
+                  selectedCategory === 'all' && !selectedSection
                     ? 'text-pink-600 dark:text-pink-400 font-medium'
                     : 'text-gray-900 dark:text-white hover:text-pink-600 dark:hover:text-pink-400'
                 }`}
@@ -663,19 +673,33 @@ export default function SikkPostsManagementPage() {
               {/* Categories grouped by section */}
               {categoriesBySection.map(({ section, categories }) => (
                 <div key={section?.id || 'uncategorized'} className="mt-3">
-                  {/* Section header */}
-                  <div className="text-xs font-semibold text-indigo-600 dark:text-indigo-400 uppercase tracking-wider mb-2 pb-1 border-b border-indigo-200 dark:border-indigo-800">
+                  {/* Section header - clickable to filter by section */}
+                  <button
+                    onClick={() => {
+                      if (section) {
+                        setSelectedSection(selectedSection === section.id ? null : section.id);
+                        setSelectedCategory('all');
+                        setSelectedSubcategory(null);
+                      }
+                    }}
+                    className={`w-full text-left text-xs font-semibold uppercase tracking-wider mb-2 pb-1 border-b transition-colors ${
+                      selectedSection === section?.id
+                        ? 'text-pink-600 dark:text-pink-400 border-pink-400 dark:border-pink-500'
+                        : 'text-indigo-600 dark:text-indigo-400 border-indigo-200 dark:border-indigo-800 hover:text-pink-600 dark:hover:text-pink-400'
+                    }`}
+                  >
                     {section?.title || '미분류'}
-                  </div>
+                  </button>
 
                   {/* Categories in this section */}
-                  {categories.map((category) => (
+                  {categories.length > 0 ? categories.map((category) => (
                     <div key={category.id}>
                       <button
                         onClick={() => {
                           toggleCategory(category.name);
                           setSelectedCategory(category.name);
                           setSelectedSubcategory(null);
+                          setSelectedSection(null);
                         }}
                         className={`w-full flex items-center justify-between py-2 text-sm transition-colors ${
                           selectedCategory === category.name && !selectedSubcategory
@@ -721,7 +745,9 @@ export default function SikkPostsManagementPage() {
                         </div>
                       )}
                     </div>
-                  ))}
+                  )) : (
+                    <p className="text-xs text-gray-400 dark:text-gray-500 py-1">카테고리 없음</p>
+                  )}
                 </div>
               ))}
             </div>
