@@ -223,6 +223,7 @@ model SikkPost {
   content     String   // MDX content
   category    String?  // Category path (e.g., "성신여자대학교/1번")
   tags        String[] @default([])
+  thumbnail   String?  // Banner/Thumbnail image URL
   isPublic    Boolean  @default(true)
   date        DateTime @default(now())
   createdAt   DateTime @default(now())
