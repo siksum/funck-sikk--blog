@@ -9,12 +9,12 @@ interface ButtonEditorProps {
 }
 
 const buttonStyles = [
-  { value: 'primary', label: '기본', className: 'bg-blue-600 hover:bg-blue-700 text-white' },
-  { value: 'secondary', label: '보조', className: 'bg-gray-600 hover:bg-gray-700 text-white' },
-  { value: 'success', label: '성공', className: 'bg-green-600 hover:bg-green-700 text-white' },
-  { value: 'danger', label: '위험', className: 'bg-red-600 hover:bg-red-700 text-white' },
-  { value: 'warning', label: '경고', className: 'bg-yellow-500 hover:bg-yellow-600 text-white' },
-  { value: 'outline', label: '외곽선', className: 'border-2 border-blue-600 text-blue-600 hover:bg-blue-50' },
+  { value: 'primary', label: '기본', className: 'bg-blue-200 hover:bg-blue-300 text-blue-800' },
+  { value: 'secondary', label: '보조', className: 'bg-gray-200 hover:bg-gray-300 text-gray-700' },
+  { value: 'success', label: '성공', className: 'bg-emerald-200 hover:bg-emerald-300 text-emerald-800' },
+  { value: 'danger', label: '위험', className: 'bg-rose-200 hover:bg-rose-300 text-rose-800' },
+  { value: 'warning', label: '경고', className: 'bg-amber-200 hover:bg-amber-300 text-amber-800' },
+  { value: 'outline', label: '외곽선', className: 'border-2 border-violet-300 text-violet-600 hover:bg-violet-50' },
 ];
 
 const buttonSizes = [
