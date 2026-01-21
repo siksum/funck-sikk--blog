@@ -2,10 +2,20 @@
 
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
+import { usePushSubscription } from '@/hooks/usePushSubscription';
 
 export default function FooterClient() {
   const pathname = usePathname();
   const isAdminPage = pathname?.startsWith('/admin');
+  const { isSubscribed, isSupported, isLoading, subscribe, unsubscribe } = usePushSubscription();
+
+  const handleNotificationToggle = async () => {
+    if (isSubscribed) {
+      await unsubscribe();
+    } else {
+      await subscribe();
+    }
+  };
 
   return (
     <footer
@@ -56,12 +66,12 @@ export default function FooterClient() {
             </ul>
           </div>
 
-          {/* Social */}
+          {/* Social & Notifications */}
           <div>
             <h3 className="text-lg font-semibold mb-4" style={{ color: 'var(--foreground)' }}>
               Connect
             </h3>
-            <div className="flex space-x-4">
+            <div className="flex space-x-4 items-center">
               <a
                 href="https://github.com"
                 target="_blank"
@@ -88,7 +98,32 @@ export default function FooterClient() {
                   <path d="M8.29 20.251c7.547 0 11.675-6.253 11.675-11.675 0-.178 0-.355-.012-.53A8.348 8.348 0 0022 5.92a8.19 8.19 0 01-2.357.646 4.118 4.118 0 001.804-2.27 8.224 8.224 0 01-2.605.996 4.107 4.107 0 00-6.993 3.743 11.65 11.65 0 01-8.457-4.287 4.106 4.106 0 001.27 5.477A4.072 4.072 0 012.8 9.713v.052a4.105 4.105 0 003.292 4.022 4.095 4.095 0 01-1.853.07 4.108 4.108 0 003.834 2.85A8.233 8.233 0 012 18.407a11.616 11.616 0 006.29 1.84" />
                 </svg>
               </a>
+              {isSupported && !isLoading && (
+                <button
+                  onClick={handleNotificationToggle}
+                  className="footer-link transition-colors relative"
+                  aria-label={isSubscribed ? '알림 해제' : '알림 구독'}
+                  title={isSubscribed ? '알림 해제' : '알림 구독'}
+                >
+                  <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={2}
+                      d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"
+                    />
+                  </svg>
+                  {isSubscribed && (
+                    <span className="absolute -top-1 -right-1 w-2 h-2 bg-green-500 rounded-full" />
+                  )}
+                </button>
+              )}
             </div>
+            {isSupported && !isLoading && (
+              <p className="mt-2 text-xs" style={{ color: 'var(--foreground-muted)' }}>
+                {isSubscribed ? '알림이 활성화되어 있습니다' : '알림을 구독하세요'}
+              </p>
+            )}
           </div>
         </div>
 
