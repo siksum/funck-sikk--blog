@@ -21,9 +21,9 @@ export default function AboutPreview() {
           hover:-translate-y-3"
         style={{ background: 'var(--card-bg)' }}
       >
-        {/* Subtle gradient overlay */}
+        {/* Subtle gradient overlay - light mode only */}
         <div
-          className="absolute inset-0 opacity-20 dark:opacity-30 pointer-events-none"
+          className="absolute inset-0 opacity-20 pointer-events-none dark:hidden"
           style={{
             background: 'radial-gradient(ellipse at 20% 50%, var(--neon-pink-glow) 0%, transparent 50%), radial-gradient(ellipse at 80% 50%, var(--neon-cyan-glow) 0%, transparent 50%)',
           }}
