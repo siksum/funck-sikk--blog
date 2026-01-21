@@ -4,9 +4,7 @@ import { useState, useRef, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import MDXContent from '@/components/mdx/MDXContent';
 import TableEditor from './TableEditor';
-import DatabaseEditor from './DatabaseEditor';
 import CodeBlockEditor from './CodeBlockEditor';
-import ToggleEditor from './ToggleEditor';
 import ColumnEditor from './ColumnEditor';
 import MathEditor from './MathEditor';
 import ButtonEditor from './ButtonEditor';
@@ -70,9 +68,7 @@ export default function PostEditor({ initialData = {}, isEdit = false }: PostEdi
   const [uploading, setUploading] = useState(false);
   const [activeTab, setActiveTab] = useState<'edit' | 'preview' | 'split'>('split');
   const [showTableEditor, setShowTableEditor] = useState(false);
-  const [showDatabaseEditor, setShowDatabaseEditor] = useState(false);
   const [showCodeBlockEditor, setShowCodeBlockEditor] = useState(false);
-  const [showToggleEditor, setShowToggleEditor] = useState(false);
   const [showColumnEditor, setShowColumnEditor] = useState(false);
   const [showMathEditor, setShowMathEditor] = useState(false);
   const [showButtonEditor, setShowButtonEditor] = useState(false);
@@ -733,11 +729,6 @@ export default function PostEditor({ initialData = {}, isEdit = false }: PostEdi
       action: () => setShowTableEditor(true),
     },
     {
-      icon: <span className="text-sm">📊</span>,
-      label: '데이터베이스',
-      action: () => setShowDatabaseEditor(true),
-    },
-    {
       icon: (
         <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h7" />
@@ -767,7 +758,7 @@ export default function PostEditor({ initialData = {}, isEdit = false }: PostEdi
         </svg>
       ),
       label: '토글',
-      action: () => setShowToggleEditor(true),
+      action: () => insertMarkdown('\n<details>\n<summary>토글 제목</summary>\n\n토글 내용\n\n</details>\n'),
     },
     {
       icon: (
@@ -1431,24 +1422,10 @@ export default function PostEditor({ initialData = {}, isEdit = false }: PostEdi
         onInsert={insertMarkdown}
       />
 
-      {/* Database Editor Modal */}
-      <DatabaseEditor
-        isOpen={showDatabaseEditor}
-        onClose={() => setShowDatabaseEditor(false)}
-        onInsert={insertMarkdown}
-      />
-
       {/* Code Block Editor Modal */}
       <CodeBlockEditor
         isOpen={showCodeBlockEditor}
         onClose={() => setShowCodeBlockEditor(false)}
-        onInsert={insertMarkdown}
-      />
-
-      {/* Toggle Editor Modal */}
-      <ToggleEditor
-        isOpen={showToggleEditor}
-        onClose={() => setShowToggleEditor(false)}
         onInsert={insertMarkdown}
       />
 
