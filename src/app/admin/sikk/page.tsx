@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useMemo } from 'react';
+import { useState, useEffect, useMemo, useRef } from 'react';
 import Link from 'next/link';
 
 // Mobile category filter dropdown component
@@ -131,6 +131,11 @@ export default function SikkPostsManagementPage() {
   const [selectedPosts, setSelectedPosts] = useState<Set<string>>(new Set());
   const [bulkActionLoading, setBulkActionLoading] = useState(false);
 
+  // Category change state
+  const [editingCategorySlug, setEditingCategorySlug] = useState<string | null>(null);
+  const [showBulkCategoryDropdown, setShowBulkCategoryDropdown] = useState(false);
+  const bulkCategoryDropdownRef = useRef<HTMLDivElement>(null);
+
   // Sorting state
   const [sortBy, setSortBy] = useState<'date' | 'title' | 'category'>('date');
   const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('desc');
@@ -196,6 +201,18 @@ export default function SikkPostsManagementPage() {
       };
     });
   }, [dbCategories, postCountMap]);
+
+  // Generate flat list of all category options for dropdowns
+  const categoryOptions = useMemo(() => {
+    const options: { value: string; label: string }[] = [];
+    dbCategories.forEach((cat) => {
+      options.push({ value: cat.name, label: cat.name });
+      cat.children.forEach((sub) => {
+        options.push({ value: `${cat.name}/${sub.name}`, label: `${cat.name} / ${sub.name}` });
+      });
+    });
+    return options;
+  }, [dbCategories]);
 
   // Group categories by section for sidebar display
   const categoriesBySection = useMemo(() => {
@@ -369,6 +386,21 @@ export default function SikkPostsManagementPage() {
       fetchSections();
     }
   }, [showSectionModal]);
+
+  // Close bulk category dropdown when clicking outside
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (bulkCategoryDropdownRef.current && !bulkCategoryDropdownRef.current.contains(event.target as Node)) {
+        setShowBulkCategoryDropdown(false);
+      }
+    };
+    if (showBulkCategoryDropdown) {
+      document.addEventListener('mousedown', handleClickOutside);
+    }
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
+  }, [showBulkCategoryDropdown]);
 
   // Create new category
   const handleCreateCategory = async (autoSelectAsParent: boolean = false) => {
@@ -567,6 +599,28 @@ export default function SikkPostsManagementPage() {
     }
   };
 
+  // Change post category
+  const handleChangeCategory = async (post: Post, newCategory: string) => {
+    try {
+      const response = await fetch(`/api/sikk/${post.slug}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          ...post,
+          category: newCategory,
+        }),
+      });
+      if (response.ok) {
+        setPosts(posts.map((p) =>
+          p.slug === post.slug ? { ...p, category: newCategory } : p
+        ));
+        setEditingCategorySlug(null);
+      }
+    } catch (error) {
+      console.error('Failed to change category:', error);
+    }
+  };
+
   // Multi-select functions
   const toggleSelectPost = (slug: string) => {
     setSelectedPosts((prev) => {
@@ -637,6 +691,36 @@ export default function SikkPostsManagementPage() {
     } catch (error) {
       console.error('Failed to bulk toggle visibility:', error);
       alert('일부 포스트 공개 상태 변경에 실패했습니다.');
+    } finally {
+      setBulkActionLoading(false);
+    }
+  };
+
+  const handleBulkChangeCategory = async (newCategory: string) => {
+    if (selectedPosts.size === 0) return;
+
+    setBulkActionLoading(true);
+    try {
+      const selectedPostsList = posts.filter((p) => selectedPosts.has(p.slug));
+      const updatePromises = selectedPostsList.map((post) =>
+        fetch(`/api/sikk/${post.slug}`, {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            ...post,
+            category: newCategory,
+          }),
+        })
+      );
+      await Promise.all(updatePromises);
+      setPosts(posts.map((p) =>
+        selectedPosts.has(p.slug) ? { ...p, category: newCategory } : p
+      ));
+      setSelectedPosts(new Set());
+      setShowBulkCategoryDropdown(false);
+    } catch (error) {
+      console.error('Failed to bulk change category:', error);
+      alert('일부 포스트 카테고리 변경에 실패했습니다.');
     } finally {
       setBulkActionLoading(false);
     }
@@ -715,6 +799,36 @@ export default function SikkPostsManagementPage() {
             {selectedPosts.size}개 선택됨
           </span>
           <div className="flex flex-wrap gap-2">
+            {/* Bulk Category Change Dropdown */}
+            <div className="relative" ref={bulkCategoryDropdownRef}>
+              <button
+                onClick={() => setShowBulkCategoryDropdown(!showBulkCategoryDropdown)}
+                disabled={bulkActionLoading}
+                className="px-3 py-1.5 text-xs bg-pink-600 text-white rounded-lg hover:bg-pink-700 disabled:opacity-50 transition-colors flex items-center gap-1"
+              >
+                카테고리 변경
+                <svg className={`w-3 h-3 transition-transform ${showBulkCategoryDropdown ? 'rotate-180' : ''}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                </svg>
+              </button>
+              {showBulkCategoryDropdown && (
+                <div className="absolute top-full left-0 mt-1 w-56 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg shadow-lg z-30 max-h-64 overflow-y-auto">
+                  {categoryOptions.length === 0 ? (
+                    <p className="p-3 text-xs text-gray-500">카테고리가 없습니다.</p>
+                  ) : (
+                    categoryOptions.map((opt) => (
+                      <button
+                        key={opt.value}
+                        onClick={() => handleBulkChangeCategory(opt.value)}
+                        className="w-full px-3 py-2 text-left text-sm text-gray-900 dark:text-white hover:bg-pink-50 dark:hover:bg-pink-900/20 transition-colors"
+                      >
+                        {opt.label}
+                      </button>
+                    ))
+                  )}
+                </div>
+              )}
+            </div>
             <button
               onClick={() => handleBulkToggleVisibility(true)}
               disabled={bulkActionLoading}
@@ -932,9 +1046,29 @@ export default function SikkPostsManagementPage() {
                         </button>
                       </div>
                       <div className="flex flex-wrap items-center gap-2 mt-2">
-                        <span className="px-2 py-0.5 text-xs bg-pink-100 dark:bg-pink-900/30 text-pink-800 dark:text-pink-300 rounded">
-                          {post.category || '미분류'}
-                        </span>
+                        {editingCategorySlug === post.slug ? (
+                          <select
+                            value={post.category || ''}
+                            onChange={(e) => handleChangeCategory(post, e.target.value)}
+                            onBlur={() => setEditingCategorySlug(null)}
+                            autoFocus
+                            className="px-2 py-0.5 text-xs bg-white dark:bg-gray-800 border border-pink-400 rounded focus:outline-none focus:ring-2 focus:ring-pink-500 text-gray-900 dark:text-white"
+                          >
+                            <option value="">미분류</option>
+                            {categoryOptions.map((opt) => (
+                              <option key={opt.value} value={opt.value}>
+                                {opt.label}
+                              </option>
+                            ))}
+                          </select>
+                        ) : (
+                          <button
+                            onClick={() => setEditingCategorySlug(post.slug)}
+                            className="px-2 py-0.5 text-xs bg-pink-100 dark:bg-pink-900/30 text-pink-800 dark:text-pink-300 rounded hover:bg-pink-200 dark:hover:bg-pink-900/50 transition-colors"
+                          >
+                            {post.category || '미분류'}
+                          </button>
+                        )}
                         <span className="text-xs text-gray-500 dark:text-gray-400">
                           {post.date}
                         </span>
@@ -1063,10 +1197,33 @@ export default function SikkPostsManagementPage() {
                               {post.slug}
                             </div>
                           </td>
-                          <td className="px-6 py-4 whitespace-nowrap">
-                            <span className="px-2 py-1 text-xs bg-pink-100 dark:bg-pink-900/30 text-pink-800 dark:text-pink-300 rounded border border-pink-200 dark:border-pink-800">
-                              {post.category || '미분류'}
-                            </span>
+                          <td className="px-6 py-4 whitespace-nowrap relative">
+                            {editingCategorySlug === post.slug ? (
+                              <div className="relative">
+                                <select
+                                  value={post.category || ''}
+                                  onChange={(e) => handleChangeCategory(post, e.target.value)}
+                                  onBlur={() => setEditingCategorySlug(null)}
+                                  autoFocus
+                                  className="px-2 py-1 text-xs bg-white dark:bg-gray-800 border border-pink-400 rounded focus:outline-none focus:ring-2 focus:ring-pink-500 text-gray-900 dark:text-white"
+                                >
+                                  <option value="">미분류</option>
+                                  {categoryOptions.map((opt) => (
+                                    <option key={opt.value} value={opt.value}>
+                                      {opt.label}
+                                    </option>
+                                  ))}
+                                </select>
+                              </div>
+                            ) : (
+                              <button
+                                onClick={() => setEditingCategorySlug(post.slug)}
+                                className="px-2 py-1 text-xs bg-pink-100 dark:bg-pink-900/30 text-pink-800 dark:text-pink-300 rounded border border-pink-200 dark:border-pink-800 hover:bg-pink-200 dark:hover:bg-pink-900/50 hover:border-pink-400 transition-colors cursor-pointer"
+                                title="클릭하여 카테고리 변경"
+                              >
+                                {post.category || '미분류'}
+                              </button>
+                            )}
                           </td>
                           <td className="px-6 py-4">
                             <div className="flex flex-wrap gap-1">
