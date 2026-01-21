@@ -28,6 +28,7 @@ function transformPost(dbPost: {
   thumbnailScale: number;
   content: string;
   isPublic: boolean;
+  status?: string;
 }): Post {
   const categoryPath = parseCategoryPath(dbPost.category || '');
   const categorySlugPath = categoryPath.map(slugify);
@@ -46,6 +47,7 @@ function transformPost(dbPost: {
     thumbnailScale: dbPost.thumbnailScale,
     content: dbPost.content,
     isPublic: dbPost.isPublic,
+    status: (dbPost.status as 'not_started' | 'in_progress' | 'completed') || 'not_started',
   };
 }
 

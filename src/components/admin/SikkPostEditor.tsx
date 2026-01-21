@@ -119,6 +119,7 @@ export default function SikkPostEditor({ initialData = {}, isEdit = false }: Sik
     content: initialData.content || '',
     date: initialData.date || getLocalDateStr(),
     isPublic: initialData.isPublic !== false,
+    status: initialData.status || 'not_started',
     thumbnail: initialData.thumbnail || '',
     thumbnailPosition: initialData.thumbnailPosition ?? 50,
     thumbnailScale: initialData.thumbnailScale ?? 100,
@@ -1066,6 +1067,48 @@ export default function SikkPostEditor({ initialData = {}, isEdit = false }: Sik
             />
             <span className="ml-2 text-sm font-medium text-gray-700 dark:text-gray-300">공개</span>
           </label>
+        </div>
+
+        {/* Status */}
+        <div>
+          <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+            상태
+          </label>
+          <div className="flex gap-2">
+            <button
+              type="button"
+              onClick={() => setFormData({ ...formData, status: 'not_started' })}
+              className={`px-3 py-1.5 rounded-full text-sm font-medium transition-colors ${
+                formData.status === 'not_started'
+                  ? 'bg-gray-200 text-gray-800 ring-2 ring-gray-400'
+                  : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+              }`}
+            >
+              시작전
+            </button>
+            <button
+              type="button"
+              onClick={() => setFormData({ ...formData, status: 'in_progress' })}
+              className={`px-3 py-1.5 rounded-full text-sm font-medium transition-colors ${
+                formData.status === 'in_progress'
+                  ? 'bg-blue-200 text-blue-800 ring-2 ring-blue-400'
+                  : 'bg-blue-100 text-blue-600 hover:bg-blue-200'
+              }`}
+            >
+              진행중
+            </button>
+            <button
+              type="button"
+              onClick={() => setFormData({ ...formData, status: 'completed' })}
+              className={`px-3 py-1.5 rounded-full text-sm font-medium transition-colors ${
+                formData.status === 'completed'
+                  ? 'bg-green-200 text-green-800 ring-2 ring-green-400'
+                  : 'bg-green-100 text-green-600 hover:bg-green-200'
+              }`}
+            >
+              완료
+            </button>
+          </div>
         </div>
       </div>
 

@@ -25,6 +25,7 @@ export async function GET(request: NextRequest) {
       thumbnailPosition: post.thumbnailPosition,
       thumbnailScale: post.thumbnailScale,
       isPublic: post.isPublic,
+      status: (post as { status?: string }).status || 'not_started',
       content: post.content,
     }));
 
@@ -38,7 +39,7 @@ export async function GET(request: NextRequest) {
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
-    const { slug, title, description, category, tags, content, date, isPublic, thumbnail, thumbnailPosition, thumbnailScale } = body;
+    const { slug, title, description, category, tags, content, date, isPublic, thumbnail, thumbnailPosition, thumbnailScale, status } = body;
 
     if (!slug || !title) {
       return NextResponse.json({ error: 'Slug and title are required' }, { status: 400 });
@@ -69,8 +70,9 @@ export async function POST(request: NextRequest) {
         thumbnailPosition: thumbnailPosition ?? 50,
         thumbnailScale: thumbnailScale ?? 100,
         isPublic: isPublic !== false,
+        status: status || 'not_started',
         date: postDate,
-      },
+      } as Parameters<typeof prisma.sikkPost.create>[0]['data'],
     });
 
     return NextResponse.json({ success: true, slug: post.slug, id: post.id });
