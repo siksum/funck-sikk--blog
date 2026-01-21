@@ -835,7 +835,7 @@ export default function AboutPage() {
               { title: '해시드, 실전 블록체인 프로그램 \'프로토콜 캠프\' 5기 성료', date: '2023.12.15', source: '한국경제', url: 'https://www.hankyung.com/article/202312158041O', image: 'https://img.hankyung.com/photo/202312/01.35339121.1.jpg' },
               { title: '연구팀, 한국융합보안학회 추계학술대회서 최우수·우수논문상 수상', date: '2024.11.08', source: '성신여대', url: 'https://www.sungshin.ac.kr/main_kor/10941/subview.do?enc=Zm5jdDF8QEB8JTJGYmJzJTJGbWFpbl9rb3IlMkYzMTkyJTJGMTM3NTE3JTJGYXJ0Y2xWaWV3LmRvJTNG', image: 'http://www.sungshin.ac.kr/editorUpload/images/000509/001_3.jpg' },
               { title: '성신여대, 한국정보처리학회 \'ACK2025\'에서 수상', date: '2025.11.10', source: '대학저널', url: 'https://m.dhnews.co.kr/news/view/1065600833585781', image: 'https://dhnews.co.kr/news/data/20251110/p1065600833585781_861_thum.jpg' },
-              { title: '성신여대, 4개 대학 연합 연구팀, ICT 융합보안크루 \'최우수\' 크루 선정', date: '2025.12.09', source: '중앙일보', url: 'https://www.joongang.co.kr/article/25395468', image: '' },
+              { title: '성신여대, 4개 대학 연합 연구팀, ICT 융합보안크루 \'최우수\' 크루 선정', date: '2025.12.09', source: '중앙일보', url: 'https://www.joongang.co.kr/article/25395468', image: 'https://pds.joongang.co.kr/news/component/htmlphoto_mmdata/202601/06/50a295e4-0fc0-43b6-a8c1-e0ffe1cb37ac.jpg' },
             ].map((press, index) => (
               <motion.a
                 key={index}
@@ -851,7 +851,7 @@ export default function AboutPage() {
                 whileHover={{ y: -4 }}
               >
                 {/* Thumbnail */}
-                <div className="h-32 relative overflow-hidden bg-gradient-to-br from-violet-100 via-indigo-50 to-purple-100 dark:from-violet-900/30 dark:via-indigo-900/20 dark:to-purple-900/30">
+                <div className="h-44 relative overflow-hidden bg-gradient-to-br from-violet-100 via-indigo-50 to-purple-100 dark:from-violet-900/30 dark:via-indigo-900/20 dark:to-purple-900/30">
                   {press.image ? (
                     <Image
                       src={press.image}
