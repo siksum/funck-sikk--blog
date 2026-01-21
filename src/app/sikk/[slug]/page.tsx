@@ -112,6 +112,19 @@ export default async function SikkPostPage({ params }: SikkPostPageProps) {
         categories={categories}
         currentCategorySlugPath={post.categorySlugPath}
       >
+        {/* Banner Image */}
+        {post.thumbnail && (
+          <div className="mb-8 -mx-4 sm:-mx-6 lg:-mx-8 rounded-xl overflow-hidden">
+            <div className="relative w-full h-48 sm:h-64 md:h-80">
+              <img
+                src={post.thumbnail}
+                alt={post.title}
+                className="w-full h-full object-cover"
+              />
+            </div>
+          </div>
+        )}
+
         {/* Header */}
         <header className="mb-8">
           <div className="flex items-center text-sm mb-4" style={{ color: 'var(--foreground)', opacity: 0.7 }}>

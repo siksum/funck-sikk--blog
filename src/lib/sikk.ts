@@ -23,6 +23,7 @@ function transformPost(dbPost: {
   date: Date;
   category: string | null;
   tags: string[];
+  thumbnail: string | null;
   content: string;
   isPublic: boolean;
 }): Post {
@@ -38,6 +39,7 @@ function transformPost(dbPost: {
     categoryPath,
     categorySlugPath,
     tags: dbPost.tags,
+    thumbnail: dbPost.thumbnail || undefined,
     content: dbPost.content,
     isPublic: dbPost.isPublic,
   };

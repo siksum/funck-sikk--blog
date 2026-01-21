@@ -93,6 +93,19 @@ export default async function SharedSikkPostPage({ params }: SharedSikkPostPageP
             </div>
           </div>
 
+          {/* Banner Image */}
+          {post.thumbnail && (
+            <div className="mb-8 rounded-xl overflow-hidden">
+              <div className="relative w-full h-48 sm:h-64 md:h-80">
+                <img
+                  src={post.thumbnail}
+                  alt={post.title}
+                  className="w-full h-full object-cover"
+                />
+              </div>
+            </div>
+          )}
+
           {/* Header */}
           <header className="mb-8">
             <div className="flex items-center gap-3 mb-4">

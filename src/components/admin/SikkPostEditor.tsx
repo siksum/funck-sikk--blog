@@ -31,6 +31,7 @@ interface SikkPostEditorProps {
     content?: string;
     date?: string;
     isPublic?: boolean;
+    thumbnail?: string;
   };
   isEdit?: boolean;
 }
@@ -85,6 +86,7 @@ export default function SikkPostEditor({ initialData = {}, isEdit = false }: Sik
     content: initialData.content || '',
     date: initialData.date || getLocalDateStr(),
     isPublic: initialData.isPublic !== false,
+    thumbnail: initialData.thumbnail || '',
   });
 
   // Update formData.category when parent or sub category changes
@@ -618,6 +620,73 @@ export default function SikkPostEditor({ initialData = {}, isEdit = false }: Sik
           className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-pink-500"
           placeholder="포스트 설명"
         />
+      </div>
+
+      {/* Thumbnail/Banner Image */}
+      <div>
+        <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+          배너 이미지
+        </label>
+        <div className="flex gap-2">
+          <input
+            type="text"
+            value={formData.thumbnail}
+            onChange={(e) => setFormData({ ...formData, thumbnail: e.target.value })}
+            className="flex-1 px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-pink-500"
+            placeholder="이미지 URL 또는 파일 업로드"
+          />
+          <label className="px-4 py-2 bg-pink-100 dark:bg-pink-900/30 text-pink-700 dark:text-pink-300 rounded-lg hover:bg-pink-200 dark:hover:bg-pink-900/50 transition-colors cursor-pointer flex items-center gap-2">
+            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
+            </svg>
+            업로드
+            <input
+              type="file"
+              accept="image/*"
+              className="hidden"
+              onChange={async (e) => {
+                const file = e.target.files?.[0];
+                if (!file) return;
+                setUploading(true);
+                try {
+                  const formDataUpload = new FormData();
+                  formDataUpload.append('file', file);
+                  const response = await fetch('/api/upload', {
+                    method: 'POST',
+                    body: formDataUpload,
+                  });
+                  if (response.ok) {
+                    const data = await response.json();
+                    setFormData(prev => ({ ...prev, thumbnail: data.url }));
+                  }
+                } catch (error) {
+                  alert('이미지 업로드에 실패했습니다.');
+                } finally {
+                  setUploading(false);
+                  e.target.value = '';
+                }
+              }}
+            />
+          </label>
+        </div>
+        {formData.thumbnail && (
+          <div className="mt-2 relative">
+            <img
+              src={formData.thumbnail}
+              alt="Banner preview"
+              className="w-full max-h-48 object-cover rounded-lg border border-gray-300 dark:border-gray-600"
+            />
+            <button
+              type="button"
+              onClick={() => setFormData({ ...formData, thumbnail: '' })}
+              className="absolute top-2 right-2 p-1 bg-red-500 text-white rounded-full hover:bg-red-600"
+            >
+              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+              </svg>
+            </button>
+          </div>
+        )}
       </div>
 
       {/* Tags & Date & Public */}
