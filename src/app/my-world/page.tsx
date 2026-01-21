@@ -1979,6 +1979,16 @@ export default function MyWorldDashboard() {
                           onClick={() => setSelectedDate(dateStr)}
                           onDragOver={handleDragOver}
                           onDrop={(e) => handleDrop(cellDate, e)}
+                          onContextMenu={(e) => {
+                            e.preventDefault();
+                            setContextMenu({
+                              x: e.clientX,
+                              y: e.clientY,
+                              type: 'empty',
+                              date: dateStr,
+                              hour: 9,
+                            });
+                          }}
                           className={`p-1 transition-all relative min-h-[80px] flex flex-col items-start justify-start ${
                             !isLastRow ? 'border-b' : ''
                           } ${
