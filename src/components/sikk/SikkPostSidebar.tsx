@@ -154,8 +154,8 @@ export default function SikkPostSidebar({
     <aside className="space-y-6">
       {/* Table of Contents */}
       <div
-        className="rounded-2xl backdrop-blur-xl border p-5"
-        style={{ background: 'var(--card-bg)', borderColor: 'var(--card-border)' }}
+        className="rounded-2xl backdrop-blur-xl border-2 border-pink-200 dark:border-pink-500/40 p-5"
+        style={{ background: 'var(--card-bg)' }}
       >
         <h3 className="text-base font-semibold mb-3 flex items-center gap-2" style={{ color: 'var(--foreground)' }}>
           <svg className="w-4 h-4 text-pink-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -168,8 +168,8 @@ export default function SikkPostSidebar({
 
       {/* Category */}
       <div
-        className="rounded-2xl backdrop-blur-xl border p-5"
-        style={{ background: 'var(--card-bg)', borderColor: 'var(--card-border)' }}
+        className="rounded-2xl backdrop-blur-xl border-2 border-pink-200 dark:border-pink-500/40 p-5"
+        style={{ background: 'var(--card-bg)' }}
       >
         <h3 className="text-base font-semibold mb-3" style={{ color: 'var(--foreground)' }}>
           카테고리
@@ -200,8 +200,8 @@ export default function SikkPostSidebar({
       {/* Tags */}
       {tags.length > 0 && (
         <div
-          className="rounded-2xl backdrop-blur-xl border p-5"
-          style={{ background: 'var(--card-bg)', borderColor: 'var(--card-border)' }}
+          className="rounded-2xl backdrop-blur-xl border-2 border-pink-200 dark:border-pink-500/40 p-5"
+          style={{ background: 'var(--card-bg)' }}
         >
           <h3 className="text-base font-semibold mb-3" style={{ color: 'var(--foreground)' }}>
             태그
@@ -211,8 +211,8 @@ export default function SikkPostSidebar({
               <Link
                 key={tag}
                 href={`/sikk/tag/${encodeURIComponent(tag)}`}
-                className="px-2.5 py-1 text-sm rounded-full transition-all hover:scale-105 border hover:border-pink-400"
-                style={{ background: 'var(--tag-bg)', color: 'var(--tag-text)', borderColor: 'var(--card-border)' }}
+                className="px-2.5 py-1 text-sm rounded-full transition-all hover:scale-105 border-2 border-pink-200 dark:border-pink-500/40 hover:border-pink-400 dark:hover:border-pink-400 text-pink-600 dark:text-pink-400 hover:bg-pink-50 dark:hover:bg-pink-500/10"
+                style={{ background: 'var(--tag-bg)' }}
               >
                 #{tag}
               </Link>
@@ -224,8 +224,8 @@ export default function SikkPostSidebar({
       {/* Related Posts */}
       {relatedPosts.length > 0 && (
         <div
-          className="rounded-2xl backdrop-blur-xl border p-5"
-          style={{ background: 'var(--card-bg)', borderColor: 'var(--card-border)' }}
+          className="rounded-2xl backdrop-blur-xl border-2 border-pink-200 dark:border-pink-500/40 p-5"
+          style={{ background: 'var(--card-bg)' }}
         >
           <h3 className="text-base font-semibold mb-3" style={{ color: 'var(--foreground)' }}>
             관련 포스트

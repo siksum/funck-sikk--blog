@@ -77,10 +77,9 @@ export default function SikkPostLayout({
             <div className="flex justify-end mb-4">
               <button
                 onClick={toggleWidth}
-                className="flex items-center gap-2 px-3 py-1.5 text-sm rounded-lg border transition-colors hover:border-pink-500"
+                className="flex items-center gap-2 px-3 py-1.5 text-sm rounded-lg border-2 border-pink-200 dark:border-pink-500/40 transition-colors hover:border-pink-400 dark:hover:border-pink-400"
                 style={{
                   background: 'var(--card-bg)',
-                  borderColor: 'var(--card-border)',
                   color: 'var(--foreground)'
                 }}
                 title={isWide ? '좁게 보기' : '넓게 보기'}
