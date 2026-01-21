@@ -2021,6 +2021,16 @@ export default function MyWorldDashboard() {
                                     e.stopPropagation();
                                     openEventModal(event);
                                   }}
+                                  onContextMenu={(e) => {
+                                    e.preventDefault();
+                                    e.stopPropagation();
+                                    setContextMenu({
+                                      x: e.clientX,
+                                      y: e.clientY,
+                                      type: 'event',
+                                      event: event,
+                                    });
+                                  }}
                                   className={`text-xs px-1 py-0.5 rounded truncate font-medium cursor-grab active:cursor-grabbing
                                     hover:scale-105 hover:shadow-lg transition-all duration-300 ease-out select-none ${
                                     draggingEvent?.id === event.id ? 'opacity-40 scale-90 shadow-xl ring-2 ring-violet-400' : ''
@@ -2080,6 +2090,16 @@ export default function MyWorldDashboard() {
                           onClick={(e) => {
                             e.stopPropagation();
                             openEventModal(bar.event);
+                          }}
+                          onContextMenu={(e) => {
+                            e.preventDefault();
+                            e.stopPropagation();
+                            setContextMenu({
+                              x: e.clientX,
+                              y: e.clientY,
+                              type: 'event',
+                              event: bar.event,
+                            });
                           }}
                         >
                           {bar.isStart && bar.event.title}
@@ -2168,6 +2188,16 @@ export default function MyWorldDashboard() {
                         key={index}
                         onDragOver={handleDragOver}
                         onDrop={(e) => handleDrop(date, e)}
+                        onContextMenu={(e) => {
+                          e.preventDefault();
+                          setContextMenu({
+                            x: e.clientX,
+                            y: e.clientY,
+                            type: 'empty',
+                            date: dateStr,
+                            hour: 9,
+                          });
+                        }}
                         className={`border-l border-gray-100 dark:border-gray-700 p-1 relative ${
                           draggingEvent ? 'hover:bg-violet-100 dark:hover:bg-violet-900/50 hover:ring-2 hover:ring-violet-300 dark:hover:ring-violet-600 transition-all duration-200' : ''
                         } ${isSelected ? '' : 'hidden sm:block'}`}
@@ -2182,6 +2212,16 @@ export default function MyWorldDashboard() {
                             onClick={() => {
                               setSelectedDate(getLocalDateStr(date));
                               openEventModal(event);
+                            }}
+                            onContextMenu={(e) => {
+                              e.preventDefault();
+                              e.stopPropagation();
+                              setContextMenu({
+                                x: e.clientX,
+                                y: e.clientY,
+                                type: 'event',
+                                event: event,
+                              });
                             }}
                             className={`text-xs px-1 py-0.5 rounded truncate cursor-grab active:cursor-grabbing
                               hover:scale-105 hover:shadow-lg transition-all duration-300 ease-out font-medium mb-0.5 select-none ${
@@ -2229,6 +2269,16 @@ export default function MyWorldDashboard() {
                           onClick={(e) => {
                             e.stopPropagation();
                             openEventModal(bar.event);
+                          }}
+                          onContextMenu={(e) => {
+                            e.preventDefault();
+                            e.stopPropagation();
+                            setContextMenu({
+                              x: e.clientX,
+                              y: e.clientY,
+                              type: 'event',
+                              event: bar.event,
+                            });
                           }}
                         >
                           {bar.isStart && bar.event.title}
@@ -3264,13 +3314,17 @@ export default function MyWorldDashboard() {
           <div
             className="fixed inset-0 z-40"
             onClick={() => setContextMenu(null)}
+            onContextMenu={(e) => {
+              e.preventDefault();
+              setContextMenu(null);
+            }}
           />
           {/* Menu */}
           <div
-            className="fixed z-50 bg-white dark:bg-gray-800 rounded-lg shadow-lg border border-gray-200 dark:border-gray-700 py-1 min-w-[150px]"
+            className="fixed z-50 bg-white dark:bg-gray-800 rounded-lg shadow-xl border border-gray-200 dark:border-gray-700 py-1 min-w-[150px] animate-in fade-in zoom-in-95 duration-100"
             style={{
-              left: contextMenu.x,
-              top: contextMenu.y,
+              left: Math.min(contextMenu.x, typeof window !== 'undefined' ? window.innerWidth - 170 : contextMenu.x),
+              top: Math.min(contextMenu.y, typeof window !== 'undefined' ? window.innerHeight - 120 : contextMenu.y),
             }}
           >
             {contextMenu.type === 'empty' ? (
