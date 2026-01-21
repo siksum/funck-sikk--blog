@@ -52,6 +52,7 @@ export default function HeaderClient({ posts }: HeaderClientProps) {
   const [isSearchOpen, setIsSearchOpen] = useState(false);
   const [isUserMenuOpen, setIsUserMenuOpen] = useState(false);
   const userMenuRef = useRef<HTMLDivElement>(null);
+  const mobileMenuRef = useRef<HTMLElement>(null);
 
   // Close user menu when clicking outside
   useEffect(() => {
@@ -71,6 +72,30 @@ export default function HeaderClient({ posts }: HeaderClientProps) {
       document.removeEventListener('touchstart', handleClickOutside as unknown as EventListener);
     };
   }, [isUserMenuOpen]);
+
+  // Close mobile menu when clicking outside
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent | TouchEvent) => {
+      const target = event.target as Node;
+      // Don't close if clicking the menu button itself
+      if (mobileMenuRef.current && !mobileMenuRef.current.contains(target)) {
+        setIsMenuOpen(false);
+      }
+    };
+
+    if (isMenuOpen) {
+      // Use setTimeout to avoid immediate closure from the same click that opened the menu
+      setTimeout(() => {
+        document.addEventListener('mousedown', handleClickOutside);
+        document.addEventListener('touchstart', handleClickOutside as EventListener);
+      }, 0);
+    }
+
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+      document.removeEventListener('touchstart', handleClickOutside as EventListener);
+    };
+  }, [isMenuOpen]);
 
   return (
     <header
@@ -266,7 +291,7 @@ export default function HeaderClient({ posts }: HeaderClientProps) {
 
         {/* Mobile Navigation */}
         {isMenuOpen && (
-          <nav className="md:hidden py-4 border-t" style={{ borderColor: 'var(--card-border)' }}>
+          <nav ref={mobileMenuRef} className="md:hidden py-4 border-t" style={{ borderColor: 'var(--card-border)' }}>
             {publicNavigation.map((item) => (
               <Link
                 key={item.href}
