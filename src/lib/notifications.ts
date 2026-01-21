@@ -93,19 +93,26 @@ export async function sendCommentNotification(
   postSlug: string,
   commentAuthorId: string
 ) {
+  // Get all commenters on this post
   const existingComments = await prisma.comment.findMany({
     where: { postSlug },
     select: { authorId: true },
     distinct: ['authorId'],
   });
 
+  // Get admin users to always notify them
+  const adminUsers = await prisma.user.findMany({
+    where: { isAdmin: true },
+    select: { id: true },
+  });
+
+  const commenterIds = existingComments.map((c) => c.authorId);
+  const adminIds = adminUsers.map((u) => u.id);
+
+  // Combine commenters and admins, remove duplicates, exclude comment author
   const userIdsToNotify = [
-    ...new Set(
-      existingComments
-        .map((c) => c.authorId)
-        .filter((id) => id !== commentAuthorId)
-    ),
-  ];
+    ...new Set([...commenterIds, ...adminIds]),
+  ].filter((id) => id !== commentAuthorId);
 
   if (userIdsToNotify.length === 0) return { sent: 0, failed: 0 };
 
