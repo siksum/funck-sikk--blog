@@ -141,8 +141,11 @@ export default function MDXContent({ content }: MDXContentProps) {
                 {children}
               </p>
             ),
-            ul: ({ children }) => (
-              <ul className="list-disc list-inside mb-4 space-y-2" style={{ color: 'var(--foreground)' }}>
+            ul: ({ children, className }) => (
+              <ul
+                className={`${className?.includes('contains-task-list') ? 'list-none' : 'list-disc list-inside'} mb-4 space-y-2`}
+                style={{ color: 'var(--foreground)' }}
+              >
                 {children}
               </ul>
             ),
@@ -151,8 +154,13 @@ export default function MDXContent({ content }: MDXContentProps) {
                 {children}
               </ol>
             ),
-            li: ({ children }) => (
-              <li style={{ color: 'var(--foreground)' }}>{children}</li>
+            li: ({ children, className }) => (
+              <li
+                className={className?.includes('task-list-item') ? 'flex items-start gap-2' : ''}
+                style={{ color: 'var(--foreground)' }}
+              >
+                {children}
+              </li>
             ),
             code: ({ className, children, node, ...props }) => {
               const isInline = !className;
