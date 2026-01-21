@@ -127,6 +127,10 @@ export default function SikkPostsManagementPage() {
   const [searchTerm, setSearchTerm] = useState('');
   const [expandedCategories, setExpandedCategories] = useState<Set<string>>(new Set());
 
+  // Multi-select state
+  const [selectedPosts, setSelectedPosts] = useState<Set<string>>(new Set());
+  const [bulkActionLoading, setBulkActionLoading] = useState(false);
+
   // Sorting state
   const [sortBy, setSortBy] = useState<'date' | 'title' | 'category'>('date');
   const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('desc');
@@ -563,6 +567,81 @@ export default function SikkPostsManagementPage() {
     }
   };
 
+  // Multi-select functions
+  const toggleSelectPost = (slug: string) => {
+    setSelectedPosts((prev) => {
+      const next = new Set(prev);
+      if (next.has(slug)) {
+        next.delete(slug);
+      } else {
+        next.add(slug);
+      }
+      return next;
+    });
+  };
+
+  const toggleSelectAll = () => {
+    if (selectedPosts.size === filteredPosts.length) {
+      setSelectedPosts(new Set());
+    } else {
+      setSelectedPosts(new Set(filteredPosts.map((p) => p.slug)));
+    }
+  };
+
+  const clearSelection = () => {
+    setSelectedPosts(new Set());
+  };
+
+  // Bulk actions
+  const handleBulkDelete = async () => {
+    if (selectedPosts.size === 0) return;
+    if (!confirm(`선택한 ${selectedPosts.size}개의 포스트를 삭제하시겠습니까?`)) return;
+
+    setBulkActionLoading(true);
+    try {
+      const deletePromises = Array.from(selectedPosts).map((slug) =>
+        fetch(`/api/sikk/${slug}`, { method: 'DELETE' })
+      );
+      await Promise.all(deletePromises);
+      setPosts(posts.filter((p) => !selectedPosts.has(p.slug)));
+      setSelectedPosts(new Set());
+    } catch (error) {
+      console.error('Failed to bulk delete:', error);
+      alert('일부 포스트 삭제에 실패했습니다.');
+    } finally {
+      setBulkActionLoading(false);
+    }
+  };
+
+  const handleBulkToggleVisibility = async (makePublic: boolean) => {
+    if (selectedPosts.size === 0) return;
+
+    setBulkActionLoading(true);
+    try {
+      const selectedPostsList = posts.filter((p) => selectedPosts.has(p.slug));
+      const updatePromises = selectedPostsList.map((post) =>
+        fetch(`/api/sikk/${post.slug}`, {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            ...post,
+            isPublic: makePublic,
+          }),
+        })
+      );
+      await Promise.all(updatePromises);
+      setPosts(posts.map((p) =>
+        selectedPosts.has(p.slug) ? { ...p, isPublic: makePublic } : p
+      ));
+      setSelectedPosts(new Set());
+    } catch (error) {
+      console.error('Failed to bulk toggle visibility:', error);
+      alert('일부 포스트 공개 상태 변경에 실패했습니다.');
+    } finally {
+      setBulkActionLoading(false);
+    }
+  };
+
   return (
     <div>
       {/* Header */}
@@ -628,6 +707,45 @@ export default function SikkPostsManagementPage() {
           )}
         </div>
       </div>
+
+      {/* Bulk Action Bar */}
+      {selectedPosts.size > 0 && (
+        <div className="mb-4 p-3 bg-pink-50 dark:bg-pink-900/20 border border-pink-200 dark:border-pink-800 rounded-lg flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
+          <span className="text-sm font-medium text-pink-800 dark:text-pink-300">
+            {selectedPosts.size}개 선택됨
+          </span>
+          <div className="flex flex-wrap gap-2">
+            <button
+              onClick={() => handleBulkToggleVisibility(true)}
+              disabled={bulkActionLoading}
+              className="px-3 py-1.5 text-xs bg-green-600 text-white rounded-lg hover:bg-green-700 disabled:opacity-50 transition-colors"
+            >
+              공개로 변경
+            </button>
+            <button
+              onClick={() => handleBulkToggleVisibility(false)}
+              disabled={bulkActionLoading}
+              className="px-3 py-1.5 text-xs bg-gray-600 text-white rounded-lg hover:bg-gray-700 disabled:opacity-50 transition-colors"
+            >
+              비공개로 변경
+            </button>
+            <button
+              onClick={handleBulkDelete}
+              disabled={bulkActionLoading}
+              className="px-3 py-1.5 text-xs bg-red-600 text-white rounded-lg hover:bg-red-700 disabled:opacity-50 transition-colors"
+            >
+              선택 삭제
+            </button>
+            <button
+              onClick={clearSelection}
+              disabled={bulkActionLoading}
+              className="px-3 py-1.5 text-xs bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-300 rounded-lg hover:bg-gray-300 dark:hover:bg-gray-600 disabled:opacity-50 transition-colors"
+            >
+              선택 해제
+            </button>
+          </div>
+        </div>
+      )}
 
       {/* Mobile Category Filter */}
       <MobileCategoryFilter
@@ -770,16 +888,36 @@ export default function SikkPostsManagementPage() {
               <>
                 {/* Mobile Card View */}
                 <div className="lg:hidden divide-y divide-gray-200 dark:divide-gray-700">
+                  {/* Mobile Select All */}
+                  <div className="p-3 bg-gray-50 dark:bg-gray-700/50 flex items-center gap-3">
+                    <input
+                      type="checkbox"
+                      checked={selectedPosts.size === filteredPosts.length && filteredPosts.length > 0}
+                      onChange={toggleSelectAll}
+                      className="w-4 h-4 rounded border-gray-300 text-pink-600 focus:ring-pink-500"
+                    />
+                    <span className="text-xs text-gray-600 dark:text-gray-400">
+                      전체 선택 ({filteredPosts.length}개)
+                    </span>
+                  </div>
                   {filteredPosts.map((post) => (
                     <div key={post.slug} className="p-4">
                       <div className="flex items-start justify-between gap-2">
-                        <div className="flex-1 min-w-0">
-                          <h3 className="text-sm font-medium text-gray-900 dark:text-white truncate">
-                            {post.title}
-                          </h3>
-                          <p className="text-xs text-gray-500 dark:text-gray-400 mt-0.5 truncate">
-                            {post.slug}
-                          </p>
+                        <div className="flex items-start gap-3 flex-1 min-w-0">
+                          <input
+                            type="checkbox"
+                            checked={selectedPosts.has(post.slug)}
+                            onChange={() => toggleSelectPost(post.slug)}
+                            className="mt-1 w-4 h-4 rounded border-gray-300 text-pink-600 focus:ring-pink-500"
+                          />
+                          <div className="flex-1 min-w-0">
+                            <h3 className="text-sm font-medium text-gray-900 dark:text-white truncate">
+                              {post.title}
+                            </h3>
+                            <p className="text-xs text-gray-500 dark:text-gray-400 mt-0.5 truncate">
+                              {post.slug}
+                            </p>
+                          </div>
                         </div>
                         <button
                           onClick={() => handleToggleVisibility(post)}
@@ -844,6 +982,14 @@ export default function SikkPostsManagementPage() {
                   <table className="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
                     <thead className="bg-gray-50 dark:bg-gray-700">
                       <tr>
+                        <th className="px-4 py-3 text-center">
+                          <input
+                            type="checkbox"
+                            checked={selectedPosts.size === filteredPosts.length && filteredPosts.length > 0}
+                            onChange={toggleSelectAll}
+                            className="w-4 h-4 rounded border-gray-300 text-pink-600 focus:ring-pink-500"
+                          />
+                        </th>
                         <th
                           onClick={() => handleSort('title')}
                           className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-600 transition-colors"
@@ -890,7 +1036,15 @@ export default function SikkPostsManagementPage() {
                     </thead>
                     <tbody className="divide-y divide-gray-200 dark:divide-gray-700">
                       {filteredPosts.map((post) => (
-                        <tr key={post.slug} className="hover:bg-gray-50 dark:hover:bg-gray-700/50">
+                        <tr key={post.slug} className={`hover:bg-gray-50 dark:hover:bg-gray-700/50 ${selectedPosts.has(post.slug) ? 'bg-pink-50 dark:bg-pink-900/10' : ''}`}>
+                          <td className="px-4 py-4 text-center">
+                            <input
+                              type="checkbox"
+                              checked={selectedPosts.has(post.slug)}
+                              onChange={() => toggleSelectPost(post.slug)}
+                              className="w-4 h-4 rounded border-gray-300 text-pink-600 focus:ring-pink-500"
+                            />
+                          </td>
                           <td className="px-6 py-4">
                             <div className="text-sm font-medium text-gray-900 dark:text-white">
                               {post.title}
