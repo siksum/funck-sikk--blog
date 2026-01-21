@@ -9,16 +9,14 @@ export default function AboutPage() {
     research: true,
     education: true,
     publications: true,
-    journals: true,
-    international: false,
-    domestic: false,
-    awards: false,
-    certificate: false,
-    patents: false,
-    activities: false,
-    press: false,
+    awards: true,
+    certificate: true,
+    patents: true,
+    activities: true,
+    press: true,
   });
   const [activeTab, setActiveTab] = useState<'education' | 'work' | 'research'>('education');
+  const [activePubTab, setActivePubTab] = useState<'journals' | 'international' | 'domestic'>('journals');
 
   // Collapsible section header component
   const SectionHeader = ({
@@ -34,7 +32,7 @@ export default function AboutPage() {
       onClick={() => toggleSection(sectionKey)}
       className="w-full text-2xl font-bold text-gray-900 dark:text-white mb-6 flex items-center gap-3 group hover:text-violet-600 dark:hover:text-violet-400 transition-colors"
     >
-      <span className="w-10 h-10 rounded-lg bg-violet-100 dark:bg-violet-900/30 flex items-center justify-center text-violet-600 dark:text-violet-400">
+      <span className="w-10 h-10 rounded-lg bg-violet-100 dark:bg-violet-500/20 flex items-center justify-center text-violet-600 dark:text-violet-400">
         {icon}
       </span>
       <span className="flex-1 text-left">{title}</span>
@@ -77,7 +75,7 @@ export default function AboutPage() {
         animate={{ opacity: 1 }}
         transition={{ duration: 0.8 }}
       >
-        <div className="absolute inset-0 bg-gradient-to-br from-violet-100 via-indigo-50 to-purple-100 dark:from-violet-950/30 dark:via-indigo-950/20 dark:to-purple-950/30" />
+        <div className="absolute inset-0 bg-gradient-to-br from-violet-100 via-indigo-50 to-purple-100 dark:from-transparent dark:via-transparent dark:to-transparent" />
 
         <div className="relative max-w-5xl mx-auto px-4 sm:px-6 lg:px-8">
           <motion.div
@@ -92,7 +90,7 @@ export default function AboutPage() {
               whileHover={{ scale: 1.05 }}
               transition={{ type: "spring", stiffness: 300 }}
             >
-              <div className="relative w-40 h-40 rounded-full overflow-hidden ring-4 ring-violet-200 dark:ring-violet-800 shadow-xl shadow-violet-500/30 dark:shadow-violet-500/20">
+              <div className="relative w-40 h-40 rounded-full overflow-hidden ring-4 ring-violet-200 dark:ring-violet-500/40 shadow-xl shadow-violet-500/30 dark:shadow-violet-500/30">
                 <Image
                   src="/profile.jpg"
                   alt="Namryeong Kim"
@@ -160,7 +158,7 @@ export default function AboutPage() {
           viewport={{ margin: "-100px" }}
           transition={{ duration: 0.5 }}
         >
-          <div className="p-6 bg-gradient-to-r from-violet-50 to-indigo-50 dark:from-violet-900/20 dark:to-indigo-900/20 rounded-2xl border border-violet-200 dark:border-violet-800">
+          <div className="p-6 rounded-2xl border border-violet-200 dark:border-violet-500/30" style={{ background: 'var(--card-bg)' }}>
             <p className="text-lg text-violet-700 dark:text-violet-300 font-medium italic text-center mb-4">
               &ldquo;올바른 가치관과 신념으로 나눌 줄 아는, 지혜로운 사람이 되고 싶습니다&rdquo;
             </p>
@@ -197,7 +195,7 @@ export default function AboutPage() {
             {['Web3 Security', 'Automated Vulnerability Detection', 'AI Security'].map((interest, index) => (
               <motion.span
                 key={interest}
-                className="px-5 py-2.5 bg-gradient-to-r from-violet-100 to-indigo-100 dark:from-violet-900/30 dark:to-indigo-900/30 text-violet-700 dark:text-violet-300 rounded-full font-medium border border-violet-200 dark:border-violet-800"
+                className="px-5 py-2.5 bg-violet-100 dark:bg-violet-500/20 text-violet-700 dark:text-violet-300 rounded-full font-medium border border-violet-200 dark:border-violet-500/30"
                 initial={{ opacity: 0, scale: 0.8 }}
                 whileInView={{ opacity: 1, scale: 1 }}
                 viewport={{ }}
@@ -221,7 +219,7 @@ export default function AboutPage() {
             ].map((item, index) => (
               <motion.div
                 key={index}
-                className="p-3 bg-green-50 dark:bg-green-900/20 rounded-lg border border-green-200 dark:border-green-800 text-green-800 dark:text-green-300"
+                className="p-3 bg-green-50 dark:bg-green-500/10 rounded-lg border border-green-200 dark:border-green-500/30 text-green-800 dark:text-green-400"
                 initial={{ opacity: 0, x: -20 }}
                 whileInView={{ opacity: 1, x: 0 }}
                 viewport={{ }}
@@ -257,7 +255,7 @@ export default function AboutPage() {
             transition={{ duration: 0.3 }}
           >
           {/* Tabs */}
-          <div className="flex gap-2 mb-6 p-1 bg-gray-100 dark:bg-gray-800/50 rounded-xl">
+          <div className="flex gap-2 mb-6 p-1 bg-gray-100 dark:bg-gray-800/80 rounded-xl border border-transparent dark:border-gray-700/50">
             {[
               { id: 'education' as const, label: 'Education', icon: '🎓', count: 2 },
               { id: 'work' as const, label: 'Work', icon: '💼', count: 3 },
@@ -327,16 +325,17 @@ export default function AboutPage() {
 
                       {/* Content Card */}
                       <motion.div
-                        className="p-4 bg-white dark:bg-gray-800/80 rounded-xl border border-gray-200 dark:border-gray-700 shadow-sm hover:shadow-md transition-all"
+                        className="p-4 rounded-xl border border-gray-200 dark:border-violet-500/20 shadow-sm hover:shadow-md transition-all"
+                        style={{ background: 'var(--card-bg)' }}
                         whileHover={{ x: 4 }}
                       >
                         <div className="flex flex-wrap items-center gap-2 mb-2">
                           <span className={`px-2.5 py-0.5 rounded-full text-xs font-medium ${
                             activeTab === 'education'
-                              ? 'bg-violet-100 dark:bg-violet-900/30 text-violet-700 dark:text-violet-300'
+                              ? 'bg-violet-100 dark:bg-violet-500/20 text-violet-700 dark:text-violet-300'
                               : activeTab === 'work'
-                              ? 'bg-emerald-100 dark:bg-emerald-900/30 text-emerald-700 dark:text-emerald-300'
-                              : 'bg-indigo-100 dark:bg-indigo-900/30 text-indigo-700 dark:text-indigo-300'
+                              ? 'bg-emerald-100 dark:bg-emerald-500/20 text-emerald-700 dark:text-emerald-300'
+                              : 'bg-indigo-100 dark:bg-indigo-500/20 text-indigo-700 dark:text-indigo-300'
                           }`}>
                             {item.year}
                           </span>
@@ -377,196 +376,147 @@ export default function AboutPage() {
             exit={{ height: 0, opacity: 0 }}
             transition={{ duration: 0.3 }}
           >
-          {/* Journals */}
-          <button
-            onClick={() => toggleSection('journals')}
-            className="w-full flex items-center justify-between text-lg font-semibold text-gray-800 dark:text-gray-200 mb-4 p-3 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
-          >
-            <span className="flex items-center gap-2">
-              Journals
-              <span className="text-sm font-normal text-violet-600 dark:text-violet-400">(4)</span>
-            </span>
-            <motion.svg
-              className="w-5 h-5 text-gray-500"
-              fill="none"
-              stroke="currentColor"
-              viewBox="0 0 24 24"
-              animate={{ rotate: expandedSections.journals ? 180 : 0 }}
-              transition={{ duration: 0.2 }}
-            >
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
-            </motion.svg>
-          </button>
-          <AnimatePresence>
-          {expandedSections.journals && (
-          <motion.div
-            className="space-y-4 mb-8"
-            initial={{ height: 0, opacity: 0 }}
-            animate={{ height: "auto", opacity: 1 }}
-            exit={{ height: 0, opacity: 0 }}
-            transition={{ duration: 0.3 }}
-          >
+          {/* Tabs */}
+          <div className="flex gap-2 mb-6 p-1 bg-gray-100 dark:bg-gray-800/80 rounded-xl border border-transparent dark:border-gray-700/50">
             {[
-              {
-                authors: 'Eunyoung Lee*, Namryeong Kim* (co-first), Chaerim Han, Nayeon Shin, Ilgu Lee',
-                title: 'rPBFT: Reliable Practical Byzantine Fault Tolerance Mechanism for Faulty Distributed Networks',
-                venue: 'IEEE Transactions on Big Data, 2025',
-                badge: 'SCIE, IF5.7, Q1, JCR Top 11.9%',
-                featured: true
-              },
-              {
-                authors: 'Hyobeen Cho, Namryeong Kim, Ilgu Lee',
-                title: 'Design and Evaluation of an Intelligent Static Analysis Framework for Detecting Access-Control Vulnerabilities in DeFi Smart Contracts',
-                venue: 'Journal of the Korea Institute of Information Security & Cryptology, Vol. 35, No. 6, Dec 2025',
-                badge: 'KCI',
-                korean: 'DeFi 스마트 컨트랙트 접근 제어 취약점 탐지를 위한 지능형 정적 분석 프레임워크의 설계 및 평가'
-              },
-              {
-                authors: 'Namryeong Kim, Dongju Ryu, Ilgu Lee',
-                title: 'Code Similarity-Based Framework for Smart Contract Attack Surface Analysis',
-                venue: 'Journal of Korea Information Assurance Society, Vol. 24, No. 5, 2024',
-                badge: 'KCI',
-                korean: '코드 유사성 비교 기반의 스마트 컨트랙트 공격 표면 분석 프레임워크'
-              },
-              {
-                authors: 'Eunyoung Lee, Namryeong Kim, Chaerim Han, Ilgu Lee',
-                title: 'Evaluation and Comparative Analysis of Scalability and Fault Tolerance for Practical Byzantine Fault Tolerant based Blockchain',
-                venue: 'Journal of the Korea Institute of Information and Communication Engineering, Vol. 26, No. 2, 2022',
-                badge: 'KCI',
-                korean: '프랙티컬 비잔틴 장애 허용 기반 블록체인의 확장성과 내결함성 평가 및 비교분석'
-              },
-            ].map((pub, index) => (
-              <motion.div
-                key={index}
-                className={`p-5 rounded-xl border ${pub.featured ? 'bg-gradient-to-br from-violet-50 to-indigo-50 dark:from-violet-900/20 dark:to-indigo-900/20 border-violet-300 dark:border-violet-700' : 'bg-white dark:bg-gray-800/50 border-gray-200 dark:border-gray-700'}`}
-                initial={{ opacity: 0, y: 20 }}
-                whileInView={{ opacity: 1, y: 0 }}
-                viewport={{ }}
-                transition={{ delay: index * 0.1 }}
+              { id: 'journals' as const, label: 'Journals', icon: '📚', count: 4 },
+              { id: 'international' as const, label: 'International', icon: '🌍', count: 3 },
+              { id: 'domestic' as const, label: 'Domestic', icon: '🇰🇷', count: 11 },
+            ].map((tab) => (
+              <button
+                key={tab.id}
+                onClick={() => setActivePubTab(tab.id)}
+                className={`flex-1 px-4 py-2.5 rounded-lg font-medium text-sm transition-all duration-200 flex items-center justify-center gap-2 ${
+                  activePubTab === tab.id
+                    ? 'bg-white dark:bg-gray-700 text-violet-600 dark:text-violet-400 shadow-sm'
+                    : 'text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-200'
+                }`}
               >
-                <div className="flex flex-wrap gap-2 mb-2">
-                  <span className={`px-2 py-0.5 rounded text-xs font-medium ${pub.featured ? 'bg-amber-100 dark:bg-amber-900/30 text-amber-700 dark:text-amber-300' : 'bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300'}`}>{pub.badge}</span>
-                </div>
-                <p className="text-sm text-violet-600 dark:text-violet-400 mb-1">{pub.authors}</p>
-                <h4 className="font-medium text-gray-900 dark:text-white mb-1">&ldquo;{pub.title}&rdquo;</h4>
-                <p className="text-sm text-gray-600 dark:text-gray-400">{pub.venue}</p>
-                {pub.korean && <p className="text-xs text-gray-500 dark:text-gray-500 mt-1"># {pub.korean}</p>}
-              </motion.div>
+                <span>{tab.icon}</span>
+                <span className="hidden sm:inline">{tab.label}</span>
+                <span className="text-xs opacity-60">({tab.count})</span>
+              </button>
             ))}
-          </motion.div>
-          )}
-          </AnimatePresence>
+          </div>
 
-          {/* International Conference */}
-          <button
-            onClick={() => toggleSection('international')}
-            className="w-full flex items-center justify-between text-lg font-semibold text-gray-800 dark:text-gray-200 mb-4 p-3 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
-          >
-            <span className="flex items-center gap-2">
-              International Conference
-              <span className="text-sm font-normal text-violet-600 dark:text-violet-400">(3)</span>
-            </span>
-            <motion.svg
-              className="w-5 h-5 text-gray-500"
-              fill="none"
-              stroke="currentColor"
-              viewBox="0 0 24 24"
-              animate={{ rotate: expandedSections.international ? 180 : 0 }}
+          {/* Publications Content */}
+          <AnimatePresence mode="wait">
+            <motion.div
+              key={activePubTab}
+              initial={{ opacity: 0, y: 10 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -10 }}
               transition={{ duration: 0.2 }}
+              className="space-y-4"
             >
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
-            </motion.svg>
-          </button>
-          <AnimatePresence>
-          {expandedSections.international && (
-          <motion.div
-            className="space-y-3 mb-8"
-            initial={{ height: 0, opacity: 0 }}
-            animate={{ height: "auto", opacity: 1 }}
-            exit={{ height: 0, opacity: 0 }}
-            transition={{ duration: 0.3 }}
-          >
-            {[
-              { authors: 'Hyobeen Cho, Namryeong Kim, Sunwoo Jeong, Ilgu Lee', title: 'Enhancing DeFi Smart Contract Security via LangChain and Retrieval-Augmented Generation', venue: 'World Conference on Information Security Applications (WISA) 2025, Jeju, Aug. 21, 2025' },
-              { authors: 'Namryeong Kim, Ilgu Lee', title: 'A Fault-Tolerant Consensus Mechanism for Scalable and Reliable Blockchain Systems', venue: 'IEEE International Conference on Consumer Technology - Pacific 2025, Matsue Shimane, Japan, Mar. 31, 2025' },
-              { authors: 'Namryeong Kim, Ilgu Lee', title: 'Reliable Practical Byzantine Fault Tolerance Mechanism for High Throughput and Low Latency Blockchain Consensus', venue: 'World Conference on Information Security Applications (WISA) 2024, Aug. 22, 2024 (Poster)' },
-            ].map((pub, index) => (
-              <motion.div
-                key={index}
-                className="p-4 bg-gray-50 dark:bg-gray-800/50 rounded-xl border border-gray-200 dark:border-gray-700"
-                initial={{ opacity: 0, y: 10 }}
-                whileInView={{ opacity: 1, y: 0 }}
-                viewport={{ }}
-                transition={{ delay: index * 0.05 }}
-              >
-                <p className="text-sm text-violet-600 dark:text-violet-400 mb-1">{pub.authors}</p>
-                <h4 className="font-medium text-gray-900 dark:text-white text-sm">&ldquo;{pub.title}&rdquo;</h4>
-                <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">{pub.venue}</p>
-              </motion.div>
-            ))}
-          </motion.div>
-          )}
-          </AnimatePresence>
+              {(() => {
+                const journals = [
+                  {
+                    authors: 'Eunyoung Lee*, Namryeong Kim* (co-first), Chaerim Han, Nayeon Shin, Ilgu Lee',
+                    title: 'rPBFT: Reliable Practical Byzantine Fault Tolerance Mechanism for Faulty Distributed Networks',
+                    venue: 'IEEE Transactions on Big Data, 2025',
+                    badge: 'SCIE, IF5.7, Q1, JCR Top 11.9%',
+                    featured: true
+                  },
+                  {
+                    authors: 'Hyobeen Cho, Namryeong Kim, Ilgu Lee',
+                    title: 'Design and Evaluation of an Intelligent Static Analysis Framework for Detecting Access-Control Vulnerabilities in DeFi Smart Contracts',
+                    venue: 'Journal of the Korea Institute of Information Security & Cryptology, Vol. 35, No. 6, Dec 2025',
+                    badge: 'KCI',
+                    korean: 'DeFi 스마트 컨트랙트 접근 제어 취약점 탐지를 위한 지능형 정적 분석 프레임워크의 설계 및 평가'
+                  },
+                  {
+                    authors: 'Namryeong Kim, Dongju Ryu, Ilgu Lee',
+                    title: 'Code Similarity-Based Framework for Smart Contract Attack Surface Analysis',
+                    venue: 'Journal of Korea Information Assurance Society, Vol. 24, No. 5, 2024',
+                    badge: 'KCI',
+                    korean: '코드 유사성 비교 기반의 스마트 컨트랙트 공격 표면 분석 프레임워크'
+                  },
+                  {
+                    authors: 'Eunyoung Lee, Namryeong Kim, Chaerim Han, Ilgu Lee',
+                    title: 'Evaluation and Comparative Analysis of Scalability and Fault Tolerance for Practical Byzantine Fault Tolerant based Blockchain',
+                    venue: 'Journal of the Korea Institute of Information and Communication Engineering, Vol. 26, No. 2, 2022',
+                    badge: 'KCI',
+                    korean: '프랙티컬 비잔틴 장애 허용 기반 블록체인의 확장성과 내결함성 평가 및 비교분석'
+                  },
+                ];
 
-          {/* Domestic Conference */}
-          <button
-            onClick={() => toggleSection('domestic')}
-            className="w-full flex items-center justify-between text-lg font-semibold text-gray-800 dark:text-gray-200 mb-4 p-3 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
-          >
-            <span className="flex items-center gap-2">
-              Domestic Conference
-              <span className="text-sm font-normal text-violet-600 dark:text-violet-400">(11)</span>
-            </span>
-            <motion.svg
-              className="w-5 h-5 text-gray-500"
-              fill="none"
-              stroke="currentColor"
-              viewBox="0 0 24 24"
-              animate={{ rotate: expandedSections.domestic ? 180 : 0 }}
-              transition={{ duration: 0.2 }}
-            >
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
-            </motion.svg>
-          </button>
-          <AnimatePresence>
-          {expandedSections.domestic && (
-          <motion.div
-            className="space-y-3"
-            initial={{ height: 0, opacity: 0 }}
-            animate={{ height: "auto", opacity: 1 }}
-            exit={{ height: 0, opacity: 0 }}
-            transition={{ duration: 0.3 }}
-          >
-            {[
-              { authors: 'Namryeong Kim, Sunwoo Jeong, Hyobeen Cho, Eunseo Youk, Ilgu Lee', title: 'A Retrieval-Augmented Chain-of-Thought Framework for Vulnerability Detection in DeFi Smart Contracts', venue: 'Annual Conference of KIPS (ACK) 2025, Nov. 7, 2025', korean: 'Retrieval-Augmented Chain-of-Thought 프레임워크를 활용한 DeFi 스마트 컨트랙트 취약점 탐지' },
-              { authors: 'Hyobeen Cho, Namryeong Kim, Sunwoo Jeong, Eunseo Youk, Ilgu Lee', title: 'A Static Analysis Approaches for Detecting Access Control Vulnerabilities in DeFi Smart Contracts', venue: 'Annual Conference of KIPS (ACK) 2025, Nov. 7, 2025', korean: 'DeFi 스마트 컨트랙트 접근 제어 취약점 탐지를 위한 정적 분석 기법' },
-              { authors: 'Sunwoo Jeong, Namryeong Kim, Ilgu Lee', title: 'Attention Pattern Analysis for Prompt Injection Detection', venue: 'Annual Conference of KIPS (ACK) 2025, Nov. 7, 2025', korean: '어텐션 패턴 분석 기반 프롬프트 인젝션 탐지 시스템', award: '한국정보기술학술단체총연합회 회장상' },
-              { authors: 'Sunwoo Jeong, Namryeong Kim, Hyobeen Cho, Eunseo Youk, Ilgu Lee', title: 'Watermark-based Prompt Injection Threat Analysis', venue: 'Annual Conference of KIPS (ACK) 2025, Nov. 7, 2025', korean: '워터마크 기반 프롬프트 인젝션 위협 분석', award: '동상' },
-              { authors: 'Eunseo Youk, Namryeong Kim, Hyobeen Cho, Sunwoo Jeong, Ilgu Lee', title: 'A Static Analysis Framework for Detecting Smart Contract Business Logic Vulnerabilities', venue: 'Annual Conference of KIPS (ACK) 2025, Nov. 7, 2025', korean: '스마트 컨트랙트 비즈니스 로직 취약점 탐지를 위한 정적 분석 프레임워크', award: '국가보안기술연구소 소장상' },
-              { authors: 'Hyobeen Cho, Namryeong Kim, Ilgu Lee', title: 'Network-Coding Based Multi-Link Transmission for Inter-Satellite Communications', venue: 'Annual Symposium of KIPS (ASK) 2025, May 31, 2025', korean: '위성 간 통신을 위한 네트워크 코딩 기반 다중 링크 전송' },
-              { authors: 'Namryeong Kim, Dongju Ryu, Ilgu Lee', title: 'Method for detecting attack surface in smart contract using code similarity techniques', venue: 'Korea Convergence Security Association 2024 Autumn Conference, Nov. 8, 2024', korean: '코드 유사도 기법을 활용한 스마트 컨트랙트 공격 표면 탐지 방법', award: '최우수논문상' },
-              { authors: 'Namryeong Kim, Nara Im, Daehee Jang', title: 'A Study on the analysis of security threats and measures in Metaverse', venue: 'Korea Convergence Security Association 2022 Summer Conference, Jul. 24, 2022', korean: '메타버스 내 보안 위협 분석 및 대책에 관한 연구', award: '장려상' },
-              { authors: 'Eunyeong Ahn, Namryeong Kim, Nara Lim, Jisun Kim, Kyungjin Kim, Daehee Jang', title: 'Analysis of Vulnerabilities and Security Measures in OAuth 2.0', venue: 'Conference on Information Security and Cryptography-Summer 2022 (CISC-S\'22), KIISC, 2022', korean: 'OAuth 2.0의 보안 취약점 분석 및 보안 대책 연구' },
-              { authors: 'Namryeong Kim, Jiwon Ock (co-first), Seongmin Kim', title: 'Secure de-identification for data privacy with SGX-based Artificial intelligence learning framework', venue: 'The 24th Korea Conference on Software Engineering (KCSE 2022), Jan. 2022', korean: '개인정보보호를 위한 SGX기반 학습데이터 비식별화 인공지능 학습 프레임워크' },
-              { authors: 'Eunyoung Lee, Namryeong Kim, Chaerim Han, Ilgu Lee', title: 'Evaluation Framework for Practical Byzantine Fault Tolerant based Consensus Algorithms', venue: 'The 50th Korea Institute of Information and Communication Engineering Conference (KIICE), Oct. 28, 2021', korean: '프랙티컬 비잔틴 장애 허용 기반의 합의 알고리즘의 평가 프레임워크', award: '우수논문상' },
-            ].map((pub, index) => (
-              <motion.div
-                key={index}
-                className={`p-4 rounded-xl border ${pub.award ? 'bg-amber-50 dark:bg-amber-900/20 border-amber-200 dark:border-amber-800' : 'bg-gray-50 dark:bg-gray-800/50 border-gray-200 dark:border-gray-700'}`}
-                initial={{ opacity: 0, y: 10 }}
-                whileInView={{ opacity: 1, y: 0 }}
-                viewport={{ }}
-                transition={{ delay: index * 0.03 }}
-              >
-                {pub.award && <span className="inline-block px-2 py-0.5 bg-amber-100 dark:bg-amber-900/40 text-amber-700 dark:text-amber-300 rounded text-xs font-medium mb-2">{pub.award}</span>}
-                <p className="text-sm text-violet-600 dark:text-violet-400 mb-1">{pub.authors}</p>
-                <h4 className="font-medium text-gray-900 dark:text-white text-sm">&ldquo;{pub.title}&rdquo;</h4>
-                <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">{pub.venue}</p>
-                {pub.korean && <p className="text-xs text-gray-400 dark:text-gray-500 mt-1"># {pub.korean}</p>}
-              </motion.div>
-            ))}
-          </motion.div>
-          )}
+                const international = [
+                  { authors: 'Hyobeen Cho, Namryeong Kim, Sunwoo Jeong, Ilgu Lee', title: 'Enhancing DeFi Smart Contract Security via LangChain and Retrieval-Augmented Generation', venue: 'World Conference on Information Security Applications (WISA) 2025, Jeju, Aug. 21, 2025' },
+                  { authors: 'Namryeong Kim, Ilgu Lee', title: 'A Fault-Tolerant Consensus Mechanism for Scalable and Reliable Blockchain Systems', venue: 'IEEE International Conference on Consumer Technology - Pacific 2025, Matsue Shimane, Japan, Mar. 31, 2025' },
+                  { authors: 'Namryeong Kim, Ilgu Lee', title: 'Reliable Practical Byzantine Fault Tolerance Mechanism for High Throughput and Low Latency Blockchain Consensus', venue: 'World Conference on Information Security Applications (WISA) 2024, Aug. 22, 2024 (Poster)' },
+                ];
+
+                const domestic = [
+                  { authors: 'Namryeong Kim, Sunwoo Jeong, Hyobeen Cho, Eunseo Youk, Ilgu Lee', title: 'A Retrieval-Augmented Chain-of-Thought Framework for Vulnerability Detection in DeFi Smart Contracts', venue: 'Annual Conference of KIPS (ACK) 2025, Nov. 7, 2025', korean: 'Retrieval-Augmented Chain-of-Thought 프레임워크를 활용한 DeFi 스마트 컨트랙트 취약점 탐지' },
+                  { authors: 'Hyobeen Cho, Namryeong Kim, Sunwoo Jeong, Eunseo Youk, Ilgu Lee', title: 'A Static Analysis Approaches for Detecting Access Control Vulnerabilities in DeFi Smart Contracts', venue: 'Annual Conference of KIPS (ACK) 2025, Nov. 7, 2025', korean: 'DeFi 스마트 컨트랙트 접근 제어 취약점 탐지를 위한 정적 분석 기법' },
+                  { authors: 'Sunwoo Jeong, Namryeong Kim, Ilgu Lee', title: 'Attention Pattern Analysis for Prompt Injection Detection', venue: 'Annual Conference of KIPS (ACK) 2025, Nov. 7, 2025', korean: '어텐션 패턴 분석 기반 프롬프트 인젝션 탐지 시스템', award: '한국정보기술학술단체총연합회 회장상' },
+                  { authors: 'Sunwoo Jeong, Namryeong Kim, Hyobeen Cho, Eunseo Youk, Ilgu Lee', title: 'Watermark-based Prompt Injection Threat Analysis', venue: 'Annual Conference of KIPS (ACK) 2025, Nov. 7, 2025', korean: '워터마크 기반 프롬프트 인젝션 위협 분석', award: '동상' },
+                  { authors: 'Eunseo Youk, Namryeong Kim, Hyobeen Cho, Sunwoo Jeong, Ilgu Lee', title: 'A Static Analysis Framework for Detecting Smart Contract Business Logic Vulnerabilities', venue: 'Annual Conference of KIPS (ACK) 2025, Nov. 7, 2025', korean: '스마트 컨트랙트 비즈니스 로직 취약점 탐지를 위한 정적 분석 프레임워크', award: '국가보안기술연구소 소장상' },
+                  { authors: 'Hyobeen Cho, Namryeong Kim, Ilgu Lee', title: 'Network-Coding Based Multi-Link Transmission for Inter-Satellite Communications', venue: 'Annual Symposium of KIPS (ASK) 2025, May 31, 2025', korean: '위성 간 통신을 위한 네트워크 코딩 기반 다중 링크 전송' },
+                  { authors: 'Namryeong Kim, Dongju Ryu, Ilgu Lee', title: 'Method for detecting attack surface in smart contract using code similarity techniques', venue: 'Korea Convergence Security Association 2024 Autumn Conference, Nov. 8, 2024', korean: '코드 유사도 기법을 활용한 스마트 컨트랙트 공격 표면 탐지 방법', award: '최우수논문상' },
+                  { authors: 'Namryeong Kim, Nara Im, Daehee Jang', title: 'A Study on the analysis of security threats and measures in Metaverse', venue: 'Korea Convergence Security Association 2022 Summer Conference, Jul. 24, 2022', korean: '메타버스 내 보안 위협 분석 및 대책에 관한 연구', award: '장려상' },
+                  { authors: 'Eunyeong Ahn, Namryeong Kim, Nara Lim, Jisun Kim, Kyungjin Kim, Daehee Jang', title: 'Analysis of Vulnerabilities and Security Measures in OAuth 2.0', venue: 'Conference on Information Security and Cryptography-Summer 2022 (CISC-S\'22), KIISC, 2022', korean: 'OAuth 2.0의 보안 취약점 분석 및 보안 대책 연구' },
+                  { authors: 'Namryeong Kim, Jiwon Ock (co-first), Seongmin Kim', title: 'Secure de-identification for data privacy with SGX-based Artificial intelligence learning framework', venue: 'The 24th Korea Conference on Software Engineering (KCSE 2022), Jan. 2022', korean: '개인정보보호를 위한 SGX기반 학습데이터 비식별화 인공지능 학습 프레임워크' },
+                  { authors: 'Eunyoung Lee, Namryeong Kim, Chaerim Han, Ilgu Lee', title: 'Evaluation Framework for Practical Byzantine Fault Tolerant based Consensus Algorithms', venue: 'The 50th Korea Institute of Information and Communication Engineering Conference (KIICE), Oct. 28, 2021', korean: '프랙티컬 비잔틴 장애 허용 기반의 합의 알고리즘의 평가 프레임워크', award: '우수논문상' },
+                ];
+
+                if (activePubTab === 'journals') {
+                  return journals.map((pub, index) => (
+                    <motion.div
+                      key={index}
+                      className={`p-5 rounded-xl border ${pub.featured ? 'bg-violet-50 dark:bg-violet-500/10 border-violet-300 dark:border-violet-500/30' : 'border-gray-200 dark:border-gray-700/50'}`}
+                      style={{ background: pub.featured ? undefined : 'var(--card-bg)' }}
+                      initial={{ opacity: 0, x: -10 }}
+                      animate={{ opacity: 1, x: 0 }}
+                      transition={{ duration: 0.3, delay: index * 0.1 }}
+                    >
+                      <div className="flex flex-wrap gap-2 mb-2">
+                        <span className={`px-2 py-0.5 rounded text-xs font-medium ${pub.featured ? 'bg-amber-100 dark:bg-amber-500/20 text-amber-700 dark:text-amber-300' : 'bg-gray-100 dark:bg-gray-700/50 text-gray-600 dark:text-gray-300'}`}>{pub.badge}</span>
+                      </div>
+                      <p className="text-sm text-violet-600 dark:text-violet-400 mb-1">{pub.authors}</p>
+                      <h4 className="font-medium text-gray-900 dark:text-white mb-1">&ldquo;{pub.title}&rdquo;</h4>
+                      <p className="text-sm text-gray-600 dark:text-gray-400">{pub.venue}</p>
+                      {pub.korean && <p className="text-xs text-gray-500 dark:text-gray-500 mt-1"># {pub.korean}</p>}
+                    </motion.div>
+                  ));
+                }
+
+                if (activePubTab === 'international') {
+                  return international.map((pub, index) => (
+                    <motion.div
+                      key={index}
+                      className="p-4 rounded-xl border border-gray-200 dark:border-gray-700/50"
+                      style={{ background: 'var(--card-bg)' }}
+                      initial={{ opacity: 0, x: -10 }}
+                      animate={{ opacity: 1, x: 0 }}
+                      transition={{ duration: 0.3, delay: index * 0.1 }}
+                    >
+                      <p className="text-sm text-violet-600 dark:text-violet-400 mb-1">{pub.authors}</p>
+                      <h4 className="font-medium text-gray-900 dark:text-white text-sm">&ldquo;{pub.title}&rdquo;</h4>
+                      <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">{pub.venue}</p>
+                    </motion.div>
+                  ));
+                }
+
+                return domestic.map((pub, index) => (
+                  <motion.div
+                    key={index}
+                    className={`p-4 rounded-xl border ${pub.award ? 'bg-amber-50 dark:bg-amber-500/10 border-amber-200 dark:border-amber-500/30' : 'border-gray-200 dark:border-gray-700/50'}`}
+                    style={{ background: pub.award ? undefined : 'var(--card-bg)' }}
+                    initial={{ opacity: 0, x: -10 }}
+                    animate={{ opacity: 1, x: 0 }}
+                    transition={{ duration: 0.3, delay: index * 0.05 }}
+                  >
+                    {pub.award && <span className="inline-block px-2 py-0.5 bg-amber-100 dark:bg-amber-500/20 text-amber-700 dark:text-amber-300 rounded text-xs font-medium mb-2">{pub.award}</span>}
+                    <p className="text-sm text-violet-600 dark:text-violet-400 mb-1">{pub.authors}</p>
+                    <h4 className="font-medium text-gray-900 dark:text-white text-sm">&ldquo;{pub.title}&rdquo;</h4>
+                    <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">{pub.venue}</p>
+                    {pub.korean && <p className="text-xs text-gray-400 dark:text-gray-500 mt-1"># {pub.korean}</p>}
+                  </motion.div>
+                ));
+              })()}
+            </motion.div>
           </AnimatePresence>
           </motion.div>
           )}
@@ -608,7 +558,8 @@ export default function AboutPage() {
             ].map((award, index) => (
               <motion.div
                 key={index}
-                className={`p-4 rounded-xl border ${award.highlight ? 'bg-gradient-to-br from-violet-100/80 to-indigo-100/80 dark:from-violet-900/30 dark:to-indigo-900/30 border-violet-300 dark:border-violet-700' : 'bg-white dark:bg-gray-800/50 border-gray-200 dark:border-gray-700'}`}
+                className={`p-4 rounded-xl border ${award.highlight ? 'bg-violet-50 dark:bg-violet-500/10 border-violet-300 dark:border-violet-500/30' : 'border-gray-200 dark:border-gray-700/50'}`}
+                style={{ background: award.highlight ? undefined : 'var(--card-bg)' }}
                 initial={{ opacity: 0, scale: 0.95 }}
                 whileInView={{ opacity: 1, scale: 1 }}
                 viewport={{ }}
@@ -650,7 +601,8 @@ export default function AboutPage() {
             transition={{ duration: 0.3 }}
           >
           <motion.div
-            className="p-4 bg-white dark:bg-gray-800/50 rounded-xl border border-gray-200 dark:border-gray-700 inline-block"
+            className="p-4 rounded-xl border border-gray-200 dark:border-gray-700/50 inline-block"
+            style={{ background: 'var(--card-bg)' }}
             whileHover={{ scale: 1.02 }}
           >
             <p className="font-medium text-gray-900 dark:text-white">Engineer Information Processing (정보처리기사)</p>
@@ -688,7 +640,8 @@ export default function AboutPage() {
             ].map((patent, index) => (
               <motion.div
                 key={index}
-                className="p-4 bg-gray-50 dark:bg-gray-800/50 rounded-xl border border-gray-200 dark:border-gray-700"
+                className="p-4 rounded-xl border border-gray-200 dark:border-gray-700/50"
+                style={{ background: 'var(--card-bg)' }}
                 initial={{ opacity: 0, x: index === 0 ? -20 : 20 }}
                 whileInView={{ opacity: 1, x: 0 }}
                 viewport={{ }}
@@ -731,14 +684,14 @@ export default function AboutPage() {
           >
           <div className="space-y-6">
             {/* Club */}
-            <div className="p-5 bg-white dark:bg-gray-800/80 rounded-xl border border-violet-100 dark:border-violet-900/50">
+            <div className="p-5 rounded-xl border border-violet-200 dark:border-violet-500/30" style={{ background: 'var(--card-bg)' }}>
               <h3 className="font-semibold text-gray-900 dark:text-white mb-3">HASH (Hacking Club) - Sungshin Women&apos;s University</h3>
               <p className="text-sm text-gray-600 dark:text-gray-400 mb-3">2021.01 - 2022.12 | 성신여대 융합보안공학과 해킹동아리</p>
               <div className="flex flex-wrap gap-2">
                 {['Founding Member', 'Vice President (2021)', 'President (2022)'].map((role, i) => (
                   <motion.span
                     key={role}
-                    className="px-3 py-1 bg-violet-100 dark:bg-violet-900/30 text-violet-700 dark:text-violet-300 rounded-full text-sm"
+                    className="px-3 py-1 bg-violet-100 dark:bg-violet-500/20 text-violet-700 dark:text-violet-300 rounded-full text-sm"
                     initial={{ opacity: 0, x: -10 }}
                     whileInView={{ opacity: 1, x: 0 }}
                     viewport={{ }}
@@ -760,7 +713,8 @@ export default function AboutPage() {
               ].map((activity, index) => (
                 <motion.div
                   key={index}
-                  className="p-4 bg-gray-50 dark:bg-gray-800/50 rounded-xl border border-gray-200 dark:border-gray-700"
+                  className="p-4 rounded-xl border border-gray-200 dark:border-gray-700/50"
+                  style={{ background: 'var(--card-bg)' }}
                   initial={{ opacity: 0, y: 10 }}
                   whileInView={{ opacity: 1, y: 0 }}
                   viewport={{ }}
@@ -785,7 +739,8 @@ export default function AboutPage() {
               ].map((ctf, index) => (
                 <motion.div
                   key={index}
-                  className="px-4 py-2 bg-gray-100 dark:bg-gray-800 rounded-lg"
+                  className="px-4 py-2 rounded-lg border border-gray-200 dark:border-gray-700/50"
+                  style={{ background: 'var(--card-bg)' }}
                   initial={{ opacity: 0, scale: 0.9 }}
                   whileInView={{ opacity: 1, scale: 1 }}
                   viewport={{ }}
@@ -833,7 +788,8 @@ export default function AboutPage() {
             ].map((press, index) => (
               <motion.div
                 key={index}
-                className="p-4 bg-gray-50 dark:bg-gray-800/50 rounded-lg border border-gray-200 dark:border-gray-700 flex items-center justify-between"
+                className="p-4 rounded-lg border border-gray-200 dark:border-gray-700/50 flex items-center justify-between"
+                style={{ background: 'var(--card-bg)' }}
                 initial={{ opacity: 0, x: -20 }}
                 whileInView={{ opacity: 1, x: 0 }}
                 viewport={{ }}
