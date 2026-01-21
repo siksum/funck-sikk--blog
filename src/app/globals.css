@@ -226,6 +226,22 @@ html, body {
   color: #f5f5f5 !important;
 }
 
+/* General card title - white text in dark mode */
+.card-title {
+  color: rgb(17 24 39); /* gray-900 */
+}
+.dark .card-title {
+  color: #f5f5f5 !important;
+}
+
+/* Section subtitle - white text in dark mode */
+.section-subtitle {
+  color: rgb(17 24 39); /* gray-900 */
+}
+.dark .section-subtitle {
+  color: #f5f5f5 !important;
+}
+
 html, body, * {
   font-family: 'JoseonGulim', Arial, Helvetica, sans-serif !important;
 }
