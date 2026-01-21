@@ -156,12 +156,14 @@ export default function MyWorldDashboard() {
   // Long press for mobile context menu
   const longPressTimerRef = useRef<NodeJS.Timeout | null>(null);
   const longPressTouchRef = useRef<{ x: number; y: number } | null>(null);
+  const contextMenuOpenedAtRef = useRef<number>(0);
 
   const handleTouchStart = useCallback((e: React.TouchEvent, event: CalendarEvent) => {
     const touch = e.touches[0];
     longPressTouchRef.current = { x: touch.clientX, y: touch.clientY };
     longPressTimerRef.current = setTimeout(() => {
       if (longPressTouchRef.current) {
+        contextMenuOpenedAtRef.current = Date.now();
         setContextMenu({
           x: longPressTouchRef.current.x,
           y: longPressTouchRef.current.y,
@@ -193,6 +195,7 @@ export default function MyWorldDashboard() {
     longPressTouchRef.current = { x: touch.clientX, y: touch.clientY };
     longPressTimerRef.current = setTimeout(() => {
       if (longPressTouchRef.current) {
+        contextMenuOpenedAtRef.current = Date.now();
         setContextMenu({
           x: longPressTouchRef.current.x,
           y: longPressTouchRef.current.y,
@@ -3474,7 +3477,18 @@ export default function MyWorldDashboard() {
           {/* Backdrop to close menu */}
           <div
             className="fixed inset-0 z-40"
-            onClick={() => setContextMenu(null)}
+            onClick={() => {
+              // Ignore clicks that happen immediately after opening (prevents touch event issues)
+              if (Date.now() - contextMenuOpenedAtRef.current > 300) {
+                setContextMenu(null);
+              }
+            }}
+            onTouchEnd={(e) => {
+              // Ignore touches that happen immediately after opening
+              if (Date.now() - contextMenuOpenedAtRef.current > 300) {
+                setContextMenu(null);
+              }
+            }}
             onContextMenu={(e) => {
               e.preventDefault();
               setContextMenu(null);
