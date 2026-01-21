@@ -33,7 +33,7 @@ export default function AboutPage() {
       className="w-full text-2xl font-bold mb-6 flex items-center gap-3 group hover:text-violet-600 dark:hover:text-violet-400 transition-colors"
       style={{ color: 'var(--foreground)' }}
     >
-      <span className="w-10 h-10 rounded-lg bg-violet-100 dark:bg-violet-500/20 flex items-center justify-center text-violet-600 dark:text-violet-400">
+      <span className="w-10 h-10 rounded-lg bg-violet-100 dark:bg-transparent flex items-center justify-center text-violet-600 dark:text-violet-400 border border-transparent dark:border-violet-400">
         {icon}
       </span>
       <span className="flex-1 text-left">{title}</span>
@@ -197,7 +197,7 @@ export default function AboutPage() {
             {['Web3 Security', 'Automated Vulnerability Detection', 'AI Security'].map((interest, index) => (
               <motion.span
                 key={interest}
-                className="px-5 py-2.5 bg-violet-100 dark:bg-violet-500/20 text-violet-700 dark:text-violet-300 rounded-full font-medium border border-violet-200 dark:border-violet-500/30"
+                className="px-5 py-2.5 bg-violet-100 dark:bg-transparent text-violet-700 dark:text-violet-300 rounded-full font-medium border border-violet-200 dark:border-violet-400"
                 initial={{ opacity: 0, scale: 0.8 }}
                 whileInView={{ opacity: 1, scale: 1 }}
                 viewport={{ }}
@@ -221,7 +221,7 @@ export default function AboutPage() {
             ].map((item, index) => (
               <motion.div
                 key={index}
-                className="p-3 bg-green-50 dark:bg-green-500/10 rounded-lg border border-green-200 dark:border-green-500/30 text-green-800 dark:text-green-400"
+                className="p-3 bg-green-50 dark:bg-transparent rounded-lg border border-green-200 dark:border-green-400 text-green-800 dark:text-green-400"
                 initial={{ opacity: 0, x: -20 }}
                 whileInView={{ opacity: 1, x: 0 }}
                 viewport={{ }}
@@ -257,7 +257,7 @@ export default function AboutPage() {
             transition={{ duration: 0.3 }}
           >
           {/* Tabs */}
-          <div className="flex gap-2 mb-6 p-1 bg-gray-100 dark:bg-gray-800/80 rounded-xl border border-transparent dark:border-gray-700/50">
+          <div className="flex gap-2 mb-6 p-1 bg-gray-100 dark:bg-transparent rounded-xl border border-gray-200 dark:border-gray-600">
             {[
               { id: 'education' as const, label: 'Education', icon: '🎓', count: 2 },
               { id: 'work' as const, label: 'Work', icon: '💼', count: 3 },
@@ -268,7 +268,7 @@ export default function AboutPage() {
                 onClick={() => setActiveTab(tab.id)}
                 className={`flex-1 px-4 py-2.5 rounded-lg font-medium text-sm transition-all duration-200 flex items-center justify-center gap-2 ${
                   activeTab === tab.id
-                    ? 'bg-white dark:bg-gray-700 text-violet-600 dark:text-violet-400 shadow-sm'
+                    ? 'bg-white dark:bg-transparent text-violet-600 dark:text-violet-400 shadow-sm dark:shadow-none border-transparent dark:border dark:border-violet-400'
                     : 'text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-200'
                 }`}
               >
@@ -332,12 +332,12 @@ export default function AboutPage() {
                         whileHover={{ x: 4 }}
                       >
                         <div className="flex flex-wrap items-center gap-2 mb-2">
-                          <span className={`px-2.5 py-0.5 rounded-full text-xs font-medium ${
+                          <span className={`px-2.5 py-0.5 rounded-full text-xs font-medium border ${
                             activeTab === 'education'
-                              ? 'bg-violet-100 dark:bg-violet-500/20 text-violet-700 dark:text-violet-300'
+                              ? 'bg-violet-100 dark:bg-transparent text-violet-700 dark:text-violet-300 border-violet-200 dark:border-violet-400'
                               : activeTab === 'work'
-                              ? 'bg-emerald-100 dark:bg-emerald-500/20 text-emerald-700 dark:text-emerald-300'
-                              : 'bg-indigo-100 dark:bg-indigo-500/20 text-indigo-700 dark:text-indigo-300'
+                              ? 'bg-emerald-100 dark:bg-transparent text-emerald-700 dark:text-emerald-300 border-emerald-200 dark:border-emerald-400'
+                              : 'bg-indigo-100 dark:bg-transparent text-indigo-700 dark:text-indigo-300 border-indigo-200 dark:border-indigo-400'
                           }`}>
                             {item.year}
                           </span>
@@ -379,7 +379,7 @@ export default function AboutPage() {
             transition={{ duration: 0.3 }}
           >
           {/* Tabs */}
-          <div className="flex gap-2 mb-6 p-1 bg-gray-100 dark:bg-gray-800/80 rounded-xl border border-transparent dark:border-gray-700/50">
+          <div className="flex gap-2 mb-6 p-1 bg-gray-100 dark:bg-transparent rounded-xl border border-gray-200 dark:border-gray-600">
             {[
               { id: 'journals' as const, label: 'Journals', icon: '📚', count: 4 },
               { id: 'international' as const, label: 'International', icon: '🌍', count: 3 },
@@ -390,7 +390,7 @@ export default function AboutPage() {
                 onClick={() => setActivePubTab(tab.id)}
                 className={`flex-1 px-4 py-2.5 rounded-lg font-medium text-sm transition-all duration-200 flex items-center justify-center gap-2 ${
                   activePubTab === tab.id
-                    ? 'bg-white dark:bg-gray-700 text-violet-600 dark:text-violet-400 shadow-sm'
+                    ? 'bg-white dark:bg-transparent text-violet-600 dark:text-violet-400 shadow-sm dark:shadow-none border-transparent dark:border dark:border-violet-400'
                     : 'text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-200'
                 }`}
               >
@@ -737,7 +737,7 @@ export default function AboutPage() {
                 {['Founding Member', 'Vice President (2021)', 'President (2022)'].map((role, i) => (
                   <motion.span
                     key={role}
-                    className="px-3 py-1 bg-violet-100 dark:bg-violet-500/20 text-violet-700 dark:text-violet-300 rounded-full text-sm"
+                    className="px-3 py-1 bg-violet-100 dark:bg-transparent text-violet-700 dark:text-violet-300 rounded-full text-sm border border-violet-200 dark:border-violet-400"
                     initial={{ opacity: 0, x: -10 }}
                     whileInView={{ opacity: 1, x: 0 }}
                     viewport={{ }}
