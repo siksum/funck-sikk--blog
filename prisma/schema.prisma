@@ -403,6 +403,14 @@ model CalendarEvent {
   @@index([userId, date])
 }
 
+// ============ ABOUT PAGE DATA ============
+
+model AboutData {
+  id        String   @id @default("about-data")
+  data      Json     // Store all about page data as JSON
+  updatedAt DateTime @updatedAt
+}
+
 // ============ MY WORLD - TODO LIST ============
 
 model Todo {
