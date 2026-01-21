@@ -282,6 +282,19 @@ function ProfileEditor({ data, setData }: { data: AboutData; setData: (d: AboutD
         onChange={(items) => setData({ ...data, inProgress: items })}
         placeholder="진행 중인 연구 추가"
       />
+
+      <h2 className="text-lg font-semibold text-gray-900 dark:text-white mt-8">페이지 정보</h2>
+      <div>
+        <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">최근 수정일</label>
+        <input
+          type="text"
+          value={data.lastUpdated}
+          onChange={(e) => setData({ ...data, lastUpdated: e.target.value })}
+          placeholder="예: 2025.12.09"
+          className="w-full md:w-48 px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
+        />
+        <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">About 페이지 하단에 표시됩니다</p>
+      </div>
     </div>
   );
 }

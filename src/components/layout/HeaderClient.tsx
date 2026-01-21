@@ -14,10 +14,12 @@ const publicNavigation: NavItem[] = [
   {
     label: 'About',
     href: '/about',
+    icon: '👤',
   },
   {
     label: 'Blog',
     href: '/blog',
+    icon: '📝',
   },
 ];
 
@@ -25,14 +27,17 @@ const adminNavigation: NavItem[] = [
   {
     label: 'Sikk',
     href: '/sikk',
+    icon: '✨',
   },
   {
     label: 'My World',
     href: '/my-world',
+    icon: '🌍',
   },
   {
     label: 'Maps',
     href: '/my-world/map',
+    icon: '🗺️',
   },
 ];
 
@@ -246,9 +251,10 @@ export default function HeaderClient({ posts }: HeaderClientProps) {
               <Link
                 key={item.href}
                 href={item.href}
-                className="nav-link block py-3 px-2 rounded-lg transition-all hover:bg-violet-100 dark:hover:bg-violet-500/20"
+                className="nav-link flex items-center gap-3 py-3 px-2 rounded-lg transition-all hover:bg-violet-100 dark:hover:bg-violet-500/20"
                 onClick={() => setIsMenuOpen(false)}
               >
+                {item.icon && <span>{item.icon}</span>}
                 {item.label}
               </Link>
             ))}
@@ -265,9 +271,10 @@ export default function HeaderClient({ posts }: HeaderClientProps) {
                 <Link
                   key={item.href}
                   href={item.href}
-                  className="nav-link block py-3 px-2 rounded-lg transition-all hover:bg-violet-100 dark:hover:bg-violet-500/20"
+                  className="nav-link flex items-center gap-3 py-3 px-2 rounded-lg transition-all hover:bg-violet-100 dark:hover:bg-violet-500/20"
                   onClick={() => setIsMenuOpen(false)}
                 >
+                  {item.icon && <span>{item.icon}</span>}
                   {item.label}
                 </Link>
               ))
