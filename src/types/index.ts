@@ -15,6 +15,8 @@ export interface Post {
   categorySlugPath: string[];
   tags: string[];
   thumbnail?: string;
+  thumbnailPosition?: number;
+  thumbnailScale?: number;
   content: string;
   isPublic: boolean;
 }

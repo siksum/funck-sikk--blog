@@ -24,6 +24,8 @@ function transformPost(dbPost: {
   category: string | null;
   tags: string[];
   thumbnail: string | null;
+  thumbnailPosition: number;
+  thumbnailScale: number;
   content: string;
   isPublic: boolean;
 }): Post {
@@ -40,6 +42,8 @@ function transformPost(dbPost: {
     categorySlugPath,
     tags: dbPost.tags,
     thumbnail: dbPost.thumbnail || undefined,
+    thumbnailPosition: dbPost.thumbnailPosition,
+    thumbnailScale: dbPost.thumbnailScale,
     content: dbPost.content,
     isPublic: dbPost.isPublic,
   };
