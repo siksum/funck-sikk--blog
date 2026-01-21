@@ -966,7 +966,7 @@ export default function PostEditor({ initialData = {}, isEdit = false }: PostEdi
               onPaste={handlePaste}
               onDragOver={handleDragOver}
               onDrop={handleDrop}
-              className="w-full h-[450px] px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-b-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500 font-mono text-sm resize-none"
+              className="w-full h-[600px] px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-b-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500 font-mono text-sm resize-none"
               placeholder="# 포스트 내용을 작성하세요... (이미지를 붙여넣거나 드래그앤드롭하세요)"
             />
           </div>
@@ -978,7 +978,7 @@ export default function PostEditor({ initialData = {}, isEdit = false }: PostEdi
             <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
               미리보기
             </label>
-            <div className="h-[500px] border border-gray-300 dark:border-gray-600 rounded-lg bg-gray-50 dark:bg-gray-900 overflow-y-auto">
+            <div className="h-[650px] border border-gray-300 dark:border-gray-600 rounded-lg bg-gray-50 dark:bg-gray-900 overflow-y-auto">
               {formData.content || formData.title ? (
                 <div className="p-6 text-gray-900 dark:text-gray-100">
                   {/* Post Header Preview */}
