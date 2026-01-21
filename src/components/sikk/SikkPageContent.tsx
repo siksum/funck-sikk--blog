@@ -57,9 +57,21 @@ export default function SikkPageContent({
     if (sections && sections.length > 0) {
       return sections.map((section) => {
         const categoryNames = section.categories.map((c) => c.name);
-        const sectionCategories = rootCategoriesWithTags.filter(
-          (cat) => categoryNames.includes(cat.name)
-        );
+        // Build section categories - include all configured categories even if they have no posts
+        const sectionCategories: CategoryWithTags[] = section.categories.map((dbCat) => {
+          // Find matching category from posts
+          const existingCat = rootCategoriesWithTags.find((cat) => cat.name === dbCat.name);
+          if (existingCat) {
+            return existingCat;
+          }
+          // Create empty category entry for categories without posts
+          return {
+            name: dbCat.name,
+            count: 0,
+            tags: [],
+            slugPath: [dbCat.slug],
+          };
+        });
         return {
           section: {
             title: section.title,
