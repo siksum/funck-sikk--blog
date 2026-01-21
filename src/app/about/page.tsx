@@ -506,7 +506,7 @@ export default function AboutPage() {
                           <span className={`px-2 py-0.5 rounded text-xs font-medium ${pub.featured ? 'bg-amber-100 dark:bg-amber-500/20 text-amber-700 dark:text-amber-300' : 'bg-gray-100 dark:bg-gray-700/50 text-gray-600 dark:text-gray-300'}`}>{pub.badge}</span>
                         </div>
                         <p className="text-sm text-violet-600 dark:text-violet-400 mb-1">{pub.authors}</p>
-                        <h4 className="font-medium pub-card-title mb-1">&ldquo;{pub.title}&rdquo;</h4>
+                        <h4 className={`font-medium mb-1 ${pub.featured ? 'text-gray-900' : 'pub-card-title'}`}>&ldquo;{pub.title}&rdquo;</h4>
                         <p className="text-sm text-gray-600 dark:text-gray-400">{pub.venue}</p>
                         {pub.korean && <p className="text-xs text-gray-500 dark:text-gray-500 mt-1"># {pub.korean}</p>}
                       </motion.div>
@@ -559,7 +559,7 @@ export default function AboutPage() {
                     >
                       {pub.award && <span className="inline-block px-2 py-0.5 bg-amber-100 dark:bg-amber-500/20 text-amber-700 dark:text-amber-300 rounded text-xs font-medium mb-2">{pub.award}</span>}
                       <p className="text-sm text-violet-600 dark:text-violet-400 mb-1">{pub.authors}</p>
-                      <h4 className="font-medium pub-card-title text-sm">&ldquo;{pub.title}&rdquo;</h4>
+                      <h4 className={`font-medium text-sm ${pub.award ? 'text-gray-900' : 'pub-card-title'}`}>&ldquo;{pub.title}&rdquo;</h4>
                       <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">{pub.venue}</p>
                       {pub.korean && <p className="text-xs text-gray-400 dark:text-gray-500 mt-1"># {pub.korean}</p>}
                     </motion.div>
@@ -617,7 +617,7 @@ export default function AboutPage() {
                 transition={{ delay: index * 0.05 }}
                 whileHover={{ scale: 1.02 }}
               >
-                <p className="font-medium card-title text-sm mb-1">{award.title}</p>
+                <p className={`font-medium text-sm mb-1 ${award.highlight ? 'text-gray-900' : 'card-title'}`}>{award.title}</p>
                 {award.korean && <p className="text-xs text-gray-400 dark:text-gray-500 mb-1"># {award.korean}</p>}
                 <div className="flex items-center gap-2 text-xs text-gray-500 dark:text-gray-400">
                   <span>{award.year}</span>
@@ -830,25 +830,46 @@ export default function AboutPage() {
             exit={{ height: 0, opacity: 0 }}
             transition={{ duration: 0.3 }}
           >
-          <div className="space-y-3">
+          <div className="grid md:grid-cols-2 gap-4">
             {[
-              { title: '해시드, 실전 블록체인 프로그램 \'프로토콜 캠프\' 5기 성료', date: '2023.12.01' },
-              { title: '연구팀, 한국융합보안학회 추계학술대회서 최우수·우수논문상 수상', date: '2024.11.08' },
-              { title: '성신여대, 한국정보처리학회 \'ACK2025\'에서 수상', date: '2025.11.10' },
-              { title: '성신여대, 4개 대학 연합 연구팀, ICT 융합보안크루 \'최우수\' 크루 선정', date: '2025.12.09' },
+              { title: '해시드, 실전 블록체인 프로그램 \'프로토콜 캠프\' 5기 성료', date: '2023.12.15', source: '한국경제', url: 'https://www.hankyung.com/article/202312158041O' },
+              { title: '연구팀, 한국융합보안학회 추계학술대회서 최우수·우수논문상 수상', date: '2024.11.08', source: '성신여대', url: 'https://www.sungshin.ac.kr/main_kor/10941/subview.do?enc=Zm5jdDF8QEB8JTJGYmJzJTJGbWFpbl9rb3IlMkYzMTkyJTJGMTM3NTE3JTJGYXJ0Y2xWaWV3LmRvJTNG' },
+              { title: '성신여대, 한국정보처리학회 \'ACK2025\'에서 수상', date: '2025.11.10', source: '대학저널', url: 'https://m.dhnews.co.kr/news/view/1065600833585781' },
+              { title: '성신여대, 4개 대학 연합 연구팀, ICT 융합보안크루 \'최우수\' 크루 선정', date: '2025.12.09', source: '중앙일보', url: 'https://www.joongang.co.kr/article/25395468' },
             ].map((press, index) => (
-              <motion.div
+              <motion.a
                 key={index}
-                className="p-4 rounded-lg border border-gray-200 dark:border-gray-700/50 flex items-center justify-between"
+                href={press.url}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="block rounded-xl border border-gray-200 dark:border-gray-700/50 overflow-hidden hover:border-violet-400 dark:hover:border-violet-500 transition-all hover:shadow-lg group"
                 style={{ background: 'var(--card-bg)' }}
-                initial={{ opacity: 0, x: -20 }}
-                whileInView={{ opacity: 1, x: 0 }}
+                initial={{ opacity: 0, y: 10 }}
+                whileInView={{ opacity: 1, y: 0 }}
                 viewport={{ }}
                 transition={{ delay: index * 0.1 }}
+                whileHover={{ y: -4 }}
               >
-                <p className="card-title text-sm">{press.title}</p>
-                <span className="text-xs text-gray-500 dark:text-gray-400 shrink-0 ml-4">{press.date}</span>
-              </motion.div>
+                {/* Thumbnail placeholder with gradient */}
+                <div className="h-32 bg-gradient-to-br from-violet-100 via-indigo-50 to-purple-100 dark:from-violet-900/30 dark:via-indigo-900/20 dark:to-purple-900/30 flex items-center justify-center relative overflow-hidden">
+                  <div className="absolute inset-0 opacity-10">
+                    <div className="absolute top-2 left-2 w-16 h-16 rounded-full bg-violet-500 blur-2xl" />
+                    <div className="absolute bottom-2 right-2 w-20 h-20 rounded-full bg-indigo-500 blur-2xl" />
+                  </div>
+                  <svg className="w-12 h-12 text-violet-400 dark:text-violet-500 opacity-60 group-hover:scale-110 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M19 20H5a2 2 0 01-2-2V6a2 2 0 012-2h10a2 2 0 012 2v1m2 13a2 2 0 01-2-2V7m2 13a2 2 0 002-2V9a2 2 0 00-2-2h-2m-4-3H9M7 16h6M7 8h6v4H7V8z" />
+                  </svg>
+                </div>
+                {/* Content */}
+                <div className="p-4">
+                  <p className="card-title text-sm font-medium line-clamp-2 group-hover:text-violet-600 dark:group-hover:text-violet-400 transition-colors">{press.title}</p>
+                  <div className="flex items-center gap-2 mt-2">
+                    <span className="text-xs text-violet-600 dark:text-violet-400 font-medium">{press.source}</span>
+                    <span className="text-xs text-gray-400">•</span>
+                    <span className="text-xs text-gray-500 dark:text-gray-400">{press.date}</span>
+                  </div>
+                </div>
+              </motion.a>
             ))}
           </div>
 
