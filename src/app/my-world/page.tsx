@@ -1446,7 +1446,7 @@ export default function MyWorldDashboard() {
                   <select
                     value={archiveCategory}
                     onChange={(e) => setArchiveCategory(e.target.value)}
-                    className="text-xs px-2 py-1 rounded-lg border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-900"
+                    className="text-xs px-2 py-1 rounded-lg border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-900 text-gray-900 dark:text-white"
                   >
                     <option value="all">전체</option>
                     <option value="personal">개인</option>
@@ -1458,7 +1458,7 @@ export default function MyWorldDashboard() {
                   <select
                     value={archiveStatus}
                     onChange={(e) => setArchiveStatus(e.target.value)}
-                    className="text-xs px-2 py-1 rounded-lg border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-900"
+                    className="text-xs px-2 py-1 rounded-lg border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-900 text-gray-900 dark:text-white"
                   >
                     <option value="all">전체</option>
                     <option value="not_started">시작전</option>
@@ -1588,7 +1588,7 @@ export default function MyWorldDashboard() {
               value={newPersonalTodo}
               onChange={(e) => setNewPersonalTodo(e.target.value)}
               placeholder="할 일 추가..."
-              className="flex-1 text-sm px-3 py-1.5 rounded-lg border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-900 focus:outline-none focus:ring-2 focus:ring-violet-500"
+              className="flex-1 text-sm px-3 py-1.5 rounded-lg border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-900 text-gray-900 dark:text-white placeholder:text-gray-400 dark:placeholder:text-gray-500 focus:outline-none focus:ring-2 focus:ring-violet-500"
             />
             <button
               type="submit"
@@ -1652,7 +1652,7 @@ export default function MyWorldDashboard() {
               value={newResearchTodo}
               onChange={(e) => setNewResearchTodo(e.target.value)}
               placeholder="할 일 추가..."
-              className="flex-1 text-sm px-3 py-1.5 rounded-lg border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-900 focus:outline-none focus:ring-2 focus:ring-pink-500"
+              className="flex-1 text-sm px-3 py-1.5 rounded-lg border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-900 text-gray-900 dark:text-white placeholder:text-gray-400 dark:placeholder:text-gray-500 focus:outline-none focus:ring-2 focus:ring-pink-500"
             />
             <button
               type="submit"
