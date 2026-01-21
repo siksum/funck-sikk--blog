@@ -71,7 +71,7 @@ export default function AboutPage() {
                 Sungshin Women&apos;s University, Prime #603
               </p>
 
-              <div className="flex flex-wrap justify-center md:justify-start gap-3">
+              <div className="flex flex-wrap justify-start gap-3">
                 <motion.a
                   href="https://github.com/siksum"
                   target="_blank"
