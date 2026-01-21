@@ -6,11 +6,50 @@ import Image from 'next/image';
 
 export default function AboutPage() {
   const [expandedSections, setExpandedSections] = useState({
+    research: true,
+    education: true,
+    publications: true,
     journals: true,
     international: false,
     domestic: false,
+    awards: false,
+    certificate: false,
+    patents: false,
+    activities: false,
+    press: false,
   });
   const [activeTab, setActiveTab] = useState<'education' | 'work' | 'research'>('education');
+
+  // Collapsible section header component
+  const SectionHeader = ({
+    sectionKey,
+    icon,
+    title
+  }: {
+    sectionKey: keyof typeof expandedSections;
+    icon: React.ReactNode;
+    title: string;
+  }) => (
+    <button
+      onClick={() => toggleSection(sectionKey)}
+      className="w-full text-2xl font-bold text-gray-900 dark:text-white mb-6 flex items-center gap-3 group hover:text-violet-600 dark:hover:text-violet-400 transition-colors"
+    >
+      <span className="w-10 h-10 rounded-lg bg-violet-100 dark:bg-violet-900/30 flex items-center justify-center text-violet-600 dark:text-violet-400">
+        {icon}
+      </span>
+      <span className="flex-1 text-left">{title}</span>
+      <motion.svg
+        className="w-5 h-5 text-gray-400 group-hover:text-violet-500"
+        fill="none"
+        stroke="currentColor"
+        viewBox="0 0 24 24"
+        animate={{ rotate: expandedSections[sectionKey] ? 180 : 0 }}
+        transition={{ duration: 0.2 }}
+      >
+        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+      </motion.svg>
+    </button>
+  );
 
   const toggleSection = (section: keyof typeof expandedSections) => {
     setExpandedSections(prev => ({ ...prev, [section]: !prev[section] }));
@@ -141,14 +180,19 @@ export default function AboutPage() {
           viewport={{ margin: "-100px" }}
           transition={{ duration: 0.5 }}
         >
-          <h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-6 flex items-center gap-3">
-            <span className="w-10 h-10 rounded-lg bg-violet-100 dark:bg-violet-900/30 flex items-center justify-center text-violet-600 dark:text-violet-400">
-              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z" />
-              </svg>
-            </span>
-            Research Interests
-          </h2>
+          <SectionHeader
+            sectionKey="research"
+            icon={<svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z" /></svg>}
+            title="Research Interests"
+          />
+          <AnimatePresence>
+          {expandedSections.research && (
+          <motion.div
+            initial={{ height: 0, opacity: 0 }}
+            animate={{ height: "auto", opacity: 1 }}
+            exit={{ height: 0, opacity: 0 }}
+            transition={{ duration: 0.3 }}
+          >
           <div className="flex flex-wrap gap-3 mb-8">
             {['Web3 Security', 'Automated Vulnerability Detection', 'AI Security'].map((interest, index) => (
               <motion.span
@@ -187,6 +231,9 @@ export default function AboutPage() {
               </motion.div>
             ))}
           </div>
+          </motion.div>
+          )}
+          </AnimatePresence>
         </motion.section>
 
         {/* Education & Experience - Tabbed Timeline */}
@@ -196,15 +243,19 @@ export default function AboutPage() {
           viewport={{ margin: "-100px" }}
           transition={{ duration: 0.5 }}
         >
-          <h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-6 flex items-center gap-3">
-            <span className="w-10 h-10 rounded-lg bg-violet-100 dark:bg-violet-900/30 flex items-center justify-center text-violet-600 dark:text-violet-400">
-              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" />
-              </svg>
-            </span>
-            Education & Experience
-          </h2>
-
+          <SectionHeader
+            sectionKey="education"
+            icon={<svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" /></svg>}
+            title="Education & Experience"
+          />
+          <AnimatePresence>
+          {expandedSections.education && (
+          <motion.div
+            initial={{ height: 0, opacity: 0 }}
+            animate={{ height: "auto", opacity: 1 }}
+            exit={{ height: 0, opacity: 0 }}
+            transition={{ duration: 0.3 }}
+          >
           {/* Tabs */}
           <div className="flex gap-2 mb-6 p-1 bg-gray-100 dark:bg-gray-800/50 rounded-xl">
             {[
@@ -301,6 +352,9 @@ export default function AboutPage() {
               </div>
             </motion.div>
           </AnimatePresence>
+          </motion.div>
+          )}
+          </AnimatePresence>
         </motion.section>
 
         {/* Publications */}
@@ -310,15 +364,19 @@ export default function AboutPage() {
           viewport={{ margin: "-100px" }}
           transition={{ duration: 0.5 }}
         >
-          <h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-6 flex items-center gap-3">
-            <span className="w-10 h-10 rounded-lg bg-violet-100 dark:bg-violet-900/30 flex items-center justify-center text-violet-600 dark:text-violet-400">
-              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-              </svg>
-            </span>
-            Publications
-          </h2>
-
+          <SectionHeader
+            sectionKey="publications"
+            icon={<svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" /></svg>}
+            title="Publications"
+          />
+          <AnimatePresence>
+          {expandedSections.publications && (
+          <motion.div
+            initial={{ height: 0, opacity: 0 }}
+            animate={{ height: "auto", opacity: 1 }}
+            exit={{ height: 0, opacity: 0 }}
+            transition={{ duration: 0.3 }}
+          >
           {/* Journals */}
           <button
             onClick={() => toggleSection('journals')}
@@ -510,6 +568,9 @@ export default function AboutPage() {
           </motion.div>
           )}
           </AnimatePresence>
+          </motion.div>
+          )}
+          </AnimatePresence>
         </motion.section>
 
         {/* Honors & Awards */}
@@ -519,15 +580,19 @@ export default function AboutPage() {
           viewport={{ margin: "-100px" }}
           transition={{ duration: 0.5 }}
         >
-          <h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-6 flex items-center gap-3">
-            <span className="w-10 h-10 rounded-lg bg-violet-100 dark:bg-violet-900/30 flex items-center justify-center text-violet-600 dark:text-violet-400">
-              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 3v4M3 5h4M6 17v4m-2-2h4m5-16l2.286 6.857L21 12l-5.714 2.143L13 21l-2.286-6.857L5 12l5.714-2.143L13 3z" />
-              </svg>
-            </span>
-            Honors & Awards
-          </h2>
-
+          <SectionHeader
+            sectionKey="awards"
+            icon={<svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 3v4M3 5h4M6 17v4m-2-2h4m5-16l2.286 6.857L21 12l-5.714 2.143L13 21l-2.286-6.857L5 12l5.714-2.143L13 3z" /></svg>}
+            title="Honors & Awards"
+          />
+          <AnimatePresence>
+          {expandedSections.awards && (
+          <motion.div
+            initial={{ height: 0, opacity: 0 }}
+            animate={{ height: "auto", opacity: 1 }}
+            exit={{ height: 0, opacity: 0 }}
+            transition={{ duration: 0.3 }}
+          >
           <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
             {[
               { title: 'ICT Convergence Security Crew Best Crew Award', org: 'KISIA', year: '2025', highlight: true },
@@ -558,6 +623,9 @@ export default function AboutPage() {
               </motion.div>
             ))}
           </div>
+          </motion.div>
+          )}
+          </AnimatePresence>
         </motion.section>
 
         {/* Certificate */}
@@ -567,14 +635,19 @@ export default function AboutPage() {
           viewport={{ margin: "-100px" }}
           transition={{ duration: 0.5 }}
         >
-          <h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-6 flex items-center gap-3">
-            <span className="w-10 h-10 rounded-lg bg-violet-100 dark:bg-violet-900/30 flex items-center justify-center text-violet-600 dark:text-violet-400">
-              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4M7.835 4.697a3.42 3.42 0 001.946-.806 3.42 3.42 0 014.438 0 3.42 3.42 0 001.946.806 3.42 3.42 0 013.138 3.138 3.42 3.42 0 00.806 1.946 3.42 3.42 0 010 4.438 3.42 3.42 0 00-.806 1.946 3.42 3.42 0 01-3.138 3.138 3.42 3.42 0 00-1.946.806 3.42 3.42 0 01-4.438 0 3.42 3.42 0 00-1.946-.806 3.42 3.42 0 01-3.138-3.138 3.42 3.42 0 00-.806-1.946 3.42 3.42 0 010-4.438 3.42 3.42 0 00.806-1.946 3.42 3.42 0 013.138-3.138z" />
-              </svg>
-            </span>
-            Certificate
-          </h2>
+          <SectionHeader
+            sectionKey="certificate"
+            icon={<svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4M7.835 4.697a3.42 3.42 0 001.946-.806 3.42 3.42 0 014.438 0 3.42 3.42 0 001.946.806 3.42 3.42 0 013.138 3.138 3.42 3.42 0 00.806 1.946 3.42 3.42 0 010 4.438 3.42 3.42 0 00-.806 1.946 3.42 3.42 0 01-3.138 3.138 3.42 3.42 0 00-1.946.806 3.42 3.42 0 01-4.438 0 3.42 3.42 0 00-1.946-.806 3.42 3.42 0 01-3.138-3.138 3.42 3.42 0 00-.806-1.946 3.42 3.42 0 010-4.438 3.42 3.42 0 00.806-1.946 3.42 3.42 0 013.138-3.138z" /></svg>}
+            title="Certificate"
+          />
+          <AnimatePresence>
+          {expandedSections.certificate && (
+          <motion.div
+            initial={{ height: 0, opacity: 0 }}
+            animate={{ height: "auto", opacity: 1 }}
+            exit={{ height: 0, opacity: 0 }}
+            transition={{ duration: 0.3 }}
+          >
           <motion.div
             className="p-4 bg-white dark:bg-gray-800/50 rounded-xl border border-gray-200 dark:border-gray-700 inline-block"
             whileHover={{ scale: 1.02 }}
@@ -582,6 +655,9 @@ export default function AboutPage() {
             <p className="font-medium text-gray-900 dark:text-white">Engineer Information Processing (정보처리기사)</p>
             <p className="text-sm text-gray-500 dark:text-gray-400">Human Resources Development Service of Korea | 2024.09</p>
           </motion.div>
+          </motion.div>
+          )}
+          </AnimatePresence>
         </motion.section>
 
         {/* Patents */}
@@ -591,14 +667,19 @@ export default function AboutPage() {
           viewport={{ margin: "-100px" }}
           transition={{ duration: 0.5 }}
         >
-          <h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-6 flex items-center gap-3">
-            <span className="w-10 h-10 rounded-lg bg-violet-100 dark:bg-violet-900/30 flex items-center justify-center text-violet-600 dark:text-violet-400">
-              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
-              </svg>
-            </span>
-            Patents (Code Copyright)
-          </h2>
+          <SectionHeader
+            sectionKey="patents"
+            icon={<svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" /></svg>}
+            title="Patents (Code Copyright)"
+          />
+          <AnimatePresence>
+          {expandedSections.patents && (
+          <motion.div
+            initial={{ height: 0, opacity: 0 }}
+            animate={{ height: "auto", opacity: 1 }}
+            exit={{ height: 0, opacity: 0 }}
+            transition={{ duration: 0.3 }}
+          >
           <div className="grid md:grid-cols-2 gap-4">
             {[
               { title: 'Solidity compiler version automatic detection and installation management program', code: 'C-2025-031742', date: 'Jul. 10, 2025', korean: '솔리디티 컴파일러 버전 자동 탐지 및 설치 관리 프로그램' },
@@ -622,6 +703,9 @@ export default function AboutPage() {
               </motion.div>
             ))}
           </div>
+          </motion.div>
+          )}
+          </AnimatePresence>
         </motion.section>
 
         {/* Professional Activities */}
@@ -631,15 +715,19 @@ export default function AboutPage() {
           viewport={{ margin: "-100px" }}
           transition={{ duration: 0.5 }}
         >
-          <h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-6 flex items-center gap-3">
-            <span className="w-10 h-10 rounded-lg bg-violet-100 dark:bg-violet-900/30 flex items-center justify-center text-violet-600 dark:text-violet-400">
-              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
-              </svg>
-            </span>
-            Professional Activities
-          </h2>
-
+          <SectionHeader
+            sectionKey="activities"
+            icon={<svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" /></svg>}
+            title="Professional Activities"
+          />
+          <AnimatePresence>
+          {expandedSections.activities && (
+          <motion.div
+            initial={{ height: 0, opacity: 0 }}
+            animate={{ height: "auto", opacity: 1 }}
+            exit={{ height: 0, opacity: 0 }}
+            transition={{ duration: 0.3 }}
+          >
           <div className="space-y-6">
             {/* Club */}
             <div className="p-5 bg-white dark:bg-gray-800/80 rounded-xl border border-violet-100 dark:border-violet-900/50">
@@ -710,6 +798,9 @@ export default function AboutPage() {
               ))}
             </div>
           </div>
+          </motion.div>
+          )}
+          </AnimatePresence>
         </motion.section>
 
         {/* Press */}
@@ -719,14 +810,19 @@ export default function AboutPage() {
           viewport={{ margin: "-100px" }}
           transition={{ duration: 0.5 }}
         >
-          <h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-6 flex items-center gap-3">
-            <span className="w-10 h-10 rounded-lg bg-violet-100 dark:bg-violet-900/30 flex items-center justify-center text-violet-600 dark:text-violet-400">
-              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 20H5a2 2 0 01-2-2V6a2 2 0 012-2h10a2 2 0 012 2v1m2 13a2 2 0 01-2-2V7m2 13a2 2 0 002-2V9a2 2 0 00-2-2h-2m-4-3H9M7 16h6M7 8h6v4H7V8z" />
-              </svg>
-            </span>
-            Press
-          </h2>
+          <SectionHeader
+            sectionKey="press"
+            icon={<svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 20H5a2 2 0 01-2-2V6a2 2 0 012-2h10a2 2 0 012 2v1m2 13a2 2 0 01-2-2V7m2 13a2 2 0 002-2V9a2 2 0 00-2-2h-2m-4-3H9M7 16h6M7 8h6v4H7V8z" /></svg>}
+            title="Press"
+          />
+          <AnimatePresence>
+          {expandedSections.press && (
+          <motion.div
+            initial={{ height: 0, opacity: 0 }}
+            animate={{ height: "auto", opacity: 1 }}
+            exit={{ height: 0, opacity: 0 }}
+            transition={{ duration: 0.3 }}
+          >
           <div className="space-y-3">
             {[
               { title: '해시드, 실전 블록체인 프로그램 \'프로토콜 캠프\' 5기 성료', date: '2023.12.01' },
@@ -747,6 +843,9 @@ export default function AboutPage() {
               </motion.div>
             ))}
           </div>
+          </motion.div>
+          )}
+          </AnimatePresence>
         </motion.section>
 
         {/* Footer */}
