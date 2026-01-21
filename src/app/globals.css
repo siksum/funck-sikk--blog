@@ -173,6 +173,30 @@ html, body {
   background: var(--background);
 }
 
+/* About page progress items - border only in dark mode */
+.about-progress-item {
+  background: rgb(240 253 244); /* green-50 */
+}
+.dark .about-progress-item {
+  background: transparent;
+}
+
+/* About page tab bar - border only in dark mode */
+.about-tab-bar {
+  background: rgb(243 244 246); /* gray-100 */
+}
+.dark .about-tab-bar {
+  background: transparent;
+}
+
+/* About page active tab - border only in dark mode */
+.about-tab-active {
+  background: white;
+}
+.dark .about-tab-active {
+  background: transparent;
+}
+
 html, body, * {
   font-family: 'JoseonGulim', Arial, Helvetica, sans-serif !important;
 }

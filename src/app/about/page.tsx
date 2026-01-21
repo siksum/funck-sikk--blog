@@ -163,7 +163,7 @@ export default function AboutPage() {
             <p className="text-lg text-violet-700 dark:text-violet-300 font-medium italic text-center mb-4">
               &ldquo;올바른 가치관과 신념으로 나눌 줄 아는, 지혜로운 사람이 되고 싶습니다&rdquo;
             </p>
-            <p className="text-gray-600 dark:text-gray-400 leading-relaxed text-center">
+            <p className="leading-relaxed text-center" style={{ color: 'var(--foreground)' }}>
               맡은 일에 대해 책임감 있으며 다양한 방법을 시도해보는 것을 좋아합니다.
               알고 있는 것을 함께 나누기 위해 준비하고 실제로 나누는 과정에서 성취감을 느낍니다.
               &lsquo;지식은 나눌수록 커진다.&rsquo;라는 말이 있듯, 누구나 쉽게 보안을 접하고 관심 가질 수 있도록
@@ -220,7 +220,7 @@ export default function AboutPage() {
             ].map((item, index) => (
               <motion.div
                 key={index}
-                className="p-3 bg-green-50 dark:bg-transparent rounded-lg border border-green-200 dark:border-green-400 text-green-800 dark:text-green-400"
+                className="p-3 about-progress-item rounded-lg border border-green-200 dark:border-green-400 text-green-800 dark:text-green-300"
                 initial={{ opacity: 0, x: -20 }}
                 whileInView={{ opacity: 1, x: 0 }}
                 viewport={{ }}
@@ -256,7 +256,7 @@ export default function AboutPage() {
             transition={{ duration: 0.3 }}
           >
           {/* Tabs */}
-          <div className="flex gap-2 mb-6 p-1 bg-gray-100 dark:bg-transparent rounded-xl border border-gray-200 dark:border-gray-600">
+          <div className="flex gap-2 mb-6 p-1 about-tab-bar rounded-xl border border-gray-200 dark:border-gray-600">
             {[
               { id: 'education' as const, label: 'Education', icon: '🎓', count: 2 },
               { id: 'work' as const, label: 'Work', icon: '💼', count: 3 },
@@ -267,7 +267,7 @@ export default function AboutPage() {
                 onClick={() => setActiveTab(tab.id)}
                 className={`flex-1 px-4 py-2.5 rounded-lg font-medium text-sm transition-all duration-200 flex items-center justify-center gap-2 ${
                   activeTab === tab.id
-                    ? 'bg-white dark:bg-transparent text-violet-600 dark:text-violet-400 shadow-sm dark:shadow-none border-transparent dark:border dark:border-violet-400'
+                    ? 'about-tab-active text-violet-600 dark:text-violet-400 shadow-sm dark:shadow-none border-transparent dark:border dark:border-violet-400'
                     : 'text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-200'
                 }`}
               >
@@ -378,7 +378,7 @@ export default function AboutPage() {
             transition={{ duration: 0.3 }}
           >
           {/* Tabs */}
-          <div className="flex gap-2 mb-6 p-1 bg-gray-100 dark:bg-transparent rounded-xl border border-gray-200 dark:border-gray-600">
+          <div className="flex gap-2 mb-6 p-1 about-tab-bar rounded-xl border border-gray-200 dark:border-gray-600">
             {[
               { id: 'journals' as const, label: 'Journals', icon: '📚', count: 4 },
               { id: 'international' as const, label: 'International', icon: '🌍', count: 3 },
@@ -389,7 +389,7 @@ export default function AboutPage() {
                 onClick={() => setActivePubTab(tab.id)}
                 className={`flex-1 px-4 py-2.5 rounded-lg font-medium text-sm transition-all duration-200 flex items-center justify-center gap-2 ${
                   activePubTab === tab.id
-                    ? 'bg-white dark:bg-transparent text-violet-600 dark:text-violet-400 shadow-sm dark:shadow-none border-transparent dark:border dark:border-violet-400'
+                    ? 'about-tab-active text-violet-600 dark:text-violet-400 shadow-sm dark:shadow-none border-transparent dark:border dark:border-violet-400'
                     : 'text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-200'
                 }`}
               >
