@@ -220,7 +220,7 @@ export default function AboutPage() {
             ].map((item, index) => (
               <motion.div
                 key={index}
-                className="p-3 about-progress-item rounded-lg border border-green-200 dark:border-green-400 text-green-800 dark:text-green-300"
+                className="p-3 about-progress-item rounded-lg border border-green-200 dark:border-lime-400 text-green-800 dark:text-lime-300"
                 initial={{ opacity: 0, x: -20 }}
                 whileInView={{ opacity: 1, x: 0 }}
                 viewport={{ }}
