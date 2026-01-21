@@ -216,18 +216,19 @@ model SikkCategory {
 // ============ SIKK POSTS ============
 
 model SikkPost {
-  id          String   @id @default(cuid())
-  slug        String   @unique
-  title       String
-  description String?
-  content     String   // MDX content
-  category    String?  // Category path (e.g., "성신여자대학교/1번")
-  tags        String[] @default([])
-  thumbnail   String?  // Banner/Thumbnail image URL
-  isPublic    Boolean  @default(true)
-  date        DateTime @default(now())
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
+  id                String   @id @default(cuid())
+  slug              String   @unique
+  title             String
+  description       String?
+  content           String   // MDX content
+  category          String?  // Category path (e.g., "성신여자대학교/1번")
+  tags              String[] @default([])
+  thumbnail         String?  // Banner/Thumbnail image URL
+  thumbnailPosition Int      @default(50) // Vertical position of thumbnail (0-100%)
+  isPublic          Boolean  @default(true)
+  date              DateTime @default(now())
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
 
   @@index([category])
   @@index([date])
@@ -237,18 +238,19 @@ model SikkPost {
 // ============ BLOG POSTS ============
 
 model BlogPost {
-  id          String   @id @default(cuid())
-  slug        String   @unique
-  title       String
-  description String?
-  content     String   // MDX content
-  category    String?  // Category path (e.g., "개발/React")
-  tags        String[] @default([])
-  thumbnail   String?  // Thumbnail image URL
-  isPublic    Boolean  @default(true)
-  date        DateTime @default(now())
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
+  id                String   @id @default(cuid())
+  slug              String   @unique
+  title             String
+  description       String?
+  content           String   // MDX content
+  category          String?  // Category path (e.g., "개발/React")
+  tags              String[] @default([])
+  thumbnail         String?  // Thumbnail image URL
+  thumbnailPosition Int      @default(50) // Vertical position of thumbnail (0-100%)
+  isPublic          Boolean  @default(true)
+  date              DateTime @default(now())
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
 
   @@index([category])
   @@index([date])

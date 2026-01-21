@@ -22,6 +22,7 @@ export async function GET(request: NextRequest) {
       category: post.category || '',
       tags: post.tags,
       thumbnail: post.thumbnail || undefined,
+      thumbnailPosition: post.thumbnailPosition,
       isPublic: post.isPublic,
       content: post.content,
     }));
@@ -36,7 +37,7 @@ export async function GET(request: NextRequest) {
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
-    const { slug, title, description, category, tags, content, date, isPublic, thumbnail } = body;
+    const { slug, title, description, category, tags, content, date, isPublic, thumbnail, thumbnailPosition } = body;
 
     if (!slug || !title) {
       return NextResponse.json({ error: 'Slug and title are required' }, { status: 400 });
@@ -64,6 +65,7 @@ export async function POST(request: NextRequest) {
         category: category || '',
         tags: tags || [],
         thumbnail: thumbnail || null,
+        thumbnailPosition: thumbnailPosition ?? 50,
         isPublic: isPublic !== false,
         date: postDate,
       },
