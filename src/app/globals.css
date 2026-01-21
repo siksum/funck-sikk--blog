@@ -152,6 +152,11 @@ html, body {
   color: var(--foreground);
 }
 
+/* Utility class for foreground text color */
+.foreground-text {
+  color: var(--foreground) !important;
+}
+
 /* Hero section background */
 .hero-bg {
   background: #ffffff;
