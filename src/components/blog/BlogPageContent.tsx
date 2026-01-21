@@ -137,27 +137,23 @@ export default function BlogPageContent({
     <div className="min-h-screen py-12">
       <div className="w-full px-4 sm:px-6 lg:px-12 xl:px-16">
         {/* Page Header with View Toggle */}
-        <div className="flex items-center justify-between mb-10">
-          <div>
+        <div className="mb-10">
+          <div className="flex items-start justify-between gap-4">
             <h1
-              className="text-4xl md:text-5xl font-bold mb-4"
+              className="text-4xl md:text-5xl font-bold"
               style={{ color: 'var(--foreground)' }}
             >
               <span className="text-transparent bg-clip-text bg-gradient-to-r from-violet-600 to-indigo-500 dark:from-violet-300 dark:to-indigo-400">
                 Blog
               </span>
             </h1>
-            <p style={{ color: 'var(--foreground-muted)' }}>
-              카테고리별로 정리된 개발 기록을 탐색해보세요
-            </p>
-          </div>
 
-          {/* View Toggle */}
-          {rootCategoriesWithTags.length > 0 && (
-            <div
-              className="inline-flex rounded-lg p-1 border"
-              style={{ background: 'var(--card-bg)', borderColor: 'var(--card-border)' }}
-            >
+            {/* View Toggle */}
+            {rootCategoriesWithTags.length > 0 && (
+              <div
+                className="inline-flex rounded-lg p-1 border shrink-0"
+                style={{ background: 'var(--card-bg)', borderColor: 'var(--card-border)' }}
+              >
               <button
                 onClick={() => setViewMode('grid')}
                 className={`p-2 rounded-md transition-colors ${
@@ -198,6 +194,10 @@ export default function BlogPageContent({
               </button>
             </div>
           )}
+          </div>
+          <p className="mt-4" style={{ color: 'var(--foreground-muted)' }}>
+            카테고리별로 정리된 개발 기록을 탐색해보세요
+          </p>
         </div>
 
         <div className="lg:grid lg:grid-cols-4 lg:gap-8 lg:items-start">
