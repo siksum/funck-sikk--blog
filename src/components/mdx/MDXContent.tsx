@@ -260,13 +260,23 @@ export default function MDXContent({ content }: MDXContentProps) {
             tr: ({ children }) => (
               <tr className="border-b border-violet-200 dark:border-violet-500/30">{children}</tr>
             ),
-            th: ({ children }) => (
-              <th className="px-4 py-2 text-left font-semibold border border-violet-200 dark:border-violet-500/30" style={{ color: 'var(--foreground)' }}>
+            th: ({ children, style, rowSpan, colSpan }) => (
+              <th
+                className="px-4 py-2 text-left font-semibold border border-violet-200 dark:border-violet-500/30"
+                style={{ color: 'var(--foreground)', ...style }}
+                rowSpan={rowSpan}
+                colSpan={colSpan}
+              >
                 {children}
               </th>
             ),
-            td: ({ children }) => (
-              <td className="px-4 py-2 border border-violet-200 dark:border-violet-500/30" style={{ color: 'var(--foreground)' }}>
+            td: ({ children, style, rowSpan, colSpan }) => (
+              <td
+                className="px-4 py-2 border border-violet-200 dark:border-violet-500/30"
+                style={{ color: 'var(--foreground)', ...style }}
+                rowSpan={rowSpan}
+                colSpan={colSpan}
+              >
                 {children}
               </td>
             ),
