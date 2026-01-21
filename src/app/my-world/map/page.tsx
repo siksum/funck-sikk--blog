@@ -150,6 +150,28 @@ export default function MapPage() {
   const [showCategoryEditor, setShowCategoryEditor] = useState(false);
   const [newCategoryName, setNewCategoryName] = useState('');
   const [newCategoryIcon, setNewCategoryIcon] = useState('📍');
+  const [showEmojiPicker, setShowEmojiPicker] = useState(false);
+
+  // Common emojis for map categories
+  const categoryEmojis = [
+    // Food & Drink
+    '🍽️', '☕', '🍕', '🍔', '🍣', '🍜', '🍰', '🍺', '🍷', '🥗',
+    // Places
+    '🏠', '🏢', '🏥', '🏫', '🏛️', '⛪', '🏪', '🏨', '🏰', '🏟️',
+    // Travel & Transport
+    '✈️', '🚗', '🚌', '🚇', '🚢', '🛩️', '🚁', '⛽', '🅿️', '🚉',
+    // Nature & Outdoor
+    '🏝️', '🏖️', '⛰️', '🌲', '🌳', '🌊', '🏕️', '🎣', '🏞️', '🌸',
+    // Entertainment
+    '🎭', '🎬', '🎤', '🎮', '🎳', '🎰', '🎢', '🎡', '🎪', '🎨',
+    // Sports & Fitness
+    '⚽', '🏀', '🎾', '⛳', '🏊', '🚴', '🧘', '💪', '🏋️', '🎿',
+    // Shopping & Services
+    '🛍️', '💇', '💅', '🧴', '👔', '👗', '👟', '💍', '🎁', '💐',
+    // Others
+    '📍', '⭐', '❤️', '💜', '💚', '💙', '🔥', '✨', '🎯', '📸',
+  ];
+
   const [userLocation, setUserLocation] = useState<{ lat: number; lng: number } | null>(null);
   const [placeResults, setPlaceResults] = useState<Array<{
     name: string;
@@ -945,28 +967,59 @@ export default function MapPage() {
                   ))}
                 </div>
                 {showCategoryEditor && (
-                  <div className="mt-2 flex gap-2">
-                    <input
-                      type="text"
-                      value={newCategoryIcon}
-                      onChange={(e) => setNewCategoryIcon(e.target.value)}
-                      className="w-12 px-2 py-1 text-center text-sm rounded border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-700"
-                      placeholder="🏷️"
-                    />
-                    <input
-                      type="text"
-                      value={newCategoryName}
-                      onChange={(e) => setNewCategoryName(e.target.value)}
-                      onKeyDown={(e) => e.key === 'Enter' && addCategory()}
-                      className="flex-1 px-2 py-1 text-sm rounded border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
-                      placeholder="새 카테고리 이름"
-                    />
-                    <button
-                      onClick={addCategory}
-                      className="px-2 py-1 text-xs bg-violet-600 text-white rounded hover:bg-violet-700"
-                    >
-                      추가
-                    </button>
+                  <div className="mt-2 space-y-2">
+                    <div className="flex gap-2">
+                      <div className="relative">
+                        <button
+                          type="button"
+                          onClick={() => setShowEmojiPicker(!showEmojiPicker)}
+                          className="w-10 h-8 flex items-center justify-center text-lg rounded border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-700 hover:bg-gray-50 dark:hover:bg-gray-600 transition-colors"
+                        >
+                          {newCategoryIcon}
+                        </button>
+                        {showEmojiPicker && (
+                          <>
+                            <div
+                              className="fixed inset-0 z-40"
+                              onClick={() => setShowEmojiPicker(false)}
+                            />
+                            <div className="absolute left-0 top-full mt-1 z-50 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-600 rounded-lg shadow-lg p-2 w-64 max-h-48 overflow-y-auto">
+                              <div className="grid grid-cols-8 gap-1">
+                                {categoryEmojis.map((emoji, index) => (
+                                  <button
+                                    key={index}
+                                    type="button"
+                                    onClick={() => {
+                                      setNewCategoryIcon(emoji);
+                                      setShowEmojiPicker(false);
+                                    }}
+                                    className={`w-7 h-7 flex items-center justify-center text-base rounded hover:bg-violet-100 dark:hover:bg-violet-900/50 transition-colors ${
+                                      newCategoryIcon === emoji ? 'bg-violet-100 dark:bg-violet-900/50 ring-1 ring-violet-500' : ''
+                                    }`}
+                                  >
+                                    {emoji}
+                                  </button>
+                                ))}
+                              </div>
+                            </div>
+                          </>
+                        )}
+                      </div>
+                      <input
+                        type="text"
+                        value={newCategoryName}
+                        onChange={(e) => setNewCategoryName(e.target.value)}
+                        onKeyDown={(e) => e.key === 'Enter' && addCategory()}
+                        className="flex-1 px-2 py-1 text-sm rounded border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
+                        placeholder="새 카테고리 이름"
+                      />
+                      <button
+                        onClick={addCategory}
+                        className="px-2 py-1 text-xs bg-violet-600 text-white rounded hover:bg-violet-700"
+                      >
+                        추가
+                      </button>
+                    </div>
                   </div>
                 )}
               </div>
