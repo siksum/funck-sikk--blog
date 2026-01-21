@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useMemo } from 'react';
+import { useState, useEffect, useMemo, useRef } from 'react';
 import Link from 'next/link';
 
 // Mobile category filter dropdown component
@@ -127,6 +127,15 @@ export default function PostsManagementPage() {
   const [searchTerm, setSearchTerm] = useState('');
   const [expandedCategories, setExpandedCategories] = useState<Set<string>>(new Set());
 
+  // Multi-select state
+  const [selectedPosts, setSelectedPosts] = useState<Set<string>>(new Set());
+  const [bulkActionLoading, setBulkActionLoading] = useState(false);
+
+  // Category change state
+  const [editingCategorySlug, setEditingCategorySlug] = useState<string | null>(null);
+  const [showBulkCategoryDropdown, setShowBulkCategoryDropdown] = useState(false);
+  const bulkCategoryDropdownRef = useRef<HTMLDivElement>(null);
+
   // Sorting state
   const [sortBy, setSortBy] = useState<'date' | 'title' | 'category'>('date');
   const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('desc');
@@ -192,6 +201,18 @@ export default function PostsManagementPage() {
       };
     });
   }, [dbCategories, postCountMap]);
+
+  // Generate flat list of all category options for dropdowns
+  const categoryOptions = useMemo(() => {
+    const options: { value: string; label: string }[] = [];
+    dbCategories.forEach((cat) => {
+      options.push({ value: cat.name, label: cat.name });
+      cat.children.forEach((sub) => {
+        options.push({ value: `${cat.name}/${sub.name}`, label: `${cat.name} / ${sub.name}` });
+      });
+    });
+    return options;
+  }, [dbCategories]);
 
   // Group categories by section for sidebar display
   const categoriesBySection = useMemo(() => {
@@ -344,6 +365,21 @@ export default function PostsManagementPage() {
       fetchSections();
     }
   }, [showSectionModal]);
+
+  // Close bulk category dropdown when clicking outside
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (bulkCategoryDropdownRef.current && !bulkCategoryDropdownRef.current.contains(event.target as Node)) {
+        setShowBulkCategoryDropdown(false);
+      }
+    };
+    if (showBulkCategoryDropdown) {
+      document.addEventListener('mousedown', handleClickOutside);
+    }
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
+  }, [showBulkCategoryDropdown]);
 
   // Create new category
   const handleCreateCategory = async (autoSelectAsParent: boolean = false) => {
@@ -544,6 +580,133 @@ export default function PostsManagementPage() {
     }
   };
 
+  // Change post category
+  const handleChangeCategory = async (post: Post, newCategory: string) => {
+    try {
+      const response = await fetch(`/api/posts/${post.slug}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          ...post,
+          category: newCategory,
+        }),
+      });
+      if (response.ok) {
+        setPosts(posts.map((p) =>
+          p.slug === post.slug ? { ...p, category: newCategory } : p
+        ));
+        setEditingCategorySlug(null);
+      }
+    } catch (error) {
+      console.error('Failed to change category:', error);
+    }
+  };
+
+  // Multi-select functions
+  const toggleSelectPost = (slug: string) => {
+    setSelectedPosts((prev) => {
+      const next = new Set(prev);
+      if (next.has(slug)) {
+        next.delete(slug);
+      } else {
+        next.add(slug);
+      }
+      return next;
+    });
+  };
+
+  const toggleSelectAll = () => {
+    if (selectedPosts.size === filteredPosts.length) {
+      setSelectedPosts(new Set());
+    } else {
+      setSelectedPosts(new Set(filteredPosts.map((p) => p.slug)));
+    }
+  };
+
+  const clearSelection = () => {
+    setSelectedPosts(new Set());
+  };
+
+  // Bulk actions
+  const handleBulkDelete = async () => {
+    if (selectedPosts.size === 0) return;
+    if (!confirm(`선택한 ${selectedPosts.size}개의 포스트를 삭제하시겠습니까?`)) return;
+
+    setBulkActionLoading(true);
+    try {
+      const deletePromises = Array.from(selectedPosts).map((slug) =>
+        fetch(`/api/posts/${slug}`, { method: 'DELETE' })
+      );
+      await Promise.all(deletePromises);
+      setPosts(posts.filter((p) => !selectedPosts.has(p.slug)));
+      setSelectedPosts(new Set());
+    } catch (error) {
+      console.error('Failed to bulk delete:', error);
+      alert('일부 포스트 삭제에 실패했습니다.');
+    } finally {
+      setBulkActionLoading(false);
+    }
+  };
+
+  const handleBulkToggleVisibility = async (makePublic: boolean) => {
+    if (selectedPosts.size === 0) return;
+
+    setBulkActionLoading(true);
+    try {
+      const selectedPostsList = posts.filter((p) => selectedPosts.has(p.slug));
+      const updatePromises = selectedPostsList.map((post) =>
+        fetch(`/api/posts/${post.slug}`, {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            ...post,
+            isPublic: makePublic,
+          }),
+        })
+      );
+      await Promise.all(updatePromises);
+      setPosts(posts.map((p) =>
+        selectedPosts.has(p.slug) ? { ...p, isPublic: makePublic } : p
+      ));
+      setSelectedPosts(new Set());
+    } catch (error) {
+      console.error('Failed to bulk toggle visibility:', error);
+      alert('일부 포스트 공개 상태 변경에 실패했습니다.');
+    } finally {
+      setBulkActionLoading(false);
+    }
+  };
+
+  const handleBulkChangeCategory = async (newCategory: string) => {
+    if (selectedPosts.size === 0) return;
+
+    setBulkActionLoading(true);
+    try {
+      const selectedPostsList = posts.filter((p) => selectedPosts.has(p.slug));
+      const updatePromises = selectedPostsList.map((post) =>
+        fetch(`/api/posts/${post.slug}`, {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            ...post,
+            category: newCategory,
+          }),
+        })
+      );
+      await Promise.all(updatePromises);
+      setPosts(posts.map((p) =>
+        selectedPosts.has(p.slug) ? { ...p, category: newCategory } : p
+      ));
+      setSelectedPosts(new Set());
+      setShowBulkCategoryDropdown(false);
+    } catch (error) {
+      console.error('Failed to bulk change category:', error);
+      alert('일부 포스트 카테고리 변경에 실패했습니다.');
+    } finally {
+      setBulkActionLoading(false);
+    }
+  };
+
   return (
     <div>
       {/* Header */}
@@ -609,6 +772,75 @@ export default function PostsManagementPage() {
           )}
         </div>
       </div>
+
+      {/* Bulk Action Bar */}
+      {selectedPosts.size > 0 && (
+        <div className="mb-4 p-3 bg-violet-50 dark:bg-violet-900/20 border border-violet-200 dark:border-violet-800 rounded-lg flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
+          <span className="text-sm font-medium text-violet-800 dark:text-violet-300">
+            {selectedPosts.size}개 선택됨
+          </span>
+          <div className="flex flex-wrap gap-2">
+            {/* Bulk Category Change Dropdown */}
+            <div className="relative" ref={bulkCategoryDropdownRef}>
+              <button
+                onClick={() => setShowBulkCategoryDropdown(!showBulkCategoryDropdown)}
+                disabled={bulkActionLoading}
+                className="px-3 py-1.5 text-xs bg-violet-600 text-white rounded-lg hover:bg-violet-700 disabled:opacity-50 transition-colors flex items-center gap-1"
+              >
+                카테고리 변경
+                <svg className={`w-3 h-3 transition-transform ${showBulkCategoryDropdown ? 'rotate-180' : ''}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                </svg>
+              </button>
+              {showBulkCategoryDropdown && (
+                <div className="absolute top-full left-0 mt-1 w-56 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg shadow-lg z-30 max-h-64 overflow-y-auto">
+                  {categoryOptions.length === 0 ? (
+                    <p className="p-3 text-xs text-gray-500">카테고리가 없습니다.</p>
+                  ) : (
+                    categoryOptions.map((opt) => (
+                      <button
+                        key={opt.value}
+                        onClick={() => handleBulkChangeCategory(opt.value)}
+                        className="w-full px-3 py-2 text-left text-sm text-gray-900 dark:text-white hover:bg-violet-50 dark:hover:bg-violet-900/20 transition-colors"
+                      >
+                        {opt.label}
+                      </button>
+                    ))
+                  )}
+                </div>
+              )}
+            </div>
+            <button
+              onClick={() => handleBulkToggleVisibility(true)}
+              disabled={bulkActionLoading}
+              className="px-3 py-1.5 text-xs bg-green-600 text-white rounded-lg hover:bg-green-700 disabled:opacity-50 transition-colors"
+            >
+              공개로 변경
+            </button>
+            <button
+              onClick={() => handleBulkToggleVisibility(false)}
+              disabled={bulkActionLoading}
+              className="px-3 py-1.5 text-xs bg-gray-600 text-white rounded-lg hover:bg-gray-700 disabled:opacity-50 transition-colors"
+            >
+              비공개로 변경
+            </button>
+            <button
+              onClick={handleBulkDelete}
+              disabled={bulkActionLoading}
+              className="px-3 py-1.5 text-xs bg-red-600 text-white rounded-lg hover:bg-red-700 disabled:opacity-50 transition-colors"
+            >
+              선택 삭제
+            </button>
+            <button
+              onClick={clearSelection}
+              disabled={bulkActionLoading}
+              className="px-3 py-1.5 text-xs bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-300 rounded-lg hover:bg-gray-300 dark:hover:bg-gray-600 disabled:opacity-50 transition-colors"
+            >
+              선택 해제
+            </button>
+          </div>
+        </div>
+      )}
 
       {/* Mobile Category Filter */}
       <MobileCategoryFilter
@@ -741,26 +973,46 @@ export default function PostsManagementPage() {
           <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 overflow-hidden">
             {loading ? (
               <div className="p-8 text-center text-gray-500">로딩 중...</div>
-            ) : filteredPosts.length === 0 ? (
-              <div className="p-8 text-center text-gray-500">
-                {posts.length === 0
-                  ? '포스트가 없습니다.'
-                  : '검색 결과가 없습니다.'}
-              </div>
             ) : (
               <>
                 {/* Mobile Card View */}
                 <div className="lg:hidden divide-y divide-gray-200 dark:divide-gray-700">
-                  {filteredPosts.map((post) => (
+                  {/* Mobile Select All */}
+                  <div className="p-3 bg-gray-50 dark:bg-gray-700/50 flex items-center gap-3">
+                    <input
+                      type="checkbox"
+                      checked={selectedPosts.size === filteredPosts.length && filteredPosts.length > 0}
+                      onChange={toggleSelectAll}
+                      disabled={filteredPosts.length === 0}
+                      className="w-4 h-4 rounded border-gray-300 text-violet-600 focus:ring-violet-500 disabled:opacity-50"
+                    />
+                    <span className="text-xs text-gray-600 dark:text-gray-400">
+                      전체 선택 ({filteredPosts.length}개)
+                    </span>
+                  </div>
+                  {filteredPosts.length === 0 ? (
+                    <div className="p-8 text-center text-gray-500">
+                      {posts.length === 0 ? '포스트가 없습니다.' : '검색 결과가 없습니다.'}
+                    </div>
+                  ) : (
+                    filteredPosts.map((post) => (
                     <div key={post.slug} className="p-4">
                       <div className="flex items-start justify-between gap-2">
-                        <div className="flex-1 min-w-0">
-                          <h3 className="text-sm font-medium text-gray-900 dark:text-white truncate">
-                            {post.title}
-                          </h3>
-                          <p className="text-xs text-gray-500 dark:text-gray-400 mt-0.5 truncate">
-                            {post.slug}
-                          </p>
+                        <div className="flex items-start gap-3 flex-1 min-w-0">
+                          <input
+                            type="checkbox"
+                            checked={selectedPosts.has(post.slug)}
+                            onChange={() => toggleSelectPost(post.slug)}
+                            className="mt-1 w-4 h-4 rounded border-gray-300 text-violet-600 focus:ring-violet-500"
+                          />
+                          <div className="flex-1 min-w-0">
+                            <h3 className="text-sm font-medium text-gray-900 dark:text-white truncate">
+                              {post.title}
+                            </h3>
+                            <p className="text-xs text-gray-500 dark:text-gray-400 mt-0.5 truncate">
+                              {post.slug}
+                            </p>
+                          </div>
                         </div>
                         <button
                           onClick={() => handleToggleVisibility(post)}
@@ -774,9 +1026,29 @@ export default function PostsManagementPage() {
                         </button>
                       </div>
                       <div className="flex flex-wrap items-center gap-2 mt-2">
-                        <span className="px-2 py-0.5 text-xs bg-violet-100 dark:bg-violet-900/30 text-violet-800 dark:text-violet-300 rounded">
-                          {post.category}
-                        </span>
+                        {editingCategorySlug === post.slug ? (
+                          <select
+                            value={post.category || ''}
+                            onChange={(e) => handleChangeCategory(post, e.target.value)}
+                            onBlur={() => setEditingCategorySlug(null)}
+                            autoFocus
+                            className="px-2 py-0.5 text-xs bg-white dark:bg-gray-800 border border-violet-400 rounded focus:outline-none focus:ring-2 focus:ring-violet-500 text-gray-900 dark:text-white"
+                          >
+                            <option value="">미분류</option>
+                            {categoryOptions.map((opt) => (
+                              <option key={opt.value} value={opt.value}>
+                                {opt.label}
+                              </option>
+                            ))}
+                          </select>
+                        ) : (
+                          <button
+                            onClick={() => setEditingCategorySlug(post.slug)}
+                            className="px-2 py-0.5 text-xs bg-violet-100 dark:bg-violet-900/30 text-violet-800 dark:text-violet-300 rounded hover:bg-violet-200 dark:hover:bg-violet-900/50 transition-colors"
+                          >
+                            {post.category || '미분류'}
+                          </button>
+                        )}
                         <span className="text-xs text-gray-500 dark:text-gray-400">
                           {post.date}
                         </span>
@@ -817,7 +1089,8 @@ export default function PostsManagementPage() {
                         </button>
                       </div>
                     </div>
-                  ))}
+                  ))
+                  )}
                 </div>
 
                 {/* Desktop Table View */}
@@ -825,6 +1098,15 @@ export default function PostsManagementPage() {
                   <table className="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
                     <thead className="bg-gray-50 dark:bg-gray-700">
                       <tr>
+                        <th className="px-4 py-3 text-center">
+                          <input
+                            type="checkbox"
+                            checked={selectedPosts.size === filteredPosts.length && filteredPosts.length > 0}
+                            onChange={toggleSelectAll}
+                            disabled={filteredPosts.length === 0}
+                            className="w-4 h-4 rounded border-gray-300 text-violet-600 focus:ring-violet-500 disabled:opacity-50"
+                          />
+                        </th>
                         <th
                           onClick={() => handleSort('title')}
                           className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-600 transition-colors"
@@ -870,8 +1152,23 @@ export default function PostsManagementPage() {
                       </tr>
                     </thead>
                     <tbody className="divide-y divide-gray-200 dark:divide-gray-700">
-                      {filteredPosts.map((post) => (
-                        <tr key={post.slug} className="hover:bg-gray-50 dark:hover:bg-gray-700/50">
+                      {filteredPosts.length === 0 ? (
+                        <tr>
+                          <td colSpan={7} className="px-6 py-8 text-center text-gray-500">
+                            {posts.length === 0 ? '포스트가 없습니다.' : '검색 결과가 없습니다.'}
+                          </td>
+                        </tr>
+                      ) : (
+                      filteredPosts.map((post) => (
+                        <tr key={post.slug} className={`hover:bg-gray-50 dark:hover:bg-gray-700/50 ${selectedPosts.has(post.slug) ? 'bg-violet-50 dark:bg-violet-900/10' : ''}`}>
+                          <td className="px-4 py-4 text-center">
+                            <input
+                              type="checkbox"
+                              checked={selectedPosts.has(post.slug)}
+                              onChange={() => toggleSelectPost(post.slug)}
+                              className="w-4 h-4 rounded border-gray-300 text-violet-600 focus:ring-violet-500"
+                            />
+                          </td>
                           <td className="px-6 py-4">
                             <div className="text-sm font-medium text-gray-900 dark:text-white">
                               {post.title}
@@ -880,10 +1177,33 @@ export default function PostsManagementPage() {
                               {post.slug}
                             </div>
                           </td>
-                          <td className="px-6 py-4 whitespace-nowrap">
-                            <span className="px-2 py-1 text-xs bg-violet-100 dark:bg-violet-900/30 text-violet-800 dark:text-violet-300 rounded border border-violet-200 dark:border-violet-800">
-                              {post.category}
-                            </span>
+                          <td className="px-6 py-4 whitespace-nowrap relative">
+                            {editingCategorySlug === post.slug ? (
+                              <div className="relative">
+                                <select
+                                  value={post.category || ''}
+                                  onChange={(e) => handleChangeCategory(post, e.target.value)}
+                                  onBlur={() => setEditingCategorySlug(null)}
+                                  autoFocus
+                                  className="px-2 py-1 text-xs bg-white dark:bg-gray-800 border border-violet-400 rounded focus:outline-none focus:ring-2 focus:ring-violet-500 text-gray-900 dark:text-white"
+                                >
+                                  <option value="">미분류</option>
+                                  {categoryOptions.map((opt) => (
+                                    <option key={opt.value} value={opt.value}>
+                                      {opt.label}
+                                    </option>
+                                  ))}
+                                </select>
+                              </div>
+                            ) : (
+                              <button
+                                onClick={() => setEditingCategorySlug(post.slug)}
+                                className="px-2 py-1 text-xs bg-violet-100 dark:bg-violet-900/30 text-violet-800 dark:text-violet-300 rounded border border-violet-200 dark:border-violet-800 hover:bg-violet-200 dark:hover:bg-violet-900/50 hover:border-violet-400 transition-colors cursor-pointer"
+                                title="클릭하여 카테고리 변경"
+                              >
+                                {post.category || '미분류'}
+                              </button>
+                            )}
                           </td>
                           <td className="px-6 py-4">
                             <div className="flex flex-wrap gap-1">
@@ -938,7 +1258,8 @@ export default function PostsManagementPage() {
                             </div>
                           </td>
                         </tr>
-                      ))}
+                      ))
+                      )}
                     </tbody>
                   </table>
                 </div>
