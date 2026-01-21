@@ -2002,7 +2002,7 @@ export default function MyWorldDashboard() {
           </div>
 
           {/* Fixed height calendar container */}
-          <div className="h-[600px] overflow-hidden flex flex-col">
+          <div className="h-[600px] overflow-hidden flex flex-col w-full max-w-full">
             {viewType === 'month' ? (
               <>
                 {/* Weekday Headers */}
@@ -2020,8 +2020,8 @@ export default function MyWorldDashboard() {
                 </div>
 
                 {/* Calendar Grid */}
-                <div className="relative flex-1 overflow-hidden" style={{ isolation: 'isolate' }}>
-                  <div className="grid grid-cols-7 border border-gray-200 dark:border-gray-700 rounded-lg overflow-hidden h-full">
+                <div className="relative flex-1 overflow-hidden w-full max-w-full" style={{ isolation: 'isolate' }}>
+                  <div className="grid grid-cols-7 border border-gray-200 dark:border-gray-700 rounded-lg overflow-hidden h-full w-full">
                     {/* Empty cells for days before the first day of the month */}
                     {Array.from({ length: startingDayOfWeek }).map((_, index) => (
                       <div key={`empty-${index}`} className="p-1 border-b border-r border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800/50 min-h-[80px]"></div>
@@ -2161,7 +2161,7 @@ export default function MyWorldDashboard() {
                   </div>
 
                   {/* Multi-day event bars overlay */}
-                  <div className="absolute inset-0 pointer-events-none overflow-hidden" style={{ borderRadius: '0.5rem' }}>
+                  <div className="absolute inset-0 pointer-events-none overflow-hidden w-full max-w-full" style={{ borderRadius: '0.5rem' }}>
                     {getMultiDayEventBars.map((bar, barIndex) => {
                       const totalRows = Math.ceil((startingDayOfWeek + daysInMonth) / 7);
                       const rowHeight = 100 / totalRows;
@@ -2190,8 +2190,7 @@ export default function MyWorldDashboard() {
                           }`}
                           style={{
                             left: `calc(${leftPercent}% + 2px)`,
-                            width: `calc(${widthPercent}% - 4px)`,
-                            maxWidth: `calc(${100 - leftPercent}% - 4px)`,
+                            width: `min(calc(${widthPercent}% - 4px), calc(100% - ${leftPercent}% - 4px))`,
                             top: `calc(${bar.row * rowHeight}% + 22px + ${barIndexInRow * 20}px)`,
                             height: '18px',
                             backgroundColor: getPastelColor(bar.event.color),
@@ -2387,7 +2386,7 @@ export default function MyWorldDashboard() {
                           }`}
                           style={{
                             left: `calc(${bar.startCol * colWidth}% + 2px)`,
-                            width: `calc(${bar.span * colWidth}% - 4px)`,
+                            width: `min(calc(${bar.span * colWidth}% - 4px), calc(100% - ${bar.startCol * colWidth}% - 4px))`,
                             top: `${4 + barIndex * 22}px`,
                             height: '20px',
                             backgroundColor: getPastelColor(bar.event.color),
