@@ -931,15 +931,24 @@ export default function MyWorldDashboard() {
 
     // Create a custom drag image for smoother visual
     if (e.currentTarget instanceof HTMLElement) {
-      const dragImage = e.currentTarget.cloneNode(true) as HTMLElement;
+      const dragImage = document.createElement('div');
+      dragImage.textContent = event.title;
       dragImage.style.position = 'absolute';
       dragImage.style.top = '-1000px';
-      dragImage.style.opacity = '0.9';
-      dragImage.style.transform = 'scale(1.02)';
-      dragImage.style.boxShadow = '0 8px 25px rgba(0,0,0,0.15)';
-      dragImage.style.borderRadius = '8px';
+      dragImage.style.left = '-1000px';
+      dragImage.style.padding = '4px 8px';
+      dragImage.style.fontSize = '12px';
+      dragImage.style.fontWeight = '500';
+      dragImage.style.backgroundColor = getPastelColor(event.color);
+      dragImage.style.color = '#374151';
+      dragImage.style.borderRadius = '6px';
+      dragImage.style.boxShadow = '0 4px 12px rgba(0,0,0,0.15)';
+      dragImage.style.maxWidth = '150px';
+      dragImage.style.whiteSpace = 'nowrap';
+      dragImage.style.overflow = 'hidden';
+      dragImage.style.textOverflow = 'ellipsis';
       document.body.appendChild(dragImage);
-      e.dataTransfer.setDragImage(dragImage, e.currentTarget.offsetWidth / 2, 15);
+      e.dataTransfer.setDragImage(dragImage, 75, 12);
 
       // Clean up the drag image after a short delay
       setTimeout(() => {
@@ -2325,14 +2334,20 @@ export default function MyWorldDashboard() {
                             onClick={() => {
                               const hour = (7 + i).toString().padStart(2, '0');
                               setSelectedDate(dateStr);
-                              setEventForm(prev => ({
-                                ...prev,
+                              setEditingEvent(null);
+                              setEventForm({
+                                title: '',
+                                description: '',
+                                type: '일정',
+                                color: '#c4b5fd',
+                                isAllDay: false,
                                 startDate: dateStr,
                                 endDate: dateStr,
                                 startTime: `${hour}:00`,
                                 endTime: `${(8 + i).toString().padStart(2, '0')}:00`,
-                                isAllDay: false,
-                              }));
+                                location: '',
+                                url: '',
+                              });
                               setShowEventModal(true);
                             }}
                             onContextMenu={(e) => {
@@ -3333,14 +3348,20 @@ export default function MyWorldDashboard() {
                   const hour = contextMenu.hour?.toString().padStart(2, '0') || '09';
                   const nextHour = ((contextMenu.hour || 9) + 1).toString().padStart(2, '0');
                   setSelectedDate(contextMenu.date || '');
-                  setEventForm(prev => ({
-                    ...prev,
+                  setEditingEvent(null);
+                  setEventForm({
+                    title: '',
+                    description: '',
+                    type: '일정',
+                    color: '#c4b5fd',
+                    isAllDay: false,
                     startDate: contextMenu.date || '',
                     endDate: contextMenu.date || '',
                     startTime: `${hour}:00`,
                     endTime: `${nextHour}:00`,
-                    isAllDay: false,
-                  }));
+                    location: '',
+                    url: '',
+                  });
                   setShowEventModal(true);
                   setContextMenu(null);
                 }}
