@@ -49,11 +49,12 @@ model User {
   createdAt     DateTime  @default(now())
 
   // My World relations
-  dailyEntries    DailyEntry[]
-  mapLocations    MapLocation[]
-  trips           Trip[]
-  calendarEvents  CalendarEvent[]
-  todos           Todo[]
+  dailyEntries      DailyEntry[]
+  mapLocations      MapLocation[]
+  trips             Trip[]
+  calendarEvents    CalendarEvent[]
+  todos             Todo[]
+  pushSubscriptions PushSubscription[]
 }
 
 model VerificationToken {
@@ -124,7 +125,11 @@ model PushSubscription {
   endpoint  String   @unique
   p256dh    String
   auth      String
+  userId    String?
+  user      User?    @relation(fields: [userId], references: [id], onDelete: Cascade)
   createdAt DateTime @default(now())
+
+  @@index([userId])
 }
 
 // ============ OWNER STATUS ============
@@ -399,8 +404,9 @@ model CalendarEvent {
   location String?  // 장소
   url      String?  // 관련 URL
 
-  isAllDay Boolean @default(true)
-  reminder Boolean @default(false)
+  isAllDay       Boolean   @default(true)
+  reminder       Boolean   @default(false)
+  reminderSentAt DateTime?
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt

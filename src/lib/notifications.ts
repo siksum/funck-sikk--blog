@@ -21,6 +21,104 @@ interface NotificationPayload {
   description: string;
 }
 
+interface PushPayload {
+  title: string;
+  body: string;
+  icon?: string;
+  url?: string;
+}
+
+interface PushSubscriptionData {
+  id: string;
+  endpoint: string;
+  p256dh: string;
+  auth: string;
+}
+
+export async function sendPushToUsers(userIds: string[], payload: PushPayload) {
+  if (!process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY || !process.env.VAPID_PRIVATE_KEY) {
+    return { sent: 0, failed: 0 };
+  }
+
+  const subscriptions = await prisma.pushSubscription.findMany({
+    where: { userId: { in: userIds } },
+  });
+
+  return sendPushToSubscriptions(subscriptions, payload);
+}
+
+export async function sendPushToSubscriptions(
+  subscriptions: PushSubscriptionData[],
+  payload: PushPayload
+) {
+  const results = { sent: 0, failed: 0 };
+
+  if (!process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY || !process.env.VAPID_PRIVATE_KEY) {
+    return results;
+  }
+
+  for (const sub of subscriptions) {
+    try {
+      await webpush.sendNotification(
+        {
+          endpoint: sub.endpoint,
+          keys: { p256dh: sub.p256dh, auth: sub.auth },
+        },
+        JSON.stringify({
+          ...payload,
+          icon: payload.icon || '/icons/icon-192x192.png',
+        })
+      );
+      results.sent++;
+    } catch (error: unknown) {
+      const webPushError = error as { statusCode?: number };
+      if (webPushError.statusCode === 410) {
+        await prisma.pushSubscription.delete({ where: { id: sub.id } }).catch(() => {});
+      }
+      results.failed++;
+    }
+  }
+
+  return results;
+}
+
+interface CommentWithAuthor {
+  id: string;
+  content: string;
+  author: { name: string | null };
+}
+
+export async function sendCommentNotification(
+  comment: CommentWithAuthor,
+  postSlug: string,
+  commentAuthorId: string
+) {
+  const existingComments = await prisma.comment.findMany({
+    where: { postSlug },
+    select: { authorId: true },
+    distinct: ['authorId'],
+  });
+
+  const userIdsToNotify = [
+    ...new Set(
+      existingComments
+        .map((c) => c.authorId)
+        .filter((id) => id !== commentAuthorId)
+    ),
+  ];
+
+  if (userIdsToNotify.length === 0) return { sent: 0, failed: 0 };
+
+  const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:3000';
+  const payload: PushPayload = {
+    title: `${comment.author.name || '누군가'}님이 댓글을 남겼습니다`,
+    body: comment.content.slice(0, 100),
+    url: `${baseUrl}/blog/${postSlug}#comment-${comment.id}`,
+  };
+
+  return sendPushToUsers(userIdsToNotify, payload);
+}
+
 export async function sendNewPostNotifications(payload: NotificationPayload) {
   const { title, slug, description } = payload;
   const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:3000';
