@@ -268,7 +268,7 @@ export default function AboutPage() {
                 className={`flex-1 px-4 py-2.5 rounded-lg font-medium text-sm transition-all duration-200 flex items-center justify-center gap-2 ${
                   activeTab === tab.id
                     ? 'about-tab-active text-violet-600 dark:text-violet-400 shadow-sm dark:shadow-none border-transparent dark:border dark:border-violet-400'
-                    : 'text-gray-600 dark:text-white hover:text-gray-900 dark:hover:text-white'
+                    : 'about-tab-inactive hover:text-gray-900'
                 }`}
               >
                 <span>{tab.icon}</span>
@@ -390,7 +390,7 @@ export default function AboutPage() {
                 className={`flex-1 px-4 py-2.5 rounded-lg font-medium text-sm transition-all duration-200 flex items-center justify-center gap-2 ${
                   activePubTab === tab.id
                     ? 'about-tab-active text-violet-600 dark:text-violet-400 shadow-sm dark:shadow-none border-transparent dark:border dark:border-violet-400'
-                    : 'text-gray-600 dark:text-white hover:text-gray-900 dark:hover:text-white'
+                    : 'about-tab-inactive hover:text-gray-900'
                 }`}
               >
                 <span>{tab.icon}</span>
@@ -500,7 +500,7 @@ export default function AboutPage() {
                           <span className={`px-2 py-0.5 rounded text-xs font-medium ${pub.featured ? 'bg-amber-100 dark:bg-amber-500/20 text-amber-700 dark:text-amber-300' : 'bg-gray-100 dark:bg-gray-700/50 text-gray-600 dark:text-gray-300'}`}>{pub.badge}</span>
                         </div>
                         <p className="text-sm text-violet-600 dark:text-violet-400 mb-1">{pub.authors}</p>
-                        <h4 className="font-medium text-gray-900 dark:text-white mb-1">&ldquo;{pub.title}&rdquo;</h4>
+                        <h4 className="font-medium pub-card-title mb-1">&ldquo;{pub.title}&rdquo;</h4>
                         <p className="text-sm text-gray-600 dark:text-gray-400">{pub.venue}</p>
                         {pub.korean && <p className="text-xs text-gray-500 dark:text-gray-500 mt-1"># {pub.korean}</p>}
                       </motion.div>
@@ -527,7 +527,7 @@ export default function AboutPage() {
                         whileHover={{ x: 4 }}
                       >
                         <p className="text-sm text-violet-600 dark:text-violet-400 mb-1">{pub.authors}</p>
-                        <h4 className="font-medium text-gray-900 dark:text-white text-sm">&ldquo;{pub.title}&rdquo;</h4>
+                        <h4 className="font-medium pub-card-title text-sm">&ldquo;{pub.title}&rdquo;</h4>
                         <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">{pub.venue}</p>
                       </motion.div>
                     </motion.div>
@@ -553,7 +553,7 @@ export default function AboutPage() {
                     >
                       {pub.award && <span className="inline-block px-2 py-0.5 bg-amber-100 dark:bg-amber-500/20 text-amber-700 dark:text-amber-300 rounded text-xs font-medium mb-2">{pub.award}</span>}
                       <p className="text-sm text-violet-600 dark:text-violet-400 mb-1">{pub.authors}</p>
-                      <h4 className="font-medium text-gray-900 dark:text-white text-sm">&ldquo;{pub.title}&rdquo;</h4>
+                      <h4 className="font-medium pub-card-title text-sm">&ldquo;{pub.title}&rdquo;</h4>
                       <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">{pub.venue}</p>
                       {pub.korean && <p className="text-xs text-gray-400 dark:text-gray-500 mt-1"># {pub.korean}</p>}
                     </motion.div>
@@ -844,6 +844,56 @@ export default function AboutPage() {
                 <span className="text-xs text-gray-500 dark:text-gray-400 shrink-0 ml-4">{press.date}</span>
               </motion.div>
             ))}
+          </div>
+
+          {/* Video Embeds */}
+          <h3 className="text-lg font-semibold text-gray-900 dark:text-white mt-8 mb-4">Videos</h3>
+          <div className="grid md:grid-cols-2 gap-4">
+            <motion.div
+              className="rounded-xl overflow-hidden border border-gray-200 dark:border-gray-700/50"
+              initial={{ opacity: 0, y: 10 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ }}
+              transition={{ delay: 0.1 }}
+            >
+              <div className="aspect-video">
+                <iframe
+                  width="100%"
+                  height="100%"
+                  src="https://www.youtube.com/embed/CvMrwqBIc_Y"
+                  title="Dreamplus Academy 2nd - 2023.03~2023.06"
+                  allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                  allowFullScreen
+                  className="border-0"
+                />
+              </div>
+              <div className="p-3" style={{ background: 'var(--card-bg)' }}>
+                <p className="text-sm text-gray-900 dark:text-white">Dreamplus Academy 2nd (2023.03~2023.06)</p>
+              </div>
+            </motion.div>
+
+            <motion.div
+              className="rounded-xl overflow-hidden border border-gray-200 dark:border-gray-700/50"
+              initial={{ opacity: 0, y: 10 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ }}
+              transition={{ delay: 0.2 }}
+            >
+              <div className="aspect-video">
+                <iframe
+                  width="100%"
+                  height="100%"
+                  src="https://www.youtube.com/embed/683ser8W2GM"
+                  title="Protocol Camp 5th Final Demoday - 2023.09~2023.12"
+                  allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                  allowFullScreen
+                  className="border-0"
+                />
+              </div>
+              <div className="p-3" style={{ background: 'var(--card-bg)' }}>
+                <p className="text-sm text-gray-900 dark:text-white">Protocol Camp 5th Final Demoday (2023.09~2023.12)</p>
+              </div>
+            </motion.div>
           </div>
           </motion.div>
           )}
