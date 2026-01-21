@@ -196,7 +196,7 @@ export default function AboutPage() {
             {['Web3 Security', 'Automated Vulnerability Detection', 'AI Security'].map((interest, index) => (
               <motion.span
                 key={interest}
-                className="px-5 py-2.5 about-interest-tag text-violet-700 dark:text-violet-300 rounded-full font-medium border border-violet-200 dark:border-violet-400"
+                className="px-5 py-2.5 about-interest-tag text-violet-400 dark:text-violet-300 rounded-full font-medium border border-violet-200 dark:border-violet-400"
                 initial={{ opacity: 0, scale: 0.8 }}
                 whileInView={{ opacity: 1, scale: 1 }}
                 viewport={{ }}
@@ -220,7 +220,7 @@ export default function AboutPage() {
             ].map((item, index) => (
               <motion.div
                 key={index}
-                className="p-3 about-progress-item rounded-lg border border-green-200 dark:border-lime-400 text-green-800 dark:text-lime-300"
+                className="p-3 about-progress-item rounded-lg border border-lime-300 dark:border-lime-400 text-lime-600 dark:text-lime-300"
                 initial={{ opacity: 0, x: -20 }}
                 whileInView={{ opacity: 1, x: 0 }}
                 viewport={{ }}
@@ -268,7 +268,7 @@ export default function AboutPage() {
                 className={`flex-1 px-4 py-2.5 rounded-lg font-medium text-sm transition-all duration-200 flex items-center justify-center gap-2 ${
                   activeTab === tab.id
                     ? 'about-tab-active text-violet-600 dark:text-violet-400 shadow-sm dark:shadow-none border-transparent dark:border dark:border-violet-400'
-                    : 'text-gray-600 dark:text-gray-200 hover:text-gray-900 dark:hover:text-white'
+                    : 'text-gray-600 dark:text-white hover:text-gray-900 dark:hover:text-white'
                 }`}
               >
                 <span>{tab.icon}</span>
@@ -390,7 +390,7 @@ export default function AboutPage() {
                 className={`flex-1 px-4 py-2.5 rounded-lg font-medium text-sm transition-all duration-200 flex items-center justify-center gap-2 ${
                   activePubTab === tab.id
                     ? 'about-tab-active text-violet-600 dark:text-violet-400 shadow-sm dark:shadow-none border-transparent dark:border dark:border-violet-400'
-                    : 'text-gray-600 dark:text-gray-200 hover:text-gray-900 dark:hover:text-white'
+                    : 'text-gray-600 dark:text-white hover:text-gray-900 dark:hover:text-white'
                 }`}
               >
                 <span>{tab.icon}</span>
