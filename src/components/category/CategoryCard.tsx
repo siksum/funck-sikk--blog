@@ -89,7 +89,7 @@ export default function CategoryCard({ name, count, tags, slugPath, variant = 'c
   const colors = categoryColors[name] || defaultColors;
 
   const href = slugPath
-    ? `/categories/${slugPath.join('/')}`
+    ? `/categories/${slugPath.map(s => encodeURIComponent(s)).join('/')}`
     : `/categories/${encodeURIComponent(name)}`;
 
   // List variant

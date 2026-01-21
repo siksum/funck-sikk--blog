@@ -42,7 +42,7 @@ function CategoryTreeItem({
   // Auto-expand if this is a parent of the current category
   const [isExpanded, setIsExpanded] = useState(depth === 0 || isParentOfCurrent);
   const hasChildren = category.children && category.children.length > 0;
-  const href = `/categories/${category.slugPath.join('/')}`;
+  const href = `/categories/${category.slugPath.map(s => encodeURIComponent(s)).join('/')}`;
 
   return (
     <>
