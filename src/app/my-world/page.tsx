@@ -928,9 +928,23 @@ export default function MyWorldDashboard() {
     setDraggingEvent(event);
     e.dataTransfer.effectAllowed = 'move';
     e.dataTransfer.setData('text/plain', event.id);
-    // Set drag image with slight offset for better UX
+
+    // Create a custom drag image for smoother visual
     if (e.currentTarget instanceof HTMLElement) {
-      e.dataTransfer.setDragImage(e.currentTarget, 10, 10);
+      const dragImage = e.currentTarget.cloneNode(true) as HTMLElement;
+      dragImage.style.position = 'absolute';
+      dragImage.style.top = '-1000px';
+      dragImage.style.opacity = '0.9';
+      dragImage.style.transform = 'scale(1.02)';
+      dragImage.style.boxShadow = '0 8px 25px rgba(0,0,0,0.15)';
+      dragImage.style.borderRadius = '8px';
+      document.body.appendChild(dragImage);
+      e.dataTransfer.setDragImage(dragImage, e.currentTarget.offsetWidth / 2, 15);
+
+      // Clean up the drag image after a short delay
+      setTimeout(() => {
+        document.body.removeChild(dragImage);
+      }, 0);
     }
   };
 
@@ -1971,7 +1985,7 @@ export default function MyWorldDashboard() {
                                 ? 'bg-red-50 dark:bg-red-900/20 hover:bg-red-100 dark:hover:bg-red-900/30'
                                 : 'hover:bg-gray-50 dark:hover:bg-gray-700/50'
                           } ${
-                            draggingEvent ? 'hover:bg-violet-50 dark:hover:bg-violet-900/30' : ''
+                            draggingEvent ? 'hover:bg-violet-100 dark:hover:bg-violet-900/50 hover:ring-2 hover:ring-violet-300 dark:hover:ring-violet-600 transition-all duration-200' : ''
                           }`}
                         >
                           <div className="w-full flex items-start justify-between">
@@ -2008,8 +2022,8 @@ export default function MyWorldDashboard() {
                                     openEventModal(event);
                                   }}
                                   className={`text-xs px-1 py-0.5 rounded truncate font-medium cursor-grab active:cursor-grabbing
-                                    hover:scale-105 hover:shadow-md transition-all duration-150 select-none ${
-                                    draggingEvent?.id === event.id ? 'opacity-50 scale-95' : ''
+                                    hover:scale-105 hover:shadow-lg transition-all duration-300 ease-out select-none ${
+                                    draggingEvent?.id === event.id ? 'opacity-40 scale-90 shadow-xl ring-2 ring-violet-400' : ''
                                   }`}
                                   style={{ backgroundColor: getPastelColor(event.color), color: '#374151' }}
                                   title={`${event.title}${event.location ? ` - ${event.location}` : ''}${event.url ? ' (링크)' : ''} (드래그하여 이동)`}
@@ -2050,8 +2064,8 @@ export default function MyWorldDashboard() {
                           onDragStart={(e) => handleDragStart(bar.event, e)}
                           onDragEnd={handleDragEnd}
                           className={`absolute text-xs truncate px-1.5 py-0.5 cursor-grab active:cursor-grabbing pointer-events-auto
-                            hover:shadow-md transition-all duration-150 font-medium select-none ${
-                            draggingEvent?.id === bar.event.id ? 'opacity-50 scale-95' : ''
+                            hover:shadow-lg hover:scale-[1.02] transition-all duration-300 ease-out font-medium select-none ${
+                            draggingEvent?.id === bar.event.id ? 'opacity-40 scale-95 shadow-xl ring-2 ring-violet-400' : ''
                           }`}
                           style={{
                             left: `calc(${bar.startCol * colWidth}% + 2px)`,
@@ -2111,7 +2125,7 @@ export default function MyWorldDashboard() {
                       onDrop={(e) => handleDrop(date, e)}
                       className={`py-2 text-center transition-colors ${
                         isSelected ? 'bg-violet-100 dark:bg-violet-900/50' : isHoliday ? 'bg-red-50 dark:bg-red-900/20' : 'hover:bg-gray-50 dark:hover:bg-gray-700/50'
-                      } ${draggingEvent ? 'hover:bg-violet-50 dark:hover:bg-violet-900/30' : ''} ${isSelected ? '' : 'hidden sm:block'}`}
+                      } ${draggingEvent ? 'hover:bg-violet-100 dark:hover:bg-violet-900/50 hover:ring-2 hover:ring-violet-300 dark:hover:ring-violet-600 transition-all duration-200' : ''} ${isSelected ? '' : 'hidden sm:block'}`}
                     >
                       <div className={`text-xs ${
                         isHoliday || isSunday ? 'text-red-500' : isSaturday ? 'text-blue-500' : 'text-gray-500 dark:text-gray-400'
@@ -2155,7 +2169,7 @@ export default function MyWorldDashboard() {
                         onDragOver={handleDragOver}
                         onDrop={(e) => handleDrop(date, e)}
                         className={`border-l border-gray-100 dark:border-gray-700 p-1 relative ${
-                          draggingEvent ? 'hover:bg-violet-50 dark:hover:bg-violet-900/30' : ''
+                          draggingEvent ? 'hover:bg-violet-100 dark:hover:bg-violet-900/50 hover:ring-2 hover:ring-violet-300 dark:hover:ring-violet-600 transition-all duration-200' : ''
                         } ${isSelected ? '' : 'hidden sm:block'}`}
                         style={{ paddingTop: `${getWeeklyMultiDayEventBars.length * 22 + 4}px` }}
                       >
@@ -2170,8 +2184,8 @@ export default function MyWorldDashboard() {
                               openEventModal(event);
                             }}
                             className={`text-xs px-1 py-0.5 rounded truncate cursor-grab active:cursor-grabbing
-                              hover:scale-105 hover:shadow-md transition-all duration-150 font-medium mb-0.5 select-none ${
-                              draggingEvent?.id === event.id ? 'opacity-50 scale-95' : ''
+                              hover:scale-105 hover:shadow-lg transition-all duration-300 ease-out font-medium mb-0.5 select-none ${
+                              draggingEvent?.id === event.id ? 'opacity-40 scale-90 shadow-xl ring-2 ring-violet-400' : ''
                             }`}
                             style={{ backgroundColor: getPastelColor(event.color), color: '#374151' }}
                             title={`${event.title} (드래그하여 이동)`}
@@ -2199,8 +2213,8 @@ export default function MyWorldDashboard() {
                           onDragStart={(e) => handleDragStart(bar.event, e)}
                           onDragEnd={handleDragEnd}
                           className={`absolute text-xs truncate px-1.5 py-0.5 cursor-grab active:cursor-grabbing pointer-events-auto
-                            hover:shadow-md transition-all duration-150 font-medium select-none ${
-                            draggingEvent?.id === bar.event.id ? 'opacity-50 scale-95' : ''
+                            hover:shadow-lg hover:scale-[1.02] transition-all duration-300 ease-out font-medium select-none ${
+                            draggingEvent?.id === bar.event.id ? 'opacity-40 scale-95 shadow-xl ring-2 ring-violet-400' : ''
                           }`}
                           style={{
                             left: `calc(${bar.startCol * colWidth}% + 2px)`,
