@@ -1728,7 +1728,7 @@ export default function MyWorldDashboard() {
                   </svg>
                 </button>
                 {/* Mobile: selected date only */}
-                <span className="text-lg font-semibold sm:hidden" style={{ color: 'var(--foreground)' }}>
+                <span className="text-lg font-semibold sm:hidden text-gray-900 dark:text-white">
                   {selectedDate ? new Date(selectedDate + 'T00:00:00').toLocaleDateString('ko-KR', { month: 'long', day: 'numeric', weekday: 'short' }) : '오늘'}
                 </span>
                 {/* Month Picker Dropdown (월간 뷰) */}
@@ -2082,8 +2082,8 @@ export default function MyWorldDashboard() {
             /* Weekly Time View */
             <div className="overflow-hidden h-full flex flex-col">
               {/* Weekly Header */}
-              <div className="grid grid-cols-2 sm:grid-cols-8 border-b border-gray-200 dark:border-gray-700 flex-shrink-0">
-                <div className="w-14 hidden sm:block"></div>
+              <div className="grid grid-cols-[3.5rem_1fr] sm:grid-cols-8 border-b border-gray-200 dark:border-gray-700 flex-shrink-0">
+                <div className="w-14"></div>
                 {getWeekDates.map((date, index) => {
                   const dayOfWeek = date.getDay();
                   const isSunday = dayOfWeek === 0;
@@ -2131,8 +2131,8 @@ export default function MyWorldDashboard() {
 
               {/* All-day events row */}
               <div className="relative border-b border-gray-200 dark:border-gray-700 flex-shrink-0" style={{ minHeight: `${Math.max(40, 24 + getWeeklyMultiDayEventBars.length * 22)}px` }}>
-                <div className="grid grid-cols-2 sm:grid-cols-8 h-full">
-                  <div className="w-14 px-2 py-1 text-xs text-gray-400 dark:text-gray-500 text-right hidden sm:block">
+                <div className="grid grid-cols-[3.5rem_1fr] sm:grid-cols-8 h-full">
+                  <div className="w-14 px-2 py-1 text-xs text-gray-400 dark:text-gray-500 text-right">
                     종일
                   </div>
                   {getWeekDates.map((date, index) => {
@@ -2217,9 +2217,9 @@ export default function MyWorldDashboard() {
 
               {/* Time grid */}
               <div className="overflow-y-auto flex-1 relative pt-2">
-                <div className="grid grid-cols-2 sm:grid-cols-8">
+                <div className="grid grid-cols-[3.5rem_1fr] sm:grid-cols-8">
                   {/* Time column */}
-                  <div className="w-14 relative hidden sm:block">
+                  <div className="w-14 relative">
                     {Array.from({ length: 17 }).map((_, i) => (
                       <div
                         key={i}
