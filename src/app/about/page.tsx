@@ -105,7 +105,7 @@ export default function AboutPage() {
             <motion.div className="text-center md:text-left flex-1" variants={fadeInUp}>
               <h1 className="text-4xl font-bold mb-2" style={{ color: 'var(--foreground)' }}>Namryeong Kim</h1>
               <p className="text-xl text-violet-600 dark:text-violet-400 font-medium mb-2">Security Researcher</p>
-              <p className="text-gray-600 dark:text-gray-400 mb-4">
+              <p className="mb-4" style={{ color: 'var(--foreground)' }}>
                 M.S. Candidate in Convergence Security Engineering<br />
                 Sungshin Women&apos;s University, Prime #603
               </p>
@@ -268,7 +268,7 @@ export default function AboutPage() {
                 className={`flex-1 px-4 py-2.5 rounded-lg font-medium text-sm transition-all duration-200 flex items-center justify-center gap-2 ${
                   activeTab === tab.id
                     ? 'about-tab-active text-violet-600 dark:text-violet-400 shadow-sm dark:shadow-none border-transparent dark:border dark:border-violet-400'
-                    : 'text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-200'
+                    : 'text-gray-600 dark:text-gray-200 hover:text-gray-900 dark:hover:text-white'
                 }`}
               >
                 <span>{tab.icon}</span>
@@ -390,7 +390,7 @@ export default function AboutPage() {
                 className={`flex-1 px-4 py-2.5 rounded-lg font-medium text-sm transition-all duration-200 flex items-center justify-center gap-2 ${
                   activePubTab === tab.id
                     ? 'about-tab-active text-violet-600 dark:text-violet-400 shadow-sm dark:shadow-none border-transparent dark:border dark:border-violet-400'
-                    : 'text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-200'
+                    : 'text-gray-600 dark:text-gray-200 hover:text-gray-900 dark:hover:text-white'
                 }`}
               >
                 <span>{tab.icon}</span>
@@ -791,10 +791,10 @@ export default function AboutPage() {
                   viewport={{ }}
                   transition={{ delay: index * 0.1 }}
                 >
-                  <span className={`text-sm font-medium ${ctf.rank === '1st' ? 'text-amber-600 dark:text-amber-400' : 'text-gray-700 dark:text-gray-300'}`}>
+                  <span className={`text-sm font-medium ${ctf.rank === '1st' ? 'text-amber-600 dark:text-amber-400' : 'foreground-text'}`}>
                     {ctf.rank}
                   </span>
-                  <span className="text-gray-600 dark:text-gray-400 text-sm"> @ {ctf.event} ({ctf.year})</span>
+                  <span className="text-sm foreground-text"> @ {ctf.event} ({ctf.year})</span>
                 </motion.div>
               ))}
             </div>
