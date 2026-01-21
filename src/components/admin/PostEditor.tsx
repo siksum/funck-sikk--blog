@@ -745,9 +745,9 @@ export default function PostEditor({ initialData = {}, isEdit = false }: PostEdi
       action: () => insertMarkdown('\n## 목차\n\n- [섹션 1](#섹션-1)\n- [섹션 2](#섹션-2)\n- [섹션 3](#섹션-3)\n\n'),
     },
     {
-      icon: <span className="text-sm font-mono">∑</span>,
-      label: '수학 공식',
-      action: () => setShowMathEditor(true),
+      icon: <span className="text-sm">😀</span>,
+      label: '이모지',
+      action: () => setShowEmojiPicker(true),
     },
     {
       icon: (
@@ -782,17 +782,8 @@ export default function PostEditor({ initialData = {}, isEdit = false }: PostEdi
           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 20l4-16m4 4l4 4-4 4M6 16l-4-4 4-4" />
         </svg>
       ),
-      label: '코드 블록 (고급)',
+      label: '코드 블록',
       action: () => setShowCodeLanguageDropdown(!showCodeLanguageDropdown),
-    },
-    {
-      icon: (
-        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
-        </svg>
-      ),
-      label: '체크박스',
-      action: () => insertAtLineStart('- [ ] '),
     },
     {
       icon: (
@@ -813,9 +804,9 @@ export default function PostEditor({ initialData = {}, isEdit = false }: PostEdi
       action: () => pdfInputRef.current?.click(),
     },
     {
-      icon: <span className="text-sm">😀</span>,
-      label: '이모지',
-      action: () => setShowEmojiPicker(true),
+      icon: <span className="text-sm font-mono">∑</span>,
+      label: '수학 공식',
+      action: () => setShowMathEditor(true),
     },
   ];
 
