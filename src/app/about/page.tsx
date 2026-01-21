@@ -76,8 +76,7 @@ export default function AboutPage() {
         animate={{ opacity: 1 }}
         transition={{ duration: 0.8 }}
       >
-        <div className="absolute inset-0 bg-gradient-to-br from-violet-100 via-indigo-50 to-purple-100 dark:hidden" />
-        <div className="absolute inset-0 hidden dark:block" style={{ background: 'var(--background)' }} />
+        <div className="absolute inset-0 about-hero-gradient" />
 
         <div className="relative max-w-5xl mx-auto px-4 sm:px-6 lg:px-8">
           <motion.div

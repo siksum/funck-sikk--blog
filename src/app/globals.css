@@ -165,6 +165,14 @@ html, body {
   background: #131318;
 }
 
+/* About page hero gradient - light mode only */
+.about-hero-gradient {
+  background: linear-gradient(to bottom right, #ede9fe, #eef2ff, #f3e8ff);
+}
+.dark .about-hero-gradient {
+  background: var(--background);
+}
+
 html, body, * {
   font-family: 'JoseonGulim', Arial, Helvetica, sans-serif !important;
 }
