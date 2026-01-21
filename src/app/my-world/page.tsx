@@ -2219,7 +2219,9 @@ export default function MyWorldDashboard() {
                           onTouchEnd={handleTouchEnd}
                           onTouchMove={handleTouchMove}
                         >
-                          {bar.isStart && bar.event.title}
+                          <span className="block w-full overflow-hidden text-ellipsis whitespace-nowrap">
+                            {bar.isStart && bar.event.title}
+                          </span>
                         </div>
                       );
                     })}
@@ -2415,7 +2417,9 @@ export default function MyWorldDashboard() {
                           onTouchEnd={handleTouchEnd}
                           onTouchMove={handleTouchMove}
                         >
-                          {bar.isStart && bar.event.title}
+                          <span className="block w-full overflow-hidden text-ellipsis whitespace-nowrap">
+                            {bar.isStart && bar.event.title}
+                          </span>
                         </div>
                       );
                     })}
