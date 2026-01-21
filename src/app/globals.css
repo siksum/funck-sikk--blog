@@ -242,20 +242,20 @@ html, body {
   color: #f5f5f5 !important;
 }
 
-/* Author/Org text - light violet in dark mode */
+/* Author/Org text - violet-400 in dark mode */
 .text-accent-violet {
   color: rgb(124 58 237); /* violet-600 */
 }
 .dark .text-accent-violet {
-  color: rgb(221 214 254) !important; /* violet-200 */
+  color: rgb(167 139 250) !important; /* violet-400 */
 }
 
-/* Role text - light indigo in dark mode */
+/* Role text - indigo-400 in dark mode */
 .text-accent-indigo {
   color: rgb(79 70 229); /* indigo-600 */
 }
 .dark .text-accent-indigo {
-  color: rgb(199 210 254) !important; /* indigo-200 */
+  color: rgb(129 140 248) !important; /* indigo-400 */
 }
 
 html, body, * {
