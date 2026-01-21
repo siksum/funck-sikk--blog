@@ -3578,7 +3578,7 @@ export default function MyWorldDashboard() {
                 </button>
                 <button
                   onClick={() => {
-                    if (contextMenu.event && confirm('이 일정을 삭제하시겠습니까?')) {
+                    if (contextMenu.event) {
                       handleDeleteEvent(contextMenu.event.id);
                     }
                     setContextMenu(null);
