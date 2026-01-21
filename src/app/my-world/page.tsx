@@ -2171,12 +2171,12 @@ export default function MyWorldDashboard() {
                       const barsInSameRow = getMultiDayEventBars.filter(b => b.row === bar.row);
                       const barIndexInRow = barsInSameRow.findIndex(b => b.event.id === bar.event.id);
 
-                      // Calculate max width to prevent overflow past the grid
+                      // Calculate positions using left and right for reliable containment
                       const leftPercent = bar.startCol * colWidth;
                       // Clamp span to not exceed remaining columns (7 - startCol)
                       const maxSpan = 7 - bar.startCol;
                       const clampedSpan = Math.min(bar.span, maxSpan);
-                      const widthPercent = clampedSpan * colWidth;
+                      const rightPercent = (7 - bar.startCol - clampedSpan) * colWidth;
 
                       return (
                         <div
@@ -2184,21 +2184,19 @@ export default function MyWorldDashboard() {
                           draggable
                           onDragStart={(e) => handleDragStart(bar.event, e)}
                           onDragEnd={handleDragEnd}
-                          className={`absolute text-xs truncate px-1.5 py-0.5 cursor-grab active:cursor-grabbing pointer-events-auto
+                          className={`absolute text-xs px-1.5 py-0.5 cursor-grab active:cursor-grabbing pointer-events-auto
                             hover:shadow-lg hover:scale-[1.02] transition-all duration-300 ease-out font-medium select-none ${
                             draggingEvent?.id === bar.event.id ? 'opacity-40 scale-95 shadow-xl ring-2 ring-violet-400' : ''
                           }`}
                           style={{
                             left: `calc(${leftPercent}% + 2px)`,
-                            width: `min(calc(${widthPercent}% - 4px), calc(100% - ${leftPercent}% - 4px))`,
+                            right: `calc(${rightPercent}% + 2px)`,
                             top: `calc(${bar.row * rowHeight}% + 22px + ${barIndexInRow * 20}px)`,
                             height: '18px',
                             backgroundColor: getPastelColor(bar.event.color),
                             color: '#374151',
                             borderRadius: bar.isStart && bar.isEnd ? '4px' : bar.isStart ? '4px 0 0 4px' : bar.isEnd ? '0 4px 4px 0' : '0',
                             overflow: 'hidden',
-                            textOverflow: 'ellipsis',
-                            whiteSpace: 'nowrap',
                           }}
                           title={`${bar.event.title} (드래그하여 이동)`}
                           onClick={(e) => {
@@ -2376,27 +2374,28 @@ export default function MyWorldDashboard() {
                   <div className="col-span-7 relative">
                     {getWeeklyMultiDayEventBars.map((bar, barIndex) => {
                       const colWidth = 100 / 7;
+                      const maxSpan = 7 - bar.startCol;
+                      const clampedSpan = Math.min(bar.span, maxSpan);
+                      const rightPercent = (7 - bar.startCol - clampedSpan) * colWidth;
                       return (
                         <div
                           key={`weekly-${bar.event.id}`}
                           draggable
                           onDragStart={(e) => handleDragStart(bar.event, e)}
                           onDragEnd={handleDragEnd}
-                          className={`absolute text-xs truncate px-1.5 py-0.5 cursor-grab active:cursor-grabbing pointer-events-auto
+                          className={`absolute text-xs px-1.5 py-0.5 cursor-grab active:cursor-grabbing pointer-events-auto
                             hover:shadow-lg hover:scale-[1.02] transition-all duration-300 ease-out font-medium select-none ${
                             draggingEvent?.id === bar.event.id ? 'opacity-40 scale-95 shadow-xl ring-2 ring-violet-400' : ''
                           }`}
                           style={{
                             left: `calc(${bar.startCol * colWidth}% + 2px)`,
-                            width: `min(calc(${bar.span * colWidth}% - 4px), calc(100% - ${bar.startCol * colWidth}% - 4px))`,
+                            right: `calc(${rightPercent}% + 2px)`,
                             top: `${4 + barIndex * 22}px`,
                             height: '20px',
                             backgroundColor: getPastelColor(bar.event.color),
                             color: '#374151',
                             borderRadius: bar.isStart && bar.isEnd ? '4px' : bar.isStart ? '4px 0 0 4px' : bar.isEnd ? '0 4px 4px 0' : '0',
                             overflow: 'hidden',
-                            textOverflow: 'ellipsis',
-                            whiteSpace: 'nowrap',
                           }}
                           title={`${bar.event.title} (드래그하여 이동)`}
                           onClick={(e) => {
