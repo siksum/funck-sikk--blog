@@ -1226,7 +1226,22 @@ export default function SikkPostEditor({ initialData = {}, isEdit = false }: Sik
             </label>
             <div className="h-[700px] border border-gray-300 dark:border-gray-600 rounded-lg bg-gray-50 dark:bg-gray-900 overflow-y-auto">
               {formData.content || formData.title ? (
-                <div className="p-6 text-gray-900 dark:text-gray-100">
+                <div className="text-gray-900 dark:text-gray-100">
+                  {/* Banner Image Preview */}
+                  {formData.thumbnail && (
+                    <div className="mb-6 rounded-t-lg overflow-hidden">
+                      <div
+                        className="w-full h-48 bg-gray-200 dark:bg-gray-700"
+                        style={{
+                          backgroundImage: `url(${formData.thumbnail})`,
+                          backgroundSize: `${formData.thumbnailScale || 100}%`,
+                          backgroundPosition: `center ${formData.thumbnailPosition}%`,
+                          backgroundRepeat: 'no-repeat',
+                        }}
+                      />
+                    </div>
+                  )}
+                  <div className="p-6">
                   {/* Post Header Preview */}
                   <header className="mb-6 pb-6 border-b-2 border-pink-400 dark:border-pink-500">
                     {formData.category && (
@@ -1269,6 +1284,7 @@ export default function SikkPostEditor({ initialData = {}, isEdit = false }: Sik
                   </header>
                   {/* Content Preview */}
                   <MDXContent content={formData.content} />
+                  </div>
                 </div>
               ) : (
                 <p className="text-gray-400 dark:text-gray-500 text-center mt-20">
