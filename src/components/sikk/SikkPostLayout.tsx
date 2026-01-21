@@ -4,6 +4,14 @@ import { useState, useEffect } from 'react';
 import { Post, Category } from '@/types';
 import SikkPostSidebar from './SikkPostSidebar';
 
+interface DBSikkSection {
+  id: string;
+  title: string;
+  description: string | null;
+  order: number;
+  categories: { id: string; name: string; slug: string }[];
+}
+
 interface SikkPostLayoutProps {
   children: React.ReactNode;
   content: string;
@@ -12,6 +20,7 @@ interface SikkPostLayoutProps {
   relatedPosts: Post[];
   categories: Category[];
   currentCategorySlugPath?: string[];
+  sections?: DBSikkSection[];
 }
 
 export default function SikkPostLayout({
@@ -22,6 +31,7 @@ export default function SikkPostLayout({
   relatedPosts,
   categories,
   currentCategorySlugPath,
+  sections,
 }: SikkPostLayoutProps) {
   const [isWide, setIsWide] = useState(false);
   const [mounted, setMounted] = useState(false);
@@ -56,6 +66,7 @@ export default function SikkPostLayout({
                 relatedPosts={relatedPosts}
                 categories={categories}
                 currentCategorySlugPath={currentCategorySlugPath}
+                sections={sections}
               />
             </div>
           </div>
