@@ -210,6 +210,22 @@ html, body {
   background: transparent;
 }
 
+/* About page inactive tab text - white in dark mode */
+.about-tab-inactive {
+  color: rgb(75 85 99); /* gray-600 */
+}
+.dark .about-tab-inactive {
+  color: #f5f5f5 !important;
+}
+
+/* Publication card title - white text in dark mode */
+.pub-card-title {
+  color: rgb(17 24 39); /* gray-900 */
+}
+.dark .pub-card-title {
+  color: #f5f5f5 !important;
+}
+
 html, body, * {
   font-family: 'JoseonGulim', Arial, Helvetica, sans-serif !important;
 }
