@@ -1342,10 +1342,10 @@ export default function MyWorldDashboard() {
     <div className="max-w-6xl mx-auto">
       {/* Header */}
       <div className="mb-8">
-        <h1 className="text-3xl font-bold text-gray-900 dark:text-white mb-2">
+        <h1 className="text-3xl font-bold mb-2" style={{ color: 'var(--foreground)' }}>
           My World
         </h1>
-        <p className="text-gray-600 dark:text-gray-400">
+        <p style={{ color: 'var(--foreground-muted)' }}>
           {formatDate(today)}
         </p>
       </div>
@@ -1355,7 +1355,7 @@ export default function MyWorldDashboard() {
         {/* Todo Date Header */}
         <div className="flex items-center justify-between mb-3">
           <div className="flex items-center gap-2">
-            <h2 className="text-lg font-semibold text-gray-900 dark:text-white">📋 할 일</h2>
+            <h2 className="text-lg font-semibold" style={{ color: 'var(--foreground)' }}>📋 할 일</h2>
             <span className="text-sm text-violet-600 dark:text-violet-400 bg-violet-100 dark:bg-violet-900/30 px-2 py-0.5 rounded-full">
               {new Date(todoDate).toLocaleDateString('ko-KR', { month: 'short', day: 'numeric', weekday: 'short' })}
               {todoDate === todayStr && ' (오늘)'}
