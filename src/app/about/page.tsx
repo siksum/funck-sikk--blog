@@ -341,7 +341,7 @@ export default function AboutPage() {
                             {item.year}
                           </span>
                         </div>
-                        <h3 className="text-lg font-semibold foreground-text">{item.title}</h3>
+                        <h3 className="text-lg font-semibold text-gray-900 dark:text-white">{item.title}</h3>
                         <p className="text-violet-600 dark:text-violet-400 font-medium text-sm">{item.subtitle}</p>
                         {item.org && <p className="text-gray-600 dark:text-gray-400 text-sm">{item.org}</p>}
                         {item.detail && <p className="text-gray-500 dark:text-gray-500 text-xs mt-1">{item.detail}</p>}
@@ -500,7 +500,7 @@ export default function AboutPage() {
                           <span className={`px-2 py-0.5 rounded text-xs font-medium ${pub.featured ? 'bg-amber-100 dark:bg-amber-500/20 text-amber-700 dark:text-amber-300' : 'bg-gray-100 dark:bg-gray-700/50 text-gray-600 dark:text-gray-300'}`}>{pub.badge}</span>
                         </div>
                         <p className="text-sm text-violet-600 dark:text-violet-400 mb-1">{pub.authors}</p>
-                        <h4 className="font-medium foreground-text mb-1">&ldquo;{pub.title}&rdquo;</h4>
+                        <h4 className="font-medium text-gray-900 dark:text-white mb-1">&ldquo;{pub.title}&rdquo;</h4>
                         <p className="text-sm text-gray-600 dark:text-gray-400">{pub.venue}</p>
                         {pub.korean && <p className="text-xs text-gray-500 dark:text-gray-500 mt-1"># {pub.korean}</p>}
                       </motion.div>
@@ -527,7 +527,7 @@ export default function AboutPage() {
                         whileHover={{ x: 4 }}
                       >
                         <p className="text-sm text-violet-600 dark:text-violet-400 mb-1">{pub.authors}</p>
-                        <h4 className="font-medium foreground-text text-sm">&ldquo;{pub.title}&rdquo;</h4>
+                        <h4 className="font-medium text-gray-900 dark:text-white text-sm">&ldquo;{pub.title}&rdquo;</h4>
                         <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">{pub.venue}</p>
                       </motion.div>
                     </motion.div>
@@ -553,7 +553,7 @@ export default function AboutPage() {
                     >
                       {pub.award && <span className="inline-block px-2 py-0.5 bg-amber-100 dark:bg-amber-500/20 text-amber-700 dark:text-amber-300 rounded text-xs font-medium mb-2">{pub.award}</span>}
                       <p className="text-sm text-violet-600 dark:text-violet-400 mb-1">{pub.authors}</p>
-                      <h4 className="font-medium foreground-text text-sm">&ldquo;{pub.title}&rdquo;</h4>
+                      <h4 className="font-medium text-gray-900 dark:text-white text-sm">&ldquo;{pub.title}&rdquo;</h4>
                       <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">{pub.venue}</p>
                       {pub.korean && <p className="text-xs text-gray-400 dark:text-gray-500 mt-1"># {pub.korean}</p>}
                     </motion.div>
@@ -611,7 +611,7 @@ export default function AboutPage() {
                 transition={{ delay: index * 0.05 }}
                 whileHover={{ scale: 1.02 }}
               >
-                <p className="font-medium foreground-text text-sm mb-1">{award.title}</p>
+                <p className="font-medium text-gray-900 dark:text-white text-sm mb-1">{award.title}</p>
                 {award.korean && <p className="text-xs text-gray-400 dark:text-gray-500 mb-1"># {award.korean}</p>}
                 <div className="flex items-center gap-2 text-xs text-gray-500 dark:text-gray-400">
                   <span>{award.year}</span>
@@ -650,7 +650,7 @@ export default function AboutPage() {
             style={{ background: 'var(--card-bg)' }}
             whileHover={{ scale: 1.02 }}
           >
-            <p className="font-medium foreground-text">Engineer Information Processing (정보처리기사)</p>
+            <p className="font-medium text-gray-900 dark:text-white">Engineer Information Processing (정보처리기사)</p>
             <p className="text-sm text-gray-500 dark:text-gray-400">Human Resources Development Service of Korea | 2024.09</p>
           </motion.div>
           </motion.div>
@@ -693,7 +693,7 @@ export default function AboutPage() {
                 transition={{ duration: 0.4 }}
                 whileHover={{ borderColor: "rgb(139 92 246 / 0.5)" }}
               >
-                <p className="font-medium foreground-text mb-1">{patent.title}</p>
+                <p className="font-medium text-gray-900 dark:text-white mb-1">{patent.title}</p>
                 <p className="text-xs text-gray-500 dark:text-gray-400 mb-2"># {patent.korean}</p>
                 <div className="flex items-center gap-2">
                   <span className="text-sm text-violet-600 dark:text-violet-400 font-mono">{patent.code}</span>
@@ -730,7 +730,7 @@ export default function AboutPage() {
           <div className="space-y-6">
             {/* Club */}
             <div className="p-5 rounded-xl border border-violet-200 dark:border-violet-500/30" style={{ background: 'var(--card-bg)' }}>
-              <h3 className="font-semibold foreground-text mb-3">HASH (Hacking Club) - Sungshin Women&apos;s University</h3>
+              <h3 className="font-semibold text-gray-900 dark:text-white mb-3">HASH (Hacking Club) - Sungshin Women&apos;s University</h3>
               <p className="text-sm text-gray-600 dark:text-gray-400 mb-3">2021.01 - 2022.12 | 성신여대 융합보안공학과 해킹동아리</p>
               <div className="flex flex-wrap gap-2">
                 {['Founding Member', 'Vice President (2021)', 'President (2022)'].map((role, i) => (
@@ -749,7 +749,7 @@ export default function AboutPage() {
             </div>
 
             {/* External Activities */}
-            <h3 className="text-lg font-semibold foreground-text">External Activities</h3>
+            <h3 className="text-lg font-semibold text-gray-900 dark:text-white">External Activities</h3>
             <div className="grid md:grid-cols-2 gap-4">
               {[
                 { period: '2025.05 - 2025.12', title: 'Convergence Security Crew', org: 'KISIA', role: 'AI Security Team Leader (크루장)', desc: 'DeFi vulnerability detection with LLM & prompt injection prevention' },
@@ -767,7 +767,7 @@ export default function AboutPage() {
                   whileHover={{ borderColor: "rgb(139 92 246 / 0.5)" }}
                 >
                   <span className="text-xs text-gray-500 dark:text-gray-400">{activity.period}</span>
-                  <h4 className="font-medium foreground-text">{activity.title}</h4>
+                  <h4 className="font-medium text-gray-900 dark:text-white">{activity.title}</h4>
                   <p className="text-violet-600 dark:text-violet-400 text-sm">{activity.org}</p>
                   {activity.role && <p className="text-sm text-indigo-600 dark:text-indigo-400">{activity.role}</p>}
                   <p className="text-sm text-gray-600 dark:text-gray-300 mt-2">{activity.desc}</p>
@@ -776,7 +776,7 @@ export default function AboutPage() {
             </div>
 
             {/* CTF */}
-            <h3 className="text-lg font-semibold foreground-text">CTF</h3>
+            <h3 className="text-lg font-semibold text-gray-900 dark:text-white">CTF</h3>
             <div className="flex flex-wrap gap-3">
               {[
                 { event: 'Sungshin CSE x I.Sly() CTF', team: 'Team 역은카와 아이들', rank: '1st', year: '2023' },
@@ -791,10 +791,10 @@ export default function AboutPage() {
                   viewport={{ }}
                   transition={{ delay: index * 0.1 }}
                 >
-                  <span className={`text-sm font-medium ${ctf.rank === '1st' ? 'text-amber-600 dark:text-amber-400' : 'foreground-text'}`}>
+                  <span className={`text-sm font-medium ${ctf.rank === '1st' ? 'text-amber-600 dark:text-amber-400' : 'text-gray-900 dark:text-white'}`}>
                     {ctf.rank}
                   </span>
-                  <span className="text-sm foreground-text"> @ {ctf.event} ({ctf.year})</span>
+                  <span className="text-sm text-gray-900 dark:text-white"> @ {ctf.event} ({ctf.year})</span>
                 </motion.div>
               ))}
             </div>
@@ -840,7 +840,7 @@ export default function AboutPage() {
                 viewport={{ }}
                 transition={{ delay: index * 0.1 }}
               >
-                <p className="foreground-text text-sm">{press.title}</p>
+                <p className="text-gray-900 dark:text-white text-sm">{press.title}</p>
                 <span className="text-xs text-gray-500 dark:text-gray-400 shrink-0 ml-4">{press.date}</span>
               </motion.div>
             ))}
