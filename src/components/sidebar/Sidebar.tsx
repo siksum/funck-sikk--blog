@@ -123,15 +123,13 @@ export default function Sidebar({
     ? (() => {
         const grouped: { section: DBSection | null; categories: Category[] }[] = [];
 
-        // Group categories by section
+        // Group categories by section (always show sections, even without categories)
         sections.forEach((section) => {
           const sectionCategoryNames = section.categories.map((c) => c.name);
           const sectionCategories = categories.filter((cat) =>
             sectionCategoryNames.includes(cat.name)
           );
-          if (sectionCategories.length > 0) {
-            grouped.push({ section, categories: sectionCategories });
-          }
+          grouped.push({ section, categories: sectionCategories });
         });
 
         // Add categories without section
@@ -163,16 +161,20 @@ export default function Sidebar({
                   {section.title}
                 </div>
               )}
-              <ul className="space-y-1">
-                {sectionCategories.map((category) => (
-                  <li key={category.slug}>
-                    <CategoryTreeItem
-                      category={category}
-                      currentCategorySlugPath={currentCategorySlugPath}
-                    />
-                  </li>
-                ))}
-              </ul>
+              {sectionCategories.length > 0 ? (
+                <ul className="space-y-1">
+                  {sectionCategories.map((category) => (
+                    <li key={category.slug}>
+                      <CategoryTreeItem
+                        category={category}
+                        currentCategorySlugPath={currentCategorySlugPath}
+                      />
+                    </li>
+                  ))}
+                </ul>
+              ) : (
+                <p className="text-xs sidebar-text-muted py-1">카테고리 없음</p>
+              )}
             </div>
           ))}
         </div>
