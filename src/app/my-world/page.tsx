@@ -115,7 +115,7 @@ export default function MyWorldDashboard() {
   const [monthEntries, setMonthEntries] = useState<DailyEntry[]>([]);
   const [monthEvents, setMonthEvents] = useState<CalendarEvent[]>([]);
   const [holidays, setHolidays] = useState<Holiday[]>([]);
-  const [selectedDate, setSelectedDate] = useState<string | null>(null);
+  const [selectedDate, setSelectedDate] = useState<string | null>(() => getLocalDateStr(new Date()));
 
   // Event types management
   const [eventTypes, setEventTypes] = useState<string[]>(DEFAULT_EVENT_TYPES);
@@ -2543,7 +2543,7 @@ export default function MyWorldDashboard() {
                           <select
                             value={dailyForm.status || ''}
                             onChange={(e) => setDailyForm({ ...dailyForm, status: e.target.value || null })}
-                            className="px-2 py-1 text-xs rounded border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-700"
+                            className="px-2 py-1 text-xs rounded border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
                           >
                             <option value="">선택</option>
                             {statusOptions.map((opt) => <option key={opt} value={opt}>{opt}</option>)}
@@ -2556,7 +2556,7 @@ export default function MyWorldDashboard() {
                               <button
                                 key={c}
                                 onClick={() => setDailyForm({ ...dailyForm, condition: dailyForm.condition === c ? null : c })}
-                                className={`px-2 py-0.5 rounded text-xs ${dailyForm.condition === c ? 'bg-violet-600 text-white' : 'bg-gray-100 dark:bg-gray-600'}`}
+                                className={`px-2 py-0.5 rounded text-xs ${dailyForm.condition === c ? 'bg-violet-600 text-white' : 'bg-gray-100 dark:bg-gray-600 text-gray-700 dark:text-gray-300'}`}
                               >
                                 {c}
                               </button>
@@ -2590,9 +2590,9 @@ export default function MyWorldDashboard() {
                               step="0.5"
                               value={dailyForm.sleepHours ?? ''}
                               onChange={(e) => setDailyForm({ ...dailyForm, sleepHours: e.target.value ? parseFloat(e.target.value) : null })}
-                              className="w-14 px-2 py-1 text-xs rounded border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-700 text-right"
+                              className="w-14 px-2 py-1 text-xs rounded border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white text-right"
                             />
-                            <span className="text-xs text-gray-400">시간</span>
+                            <span className="text-xs text-gray-400 dark:text-gray-500">시간</span>
                           </div>
                         </div>
                         <div className="flex items-center justify-between">
@@ -2603,15 +2603,15 @@ export default function MyWorldDashboard() {
                               min="0"
                               value={dailyForm.water ?? ''}
                               onChange={(e) => setDailyForm({ ...dailyForm, water: e.target.value ? parseInt(e.target.value) : null })}
-                              className="w-10 px-1 py-1 text-xs rounded border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-700 text-right"
+                              className="w-10 px-1 py-1 text-xs rounded border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white text-right"
                             />
-                            <span className="text-xs">/</span>
+                            <span className="text-xs text-gray-500 dark:text-gray-400">/</span>
                             <input
                               type="number"
                               min="0"
                               value={dailyForm.coffee ?? ''}
                               onChange={(e) => setDailyForm({ ...dailyForm, coffee: e.target.value ? parseInt(e.target.value) : null })}
-                              className="w-10 px-1 py-1 text-xs rounded border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-700 text-right"
+                              className="w-10 px-1 py-1 text-xs rounded border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white text-right"
                             />
                           </div>
                         </div>
@@ -2626,7 +2626,7 @@ export default function MyWorldDashboard() {
                               <button
                                 key={key}
                                 onClick={() => setDailyForm({ ...dailyForm, [key]: !dailyForm[key as keyof typeof dailyForm] })}
-                                className={`px-2 py-0.5 rounded text-xs ${dailyForm[key as keyof typeof dailyForm] ? 'bg-violet-600 text-white' : 'bg-gray-100 dark:bg-gray-600'}`}
+                                className={`px-2 py-0.5 rounded text-xs ${dailyForm[key as keyof typeof dailyForm] ? 'bg-violet-600 text-white' : 'bg-gray-100 dark:bg-gray-600 text-gray-700 dark:text-gray-300'}`}
                               >
                                 {label}
                               </button>
@@ -2661,7 +2661,7 @@ export default function MyWorldDashboard() {
                               type="text"
                               value={dailyForm[key as keyof typeof dailyForm] as string || ''}
                               onChange={(e) => setDailyForm({ ...dailyForm, [key]: e.target.value || null })}
-                              className="flex-1 px-2 py-1 text-xs rounded border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-700"
+                              className="flex-1 px-2 py-1 text-xs rounded border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
                               placeholder="입력"
                             />
                           </div>
@@ -2686,26 +2686,26 @@ export default function MyWorldDashboard() {
                         <div className="flex items-center gap-2">
                           <span className="text-xs text-gray-500 w-12">💰 소득</span>
                           <div className="flex items-center gap-1 flex-1">
-                            <span className="text-xs">₩</span>
+                            <span className="text-xs text-gray-500 dark:text-gray-400">₩</span>
                             <input
                               type="number"
                               min="0"
                               value={dailyForm.income || ''}
                               onChange={(e) => setDailyForm({ ...dailyForm, income: parseInt(e.target.value) || 0 })}
-                              className="flex-1 px-2 py-1 text-xs rounded border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-700 text-right"
+                              className="flex-1 px-2 py-1 text-xs rounded border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white text-right"
                             />
                           </div>
                         </div>
                         <div className="flex items-center gap-2">
                           <span className="text-xs text-gray-500 w-12">💸 지출</span>
                           <div className="flex items-center gap-1 flex-1">
-                            <span className="text-xs">₩</span>
+                            <span className="text-xs text-gray-500 dark:text-gray-400">₩</span>
                             <input
                               type="number"
                               min="0"
                               value={dailyForm.expense || ''}
                               onChange={(e) => setDailyForm({ ...dailyForm, expense: parseInt(e.target.value) || 0 })}
-                              className="flex-1 px-2 py-1 text-xs rounded border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-700 text-right"
+                              className="flex-1 px-2 py-1 text-xs rounded border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white text-right"
                             />
                           </div>
                         </div>
@@ -2716,7 +2716,7 @@ export default function MyWorldDashboard() {
                             value={dailyForm.expenseNote || ''}
                             onChange={(e) => setDailyForm({ ...dailyForm, expenseNote: e.target.value || null })}
                             placeholder="지출 내역"
-                            className="flex-1 px-2 py-1 text-xs rounded border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-700"
+                            className="flex-1 px-2 py-1 text-xs rounded border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
                           />
                         </div>
                       </div>
