@@ -247,8 +247,8 @@ export default function MDXContent({ content }: MDXContentProps) {
               );
             },
             table: ({ children }) => (
-              <div className="overflow-x-auto my-4">
-                <table className="min-w-full border-collapse border border-violet-200 dark:border-violet-500/30">
+              <div className="overflow-x-auto my-4 -mx-4 px-4 sm:-mx-0 sm:px-0">
+                <table className="w-max min-w-full border-collapse border border-violet-200 dark:border-violet-500/30">
                   {children}
                 </table>
               </div>
@@ -262,8 +262,8 @@ export default function MDXContent({ content }: MDXContentProps) {
             ),
             th: ({ children, style, rowSpan, colSpan }) => (
               <th
-                className="px-4 py-2 text-left font-semibold border border-violet-200 dark:border-violet-500/30"
-                style={{ color: 'var(--foreground)', ...style }}
+                className="px-4 py-2 text-left font-semibold border border-violet-200 dark:border-violet-500/30 whitespace-nowrap"
+                style={{ color: 'var(--foreground)', minWidth: '80px', ...style }}
                 rowSpan={rowSpan}
                 colSpan={colSpan}
               >
@@ -273,7 +273,7 @@ export default function MDXContent({ content }: MDXContentProps) {
             td: ({ children, style, rowSpan, colSpan }) => (
               <td
                 className="px-4 py-2 border border-violet-200 dark:border-violet-500/30"
-                style={{ color: 'var(--foreground)', ...style }}
+                style={{ color: 'var(--foreground)', minWidth: '80px', ...style }}
                 rowSpan={rowSpan}
                 colSpan={colSpan}
               >
