@@ -8,12 +8,21 @@ interface SikkPostCardProps {
   variant?: 'default' | 'compact' | 'list';
 }
 
+const statusConfig = {
+  not_started: { label: '시작전', bgColor: 'bg-gray-100 dark:bg-gray-700', textColor: 'text-gray-600 dark:text-gray-300' },
+  in_progress: { label: '진행중', bgColor: 'bg-blue-100 dark:bg-blue-900/30', textColor: 'text-blue-600 dark:text-blue-400' },
+  completed: { label: '완료', bgColor: 'bg-green-100 dark:bg-green-900/30', textColor: 'text-green-600 dark:text-green-400' },
+};
+
 export default function SikkPostCard({ post, variant = 'default' }: SikkPostCardProps) {
   const formattedDate = new Date(post.date).toLocaleDateString('ko-KR', {
     year: 'numeric',
     month: 'long',
     day: 'numeric',
   });
+
+  const status = post.status || 'not_started';
+  const statusInfo = statusConfig[status];
 
   const handleShare = async (e: React.MouseEvent) => {
     e.preventDefault();
@@ -125,6 +134,9 @@ export default function SikkPostCard({ post, variant = 'default' }: SikkPostCard
             <div className="flex items-center justify-between text-xs" style={{ color: 'var(--foreground-muted)' }}>
               <div className="flex items-center gap-3">
                 <time dateTime={post.date}>{formattedDate}</time>
+                <span className={`px-2 py-0.5 rounded-full text-xs font-medium ${statusInfo.bgColor} ${statusInfo.textColor}`}>
+                  {statusInfo.label}
+                </span>
                 <div className="flex gap-1">
                   {post.tags.slice(0, 2).map((tag) => (
                     <span key={tag}>#{tag}</span>
@@ -246,7 +258,12 @@ export default function SikkPostCard({ post, variant = 'default' }: SikkPostCard
           {/* Meta */}
           <div className="flex flex-col gap-1.5 text-xs" style={{ color: 'var(--foreground-muted)' }}>
             <div className="flex items-center justify-between">
-              <time dateTime={post.date}>{formattedDate}</time>
+              <div className="flex items-center gap-2">
+                <time dateTime={post.date}>{formattedDate}</time>
+                <span className={`px-2 py-0.5 rounded-full text-xs font-medium ${statusInfo.bgColor} ${statusInfo.textColor}`}>
+                  {statusInfo.label}
+                </span>
+              </div>
               <div className="flex items-center gap-2">
                 {/* Share Button */}
                 <button

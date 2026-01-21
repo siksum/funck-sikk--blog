@@ -19,6 +19,7 @@ export interface Post {
   thumbnailScale?: number;
   content: string;
   isPublic: boolean;
+  status?: 'not_started' | 'in_progress' | 'completed';
 }
 
 export interface Category {
