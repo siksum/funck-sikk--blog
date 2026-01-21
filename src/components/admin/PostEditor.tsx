@@ -857,7 +857,7 @@ export default function PostEditor({ initialData = {}, isEdit = false }: PostEdi
       });
 
       if (response.ok) {
-        router.push('/admin');
+        router.push('/admin/posts');
         router.refresh();
       } else {
         const error = await response.json();
