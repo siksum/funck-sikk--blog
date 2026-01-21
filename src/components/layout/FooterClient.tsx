@@ -1,11 +1,15 @@
 'use client';
 
 import Link from 'next/link';
+import { usePathname } from 'next/navigation';
 
 export default function FooterClient() {
+  const pathname = usePathname();
+  const isAdminPage = pathname?.startsWith('/admin');
+
   return (
     <footer
-      className="border-t"
+      className={`border-t ${isAdminPage ? 'lg:ml-64' : ''}`}
       style={{ borderColor: 'var(--card-border)' }}
     >
       <div className="w-full px-4 sm:px-6 lg:px-12 xl:px-16 py-12">
