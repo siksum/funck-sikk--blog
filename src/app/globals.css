@@ -192,9 +192,11 @@ html, body {
 /* About page active tab - border only in dark mode */
 .about-tab-active {
   background: white;
+  color: rgb(124 58 237); /* violet-600 */
 }
 .dark .about-tab-active {
   background: transparent;
+  color: rgb(167 139 250); /* violet-400 */
 }
 
 /* About page research interest tags - border only in dark mode */
