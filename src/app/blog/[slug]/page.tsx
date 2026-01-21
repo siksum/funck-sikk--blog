@@ -13,6 +13,7 @@ import KeyboardNavigation from '@/components/blog/KeyboardNavigation';
 import HighlightShare from '@/components/blog/HighlightShare';
 import DifficultyBadge from '@/components/blog/DifficultyBadge';
 import BlogPostLayout from '@/components/blog/BlogPostLayout';
+import InlinePostEditor from '@/components/blog/InlinePostEditor';
 import { auth } from '@/lib/auth';
 import { prisma } from '@/lib/db';
 
@@ -94,18 +95,16 @@ export default async function BlogPostPage({ params }: BlogPostPageProps) {
     notFound();
   }
 
+  // Check if user is admin
+  const session = await auth();
+  const isAdmin = session?.user?.isAdmin || false;
+
   // Check if post is private
   const isPrivate = !post.isPublic;
-  let isAdmin = false;
 
-  if (isPrivate) {
-    const session = await auth();
-    isAdmin = session?.user?.isAdmin || false;
-
-    // If post is private and user is not admin, show 404
-    if (!isAdmin) {
-      notFound();
-    }
+  // If post is private and user is not admin, show 404
+  if (isPrivate && !isAdmin) {
+    notFound();
   }
 
   const formattedDate = new Date(post.date).toLocaleDateString('ko-KR', {
@@ -123,7 +122,21 @@ export default async function BlogPostPage({ params }: BlogPostPageProps) {
   ]);
   const difficulty = estimateDifficulty(post.content, post.tags);
 
-  return (
+  const postData = {
+    slug: post.slug,
+    title: post.title,
+    description: post.description || '',
+    category: post.category,
+    tags: post.tags,
+    content: post.content,
+    date: post.date,
+    thumbnail: post.thumbnail,
+    thumbnailPosition: post.thumbnailPosition,
+    thumbnailScale: post.thumbnailScale,
+    isPublic: post.isPublic,
+  };
+
+  const content = (
     <>
       <ReadingProgressBar readingTime={readingTime} />
       <HighlightShare />
@@ -268,4 +281,15 @@ export default async function BlogPostPage({ params }: BlogPostPageProps) {
       <KeyboardNavigation prevPost={prevPost} nextPost={nextPost} />
     </>
   );
+
+  // Wrap with InlinePostEditor for admins
+  if (isAdmin) {
+    return (
+      <InlinePostEditor post={postData}>
+        {content}
+      </InlinePostEditor>
+    );
+  }
+
+  return content;
 }

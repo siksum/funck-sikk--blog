@@ -51,6 +51,7 @@ interface PostEditorProps {
     isPublic?: boolean;
   };
   isEdit?: boolean;
+  onSaveSuccess?: () => void;
 }
 
 interface ToolbarButton {
@@ -65,7 +66,7 @@ const codeLanguages = [
   'markdown', 'yaml', 'xml', 'text',
 ];
 
-export default function PostEditor({ initialData = {}, isEdit = false }: PostEditorProps) {
+export default function PostEditor({ initialData = {}, isEdit = false, onSaveSuccess }: PostEditorProps) {
   const router = useRouter();
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -835,8 +836,12 @@ export default function PostEditor({ initialData = {}, isEdit = false }: PostEdi
       });
 
       if (response.ok) {
-        router.push('/admin/posts');
-        router.refresh();
+        if (onSaveSuccess) {
+          onSaveSuccess();
+        } else {
+          router.push('/admin/posts');
+          router.refresh();
+        }
       } else {
         const error = await response.json();
         alert(error.error || '저장에 실패했습니다.');
