@@ -192,7 +192,7 @@ export default async function SikkPostPage({ params }: SikkPostPageProps) {
         <PostNavigation prevPost={prevPost} nextPost={nextPost} basePath="/sikk" variant="pink" />
 
         {/* Footer */}
-        <footer className="mt-12 pt-8 border-t" style={{ borderColor: 'var(--card-border)' }}>
+        <footer className="mt-12 pt-8 border-t-2 border-pink-300 dark:border-pink-500">
           <Link
             href="/sikk"
             className="inline-flex items-center text-pink-600 dark:text-pink-400 hover:underline"
