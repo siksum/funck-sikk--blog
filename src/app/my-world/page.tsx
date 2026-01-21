@@ -2161,7 +2161,7 @@ export default function MyWorldDashboard() {
                   </div>
 
                   {/* Multi-day event bars overlay */}
-                  <div className="absolute inset-0 pointer-events-none overflow-hidden" style={{ borderRadius: '0.5rem', clip: 'rect(0, auto, auto, 0)' }}>
+                  <div className="absolute inset-0 pointer-events-none overflow-hidden" style={{ borderRadius: '0.5rem' }}>
                     {getMultiDayEventBars.map((bar, barIndex) => {
                       const totalRows = Math.ceil((startingDayOfWeek + daysInMonth) / 7);
                       const rowHeight = 100 / totalRows;
@@ -2172,10 +2172,11 @@ export default function MyWorldDashboard() {
                       const barIndexInRow = barsInSameRow.findIndex(b => b.event.id === bar.event.id);
 
                       // Calculate max width to prevent overflow past the grid
-                      const maxRight = 100; // 100% is the right edge
                       const leftPercent = bar.startCol * colWidth;
-                      const widthPercent = bar.span * colWidth;
-                      const clampedWidth = Math.min(widthPercent, maxRight - leftPercent);
+                      // Clamp span to not exceed remaining columns (7 - startCol)
+                      const maxSpan = 7 - bar.startCol;
+                      const clampedSpan = Math.min(bar.span, maxSpan);
+                      const widthPercent = clampedSpan * colWidth;
 
                       return (
                         <div
@@ -2189,8 +2190,8 @@ export default function MyWorldDashboard() {
                           }`}
                           style={{
                             left: `calc(${leftPercent}% + 2px)`,
-                            width: `calc(${clampedWidth}% - 4px)`,
-                            maxWidth: `calc(${maxRight - leftPercent}% - 4px)`,
+                            width: `calc(${widthPercent}% - 4px)`,
+                            maxWidth: `calc(${100 - leftPercent}% - 4px)`,
                             top: `calc(${bar.row * rowHeight}% + 22px + ${barIndexInRow * 20}px)`,
                             height: '18px',
                             backgroundColor: getPastelColor(bar.event.color),
