@@ -1053,6 +1053,22 @@ export default function MyWorldDashboard() {
     setWeekStartDate(start);
   };
 
+  // Navigate by day (for mobile view)
+  const navigateDay = (direction: number) => {
+    if (!selectedDate) return;
+    const current = new Date(selectedDate + 'T00:00:00');
+    current.setDate(current.getDate() + direction);
+    setSelectedDate(getLocalDateStr(current));
+    // Also update week if navigating out of current week range
+    if (current < weekStartDate || current > getWeekDates[6]) {
+      const dayOfWeek = current.getDay();
+      const newStart = new Date(current);
+      newStart.setDate(current.getDate() - dayOfWeek);
+      newStart.setHours(0, 0, 0, 0);
+      setWeekStartDate(newStart);
+    }
+  };
+
   // Daily list week navigation
   const navigateDailyListWeek = (direction: number) => {
     const newStart = new Date(dailyListWeekStart);
@@ -1690,19 +1706,18 @@ export default function MyWorldDashboard() {
           <div className="flex items-center justify-between mb-6">
             <div className="flex items-center gap-4">
               <div className="relative">
+                {/* Desktop: week/month range picker */}
                 <button
                   onClick={() => {
                     if (viewType === 'week') {
-                      // 주간 뷰에서는 주차 선택 표시
                       setShowWeekPicker(!showWeekPicker);
                       setShowMonthPicker(false);
                     } else {
-                      // 월간 뷰에서는 월 선택 표시
                       setShowMonthPicker(!showMonthPicker);
                       setShowWeekPicker(false);
                     }
                   }}
-                  className="text-lg font-semibold text-gray-900 dark:text-white hover:text-violet-600 dark:hover:text-violet-400 flex items-center gap-1 transition-colors"
+                  className="text-lg font-semibold text-gray-900 dark:text-white hover:text-violet-600 dark:hover:text-violet-400 items-center gap-1 transition-colors hidden sm:flex"
                 >
                   {viewType === 'month'
                     ? currentMonth.toLocaleDateString('ko-KR', { year: 'numeric', month: 'long' })
@@ -1712,6 +1727,10 @@ export default function MyWorldDashboard() {
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
                   </svg>
                 </button>
+                {/* Mobile: selected date only */}
+                <span className="text-lg font-semibold sm:hidden" style={{ color: 'var(--foreground)' }}>
+                  {selectedDate ? new Date(selectedDate + 'T00:00:00').toLocaleDateString('ko-KR', { month: 'long', day: 'numeric', weekday: 'short' }) : '오늘'}
+                </span>
                 {/* Month Picker Dropdown (월간 뷰) */}
                 {showMonthPicker && viewType === 'month' && (
                   <div className="absolute top-full left-0 mt-2 bg-white dark:bg-gray-800 rounded-xl shadow-lg border border-gray-200 dark:border-gray-700 p-4 z-50 min-w-[280px]">
@@ -1823,23 +1842,50 @@ export default function MyWorldDashboard() {
               </div>
             </div>
             <div className="flex items-center gap-2">
+              {/* Desktop: navigate week/month */}
               <button
                 onClick={() => viewType === 'month' ? navigateMonth(-1) : navigateWeek(-1)}
-                className="p-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-colors"
+                className="p-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-colors hidden sm:block"
+              >
+                <svg className="w-5 h-5 text-gray-600 dark:text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+                </svg>
+              </button>
+              {/* Mobile: navigate day */}
+              <button
+                onClick={() => navigateDay(-1)}
+                className="p-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-colors sm:hidden"
               >
                 <svg className="w-5 h-5 text-gray-600 dark:text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
                 </svg>
               </button>
               <button
-                onClick={() => viewType === 'month' ? setCurrentMonth(new Date()) : goToCurrentWeek()}
+                onClick={() => {
+                  if (viewType === 'month') {
+                    setCurrentMonth(new Date());
+                  } else {
+                    goToCurrentWeek();
+                  }
+                  setSelectedDate(getLocalDateStr(new Date()));
+                }}
                 className="px-3 py-1 text-sm text-violet-600 dark:text-violet-400 hover:bg-violet-50 dark:hover:bg-violet-900/30 rounded-lg transition-colors"
               >
                 오늘
               </button>
+              {/* Desktop: navigate week/month */}
               <button
                 onClick={() => viewType === 'month' ? navigateMonth(1) : navigateWeek(1)}
-                className="p-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-colors"
+                className="p-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-colors hidden sm:block"
+              >
+                <svg className="w-5 h-5 text-gray-600 dark:text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                </svg>
+              </button>
+              {/* Mobile: navigate day */}
+              <button
+                onClick={() => navigateDay(1)}
+                className="p-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-colors sm:hidden"
               >
                 <svg className="w-5 h-5 text-gray-600 dark:text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
@@ -2036,8 +2082,8 @@ export default function MyWorldDashboard() {
             /* Weekly Time View */
             <div className="overflow-hidden h-full flex flex-col">
               {/* Weekly Header */}
-              <div className="grid grid-cols-8 border-b border-gray-200 dark:border-gray-700 flex-shrink-0">
-                <div className="w-14"></div>
+              <div className="grid grid-cols-2 sm:grid-cols-8 border-b border-gray-200 dark:border-gray-700 flex-shrink-0">
+                <div className="w-14 hidden sm:block"></div>
                 {getWeekDates.map((date, index) => {
                   const dayOfWeek = date.getDay();
                   const isSunday = dayOfWeek === 0;
@@ -2055,7 +2101,7 @@ export default function MyWorldDashboard() {
                       onDrop={(e) => handleDrop(date, e)}
                       className={`py-2 text-center transition-colors ${
                         isSelected ? 'bg-violet-100 dark:bg-violet-900/50' : isHoliday ? 'bg-red-50 dark:bg-red-900/20' : 'hover:bg-gray-50 dark:hover:bg-gray-700/50'
-                      } ${draggingEvent ? 'hover:bg-violet-50 dark:hover:bg-violet-900/30' : ''}`}
+                      } ${draggingEvent ? 'hover:bg-violet-50 dark:hover:bg-violet-900/30' : ''} ${isSelected ? '' : 'hidden sm:block'}`}
                     >
                       <div className={`text-xs ${
                         isHoliday || isSunday ? 'text-red-500' : isSaturday ? 'text-blue-500' : 'text-gray-500 dark:text-gray-400'
@@ -2085,12 +2131,14 @@ export default function MyWorldDashboard() {
 
               {/* All-day events row */}
               <div className="relative border-b border-gray-200 dark:border-gray-700 flex-shrink-0" style={{ minHeight: `${Math.max(40, 24 + getWeeklyMultiDayEventBars.length * 22)}px` }}>
-                <div className="grid grid-cols-8 h-full">
-                  <div className="w-14 px-2 py-1 text-xs text-gray-400 dark:text-gray-500 text-right">
+                <div className="grid grid-cols-2 sm:grid-cols-8 h-full">
+                  <div className="w-14 px-2 py-1 text-xs text-gray-400 dark:text-gray-500 text-right hidden sm:block">
                     종일
                   </div>
                   {getWeekDates.map((date, index) => {
                     const singleDayEvents = getSingleDayAllDayEventsForWeekDate(date);
+                    const dateStr = getLocalDateStr(date);
+                    const isSelected = selectedDate === dateStr;
                     return (
                       <div
                         key={index}
@@ -2098,7 +2146,7 @@ export default function MyWorldDashboard() {
                         onDrop={(e) => handleDrop(date, e)}
                         className={`border-l border-gray-100 dark:border-gray-700 p-1 relative ${
                           draggingEvent ? 'hover:bg-violet-50 dark:hover:bg-violet-900/30' : ''
-                        }`}
+                        } ${isSelected ? '' : 'hidden sm:block'}`}
                         style={{ paddingTop: `${getWeeklyMultiDayEventBars.length * 22 + 4}px` }}
                       >
                         {singleDayEvents.slice(0, 2).map((event) => (
@@ -2128,8 +2176,8 @@ export default function MyWorldDashboard() {
                     );
                   })}
                 </div>
-                {/* Multi-day event bars overlay */}
-                <div className="absolute top-0 left-0 right-0 pointer-events-none grid grid-cols-8">
+                {/* Multi-day event bars overlay - hidden on mobile */}
+                <div className="absolute top-0 left-0 right-0 pointer-events-none grid-cols-8 hidden sm:grid">
                   <div className="w-14"></div>
                   <div className="col-span-7 relative">
                     {getWeeklyMultiDayEventBars.map((bar, barIndex) => {
@@ -2169,9 +2217,9 @@ export default function MyWorldDashboard() {
 
               {/* Time grid */}
               <div className="overflow-y-auto flex-1 relative pt-2">
-                <div className="grid grid-cols-8">
+                <div className="grid grid-cols-2 sm:grid-cols-8">
                   {/* Time column */}
-                  <div className="w-14 relative">
+                  <div className="w-14 relative hidden sm:block">
                     {Array.from({ length: 17 }).map((_, i) => (
                       <div
                         key={i}
@@ -2188,11 +2236,12 @@ export default function MyWorldDashboard() {
                   {getWeekDates.map((date, dayIndex) => {
                     const events = getEventsForWeekDate(date).filter(e => !e.isAllDay);
                     const dateStr = getLocalDateStr(date);
+                    const isSelected = selectedDate === dateStr;
 
                     return (
                       <div
                         key={dayIndex}
-                        className="relative border-l border-gray-100 dark:border-gray-700"
+                        className={`relative border-l border-gray-100 dark:border-gray-700 ${isSelected ? '' : 'hidden sm:block'}`}
                       >
                         {/* Hour lines */}
                         {Array.from({ length: 17 }).map((_, i) => (
