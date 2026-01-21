@@ -1350,7 +1350,7 @@ export default function PostEditor({ initialData = {}, isEdit = false }: PostEdi
             <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
               미리보기
             </label>
-            <div className="h-[700px] border border-gray-300 dark:border-gray-600 rounded-lg bg-gray-50 dark:bg-gray-900 overflow-y-auto">
+            <div className="h-[740px] border border-gray-300 dark:border-gray-600 rounded-lg bg-gray-50 dark:bg-gray-900 overflow-y-auto">
               {formData.content || formData.title ? (
                 <div className="text-gray-900 dark:text-gray-100">
                   {/* Banner Image Preview */}
