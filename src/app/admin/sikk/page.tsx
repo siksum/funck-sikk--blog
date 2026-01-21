@@ -685,7 +685,7 @@ export default function SikkPostsManagementPage() {
                     className={`w-full text-left text-xs font-semibold uppercase tracking-wider mb-2 pb-1 border-b transition-colors ${
                       selectedSection === section?.id
                         ? 'text-pink-600 dark:text-pink-400 border-pink-400 dark:border-pink-500'
-                        : 'text-indigo-600 dark:text-indigo-400 border-indigo-200 dark:border-indigo-800 hover:text-pink-600 dark:hover:text-pink-400'
+                        : 'text-pink-600 dark:text-pink-400 border-pink-200 dark:border-pink-800 hover:text-pink-700 dark:hover:text-pink-300'
                     }`}
                   >
                     {section?.title || '미분류'}
