@@ -2132,7 +2132,14 @@ export default function MyWorldDashboard() {
                                     hover:scale-105 hover:shadow-lg transition-all duration-300 ease-out select-none ${
                                     draggingEvent?.id === event.id ? 'opacity-40 scale-90 shadow-xl ring-2 ring-violet-400' : ''
                                   }`}
-                                  style={{ backgroundColor: getPastelColor(event.color), color: '#374151' }}
+                                  style={{
+                                    backgroundColor: getPastelColor(event.color),
+                                    color: '#374151',
+                                    overflow: 'hidden',
+                                    textOverflow: 'ellipsis',
+                                    whiteSpace: 'nowrap',
+                                    maxWidth: '100%',
+                                  }}
                                   title={`${event.title}${event.location ? ` - ${event.location}` : ''}${event.url ? ' (링크)' : ''} (드래그하여 이동)`}
                                 >
                                   {event.title}
@@ -2189,6 +2196,9 @@ export default function MyWorldDashboard() {
                             backgroundColor: getPastelColor(bar.event.color),
                             color: '#374151',
                             borderRadius: bar.isStart && bar.isEnd ? '4px' : bar.isStart ? '4px 0 0 4px' : bar.isEnd ? '0 4px 4px 0' : '0',
+                            overflow: 'hidden',
+                            textOverflow: 'ellipsis',
+                            whiteSpace: 'nowrap',
                           }}
                           title={`${bar.event.title} (드래그하여 이동)`}
                           onClick={(e) => {
@@ -2338,7 +2348,14 @@ export default function MyWorldDashboard() {
                               hover:scale-105 hover:shadow-lg transition-all duration-300 ease-out font-medium mb-0.5 select-none ${
                               draggingEvent?.id === event.id ? 'opacity-40 scale-90 shadow-xl ring-2 ring-violet-400' : ''
                             }`}
-                            style={{ backgroundColor: getPastelColor(event.color), color: '#374151' }}
+                            style={{
+                              backgroundColor: getPastelColor(event.color),
+                              color: '#374151',
+                              overflow: 'hidden',
+                              textOverflow: 'ellipsis',
+                              whiteSpace: 'nowrap',
+                              maxWidth: '100%',
+                            }}
                             title={`${event.title} (드래그하여 이동)`}
                           >
                             {event.title}
@@ -2375,6 +2392,9 @@ export default function MyWorldDashboard() {
                             backgroundColor: getPastelColor(bar.event.color),
                             color: '#374151',
                             borderRadius: bar.isStart && bar.isEnd ? '4px' : bar.isStart ? '4px 0 0 4px' : bar.isEnd ? '0 4px 4px 0' : '0',
+                            overflow: 'hidden',
+                            textOverflow: 'ellipsis',
+                            whiteSpace: 'nowrap',
                           }}
                           title={`${bar.event.title} (드래그하여 이동)`}
                           onClick={(e) => {
@@ -3558,7 +3578,7 @@ export default function MyWorldDashboard() {
                 </button>
                 <button
                   onClick={() => {
-                    if (contextMenu.event && confirm('이 일정을 삭제하시겠습니까?')) {
+                    if (contextMenu.event) {
                       handleDeleteEvent(contextMenu.event.id);
                     }
                     setContextMenu(null);
