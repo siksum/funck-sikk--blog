@@ -197,6 +197,14 @@ html, body {
   background: transparent;
 }
 
+/* About page research interest tags - border only in dark mode */
+.about-interest-tag {
+  background: rgb(237 233 254); /* violet-100 */
+}
+.dark .about-interest-tag {
+  background: transparent;
+}
+
 html, body, * {
   font-family: 'JoseonGulim', Arial, Helvetica, sans-serif !important;
 }

@@ -196,7 +196,7 @@ export default function AboutPage() {
             {['Web3 Security', 'Automated Vulnerability Detection', 'AI Security'].map((interest, index) => (
               <motion.span
                 key={interest}
-                className="px-5 py-2.5 bg-violet-100 dark:bg-transparent text-violet-700 dark:text-violet-300 rounded-full font-medium border border-violet-200 dark:border-violet-400"
+                className="px-5 py-2.5 about-interest-tag text-violet-700 dark:text-violet-300 rounded-full font-medium border border-violet-200 dark:border-violet-400"
                 initial={{ opacity: 0, scale: 0.8 }}
                 whileInView={{ opacity: 1, scale: 1 }}
                 viewport={{ }}
