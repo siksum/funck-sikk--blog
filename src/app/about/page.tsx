@@ -289,7 +289,13 @@ export default function AboutPage() {
               className="relative"
             >
               {/* Timeline line */}
-              <div className="absolute left-3 top-0 bottom-0 w-0.5 bg-gradient-to-b from-violet-500 via-indigo-500 to-purple-500 rounded-full" />
+              <div className={`absolute left-3 top-0 bottom-0 w-0.5 rounded-full ${
+                activeTab === 'education'
+                  ? 'bg-gradient-to-b from-violet-500 via-indigo-500 to-purple-500'
+                  : activeTab === 'work'
+                  ? 'bg-gradient-to-b from-emerald-500 via-teal-500 to-green-500'
+                  : 'bg-gradient-to-b from-indigo-500 via-blue-500 to-cyan-500'
+              }`} />
 
               <div className="space-y-4">
                 {(() => {
@@ -341,7 +347,7 @@ export default function AboutPage() {
                             {item.year}
                           </span>
                         </div>
-                        <h3 className="text-lg font-semibold text-gray-900 dark:text-white">{item.title}</h3>
+                        <h3 className="text-lg font-semibold card-title">{item.title}</h3>
                         <p className="text-violet-600 dark:text-violet-400 font-medium text-sm">{item.subtitle}</p>
                         {item.org && <p className="text-gray-600 dark:text-gray-400 text-sm">{item.org}</p>}
                         {item.detail && <p className="text-gray-500 dark:text-gray-500 text-xs mt-1">{item.detail}</p>}
@@ -611,7 +617,7 @@ export default function AboutPage() {
                 transition={{ delay: index * 0.05 }}
                 whileHover={{ scale: 1.02 }}
               >
-                <p className="font-medium text-gray-900 dark:text-white text-sm mb-1">{award.title}</p>
+                <p className="font-medium card-title text-sm mb-1">{award.title}</p>
                 {award.korean && <p className="text-xs text-gray-400 dark:text-gray-500 mb-1"># {award.korean}</p>}
                 <div className="flex items-center gap-2 text-xs text-gray-500 dark:text-gray-400">
                   <span>{award.year}</span>
@@ -650,7 +656,7 @@ export default function AboutPage() {
             style={{ background: 'var(--card-bg)' }}
             whileHover={{ scale: 1.02 }}
           >
-            <p className="font-medium text-gray-900 dark:text-white">Engineer Information Processing (정보처리기사)</p>
+            <p className="font-medium card-title">Engineer Information Processing (정보처리기사)</p>
             <p className="text-sm text-gray-500 dark:text-gray-400">Human Resources Development Service of Korea | 2024.09</p>
           </motion.div>
           </motion.div>
@@ -693,7 +699,7 @@ export default function AboutPage() {
                 transition={{ duration: 0.4 }}
                 whileHover={{ borderColor: "rgb(139 92 246 / 0.5)" }}
               >
-                <p className="font-medium text-gray-900 dark:text-white mb-1">{patent.title}</p>
+                <p className="font-medium card-title mb-1">{patent.title}</p>
                 <p className="text-xs text-gray-500 dark:text-gray-400 mb-2"># {patent.korean}</p>
                 <div className="flex items-center gap-2">
                   <span className="text-sm text-violet-600 dark:text-violet-400 font-mono">{patent.code}</span>
@@ -730,7 +736,7 @@ export default function AboutPage() {
           <div className="space-y-6">
             {/* Club */}
             <div className="p-5 rounded-xl border border-violet-200 dark:border-violet-500/30" style={{ background: 'var(--card-bg)' }}>
-              <h3 className="font-semibold text-gray-900 dark:text-white mb-3">HASH (Hacking Club) - Sungshin Women&apos;s University</h3>
+              <h3 className="font-semibold card-title mb-3">HASH (Hacking Club) - Sungshin Women&apos;s University</h3>
               <p className="text-sm text-gray-600 dark:text-gray-400 mb-3">2021.01 - 2022.12 | 성신여대 융합보안공학과 해킹동아리</p>
               <div className="flex flex-wrap gap-2">
                 {['Founding Member', 'Vice President (2021)', 'President (2022)'].map((role, i) => (
@@ -749,7 +755,7 @@ export default function AboutPage() {
             </div>
 
             {/* External Activities */}
-            <h3 className="text-lg font-semibold text-gray-900 dark:text-white">External Activities</h3>
+            <h3 className="text-lg font-semibold section-subtitle">External Activities</h3>
             <div className="grid md:grid-cols-2 gap-4">
               {[
                 { period: '2025.05 - 2025.12', title: 'Convergence Security Crew', org: 'KISIA', role: 'AI Security Team Leader (크루장)', desc: 'DeFi vulnerability detection with LLM & prompt injection prevention' },
@@ -767,7 +773,7 @@ export default function AboutPage() {
                   whileHover={{ borderColor: "rgb(139 92 246 / 0.5)" }}
                 >
                   <span className="text-xs text-gray-500 dark:text-gray-400">{activity.period}</span>
-                  <h4 className="font-medium text-gray-900 dark:text-white">{activity.title}</h4>
+                  <h4 className="font-medium card-title">{activity.title}</h4>
                   <p className="text-violet-600 dark:text-violet-400 text-sm">{activity.org}</p>
                   {activity.role && <p className="text-sm text-indigo-600 dark:text-indigo-400">{activity.role}</p>}
                   <p className="text-sm text-gray-600 dark:text-gray-300 mt-2">{activity.desc}</p>
@@ -776,7 +782,7 @@ export default function AboutPage() {
             </div>
 
             {/* CTF */}
-            <h3 className="text-lg font-semibold text-gray-900 dark:text-white">CTF</h3>
+            <h3 className="text-lg font-semibold section-subtitle">CTF</h3>
             <div className="flex flex-wrap gap-3">
               {[
                 { event: 'Sungshin CSE x I.Sly() CTF', team: 'Team 역은카와 아이들', rank: '1st', year: '2023' },
@@ -791,10 +797,10 @@ export default function AboutPage() {
                   viewport={{ }}
                   transition={{ delay: index * 0.1 }}
                 >
-                  <span className={`text-sm font-medium ${ctf.rank === '1st' ? 'text-amber-600 dark:text-amber-400' : 'text-gray-900 dark:text-white'}`}>
+                  <span className={`text-sm font-medium ${ctf.rank === '1st' ? 'text-amber-600 dark:text-amber-400' : 'card-title'}`}>
                     {ctf.rank}
                   </span>
-                  <span className="text-sm text-gray-900 dark:text-white"> @ {ctf.event} ({ctf.year})</span>
+                  <span className="text-sm card-title"> @ {ctf.event} ({ctf.year})</span>
                 </motion.div>
               ))}
             </div>
@@ -840,14 +846,14 @@ export default function AboutPage() {
                 viewport={{ }}
                 transition={{ delay: index * 0.1 }}
               >
-                <p className="text-gray-900 dark:text-white text-sm">{press.title}</p>
+                <p className="card-title text-sm">{press.title}</p>
                 <span className="text-xs text-gray-500 dark:text-gray-400 shrink-0 ml-4">{press.date}</span>
               </motion.div>
             ))}
           </div>
 
           {/* Video Embeds */}
-          <h3 className="text-lg font-semibold text-gray-900 dark:text-white mt-8 mb-4">Videos</h3>
+          <h3 className="text-lg font-semibold section-subtitle mt-8 mb-4">Videos</h3>
           <div className="grid md:grid-cols-2 gap-4">
             <motion.div
               className="rounded-xl overflow-hidden border border-gray-200 dark:border-gray-700/50"
@@ -868,7 +874,7 @@ export default function AboutPage() {
                 />
               </div>
               <div className="p-3" style={{ background: 'var(--card-bg)' }}>
-                <p className="text-sm text-gray-900 dark:text-white">Dreamplus Academy 2nd (2023.03~2023.06)</p>
+                <p className="text-sm card-title">Dreamplus Academy 2nd (2023.03~2023.06)</p>
               </div>
             </motion.div>
 
@@ -891,7 +897,7 @@ export default function AboutPage() {
                 />
               </div>
               <div className="p-3" style={{ background: 'var(--card-bg)' }}>
-                <p className="text-sm text-gray-900 dark:text-white">Protocol Camp 5th Final Demoday (2023.09~2023.12)</p>
+                <p className="text-sm card-title">Protocol Camp 5th Final Demoday (2023.09~2023.12)</p>
               </div>
             </motion.div>
           </div>
