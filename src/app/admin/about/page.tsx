@@ -393,42 +393,57 @@ function TimelineEditor({ data, setData }: { data: AboutData; setData: (d: About
         {items.map((item, index) => (
           <div key={index} className="p-4 border border-gray-200 dark:border-gray-700 rounded-lg space-y-3">
             <div className="grid grid-cols-2 gap-3">
+              <div>
+                <label className="block text-xs font-medium text-gray-500 dark:text-gray-400 mb-1">기간</label>
+                <input
+                  type="text"
+                  placeholder="예: 2024.09 - Current"
+                  value={item.year}
+                  onChange={(e) => updateItem(tab, index, 'year', e.target.value)}
+                  className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
+                />
+              </div>
+              <div>
+                <label className="block text-xs font-medium text-gray-500 dark:text-gray-400 mb-1">직책/학위</label>
+                <input
+                  type="text"
+                  placeholder="예: M.S. Candidate"
+                  value={item.title}
+                  onChange={(e) => updateItem(tab, index, 'title', e.target.value)}
+                  className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
+                />
+              </div>
+              <div>
+                <label className="block text-xs font-medium text-gray-500 dark:text-gray-400 mb-1">전공/부서</label>
+                <input
+                  type="text"
+                  placeholder="예: Convergence Security Engineering"
+                  value={item.subtitle}
+                  onChange={(e) => updateItem(tab, index, 'subtitle', e.target.value)}
+                  className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
+                />
+              </div>
+              <div>
+                <label className="block text-xs font-medium text-gray-500 dark:text-gray-400 mb-1">기관</label>
+                <input
+                  type="text"
+                  placeholder="예: Sungshin Women's University"
+                  value={item.org}
+                  onChange={(e) => updateItem(tab, index, 'org', e.target.value)}
+                  className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
+                />
+              </div>
+            </div>
+            <div>
+              <label className="block text-xs font-medium text-gray-500 dark:text-gray-400 mb-1">상세 정보</label>
               <input
                 type="text"
-                placeholder="기간 (예: 2024.09 - Current)"
-                value={item.year}
-                onChange={(e) => updateItem(tab, index, 'year', e.target.value)}
-                className="px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
-              />
-              <input
-                type="text"
-                placeholder="직책/학위"
-                value={item.title}
-                onChange={(e) => updateItem(tab, index, 'title', e.target.value)}
-                className="px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
-              />
-              <input
-                type="text"
-                placeholder="부제목"
-                value={item.subtitle}
-                onChange={(e) => updateItem(tab, index, 'subtitle', e.target.value)}
-                className="px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
-              />
-              <input
-                type="text"
-                placeholder="기관"
-                value={item.org}
-                onChange={(e) => updateItem(tab, index, 'org', e.target.value)}
-                className="px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
+                placeholder="예: Advisor: Ilgu Lee | GPA: 4.5/4.5"
+                value={item.detail}
+                onChange={(e) => updateItem(tab, index, 'detail', e.target.value)}
+                className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
               />
             </div>
-            <input
-              type="text"
-              placeholder="상세 정보"
-              value={item.detail}
-              onChange={(e) => updateItem(tab, index, 'detail', e.target.value)}
-              className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
-            />
             <button
               onClick={() => removeItem(tab, index)}
               className="text-red-500 text-sm hover:underline"
@@ -448,17 +463,82 @@ function TimelineEditor({ data, setData }: { data: AboutData; setData: (d: About
   );
 }
 
-// Publications Editor (simplified version)
+// Publications Editor
 function PublicationsEditor({ data, setData }: { data: AboutData; setData: (d: AboutData) => void }) {
+  const [pubTab, setPubTab] = useState<'journals' | 'international' | 'domestic'>('journals');
+
+  const addJournal = () => {
+    setData({
+      ...data,
+      publications: {
+        ...data.publications,
+        journals: [...data.publications.journals, { authors: '', title: '', venue: '', badge: '', featured: false, korean: '' }],
+      },
+    });
+  };
+
+  const updateJournal = (index: number, field: string, value: string | boolean) => {
+    const newJournals = [...data.publications.journals];
+    newJournals[index] = { ...newJournals[index], [field]: value };
+    setData({ ...data, publications: { ...data.publications, journals: newJournals } });
+  };
+
+  const removeJournal = (index: number) => {
+    setData({
+      ...data,
+      publications: { ...data.publications, journals: data.publications.journals.filter((_, i) => i !== index) },
+    });
+  };
+
+  const addInternational = () => {
+    setData({
+      ...data,
+      publications: {
+        ...data.publications,
+        international: [...data.publications.international, { authors: '', title: '', venue: '' }],
+      },
+    });
+  };
+
+  const updateInternational = (index: number, field: string, value: string) => {
+    const newItems = [...data.publications.international];
+    newItems[index] = { ...newItems[index], [field]: value };
+    setData({ ...data, publications: { ...data.publications, international: newItems } });
+  };
+
+  const removeInternational = (index: number) => {
+    setData({
+      ...data,
+      publications: { ...data.publications, international: data.publications.international.filter((_, i) => i !== index) },
+    });
+  };
+
+  const addDomestic = () => {
+    setData({
+      ...data,
+      publications: {
+        ...data.publications,
+        domestic: [...data.publications.domestic, { authors: '', title: '', venue: '', korean: '', award: '' }],
+      },
+    });
+  };
+
+  const updateDomestic = (index: number, field: string, value: string) => {
+    const newItems = [...data.publications.domestic];
+    newItems[index] = { ...newItems[index], [field]: value };
+    setData({ ...data, publications: { ...data.publications, domestic: newItems } });
+  };
+
+  const removeDomestic = (index: number) => {
+    setData({
+      ...data,
+      publications: { ...data.publications, domestic: data.publications.domestic.filter((_, i) => i !== index) },
+    });
+  };
+
   return (
     <div className="space-y-6">
-      <p className="text-gray-500 dark:text-gray-400">
-        논문 데이터는 JSON 파일에서 직접 수정해주세요. 복잡한 구조로 인해 UI 편집기는 제공되지 않습니다.
-      </p>
-      <div className="p-4 bg-gray-50 dark:bg-gray-900 rounded-lg">
-        <p className="text-sm text-gray-600 dark:text-gray-400 mb-2">파일 위치:</p>
-        <code className="text-sm text-violet-600 dark:text-violet-400">src/data/about.json</code>
-      </div>
+      {/* Stats */}
       <div className="grid grid-cols-3 gap-4 text-center">
         <div className="p-4 bg-violet-50 dark:bg-violet-900/20 rounded-lg">
           <p className="text-2xl font-bold text-violet-600 dark:text-violet-400">{data.publications.journals.length}</p>
@@ -473,6 +553,212 @@ function PublicationsEditor({ data, setData }: { data: AboutData; setData: (d: A
           <p className="text-sm text-gray-600 dark:text-gray-400">Domestic</p>
         </div>
       </div>
+
+      {/* Tabs */}
+      <div className="flex gap-2">
+        {(['journals', 'international', 'domestic'] as const).map((t) => (
+          <button
+            key={t}
+            onClick={() => setPubTab(t)}
+            className={`px-4 py-2 rounded-lg ${
+              pubTab === t
+                ? 'bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300'
+                : 'text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-700'
+            }`}
+          >
+            {t === 'journals' ? 'Journals' : t === 'international' ? 'International' : 'Domestic'}
+          </button>
+        ))}
+      </div>
+
+      {/* Journals Tab */}
+      {pubTab === 'journals' && (
+        <div className="space-y-4">
+          {data.publications.journals.map((item, index) => (
+            <div key={index} className="p-4 border border-gray-200 dark:border-gray-700 rounded-lg space-y-3">
+              <div>
+                <label className="block text-xs font-medium text-gray-500 dark:text-gray-400 mb-1">저자</label>
+                <input
+                  type="text"
+                  placeholder="예: Namryeong Kim, Ilgu Lee"
+                  value={item.authors}
+                  onChange={(e) => updateJournal(index, 'authors', e.target.value)}
+                  className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
+                />
+              </div>
+              <div>
+                <label className="block text-xs font-medium text-gray-500 dark:text-gray-400 mb-1">논문 제목 (영문)</label>
+                <input
+                  type="text"
+                  value={item.title}
+                  onChange={(e) => updateJournal(index, 'title', e.target.value)}
+                  className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
+                />
+              </div>
+              <div>
+                <label className="block text-xs font-medium text-gray-500 dark:text-gray-400 mb-1">논문 제목 (한글, 선택)</label>
+                <input
+                  type="text"
+                  value={item.korean || ''}
+                  onChange={(e) => updateJournal(index, 'korean', e.target.value)}
+                  className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
+                />
+              </div>
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className="block text-xs font-medium text-gray-500 dark:text-gray-400 mb-1">게재지/학회</label>
+                  <input
+                    type="text"
+                    placeholder="예: IEEE Transactions on Big Data, 2025"
+                    value={item.venue}
+                    onChange={(e) => updateJournal(index, 'venue', e.target.value)}
+                    className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
+                  />
+                </div>
+                <div>
+                  <label className="block text-xs font-medium text-gray-500 dark:text-gray-400 mb-1">배지 (SCIE, KCI 등)</label>
+                  <input
+                    type="text"
+                    placeholder="예: SCIE, IF5.7, Q1"
+                    value={item.badge}
+                    onChange={(e) => updateJournal(index, 'badge', e.target.value)}
+                    className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
+                  />
+                </div>
+              </div>
+              <div className="flex items-center justify-between">
+                <label className="flex items-center gap-2 text-sm text-gray-600 dark:text-gray-400">
+                  <input
+                    type="checkbox"
+                    checked={item.featured || false}
+                    onChange={(e) => updateJournal(index, 'featured', e.target.checked)}
+                    className="rounded"
+                  />
+                  하이라이트 (대표 논문)
+                </label>
+                <button onClick={() => removeJournal(index)} className="text-red-500 text-sm hover:underline">삭제</button>
+              </div>
+            </div>
+          ))}
+          <button
+            onClick={addJournal}
+            className="w-full px-4 py-2 text-blue-600 dark:text-blue-400 border border-dashed border-blue-300 dark:border-blue-700 rounded-lg hover:bg-blue-50 dark:hover:bg-blue-900/20"
+          >
+            + Journal 논문 추가
+          </button>
+        </div>
+      )}
+
+      {/* International Tab */}
+      {pubTab === 'international' && (
+        <div className="space-y-4">
+          {data.publications.international.map((item, index) => (
+            <div key={index} className="p-4 border border-gray-200 dark:border-gray-700 rounded-lg space-y-3">
+              <div>
+                <label className="block text-xs font-medium text-gray-500 dark:text-gray-400 mb-1">저자</label>
+                <input
+                  type="text"
+                  value={item.authors}
+                  onChange={(e) => updateInternational(index, 'authors', e.target.value)}
+                  className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
+                />
+              </div>
+              <div>
+                <label className="block text-xs font-medium text-gray-500 dark:text-gray-400 mb-1">논문 제목</label>
+                <input
+                  type="text"
+                  value={item.title}
+                  onChange={(e) => updateInternational(index, 'title', e.target.value)}
+                  className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
+                />
+              </div>
+              <div>
+                <label className="block text-xs font-medium text-gray-500 dark:text-gray-400 mb-1">학회/장소</label>
+                <input
+                  type="text"
+                  placeholder="예: WISA 2025, Jeju, Aug. 21, 2025"
+                  value={item.venue}
+                  onChange={(e) => updateInternational(index, 'venue', e.target.value)}
+                  className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
+                />
+              </div>
+              <button onClick={() => removeInternational(index)} className="text-red-500 text-sm hover:underline">삭제</button>
+            </div>
+          ))}
+          <button
+            onClick={addInternational}
+            className="w-full px-4 py-2 text-blue-600 dark:text-blue-400 border border-dashed border-blue-300 dark:border-blue-700 rounded-lg hover:bg-blue-50 dark:hover:bg-blue-900/20"
+          >
+            + International 논문 추가
+          </button>
+        </div>
+      )}
+
+      {/* Domestic Tab */}
+      {pubTab === 'domestic' && (
+        <div className="space-y-4">
+          {data.publications.domestic.map((item, index) => (
+            <div key={index} className="p-4 border border-gray-200 dark:border-gray-700 rounded-lg space-y-3">
+              <div>
+                <label className="block text-xs font-medium text-gray-500 dark:text-gray-400 mb-1">저자</label>
+                <input
+                  type="text"
+                  value={item.authors}
+                  onChange={(e) => updateDomestic(index, 'authors', e.target.value)}
+                  className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
+                />
+              </div>
+              <div>
+                <label className="block text-xs font-medium text-gray-500 dark:text-gray-400 mb-1">논문 제목 (영문)</label>
+                <input
+                  type="text"
+                  value={item.title}
+                  onChange={(e) => updateDomestic(index, 'title', e.target.value)}
+                  className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
+                />
+              </div>
+              <div>
+                <label className="block text-xs font-medium text-gray-500 dark:text-gray-400 mb-1">논문 제목 (한글, 선택)</label>
+                <input
+                  type="text"
+                  value={item.korean || ''}
+                  onChange={(e) => updateDomestic(index, 'korean', e.target.value)}
+                  className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
+                />
+              </div>
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className="block text-xs font-medium text-gray-500 dark:text-gray-400 mb-1">학회</label>
+                  <input
+                    type="text"
+                    placeholder="예: ACK 2025, Nov. 7, 2025"
+                    value={item.venue}
+                    onChange={(e) => updateDomestic(index, 'venue', e.target.value)}
+                    className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
+                  />
+                </div>
+                <div>
+                  <label className="block text-xs font-medium text-gray-500 dark:text-gray-400 mb-1">수상 (선택)</label>
+                  <input
+                    type="text"
+                    placeholder="예: 최우수논문상"
+                    value={item.award || ''}
+                    onChange={(e) => updateDomestic(index, 'award', e.target.value)}
+                    className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
+                  />
+                </div>
+              </div>
+              <button onClick={() => removeDomestic(index)} className="text-red-500 text-sm hover:underline">삭제</button>
+            </div>
+          ))}
+          <button
+            onClick={addDomestic}
+            className="w-full px-4 py-2 text-blue-600 dark:text-blue-400 border border-dashed border-blue-300 dark:border-blue-700 rounded-lg hover:bg-blue-50 dark:hover:bg-blue-900/20"
+          >
+            + Domestic 논문 추가
+          </button>
+        </div>
+      )}
     </div>
   );
 }
@@ -501,34 +787,46 @@ function AwardsEditor({ data, setData }: { data: AboutData; setData: (d: AboutDa
       {data.awards.map((award, index) => (
         <div key={index} className="p-4 border border-gray-200 dark:border-gray-700 rounded-lg space-y-3">
           <div className="grid grid-cols-2 gap-3">
-            <input
-              type="text"
-              placeholder="수상명 (영문)"
-              value={award.title}
-              onChange={(e) => updateAward(index, 'title', e.target.value)}
-              className="px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
-            />
-            <input
-              type="text"
-              placeholder="수상명 (한글)"
-              value={award.korean || ''}
-              onChange={(e) => updateAward(index, 'korean', e.target.value)}
-              className="px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
-            />
-            <input
-              type="text"
-              placeholder="기관"
-              value={award.org}
-              onChange={(e) => updateAward(index, 'org', e.target.value)}
-              className="px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
-            />
-            <input
-              type="text"
-              placeholder="연도"
-              value={award.year}
-              onChange={(e) => updateAward(index, 'year', e.target.value)}
-              className="px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
-            />
+            <div>
+              <label className="block text-xs font-medium text-gray-500 dark:text-gray-400 mb-1">수상명 (영문)</label>
+              <input
+                type="text"
+                placeholder="예: Best Paper Award"
+                value={award.title}
+                onChange={(e) => updateAward(index, 'title', e.target.value)}
+                className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
+              />
+            </div>
+            <div>
+              <label className="block text-xs font-medium text-gray-500 dark:text-gray-400 mb-1">수상명 (한글, 선택)</label>
+              <input
+                type="text"
+                placeholder="예: 최우수논문상"
+                value={award.korean || ''}
+                onChange={(e) => updateAward(index, 'korean', e.target.value)}
+                className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
+              />
+            </div>
+            <div>
+              <label className="block text-xs font-medium text-gray-500 dark:text-gray-400 mb-1">수여 기관</label>
+              <input
+                type="text"
+                placeholder="예: ACK 2025"
+                value={award.org}
+                onChange={(e) => updateAward(index, 'org', e.target.value)}
+                className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
+              />
+            </div>
+            <div>
+              <label className="block text-xs font-medium text-gray-500 dark:text-gray-400 mb-1">연도</label>
+              <input
+                type="text"
+                placeholder="예: 2025"
+                value={award.year}
+                onChange={(e) => updateAward(index, 'year', e.target.value)}
+                className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
+              />
+            </div>
           </div>
           <div className="flex items-center justify-between">
             <label className="flex items-center gap-2 text-sm text-gray-600 dark:text-gray-400">
@@ -538,7 +836,7 @@ function AwardsEditor({ data, setData }: { data: AboutData; setData: (d: AboutDa
                 onChange={(e) => updateAward(index, 'highlight', e.target.checked)}
                 className="rounded"
               />
-              하이라이트
+              하이라이트 (대표 수상)
             </label>
             <button
               onClick={() => removeAward(index)}
@@ -559,37 +857,273 @@ function AwardsEditor({ data, setData }: { data: AboutData; setData: (d: AboutDa
   );
 }
 
-// Activities Editor (simplified)
+// Activities Editor
 function ActivitiesEditor({ data, setData }: { data: AboutData; setData: (d: AboutData) => void }) {
+  const [actTab, setActTab] = useState<'club' | 'external' | 'ctf'>('club');
+
+  const updateClub = (field: string, value: string | string[]) => {
+    setData({
+      ...data,
+      activities: { ...data.activities, club: { ...data.activities.club, [field]: value } }
+    });
+  };
+
+  const addExternal = () => {
+    setData({
+      ...data,
+      activities: {
+        ...data.activities,
+        external: [...data.activities.external, { period: '', title: '', org: '', role: '', desc: '' }],
+      },
+    });
+  };
+
+  const updateExternal = (index: number, field: string, value: string) => {
+    const newItems = [...data.activities.external];
+    newItems[index] = { ...newItems[index], [field]: value };
+    setData({ ...data, activities: { ...data.activities, external: newItems } });
+  };
+
+  const removeExternal = (index: number) => {
+    setData({
+      ...data,
+      activities: { ...data.activities, external: data.activities.external.filter((_, i) => i !== index) },
+    });
+  };
+
+  const addCTF = () => {
+    setData({
+      ...data,
+      activities: {
+        ...data.activities,
+        ctf: [...data.activities.ctf, { event: '', team: '', rank: '', year: '' }],
+      },
+    });
+  };
+
+  const updateCTF = (index: number, field: string, value: string) => {
+    const newItems = [...data.activities.ctf];
+    newItems[index] = { ...newItems[index], [field]: value };
+    setData({ ...data, activities: { ...data.activities, ctf: newItems } });
+  };
+
+  const removeCTF = (index: number) => {
+    setData({
+      ...data,
+      activities: { ...data.activities, ctf: data.activities.ctf.filter((_, i) => i !== index) },
+    });
+  };
+
   return (
     <div className="space-y-6">
-      <h3 className="text-lg font-semibold text-gray-900 dark:text-white">동아리</h3>
-      <div className="grid grid-cols-2 gap-4">
-        <input
-          type="text"
-          placeholder="동아리명"
-          value={data.activities.club.name}
-          onChange={(e) => setData({
-            ...data,
-            activities: { ...data.activities, club: { ...data.activities.club, name: e.target.value } }
-          })}
-          className="px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
-        />
-        <input
-          type="text"
-          placeholder="기간"
-          value={data.activities.club.period}
-          onChange={(e) => setData({
-            ...data,
-            activities: { ...data.activities, club: { ...data.activities.club, period: e.target.value } }
-          })}
-          className="px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
-        />
+      {/* Stats */}
+      <div className="grid grid-cols-3 gap-4 text-center">
+        <div className="p-4 bg-purple-50 dark:bg-purple-900/20 rounded-lg">
+          <p className="text-2xl font-bold text-purple-600 dark:text-purple-400">1</p>
+          <p className="text-sm text-gray-600 dark:text-gray-400">동아리</p>
+        </div>
+        <div className="p-4 bg-green-50 dark:bg-green-900/20 rounded-lg">
+          <p className="text-2xl font-bold text-green-600 dark:text-green-400">{data.activities.external.length}</p>
+          <p className="text-sm text-gray-600 dark:text-gray-400">외부 활동</p>
+        </div>
+        <div className="p-4 bg-orange-50 dark:bg-orange-900/20 rounded-lg">
+          <p className="text-2xl font-bold text-orange-600 dark:text-orange-400">{data.activities.ctf.length}</p>
+          <p className="text-sm text-gray-600 dark:text-gray-400">CTF</p>
+        </div>
       </div>
 
-      <p className="text-gray-500 dark:text-gray-400 text-sm">
-        외부 활동 및 CTF는 JSON 파일에서 직접 수정해주세요.
-      </p>
+      {/* Tabs */}
+      <div className="flex gap-2">
+        {(['club', 'external', 'ctf'] as const).map((t) => (
+          <button
+            key={t}
+            onClick={() => setActTab(t)}
+            className={`px-4 py-2 rounded-lg ${
+              actTab === t
+                ? 'bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300'
+                : 'text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-700'
+            }`}
+          >
+            {t === 'club' ? '동아리' : t === 'external' ? '외부 활동' : 'CTF'}
+          </button>
+        ))}
+      </div>
+
+      {/* Club Tab */}
+      {actTab === 'club' && (
+        <div className="p-4 border border-gray-200 dark:border-gray-700 rounded-lg space-y-4">
+          <div className="grid grid-cols-2 gap-4">
+            <div>
+              <label className="block text-xs font-medium text-gray-500 dark:text-gray-400 mb-1">동아리명</label>
+              <input
+                type="text"
+                placeholder="예: Layer7"
+                value={data.activities.club.name}
+                onChange={(e) => updateClub('name', e.target.value)}
+                className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
+              />
+            </div>
+            <div>
+              <label className="block text-xs font-medium text-gray-500 dark:text-gray-400 mb-1">활동 기간</label>
+              <input
+                type="text"
+                placeholder="예: 2020.03 - 2024.02"
+                value={data.activities.club.period}
+                onChange={(e) => updateClub('period', e.target.value)}
+                className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
+              />
+            </div>
+          </div>
+          <div>
+            <label className="block text-xs font-medium text-gray-500 dark:text-gray-400 mb-1">설명</label>
+            <textarea
+              placeholder="동아리 설명"
+              value={data.activities.club.description}
+              onChange={(e) => updateClub('description', e.target.value)}
+              rows={2}
+              className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
+            />
+          </div>
+          <div>
+            <label className="block text-xs font-medium text-gray-500 dark:text-gray-400 mb-1">역할 (한 줄에 하나씩)</label>
+            <textarea
+              placeholder="예: 회장 (2023)&#10;부회장 (2022)"
+              value={data.activities.club.roles.join('\n')}
+              onChange={(e) => updateClub('roles', e.target.value.split('\n').filter(r => r.trim()))}
+              rows={3}
+              className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
+            />
+          </div>
+        </div>
+      )}
+
+      {/* External Activities Tab */}
+      {actTab === 'external' && (
+        <div className="space-y-4">
+          {data.activities.external.map((item, index) => (
+            <div key={index} className="p-4 border border-gray-200 dark:border-gray-700 rounded-lg space-y-3">
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className="block text-xs font-medium text-gray-500 dark:text-gray-400 mb-1">활동 기간</label>
+                  <input
+                    type="text"
+                    placeholder="예: 2024.03 - 2024.11"
+                    value={item.period}
+                    onChange={(e) => updateExternal(index, 'period', e.target.value)}
+                    className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
+                  />
+                </div>
+                <div>
+                  <label className="block text-xs font-medium text-gray-500 dark:text-gray-400 mb-1">역할 (선택)</label>
+                  <input
+                    type="text"
+                    placeholder="예: 부트캠퍼"
+                    value={item.role || ''}
+                    onChange={(e) => updateExternal(index, 'role', e.target.value)}
+                    className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
+                  />
+                </div>
+              </div>
+              <div>
+                <label className="block text-xs font-medium text-gray-500 dark:text-gray-400 mb-1">프로그램/활동명</label>
+                <input
+                  type="text"
+                  placeholder="예: AI Security Bootcamp"
+                  value={item.title}
+                  onChange={(e) => updateExternal(index, 'title', e.target.value)}
+                  className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
+                />
+              </div>
+              <div>
+                <label className="block text-xs font-medium text-gray-500 dark:text-gray-400 mb-1">주최 기관</label>
+                <input
+                  type="text"
+                  placeholder="예: KISA"
+                  value={item.org}
+                  onChange={(e) => updateExternal(index, 'org', e.target.value)}
+                  className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
+                />
+              </div>
+              <div>
+                <label className="block text-xs font-medium text-gray-500 dark:text-gray-400 mb-1">설명</label>
+                <textarea
+                  placeholder="활동 내용 설명"
+                  value={item.desc}
+                  onChange={(e) => updateExternal(index, 'desc', e.target.value)}
+                  rows={2}
+                  className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
+                />
+              </div>
+              <button onClick={() => removeExternal(index)} className="text-red-500 text-sm hover:underline">삭제</button>
+            </div>
+          ))}
+          <button
+            onClick={addExternal}
+            className="w-full px-4 py-2 text-blue-600 dark:text-blue-400 border border-dashed border-blue-300 dark:border-blue-700 rounded-lg hover:bg-blue-50 dark:hover:bg-blue-900/20"
+          >
+            + 외부 활동 추가
+          </button>
+        </div>
+      )}
+
+      {/* CTF Tab */}
+      {actTab === 'ctf' && (
+        <div className="space-y-4">
+          {data.activities.ctf.map((item, index) => (
+            <div key={index} className="p-4 border border-gray-200 dark:border-gray-700 rounded-lg space-y-3">
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className="block text-xs font-medium text-gray-500 dark:text-gray-400 mb-1">대회명</label>
+                  <input
+                    type="text"
+                    placeholder="예: DEF CON CTF Quals"
+                    value={item.event}
+                    onChange={(e) => updateCTF(index, 'event', e.target.value)}
+                    className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
+                  />
+                </div>
+                <div>
+                  <label className="block text-xs font-medium text-gray-500 dark:text-gray-400 mb-1">팀명</label>
+                  <input
+                    type="text"
+                    placeholder="예: st4rt or Defenit"
+                    value={item.team}
+                    onChange={(e) => updateCTF(index, 'team', e.target.value)}
+                    className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
+                  />
+                </div>
+                <div>
+                  <label className="block text-xs font-medium text-gray-500 dark:text-gray-400 mb-1">순위</label>
+                  <input
+                    type="text"
+                    placeholder="예: 1st, 3rd, Finals"
+                    value={item.rank}
+                    onChange={(e) => updateCTF(index, 'rank', e.target.value)}
+                    className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
+                  />
+                </div>
+                <div>
+                  <label className="block text-xs font-medium text-gray-500 dark:text-gray-400 mb-1">연도</label>
+                  <input
+                    type="text"
+                    placeholder="예: 2024"
+                    value={item.year}
+                    onChange={(e) => updateCTF(index, 'year', e.target.value)}
+                    className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
+                  />
+                </div>
+              </div>
+              <button onClick={() => removeCTF(index)} className="text-red-500 text-sm hover:underline">삭제</button>
+            </div>
+          ))}
+          <button
+            onClick={addCTF}
+            className="w-full px-4 py-2 text-blue-600 dark:text-blue-400 border border-dashed border-blue-300 dark:border-blue-700 rounded-lg hover:bg-blue-50 dark:hover:bg-blue-900/20"
+          >
+            + CTF 추가
+          </button>
+        </div>
+      )}
     </div>
   );
 }
@@ -635,43 +1169,58 @@ function PressEditor({ data, setData }: { data: AboutData; setData: (d: AboutDat
       <h3 className="text-lg font-semibold text-gray-900 dark:text-white">언론 보도</h3>
       {data.press.map((item, index) => (
         <div key={index} className="p-4 border border-gray-200 dark:border-gray-700 rounded-lg space-y-3">
-          <input
-            type="text"
-            placeholder="제목"
-            value={item.title}
-            onChange={(e) => updatePress(index, 'title', e.target.value)}
-            className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
-          />
-          <div className="grid grid-cols-2 gap-3">
+          <div>
+            <label className="block text-xs font-medium text-gray-500 dark:text-gray-400 mb-1">기사 제목</label>
             <input
               type="text"
-              placeholder="출처"
-              value={item.source}
-              onChange={(e) => updatePress(index, 'source', e.target.value)}
-              className="px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
-            />
-            <input
-              type="text"
-              placeholder="날짜 (예: 2024.01.01)"
-              value={item.date}
-              onChange={(e) => updatePress(index, 'date', e.target.value)}
-              className="px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
+              placeholder="예: 성신여대 융합보안공학과 학생, AI 보안 대회 우승"
+              value={item.title}
+              onChange={(e) => updatePress(index, 'title', e.target.value)}
+              className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
             />
           </div>
-          <input
-            type="text"
-            placeholder="URL"
-            value={item.url}
-            onChange={(e) => updatePress(index, 'url', e.target.value)}
-            className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
-          />
-          <input
-            type="text"
-            placeholder="썸네일 이미지 URL"
-            value={item.image}
-            onChange={(e) => updatePress(index, 'image', e.target.value)}
-            className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
-          />
+          <div className="grid grid-cols-2 gap-3">
+            <div>
+              <label className="block text-xs font-medium text-gray-500 dark:text-gray-400 mb-1">언론사</label>
+              <input
+                type="text"
+                placeholder="예: 중앙일보"
+                value={item.source}
+                onChange={(e) => updatePress(index, 'source', e.target.value)}
+                className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
+              />
+            </div>
+            <div>
+              <label className="block text-xs font-medium text-gray-500 dark:text-gray-400 mb-1">보도 날짜</label>
+              <input
+                type="text"
+                placeholder="예: 2024.01.15"
+                value={item.date}
+                onChange={(e) => updatePress(index, 'date', e.target.value)}
+                className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
+              />
+            </div>
+          </div>
+          <div>
+            <label className="block text-xs font-medium text-gray-500 dark:text-gray-400 mb-1">기사 링크 (URL)</label>
+            <input
+              type="text"
+              placeholder="https://..."
+              value={item.url}
+              onChange={(e) => updatePress(index, 'url', e.target.value)}
+              className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
+            />
+          </div>
+          <div>
+            <label className="block text-xs font-medium text-gray-500 dark:text-gray-400 mb-1">썸네일 이미지 URL</label>
+            <input
+              type="text"
+              placeholder="https://... (이미지 주소)"
+              value={item.image}
+              onChange={(e) => updatePress(index, 'image', e.target.value)}
+              className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
+            />
+          </div>
           <button
             onClick={() => removePress(index)}
             className="text-red-500 text-sm hover:underline"
@@ -690,20 +1239,26 @@ function PressEditor({ data, setData }: { data: AboutData; setData: (d: AboutDat
       <h3 className="text-lg font-semibold text-gray-900 dark:text-white mt-8">영상</h3>
       {data.videos.map((video, index) => (
         <div key={index} className="p-4 border border-gray-200 dark:border-gray-700 rounded-lg space-y-3">
-          <input
-            type="text"
-            placeholder="제목"
-            value={video.title}
-            onChange={(e) => updateVideo(index, 'title', e.target.value)}
-            className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
-          />
-          <input
-            type="text"
-            placeholder="YouTube 임베드 URL"
-            value={video.url}
-            onChange={(e) => updateVideo(index, 'url', e.target.value)}
-            className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
-          />
+          <div>
+            <label className="block text-xs font-medium text-gray-500 dark:text-gray-400 mb-1">영상 제목</label>
+            <input
+              type="text"
+              placeholder="예: AI 보안 특강 - 딥러닝 기반 악성코드 탐지"
+              value={video.title}
+              onChange={(e) => updateVideo(index, 'title', e.target.value)}
+              className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
+            />
+          </div>
+          <div>
+            <label className="block text-xs font-medium text-gray-500 dark:text-gray-400 mb-1">YouTube 임베드 URL</label>
+            <input
+              type="text"
+              placeholder="https://www.youtube.com/embed/..."
+              value={video.url}
+              onChange={(e) => updateVideo(index, 'url', e.target.value)}
+              className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
+            />
+          </div>
           <button
             onClick={() => removeVideo(index)}
             className="text-red-500 text-sm hover:underline"
