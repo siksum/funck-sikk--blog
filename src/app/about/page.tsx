@@ -595,16 +595,16 @@ export default function AboutPage() {
           >
           <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
             {[
-              { title: 'ICT Convergence Security Crew Best Crew Award', org: 'KISIA', year: '2025', highlight: true },
-              { title: 'National Security Technology Research Institute Director Award', org: 'ACK 2025', year: '2025', highlight: true },
-              { title: 'Korea Information Technology Association President\'s Award', org: 'ACK 2025', year: '2025', highlight: true },
-              { title: 'The Third Prize', org: 'ACK 2025', year: '2025' },
-              { title: 'Best Paper Award', org: 'KCSA 2024 Autumn Conference', year: '2024' },
-              { title: 'First Prize, Convergence Security Software Competition', org: 'Sungshin Women\'s University', year: '2024' },
-              { title: 'First Prize, Protocol Camp 5th', org: 'Dreamplus X HASHED', year: '2024' },
-              { title: 'First Prize, Sungshin CSE x I.Sly() CTF', org: '', year: '2023' },
-              { title: 'The Third Prize', org: 'KCSA 2022 Summer Conference', year: '2022' },
-              { title: 'Excellent Paper Award', org: 'KIICE 50th Conference', year: '2021' },
+              { title: 'ICT Convergence Security Crew Best Crew Award', org: 'KISIA', year: '2025', highlight: true, korean: 'ICT 융합보안크루 최우수 크루상' },
+              { title: 'National Security Technology Research Institute Director Award', org: 'ACK 2025', year: '2025', highlight: true, korean: '국가보안기술연구소 소장상' },
+              { title: 'Korea Information Technology Association President\'s Award', org: 'ACK 2025', year: '2025', highlight: true, korean: '한국정보기술학술단체총연합회 회장상' },
+              { title: 'The Third Prize', org: 'ACK 2025', year: '2025', korean: '동상' },
+              { title: 'Best Paper Award', org: 'KCSA 2024 Autumn Conference', year: '2024', korean: '최우수논문상' },
+              { title: 'First Prize, Convergence Security Software Competition', org: 'Sungshin Women\'s University', year: '2024', korean: '융합보안소프트웨어경진대회 대상' },
+              { title: 'First Prize, Protocol Camp 5th', org: 'Dreamplus X HASHED', year: '2024', korean: '프로토콜캠프 5기 대상' },
+              { title: 'First Prize, Sungshin CSE x I.Sly() CTF', org: '', year: '2023', korean: '성신여대 융합보안공학과 x I.Sly() CTF 1위' },
+              { title: 'The Third Prize', org: 'KCSA 2022 Summer Conference', year: '2022', korean: '장려상' },
+              { title: 'Excellent Paper Award', org: 'KIICE 50th Conference', year: '2021', korean: '우수논문상' },
             ].map((award, index) => (
               <motion.div
                 key={index}
@@ -616,6 +616,7 @@ export default function AboutPage() {
                 whileHover={{ scale: 1.02 }}
               >
                 <p className="font-medium text-gray-900 dark:text-white text-sm mb-1">{award.title}</p>
+                {award.korean && <p className="text-xs text-gray-400 dark:text-gray-500 mb-1"># {award.korean}</p>}
                 <div className="flex items-center gap-2 text-xs text-gray-500 dark:text-gray-400">
                   <span>{award.year}</span>
                   {award.org && <span className="truncate">| {award.org}</span>}
