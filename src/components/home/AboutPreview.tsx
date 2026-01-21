@@ -1,7 +1,6 @@
 'use client';
 
 import Link from 'next/link';
-import Image from 'next/image';
 
 export default function AboutPreview() {
   const tags = [
@@ -45,33 +44,6 @@ export default function AboutPreview() {
         />
 
         <div className="relative z-10 flex flex-col md:flex-row items-center gap-6 md:gap-10">
-          {/* Profile Avatar */}
-          <div
-            className="w-32 h-32 md:w-40 md:h-40 rounded-full shrink-0 relative overflow-hidden"
-            style={{
-              boxShadow: '0 0 30px var(--neon-pink-glow), inset 0 0 20px rgba(255, 255, 255, 0.1)',
-            }}
-          >
-            {/* Rotating ring - dark mode only */}
-            <div
-              className="absolute inset-[-4px] rounded-full border-2 border-transparent animate-spin hidden dark:block z-10"
-              style={{
-                animationDuration: '8s',
-                background: 'linear-gradient(0deg, transparent 40%, var(--neon-cyan) 50%, transparent 60%) border-box',
-                WebkitMask: 'linear-gradient(#fff 0 0) padding-box, linear-gradient(#fff 0 0)',
-                WebkitMaskComposite: 'xor',
-                maskComposite: 'exclude',
-              }}
-            />
-            <Image
-              src="/profile.jpg"
-              alt="Namryeong Kim"
-              fill
-              className="object-cover object-top"
-              priority
-            />
-          </div>
-
           {/* Content */}
           <div className="text-left flex-1">
             <h3 className="text-2xl md:text-3xl font-bold mb-3" style={{ color: 'var(--foreground)' }}>
