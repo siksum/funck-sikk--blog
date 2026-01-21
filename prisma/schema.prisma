@@ -225,6 +225,7 @@ model SikkPost {
   tags              String[] @default([])
   thumbnail         String?  // Banner/Thumbnail image URL
   thumbnailPosition Int      @default(50) // Vertical position of thumbnail (0-100%)
+  thumbnailScale    Int      @default(100) // Scale/zoom of thumbnail (50-200%)
   isPublic          Boolean  @default(true)
   date              DateTime @default(now())
   createdAt         DateTime @default(now())
@@ -247,6 +248,7 @@ model BlogPost {
   tags              String[] @default([])
   thumbnail         String?  // Thumbnail image URL
   thumbnailPosition Int      @default(50) // Vertical position of thumbnail (0-100%)
+  thumbnailScale    Int      @default(100) // Scale/zoom of thumbnail (50-200%)
   isPublic          Boolean  @default(true)
   date              DateTime @default(now())
   createdAt         DateTime @default(now())
