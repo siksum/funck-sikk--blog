@@ -161,8 +161,8 @@ export default function SikkCategoryPageContent({
                   </div>
                   {/* View Toggle */}
                   <div
-                    className="inline-flex rounded-lg p-1 border"
-                    style={{ background: 'var(--card-bg)', borderColor: 'var(--card-border)' }}
+                    className="inline-flex rounded-lg p-1 border border-pink-200 dark:border-pink-500/40"
+                    style={{ background: 'var(--card-bg)' }}
                   >
                     <button
                       onClick={() => setViewMode('grid')}
@@ -249,8 +249,8 @@ export default function SikkCategoryPageContent({
                   </div>
                   {/* View Toggle */}
                   <div
-                    className="inline-flex rounded-lg p-1 border"
-                    style={{ background: 'var(--card-bg)', borderColor: 'var(--card-border)' }}
+                    className="inline-flex rounded-lg p-1 border border-pink-200 dark:border-pink-500/40"
+                    style={{ background: 'var(--card-bg)' }}
                   >
                     <button
                       onClick={() => setViewMode('grid')}
@@ -302,10 +302,9 @@ export default function SikkCategoryPageContent({
                       placeholder="제목, 설명, 태그로 검색..."
                       value={searchTerm}
                       onChange={(e) => setSearchTerm(e.target.value)}
-                      className="w-full px-4 py-2 pl-10 text-sm rounded-lg border transition-colors focus:outline-none focus:ring-2 focus:ring-pink-500"
+                      className="w-full px-4 py-2 pl-10 text-sm rounded-lg border border-pink-200 dark:border-pink-500/40 transition-colors focus:outline-none focus:ring-2 focus:ring-pink-500"
                       style={{
                         background: 'var(--card-bg)',
-                        borderColor: 'var(--card-border)',
                         color: 'var(--foreground)',
                       }}
                     />
@@ -327,8 +326,8 @@ export default function SikkCategoryPageContent({
 
                   {/* Sort Buttons */}
                   <div
-                    className="inline-flex rounded-lg p-1 border"
-                    style={{ background: 'var(--card-bg)', borderColor: 'var(--card-border)' }}
+                    className="inline-flex rounded-lg p-1 border border-pink-200 dark:border-pink-500/40"
+                    style={{ background: 'var(--card-bg)' }}
                   >
                     <button
                       onClick={() => handleSortChange('date')}
