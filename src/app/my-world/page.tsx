@@ -41,6 +41,7 @@ interface CalendarEvent {
   location: string | null;
   url: string | null;
   isAllDay: boolean;
+  reminder: boolean;
 }
 
 interface Stats {
@@ -131,6 +132,7 @@ export default function MyWorldDashboard() {
     type: '일정',
     color: '#c4b5fd',
     isAllDay: true,
+    reminder: false,
     startDate: '',
     endDate: '',
     startTime: '09:00',
@@ -820,6 +822,7 @@ export default function MyWorldDashboard() {
         type: event.type || '일정',
         color: getPastelColor(event.color),
         isAllDay: event.isAllDay,
+        reminder: event.reminder || false,
         startDate,
         endDate,
         startTime,
@@ -836,6 +839,7 @@ export default function MyWorldDashboard() {
         type: '일정',
         color: '#c4b5fd',
         isAllDay: true,
+        reminder: false,
         startDate: selectedDate || todayStr,
         endDate: selectedDate || todayStr,
         startTime: '09:00',
@@ -884,6 +888,7 @@ export default function MyWorldDashboard() {
         location: eventForm.location || null,
         url: eventForm.url || null,
         isAllDay: eventForm.isAllDay,
+        reminder: eventForm.reminder,
       };
 
       const url = editingEvent
@@ -2367,6 +2372,7 @@ export default function MyWorldDashboard() {
                                 type: '일정',
                                 color: '#c4b5fd',
                                 isAllDay: false,
+                                reminder: false,
                                 startDate: dateStr,
                                 endDate: dateStr,
                                 startTime: `${hour}:00`,
@@ -3198,6 +3204,27 @@ export default function MyWorldDashboard() {
                 </div>
               )}
 
+              {/* Reminder Toggle (only for timed events) */}
+              {!eventForm.isAllDay && (
+                <div className="flex items-center justify-between">
+                  <label className="text-sm font-medium text-gray-700 dark:text-gray-300">
+                    30분 전 알림
+                  </label>
+                  <button
+                    onClick={() => setEventForm({ ...eventForm, reminder: !eventForm.reminder })}
+                    className={`relative w-12 h-6 rounded-full transition-colors ${
+                      eventForm.reminder ? 'bg-violet-600' : 'bg-gray-300 dark:bg-gray-600'
+                    }`}
+                  >
+                    <div
+                      className={`absolute top-0.5 w-5 h-5 bg-white rounded-full shadow transition-transform ${
+                        eventForm.reminder ? 'translate-x-6' : 'translate-x-0.5'
+                      }`}
+                    />
+                  </button>
+                </div>
+              )}
+
               {/* Location */}
               <div>
                 <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
@@ -3381,6 +3408,7 @@ export default function MyWorldDashboard() {
                     type: '일정',
                     color: '#c4b5fd',
                     isAllDay: contextMenu.isAllDay ?? false,
+                    reminder: false,
                     startDate: contextMenu.date || '',
                     endDate: contextMenu.date || '',
                     startTime: `${hour}:00`,
