@@ -18,7 +18,6 @@ const blogMenuItems = [
   { href: '/admin/new', label: '새 포스트', icon: '✏️' },
   { href: '/admin/comments', label: '댓글 관리', icon: '💬' },
   { href: '/admin/subscribers', label: '구독자 관리', icon: '📧' },
-  { href: '/admin/about', label: 'About 페이지', icon: '👤' },
 ];
 
 const sikkMenuItems = [
@@ -26,7 +25,11 @@ const sikkMenuItems = [
   { href: '/admin/sikk/new', label: '새 Sikk 포스트', icon: '✍️' },
 ];
 
-const menuItems = [...blogMenuItems, ...sikkMenuItems];
+const profileMenuItems = [
+  { href: '/admin/about', label: 'About 페이지', icon: '👤' },
+];
+
+const menuItems = [...blogMenuItems, ...sikkMenuItems, ...profileMenuItems];
 
 export default function AdminSidebar({ user }: AdminSidebarProps) {
   const pathname = usePathname();
@@ -179,6 +182,34 @@ export default function AdminSidebar({ user }: AdminSidebarProps) {
                         className={`flex items-center gap-3 px-4 py-2 rounded-lg transition-colors ${
                           isActive
                             ? 'bg-pink-600 text-white'
+                            : 'text-gray-300 hover:bg-gray-800 hover:text-white'
+                        }`}
+                      >
+                        <span>{item.icon}</span>
+                        <span>{item.label}</span>
+                      </Link>
+                    </li>
+                  );
+                })}
+              </ul>
+            </div>
+
+            {/* Divider */}
+            <hr className="border-gray-700" />
+
+            {/* Profile Section */}
+            <div>
+              <p className="px-4 text-xs font-semibold text-violet-400 uppercase tracking-wider mb-2">Profile</p>
+              <ul className="space-y-2">
+                {profileMenuItems.map((item) => {
+                  const isActive = pathname === item.href;
+                  return (
+                    <li key={item.href}>
+                      <Link
+                        href={item.href}
+                        className={`flex items-center gap-3 px-4 py-2 rounded-lg transition-colors ${
+                          isActive
+                            ? 'bg-violet-600 text-white'
                             : 'text-gray-300 hover:bg-gray-800 hover:text-white'
                         }`}
                       >
