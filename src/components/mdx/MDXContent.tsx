@@ -205,16 +205,47 @@ export default function MDXContent({ content }: MDXContentProps) {
                 </div>
               </blockquote>
             ),
-            a: ({ href, children, className, target, rel }) => (
-              <a
-                href={href}
-                className={className || "text-violet-600 dark:text-violet-400 hover:underline underline-offset-2 decoration-violet-400/50"}
-                target={target || (href?.startsWith('http') ? '_blank' : undefined)}
-                rel={rel || (href?.startsWith('http') ? 'noopener noreferrer' : undefined)}
-              >
-                {children}
-              </a>
-            ),
+            a: ({ href, children, className, target, rel }) => {
+              // Check if it's a PDF link (starts with 📄 emoji or ends with .pdf)
+              const childText = String(children);
+              const isPdfLink = childText.startsWith('📄') || href?.toLowerCase().endsWith('.pdf') || href?.includes('/raw/upload/');
+
+              if (isPdfLink && href) {
+                const fileName = childText.replace('📄 ', '').trim() || 'PDF 파일';
+                return (
+                  <a
+                    href={href}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="flex items-center gap-3 p-4 my-4 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg hover:bg-red-100 dark:hover:bg-red-900/30 transition-colors group"
+                  >
+                    <div className="flex-shrink-0 w-12 h-12 bg-red-500 rounded-lg flex items-center justify-center">
+                      <svg className="w-6 h-6 text-white" fill="currentColor" viewBox="0 0 24 24">
+                        <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8l-6-6zm-1 2l5 5h-5V4zm-3 9h4v1h-4v-1zm0 2h4v1h-4v-1zm-2-2h1v4h-1v-4zm0-2h6v1H8v-1z"/>
+                      </svg>
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <p className="font-medium text-gray-900 dark:text-white truncate">{fileName}</p>
+                      <p className="text-sm text-gray-500 dark:text-gray-400">PDF 파일 · 클릭하여 열기</p>
+                    </div>
+                    <svg className="w-5 h-5 text-gray-400 group-hover:text-red-500 transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
+                    </svg>
+                  </a>
+                );
+              }
+
+              return (
+                <a
+                  href={href}
+                  className={className || "text-violet-600 dark:text-violet-400 hover:underline underline-offset-2 decoration-violet-400/50"}
+                  target={target || (href?.startsWith('http') ? '_blank' : undefined)}
+                  rel={rel || (href?.startsWith('http') ? 'noopener noreferrer' : undefined)}
+                >
+                  {children}
+                </a>
+              );
+            },
             strong: ({ children }) => (
               <strong className="font-bold" style={{ color: 'var(--foreground)' }}>
                 {children}

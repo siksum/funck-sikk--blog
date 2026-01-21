@@ -59,6 +59,12 @@ interface ToolbarButton {
   action: (textarea: HTMLTextAreaElement, content: string, setContent: (c: string) => void) => void;
 }
 
+const codeLanguages = [
+  'javascript', 'typescript', 'python', 'html', 'css', 'json', 'bash', 'sql',
+  'java', 'cpp', 'csharp', 'go', 'rust', 'php', 'ruby', 'swift', 'kotlin',
+  'markdown', 'yaml', 'xml', 'text',
+];
+
 export default function PostEditor({ initialData = {}, isEdit = false }: PostEditorProps) {
   const router = useRouter();
   const textareaRef = useRef<HTMLTextAreaElement>(null);
@@ -69,6 +75,7 @@ export default function PostEditor({ initialData = {}, isEdit = false }: PostEdi
   const [activeTab, setActiveTab] = useState<'edit' | 'preview' | 'split'>('split');
   const [showTableEditor, setShowTableEditor] = useState(false);
   const [showCodeBlockEditor, setShowCodeBlockEditor] = useState(false);
+  const [showCodeLanguageDropdown, setShowCodeLanguageDropdown] = useState(false);
   const [showColumnEditor, setShowColumnEditor] = useState(false);
   const [showMathEditor, setShowMathEditor] = useState(false);
   const [showButtonEditor, setShowButtonEditor] = useState(false);
@@ -776,7 +783,7 @@ export default function PostEditor({ initialData = {}, isEdit = false }: PostEdi
         </svg>
       ),
       label: '코드 블록 (고급)',
-      action: () => setShowCodeBlockEditor(true),
+      action: () => setShowCodeLanguageDropdown(!showCodeLanguageDropdown),
     },
     {
       icon: (
@@ -1264,7 +1271,7 @@ export default function PostEditor({ initialData = {}, isEdit = false }: PostEdi
                 ))}
               </div>
               {/* Special block buttons with labels */}
-              <div className="flex flex-wrap gap-1 p-2">
+              <div className="flex flex-wrap gap-1 p-2 relative">
                 {specialButtons.map((button, index) => (
                   <button
                     key={`special-${index}`}
@@ -1277,6 +1284,25 @@ export default function PostEditor({ initialData = {}, isEdit = false }: PostEdi
                     <span>{button.label}</span>
                   </button>
                 ))}
+
+                {/* Code Language Dropdown */}
+                {showCodeLanguageDropdown && (
+                  <div className="absolute z-20 mt-1 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded-lg shadow-lg p-2 grid grid-cols-4 gap-1 w-80">
+                    {codeLanguages.map((lang) => (
+                      <button
+                        key={lang}
+                        type="button"
+                        onClick={() => {
+                          insertMarkdown(`\n\`\`\`${lang}\n\n\`\`\`\n`);
+                          setShowCodeLanguageDropdown(false);
+                        }}
+                        className="px-2 py-1 text-xs text-gray-700 dark:text-gray-300 hover:bg-violet-100 dark:hover:bg-violet-900/30 rounded transition-colors text-left"
+                      >
+                        {lang}
+                      </button>
+                    ))}
+                  </div>
+                )}
               </div>
             </div>
 
