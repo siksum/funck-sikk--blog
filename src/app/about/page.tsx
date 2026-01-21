@@ -75,7 +75,8 @@ export default function AboutPage() {
         animate={{ opacity: 1 }}
         transition={{ duration: 0.8 }}
       >
-        <div className="absolute inset-0 bg-gradient-to-br from-violet-100 via-indigo-50 to-purple-100 dark:from-transparent dark:via-transparent dark:to-transparent" />
+        <div className="absolute inset-0 bg-gradient-to-br from-violet-100 via-indigo-50 to-purple-100 dark:hidden" />
+        <div className="absolute inset-0 hidden dark:block" style={{ background: 'var(--background)' }} />
 
         <div className="relative max-w-5xl mx-auto px-4 sm:px-6 lg:px-8">
           <motion.div
@@ -399,7 +400,7 @@ export default function AboutPage() {
             ))}
           </div>
 
-          {/* Publications Content */}
+          {/* Publications Content with Timeline */}
           <AnimatePresence mode="wait">
             <motion.div
               key={activePubTab}
@@ -407,8 +408,18 @@ export default function AboutPage() {
               animate={{ opacity: 1, y: 0 }}
               exit={{ opacity: 0, y: -10 }}
               transition={{ duration: 0.2 }}
-              className="space-y-4"
+              className="relative"
             >
+              {/* Timeline line */}
+              <div className={`absolute left-3 top-0 bottom-0 w-0.5 rounded-full ${
+                activePubTab === 'journals'
+                  ? 'bg-gradient-to-b from-violet-500 via-indigo-500 to-purple-500'
+                  : activePubTab === 'international'
+                  ? 'bg-gradient-to-b from-blue-500 via-cyan-500 to-teal-500'
+                  : 'bg-gradient-to-b from-amber-500 via-orange-500 to-red-500'
+              }`} />
+
+              <div className="space-y-4">
               {(() => {
                 const journals = [
                   {
@@ -461,23 +472,38 @@ export default function AboutPage() {
                   { authors: 'Eunyoung Lee, Namryeong Kim, Chaerim Han, Ilgu Lee', title: 'Evaluation Framework for Practical Byzantine Fault Tolerant based Consensus Algorithms', venue: 'The 50th Korea Institute of Information and Communication Engineering Conference (KIICE), Oct. 28, 2021', korean: '프랙티컬 비잔틴 장애 허용 기반의 합의 알고리즘의 평가 프레임워크', award: '우수논문상' },
                 ];
 
+                const getDotColor = () => {
+                  if (activePubTab === 'journals') return 'bg-violet-500';
+                  if (activePubTab === 'international') return 'bg-blue-500';
+                  return 'bg-amber-500';
+                };
+
                 if (activePubTab === 'journals') {
                   return journals.map((pub, index) => (
                     <motion.div
                       key={index}
-                      className={`p-5 rounded-xl border ${pub.featured ? 'bg-violet-50 dark:bg-violet-500/10 border-violet-300 dark:border-violet-500/30' : 'border-gray-200 dark:border-gray-700/50'}`}
-                      style={{ background: pub.featured ? undefined : 'var(--card-bg)' }}
+                      className="relative pl-8"
                       initial={{ opacity: 0, x: -10 }}
                       animate={{ opacity: 1, x: 0 }}
                       transition={{ duration: 0.3, delay: index * 0.1 }}
                     >
-                      <div className="flex flex-wrap gap-2 mb-2">
-                        <span className={`px-2 py-0.5 rounded text-xs font-medium ${pub.featured ? 'bg-amber-100 dark:bg-amber-500/20 text-amber-700 dark:text-amber-300' : 'bg-gray-100 dark:bg-gray-700/50 text-gray-600 dark:text-gray-300'}`}>{pub.badge}</span>
+                      {/* Timeline dot */}
+                      <div className={`absolute left-0 top-4 w-6 h-6 rounded-full flex items-center justify-center z-10 ${getDotColor()}`}>
+                        <div className="w-2 h-2 rounded-full bg-white" />
                       </div>
-                      <p className="text-sm text-violet-600 dark:text-violet-400 mb-1">{pub.authors}</p>
-                      <h4 className="font-medium text-gray-900 dark:text-white mb-1">&ldquo;{pub.title}&rdquo;</h4>
-                      <p className="text-sm text-gray-600 dark:text-gray-400">{pub.venue}</p>
-                      {pub.korean && <p className="text-xs text-gray-500 dark:text-gray-500 mt-1"># {pub.korean}</p>}
+                      <motion.div
+                        className={`p-5 rounded-xl border ${pub.featured ? 'bg-violet-50 dark:bg-violet-500/10 border-violet-300 dark:border-violet-500/30' : 'border-gray-200 dark:border-gray-700/50'}`}
+                        style={{ background: pub.featured ? undefined : 'var(--card-bg)' }}
+                        whileHover={{ x: 4 }}
+                      >
+                        <div className="flex flex-wrap gap-2 mb-2">
+                          <span className={`px-2 py-0.5 rounded text-xs font-medium ${pub.featured ? 'bg-amber-100 dark:bg-amber-500/20 text-amber-700 dark:text-amber-300' : 'bg-gray-100 dark:bg-gray-700/50 text-gray-600 dark:text-gray-300'}`}>{pub.badge}</span>
+                        </div>
+                        <p className="text-sm text-violet-600 dark:text-violet-400 mb-1">{pub.authors}</p>
+                        <h4 className="font-medium text-gray-900 dark:text-white mb-1">&ldquo;{pub.title}&rdquo;</h4>
+                        <p className="text-sm text-gray-600 dark:text-gray-400">{pub.venue}</p>
+                        {pub.korean && <p className="text-xs text-gray-500 dark:text-gray-500 mt-1"># {pub.korean}</p>}
+                      </motion.div>
                     </motion.div>
                   ));
                 }
@@ -486,15 +512,24 @@ export default function AboutPage() {
                   return international.map((pub, index) => (
                     <motion.div
                       key={index}
-                      className="p-4 rounded-xl border border-gray-200 dark:border-gray-700/50"
-                      style={{ background: 'var(--card-bg)' }}
+                      className="relative pl-8"
                       initial={{ opacity: 0, x: -10 }}
                       animate={{ opacity: 1, x: 0 }}
                       transition={{ duration: 0.3, delay: index * 0.1 }}
                     >
-                      <p className="text-sm text-violet-600 dark:text-violet-400 mb-1">{pub.authors}</p>
-                      <h4 className="font-medium text-gray-900 dark:text-white text-sm">&ldquo;{pub.title}&rdquo;</h4>
-                      <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">{pub.venue}</p>
+                      {/* Timeline dot */}
+                      <div className={`absolute left-0 top-4 w-6 h-6 rounded-full flex items-center justify-center z-10 ${getDotColor()}`}>
+                        <div className="w-2 h-2 rounded-full bg-white" />
+                      </div>
+                      <motion.div
+                        className="p-4 rounded-xl border border-gray-200 dark:border-gray-700/50"
+                        style={{ background: 'var(--card-bg)' }}
+                        whileHover={{ x: 4 }}
+                      >
+                        <p className="text-sm text-violet-600 dark:text-violet-400 mb-1">{pub.authors}</p>
+                        <h4 className="font-medium text-gray-900 dark:text-white text-sm">&ldquo;{pub.title}&rdquo;</h4>
+                        <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">{pub.venue}</p>
+                      </motion.div>
                     </motion.div>
                   ));
                 }
@@ -502,20 +537,30 @@ export default function AboutPage() {
                 return domestic.map((pub, index) => (
                   <motion.div
                     key={index}
-                    className={`p-4 rounded-xl border ${pub.award ? 'bg-amber-50 dark:bg-amber-500/10 border-amber-200 dark:border-amber-500/30' : 'border-gray-200 dark:border-gray-700/50'}`}
-                    style={{ background: pub.award ? undefined : 'var(--card-bg)' }}
+                    className="relative pl-8"
                     initial={{ opacity: 0, x: -10 }}
                     animate={{ opacity: 1, x: 0 }}
                     transition={{ duration: 0.3, delay: index * 0.05 }}
                   >
-                    {pub.award && <span className="inline-block px-2 py-0.5 bg-amber-100 dark:bg-amber-500/20 text-amber-700 dark:text-amber-300 rounded text-xs font-medium mb-2">{pub.award}</span>}
-                    <p className="text-sm text-violet-600 dark:text-violet-400 mb-1">{pub.authors}</p>
-                    <h4 className="font-medium text-gray-900 dark:text-white text-sm">&ldquo;{pub.title}&rdquo;</h4>
-                    <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">{pub.venue}</p>
-                    {pub.korean && <p className="text-xs text-gray-400 dark:text-gray-500 mt-1"># {pub.korean}</p>}
+                    {/* Timeline dot */}
+                    <div className={`absolute left-0 top-4 w-6 h-6 rounded-full flex items-center justify-center z-10 ${pub.award ? 'bg-amber-500' : getDotColor()}`}>
+                      <div className="w-2 h-2 rounded-full bg-white" />
+                    </div>
+                    <motion.div
+                      className={`p-4 rounded-xl border ${pub.award ? 'bg-amber-50 dark:bg-amber-500/10 border-amber-200 dark:border-amber-500/30' : 'border-gray-200 dark:border-gray-700/50'}`}
+                      style={{ background: pub.award ? undefined : 'var(--card-bg)' }}
+                      whileHover={{ x: 4 }}
+                    >
+                      {pub.award && <span className="inline-block px-2 py-0.5 bg-amber-100 dark:bg-amber-500/20 text-amber-700 dark:text-amber-300 rounded text-xs font-medium mb-2">{pub.award}</span>}
+                      <p className="text-sm text-violet-600 dark:text-violet-400 mb-1">{pub.authors}</p>
+                      <h4 className="font-medium text-gray-900 dark:text-white text-sm">&ldquo;{pub.title}&rdquo;</h4>
+                      <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">{pub.venue}</p>
+                      {pub.korean && <p className="text-xs text-gray-400 dark:text-gray-500 mt-1"># {pub.korean}</p>}
+                    </motion.div>
                   </motion.div>
                 ));
               })()}
+              </div>
             </motion.div>
           </AnimatePresence>
           </motion.div>
