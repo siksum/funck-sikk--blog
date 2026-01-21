@@ -276,12 +276,78 @@ export async function getCategoryBySlugPathAsync(slugPath: string[]): Promise<Ca
 
   for (const slug of slugPath) {
     if (!current.children[slug]) {
-      return null;
+      // Category not found in post-built tree, check DB Category table
+      return getCategoryFromDbBySlugPath(slugPath);
     }
     current = current.children[slug];
   }
 
   return current;
+}
+
+// Helper function to find a category by slug and parent
+async function findDbCategoryBySlugAndParent(slug: string, parentId: string | null) {
+  return prisma.category.findFirst({
+    where: { slug, parentId },
+  });
+}
+
+// Helper function to find children categories
+async function findDbCategoryChildren(parentId: string) {
+  return prisma.category.findMany({
+    where: { parentId },
+    orderBy: { order: 'asc' },
+  });
+}
+
+// Helper function to get category from DB when it has no public posts
+async function getCategoryFromDbBySlugPath(slugPath: string[]): Promise<CategoryTreeNode | null> {
+  if (slugPath.length === 0) return null;
+
+  // Navigate through the parent-child chain in the DB
+  let currentParentId: string | null = null;
+  let lastCategoryId: string | null = null;
+  const pathNames: string[] = [];
+
+  for (const slug of slugPath) {
+    const dbCat = await findDbCategoryBySlugAndParent(slug, currentParentId);
+
+    if (!dbCat) {
+      return null;
+    }
+
+    pathNames.push(dbCat.name);
+    currentParentId = dbCat.id;
+    lastCategoryId = dbCat.id;
+  }
+
+  // Get children categories from DB
+  const dbChildren = lastCategoryId ? await findDbCategoryChildren(lastCategoryId) : [];
+
+  // Build children map
+  const children: Record<string, CategoryTreeNode> = {};
+  for (const child of dbChildren) {
+    children[child.slug] = {
+      name: child.name,
+      slug: child.slug,
+      count: 0,
+      directCount: 0,
+      children: {},
+      path: [...pathNames, child.name],
+      slugPath: [...slugPath, child.slug],
+    };
+  }
+
+  // Found all segments, return a CategoryTreeNode
+  return {
+    name: pathNames[pathNames.length - 1],
+    slug: slugPath[slugPath.length - 1],
+    count: 0,
+    directCount: 0,
+    children,
+    path: pathNames,
+    slugPath: slugPath,
+  };
 }
 
 export async function getAllCategoriesHierarchicalAsync(): Promise<Category[]> {
