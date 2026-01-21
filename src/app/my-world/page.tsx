@@ -486,7 +486,7 @@ export default function MyWorldDashboard() {
     }
   };
 
-  const cycleStatus = async (id: string, currentStatus: TodoStatus, category: 'personal' | 'research') => {
+  const cycleStatus = async (id: string, currentStatus: TodoStatus, category: 'personal' | 'research', isArchive: boolean = false) => {
     const statusOrder: TodoStatus[] = ['not_started', 'in_progress', 'completed'];
     const currentIndex = statusOrder.indexOf(currentStatus);
     const nextStatus = statusOrder[(currentIndex + 1) % statusOrder.length];
@@ -501,10 +501,15 @@ export default function MyWorldDashboard() {
 
       if (res.ok) {
         const updatedTodo = await res.json();
-        if (category === 'personal') {
-          setPersonalTodos(prev => prev.map(t => t.id === id ? { ...t, ...updatedTodo } : t));
+        if (isArchive) {
+          // Update archive todos
+          setArchiveTodos(prev => prev.map(t => t.id === id ? { ...t, ...updatedTodo } : t));
         } else {
-          setResearchTodos(prev => prev.map(t => t.id === id ? { ...t, ...updatedTodo } : t));
+          if (category === 'personal') {
+            setPersonalTodos(prev => prev.map(t => t.id === id ? { ...t, ...updatedTodo } : t));
+          } else {
+            setResearchTodos(prev => prev.map(t => t.id === id ? { ...t, ...updatedTodo } : t));
+          }
         }
       }
     } catch (error) {
@@ -1561,9 +1566,13 @@ export default function MyWorldDashboard() {
                                     className="flex items-center gap-2 text-sm text-gray-600 dark:text-gray-400"
                                   >
                                     <span className={`${status === 'completed' ? 'line-through' : ''}`}>• {todo.content}</span>
-                                    <span className={`text-xs px-1.5 py-0.5 rounded-full ml-auto ${statusConfig.color}`}>
+                                    <button
+                                      onClick={() => cycleStatus(todo.id, status, 'personal', true)}
+                                      className={`text-xs px-1.5 py-0.5 rounded-full ml-auto hover:opacity-80 transition-opacity cursor-pointer ${statusConfig.color}`}
+                                      title="클릭하여 상태 변경"
+                                    >
                                       {statusConfig.label}
-                                    </span>
+                                    </button>
                                   </div>
                                 );
                               })}
@@ -1584,9 +1593,13 @@ export default function MyWorldDashboard() {
                                     className="flex items-center gap-2 text-sm text-gray-600 dark:text-gray-400"
                                   >
                                     <span className={`${status === 'completed' ? 'line-through' : ''}`}>• {todo.content}</span>
-                                    <span className={`text-xs px-1.5 py-0.5 rounded-full ml-auto ${statusConfig.color}`}>
+                                    <button
+                                      onClick={() => cycleStatus(todo.id, status, 'research', true)}
+                                      className={`text-xs px-1.5 py-0.5 rounded-full ml-auto hover:opacity-80 transition-opacity cursor-pointer ${statusConfig.color}`}
+                                      title="클릭하여 상태 변경"
+                                    >
                                       {statusConfig.label}
-                                    </span>
+                                    </button>
                                   </div>
                                 );
                               })}
