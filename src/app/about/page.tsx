@@ -832,10 +832,10 @@ export default function AboutPage() {
           >
           <div className="grid md:grid-cols-2 gap-4">
             {[
-              { title: '해시드, 실전 블록체인 프로그램 \'프로토콜 캠프\' 5기 성료', date: '2023.12.15', source: '한국경제', url: 'https://www.hankyung.com/article/202312158041O' },
-              { title: '연구팀, 한국융합보안학회 추계학술대회서 최우수·우수논문상 수상', date: '2024.11.08', source: '성신여대', url: 'https://www.sungshin.ac.kr/main_kor/10941/subview.do?enc=Zm5jdDF8QEB8JTJGYmJzJTJGbWFpbl9rb3IlMkYzMTkyJTJGMTM3NTE3JTJGYXJ0Y2xWaWV3LmRvJTNG' },
-              { title: '성신여대, 한국정보처리학회 \'ACK2025\'에서 수상', date: '2025.11.10', source: '대학저널', url: 'https://m.dhnews.co.kr/news/view/1065600833585781' },
-              { title: '성신여대, 4개 대학 연합 연구팀, ICT 융합보안크루 \'최우수\' 크루 선정', date: '2025.12.09', source: '중앙일보', url: 'https://www.joongang.co.kr/article/25395468' },
+              { title: '해시드, 실전 블록체인 프로그램 \'프로토콜 캠프\' 5기 성료', date: '2023.12.15', source: '한국경제', url: 'https://www.hankyung.com/article/202312158041O', image: 'https://img.hankyung.com/photo/202312/01.35339121.1.jpg' },
+              { title: '연구팀, 한국융합보안학회 추계학술대회서 최우수·우수논문상 수상', date: '2024.11.08', source: '성신여대', url: 'https://www.sungshin.ac.kr/main_kor/10941/subview.do?enc=Zm5jdDF8QEB8JTJGYmJzJTJGbWFpbl9rb3IlMkYzMTkyJTJGMTM3NTE3JTJGYXJ0Y2xWaWV3LmRvJTNG', image: 'http://www.sungshin.ac.kr/editorUpload/images/000509/001_3.jpg' },
+              { title: '성신여대, 한국정보처리학회 \'ACK2025\'에서 수상', date: '2025.11.10', source: '대학저널', url: 'https://m.dhnews.co.kr/news/view/1065600833585781', image: 'https://dhnews.co.kr/news/data/20251110/p1065600833585781_861_thum.jpg' },
+              { title: '성신여대, 4개 대학 연합 연구팀, ICT 융합보안크루 \'최우수\' 크루 선정', date: '2025.12.09', source: '중앙일보', url: 'https://www.joongang.co.kr/article/25395468', image: '' },
             ].map((press, index) => (
               <motion.a
                 key={index}
@@ -850,15 +850,26 @@ export default function AboutPage() {
                 transition={{ delay: index * 0.1 }}
                 whileHover={{ y: -4 }}
               >
-                {/* Thumbnail placeholder with gradient */}
-                <div className="h-32 bg-gradient-to-br from-violet-100 via-indigo-50 to-purple-100 dark:from-violet-900/30 dark:via-indigo-900/20 dark:to-purple-900/30 flex items-center justify-center relative overflow-hidden">
-                  <div className="absolute inset-0 opacity-10">
-                    <div className="absolute top-2 left-2 w-16 h-16 rounded-full bg-violet-500 blur-2xl" />
-                    <div className="absolute bottom-2 right-2 w-20 h-20 rounded-full bg-indigo-500 blur-2xl" />
-                  </div>
-                  <svg className="w-12 h-12 text-violet-400 dark:text-violet-500 opacity-60 group-hover:scale-110 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M19 20H5a2 2 0 01-2-2V6a2 2 0 012-2h10a2 2 0 012 2v1m2 13a2 2 0 01-2-2V7m2 13a2 2 0 002-2V9a2 2 0 00-2-2h-2m-4-3H9M7 16h6M7 8h6v4H7V8z" />
-                  </svg>
+                {/* Thumbnail */}
+                <div className="h-32 relative overflow-hidden bg-gradient-to-br from-violet-100 via-indigo-50 to-purple-100 dark:from-violet-900/30 dark:via-indigo-900/20 dark:to-purple-900/30">
+                  {press.image ? (
+                    <Image
+                      src={press.image}
+                      alt={press.title}
+                      fill
+                      className="object-cover group-hover:scale-105 transition-transform duration-300"
+                    />
+                  ) : (
+                    <div className="w-full h-full flex items-center justify-center">
+                      <div className="absolute inset-0 opacity-10">
+                        <div className="absolute top-2 left-2 w-16 h-16 rounded-full bg-violet-500 blur-2xl" />
+                        <div className="absolute bottom-2 right-2 w-20 h-20 rounded-full bg-indigo-500 blur-2xl" />
+                      </div>
+                      <svg className="w-12 h-12 text-violet-400 dark:text-violet-500 opacity-60 group-hover:scale-110 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M19 20H5a2 2 0 01-2-2V6a2 2 0 012-2h10a2 2 0 012 2v1m2 13a2 2 0 01-2-2V7m2 13a2 2 0 002-2V9a2 2 0 00-2-2h-2m-4-3H9M7 16h6M7 8h6v4H7V8z" />
+                      </svg>
+                    </div>
+                  )}
                 </div>
                 {/* Content */}
                 <div className="p-4">
