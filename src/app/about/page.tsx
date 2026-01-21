@@ -33,7 +33,7 @@ export default function AboutPage() {
       className="w-full text-2xl font-bold mb-6 flex items-center gap-3 group hover:text-violet-600 dark:hover:text-violet-400 transition-colors"
       style={{ color: 'var(--foreground)' }}
     >
-      <span className="w-10 h-10 rounded-lg bg-violet-100 dark:bg-transparent flex items-center justify-center text-violet-600 dark:text-violet-400 border border-transparent dark:border-violet-400">
+      <span className="w-10 h-10 rounded-lg bg-violet-100 dark:bg-transparent flex items-center justify-center text-violet-600 dark:text-violet-300 border border-transparent dark:border-violet-400">
         {icon}
       </span>
       <span className="flex-1 text-left">{title}</span>
@@ -104,7 +104,7 @@ export default function AboutPage() {
 
             <motion.div className="text-center md:text-left flex-1" variants={fadeInUp}>
               <h1 className="text-4xl font-bold mb-2" style={{ color: 'var(--foreground)' }}>Namryeong Kim</h1>
-              <p className="text-xl text-violet-600 dark:text-violet-400 font-medium mb-2">Security Researcher</p>
+              <p className="text-xl text-violet-600 dark:text-violet-300 font-medium mb-2">Security Researcher</p>
               <p className="mb-4" style={{ color: 'var(--foreground)' }}>
                 M.S. Candidate in Convergence Security Engineering<br />
                 Sungshin Women&apos;s University, Prime #603
@@ -267,7 +267,7 @@ export default function AboutPage() {
                 onClick={() => setActiveTab(tab.id)}
                 className={`flex-1 px-4 py-2.5 rounded-lg font-medium text-sm transition-all duration-200 flex items-center justify-center gap-2 ${
                   activeTab === tab.id
-                    ? 'about-tab-active text-violet-600 dark:text-violet-400 shadow-sm dark:shadow-none border-transparent dark:border dark:border-violet-400'
+                    ? 'about-tab-active text-violet-600 dark:text-violet-300 shadow-sm dark:shadow-none border-transparent dark:border dark:border-violet-400'
                     : 'about-tab-inactive hover:text-gray-900'
                 }`}
               >
@@ -341,14 +341,14 @@ export default function AboutPage() {
                             activeTab === 'education'
                               ? 'bg-violet-100 dark:bg-transparent text-violet-700 dark:text-violet-300 border-violet-200 dark:border-violet-400'
                               : activeTab === 'work'
-                              ? 'bg-emerald-100 dark:bg-transparent text-emerald-700 dark:text-emerald-300 border-emerald-200 dark:border-emerald-400'
+                              ? 'bg-emerald-100 dark:bg-transparent text-emerald-700 dark:text-emerald-200 border-emerald-200 dark:border-emerald-400'
                               : 'bg-indigo-100 dark:bg-transparent text-indigo-700 dark:text-indigo-300 border-indigo-200 dark:border-indigo-400'
                           }`}>
                             {item.year}
                           </span>
                         </div>
                         <h3 className="text-lg font-semibold card-title">{item.title}</h3>
-                        <p className="text-violet-600 dark:text-violet-400 font-medium text-sm">{item.subtitle}</p>
+                        <p className="text-violet-600 dark:text-violet-300 font-medium text-sm">{item.subtitle}</p>
                         {item.org && <p className="text-gray-600 dark:text-gray-400 text-sm">{item.org}</p>}
                         {item.detail && <p className="text-gray-500 dark:text-gray-500 text-xs mt-1">{item.detail}</p>}
                       </motion.div>
@@ -395,7 +395,7 @@ export default function AboutPage() {
                 onClick={() => setActivePubTab(tab.id)}
                 className={`flex-1 px-4 py-2.5 rounded-lg font-medium text-sm transition-all duration-200 flex items-center justify-center gap-2 ${
                   activePubTab === tab.id
-                    ? 'about-tab-active text-violet-600 dark:text-violet-400 shadow-sm dark:shadow-none border-transparent dark:border dark:border-violet-400'
+                    ? 'about-tab-active text-violet-600 dark:text-violet-300 shadow-sm dark:shadow-none border-transparent dark:border dark:border-violet-400'
                     : 'about-tab-inactive hover:text-gray-900'
                 }`}
               >
@@ -505,7 +505,7 @@ export default function AboutPage() {
                         <div className="flex flex-wrap gap-2 mb-2">
                           <span className={`px-2 py-0.5 rounded text-xs font-medium ${pub.featured ? 'bg-amber-100 dark:bg-amber-500/20 text-amber-700 dark:text-amber-300' : 'bg-gray-100 dark:bg-gray-700/50 text-gray-600 dark:text-gray-300'}`}>{pub.badge}</span>
                         </div>
-                        <p className="text-sm text-violet-600 dark:text-violet-400 mb-1">{pub.authors}</p>
+                        <p className="text-sm text-violet-600 dark:text-violet-300 mb-1">{pub.authors}</p>
                         <h4 className={`font-medium mb-1 ${pub.featured ? 'text-gray-900' : 'pub-card-title'}`}>&ldquo;{pub.title}&rdquo;</h4>
                         <p className="text-sm text-gray-600 dark:text-gray-400">{pub.venue}</p>
                         {pub.korean && <p className="text-xs text-gray-500 dark:text-gray-500 mt-1"># {pub.korean}</p>}
@@ -532,7 +532,7 @@ export default function AboutPage() {
                         style={{ background: 'var(--card-bg)' }}
                         whileHover={{ x: 4 }}
                       >
-                        <p className="text-sm text-violet-600 dark:text-violet-400 mb-1">{pub.authors}</p>
+                        <p className="text-sm text-violet-600 dark:text-violet-300 mb-1">{pub.authors}</p>
                         <h4 className="font-medium pub-card-title text-sm">&ldquo;{pub.title}&rdquo;</h4>
                         <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">{pub.venue}</p>
                       </motion.div>
@@ -558,7 +558,7 @@ export default function AboutPage() {
                       whileHover={{ x: 4 }}
                     >
                       {pub.award && <span className="inline-block px-2 py-0.5 bg-amber-100 dark:bg-amber-500/20 text-amber-700 dark:text-amber-300 rounded text-xs font-medium mb-2">{pub.award}</span>}
-                      <p className="text-sm text-violet-600 dark:text-violet-400 mb-1">{pub.authors}</p>
+                      <p className="text-sm text-violet-600 dark:text-violet-300 mb-1">{pub.authors}</p>
                       <h4 className={`font-medium text-sm ${pub.award ? 'text-gray-900' : 'pub-card-title'}`}>&ldquo;{pub.title}&rdquo;</h4>
                       <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">{pub.venue}</p>
                       {pub.korean && <p className="text-xs text-gray-400 dark:text-gray-500 mt-1"># {pub.korean}</p>}
@@ -702,7 +702,7 @@ export default function AboutPage() {
                 <p className="font-medium card-title mb-1">{patent.title}</p>
                 <p className="text-xs text-gray-500 dark:text-gray-400 mb-2"># {patent.korean}</p>
                 <div className="flex items-center gap-2">
-                  <span className="text-sm text-violet-600 dark:text-violet-400 font-mono">{patent.code}</span>
+                  <span className="text-sm text-violet-600 dark:text-violet-300 font-mono">{patent.code}</span>
                   <span className="text-xs text-gray-400">| {patent.date}</span>
                 </div>
               </motion.div>
@@ -774,8 +774,8 @@ export default function AboutPage() {
                 >
                   <span className="text-xs text-gray-500 dark:text-gray-400">{activity.period}</span>
                   <h4 className="font-medium card-title">{activity.title}</h4>
-                  <p className="text-violet-600 dark:text-violet-400 text-sm">{activity.org}</p>
-                  {activity.role && <p className="text-sm text-indigo-600 dark:text-indigo-400">{activity.role}</p>}
+                  <p className="text-violet-600 dark:text-violet-300 text-sm">{activity.org}</p>
+                  {activity.role && <p className="text-sm text-indigo-600 dark:text-indigo-300">{activity.role}</p>}
                   <p className="text-sm text-gray-600 dark:text-gray-300 mt-2">{activity.desc}</p>
                 </motion.div>
               ))}
@@ -875,7 +875,7 @@ export default function AboutPage() {
                 <div className="p-4">
                   <p className="card-title text-sm font-medium line-clamp-2 group-hover:text-violet-600 dark:group-hover:text-violet-400 transition-colors">{press.title}</p>
                   <div className="flex items-center gap-2 mt-2">
-                    <span className="text-xs text-violet-600 dark:text-violet-400 font-medium">{press.source}</span>
+                    <span className="text-xs text-violet-600 dark:text-violet-300 font-medium">{press.source}</span>
                     <span className="text-xs text-gray-400">•</span>
                     <span className="text-xs text-gray-500 dark:text-gray-400">{press.date}</span>
                   </div>
