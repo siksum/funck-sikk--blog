@@ -2020,7 +2020,7 @@ export default function MyWorldDashboard() {
                 </div>
 
                 {/* Calendar Grid */}
-                <div className="relative flex-1 overflow-hidden w-full max-w-full" style={{ isolation: 'isolate' }}>
+                <div className="relative flex-1 w-full" style={{ isolation: 'isolate', overflow: 'hidden', contain: 'strict' }}>
                   <div className="grid grid-cols-7 border border-gray-200 dark:border-gray-700 rounded-lg overflow-hidden h-full w-full">
                     {/* Empty cells for days before the first day of the month */}
                     {Array.from({ length: startingDayOfWeek }).map((_, index) => (
@@ -2161,7 +2161,7 @@ export default function MyWorldDashboard() {
                   </div>
 
                   {/* Multi-day event bars overlay */}
-                  <div className="absolute inset-0 pointer-events-none overflow-hidden" style={{ borderRadius: '0.5rem', clipPath: 'inset(0 round 0.5rem)' }}>
+                  <div className="absolute inset-0 pointer-events-none" style={{ overflow: 'hidden', borderRadius: '0.5rem', clipPath: 'inset(0 round 0.5rem)', contain: 'strict' }}>
                     {getMultiDayEventBars.map((bar, barIndex) => {
                       const totalRows = Math.ceil((startingDayOfWeek + daysInMonth) / 7);
                       const rowHeight = 100 / totalRows;
@@ -2171,12 +2171,13 @@ export default function MyWorldDashboard() {
                       const barsInSameRow = getMultiDayEventBars.filter(b => b.row === bar.row);
                       const barIndexInRow = barsInSameRow.findIndex(b => b.event.id === bar.event.id);
 
-                      // Calculate positions using left and right for reliable containment
+                      // Calculate positions using left and explicit width for reliable containment
                       const leftPercent = bar.startCol * colWidth;
                       // Clamp span to not exceed remaining columns (7 - startCol)
                       const maxSpan = 7 - bar.startCol;
                       const clampedSpan = Math.min(bar.span, maxSpan);
-                      const rightPercent = (7 - bar.startCol - clampedSpan) * colWidth;
+                      // Calculate width as percentage, clamped to remaining space
+                      const widthPercent = clampedSpan * colWidth;
 
                       return (
                         <div
@@ -2184,13 +2185,14 @@ export default function MyWorldDashboard() {
                           draggable
                           onDragStart={(e) => handleDragStart(bar.event, e)}
                           onDragEnd={handleDragEnd}
-                          className={`absolute text-xs px-1.5 py-0.5 cursor-grab active:cursor-grabbing pointer-events-auto
+                          className={`absolute text-xs px-1 py-0.5 cursor-grab active:cursor-grabbing pointer-events-auto
                             hover:shadow-lg hover:scale-[1.02] transition-all duration-300 ease-out font-medium select-none ${
                             draggingEvent?.id === bar.event.id ? 'opacity-40 scale-95 shadow-xl ring-2 ring-violet-400' : ''
                           }`}
                           style={{
                             left: `calc(${leftPercent}% + 2px)`,
-                            right: `calc(${rightPercent}% + 2px)`,
+                            width: `calc(${widthPercent}% - 4px)`,
+                            maxWidth: `calc(${100 - leftPercent}% - 4px)`,
                             top: `calc(${bar.row * rowHeight}% + 22px + ${barIndexInRow * 20}px)`,
                             height: '18px',
                             backgroundColor: getPastelColor(bar.event.color),
@@ -2371,27 +2373,29 @@ export default function MyWorldDashboard() {
                   })}
                 </div>
                 {/* Multi-day event bars overlay - hidden on mobile */}
-                <div className="absolute top-0 left-0 right-0 pointer-events-none grid-cols-8 hidden sm:grid">
+                <div className="absolute top-0 left-0 right-0 pointer-events-none grid-cols-8 hidden sm:grid" style={{ overflow: 'hidden' }}>
                   <div className="w-14"></div>
-                  <div className="col-span-7 relative">
+                  <div className="col-span-7 relative" style={{ overflow: 'hidden', contain: 'strict' }}>
                     {getWeeklyMultiDayEventBars.map((bar, barIndex) => {
                       const colWidth = 100 / 7;
+                      const leftPercent = bar.startCol * colWidth;
                       const maxSpan = 7 - bar.startCol;
                       const clampedSpan = Math.min(bar.span, maxSpan);
-                      const rightPercent = (7 - bar.startCol - clampedSpan) * colWidth;
+                      const widthPercent = clampedSpan * colWidth;
                       return (
                         <div
                           key={`weekly-${bar.event.id}`}
                           draggable
                           onDragStart={(e) => handleDragStart(bar.event, e)}
                           onDragEnd={handleDragEnd}
-                          className={`absolute text-xs px-1.5 py-0.5 cursor-grab active:cursor-grabbing pointer-events-auto
+                          className={`absolute text-xs px-1 py-0.5 cursor-grab active:cursor-grabbing pointer-events-auto
                             hover:shadow-lg hover:scale-[1.02] transition-all duration-300 ease-out font-medium select-none ${
                             draggingEvent?.id === bar.event.id ? 'opacity-40 scale-95 shadow-xl ring-2 ring-violet-400' : ''
                           }`}
                           style={{
-                            left: `calc(${bar.startCol * colWidth}% + 2px)`,
-                            right: `calc(${rightPercent}% + 2px)`,
+                            left: `calc(${leftPercent}% + 2px)`,
+                            width: `calc(${widthPercent}% - 4px)`,
+                            maxWidth: `calc(${100 - leftPercent}% - 4px)`,
                             top: `${4 + barIndex * 22}px`,
                             height: '20px',
                             backgroundColor: getPastelColor(bar.event.color),
