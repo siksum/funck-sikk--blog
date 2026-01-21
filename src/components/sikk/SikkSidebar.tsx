@@ -37,7 +37,7 @@ function CategoryTreeItem({
 
   const [isExpanded, setIsExpanded] = useState(depth === 0 || isParentOfCurrent);
   const hasChildren = category.children && category.children.length > 0;
-  const href = `/sikk/category/${category.slugPath.join('/')}`;
+  const href = `/sikk/category/${category.slugPath.map(s => encodeURIComponent(s)).join('/')}`;
 
   return (
     <>
