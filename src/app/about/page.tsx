@@ -10,6 +10,7 @@ export default function AboutPage() {
     international: false,
     domestic: false,
   });
+  const [activeTab, setActiveTab] = useState<'education' | 'work' | 'research'>('education');
 
   const toggleSection = (section: keyof typeof expandedSections) => {
     setExpandedSections(prev => ({ ...prev, [section]: !prev[section] }));
@@ -188,14 +189,14 @@ export default function AboutPage() {
           </div>
         </motion.section>
 
-        {/* Education & Experience - Timeline */}
+        {/* Education & Experience - Tabbed Timeline */}
         <motion.section
           initial={{ opacity: 0, y: 20 }}
           whileInView={{ opacity: 1, y: 0 }}
           viewport={{ margin: "-100px" }}
           transition={{ duration: 0.5 }}
         >
-          <h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-8 flex items-center gap-3">
+          <h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-6 flex items-center gap-3">
             <span className="w-10 h-10 rounded-lg bg-violet-100 dark:bg-violet-900/30 flex items-center justify-center text-violet-600 dark:text-violet-400">
               <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" />
@@ -204,58 +205,102 @@ export default function AboutPage() {
             Education & Experience
           </h2>
 
-          <div className="relative">
-            {/* Timeline line */}
-            <div className="absolute left-4 md:left-1/2 top-0 bottom-0 w-0.5 bg-gradient-to-b from-violet-500 via-indigo-500 to-purple-500" />
-
-            {/* Timeline items */}
-            <div className="space-y-8">
-              {[
-                { year: '2024.09 - Current', title: 'M.S. Candidate', subtitle: 'Convergence Security Engineering', org: 'Sungshin Women\'s University', detail: 'Advisor: Ilgu Lee | GPA: 4.5/4.5', type: 'education' },
-                { year: '2025.03 - 08', title: 'Research Assistant (RA)', subtitle: 'CSE Lab', org: 'Sungshin Women\'s University', detail: 'Advisor: Ilgu Lee', type: 'work' },
-                { year: '2024.03 - 06', title: 'Community Manager', subtitle: 'Protocol Camp 6th', org: 'Hanwha Life (Dreamplus)', detail: '', type: 'work' },
-                { year: '2023.07 - 08', title: 'Community Manager', subtitle: 'SWF Accelerator', org: 'Hanwha Life (Dreamplus)', detail: '', type: 'work' },
-                { year: '2022.03 - 2023.01', title: 'Undergraduate Internship', subtitle: 'Pwnlab', org: 'Sungshin Women\'s University', detail: 'Advisor: Daehee Jang', type: 'research' },
-                { year: '2022.01 - 02', title: 'Undergraduate Internship', subtitle: 'NSSec', org: 'Sungshin Women\'s University', detail: 'Advisor: Sungmin Kim', type: 'research' },
-                { year: '2021.03 - 12', title: 'Undergraduate Internship', subtitle: 'CSE Lab', org: 'Sungshin Women\'s University', detail: 'Advisor: Ilgu Lee', type: 'research' },
-                { year: '2019.03 - 2023.02', title: 'B.S.', subtitle: 'Convergence Security Engineering', org: 'Sungshin Women\'s University', detail: 'GPA: 4.33/4.5', type: 'education' },
-              ].map((item, index) => (
-                <motion.div
-                  key={index}
-                  className={`relative flex items-center ${index % 2 === 0 ? 'md:flex-row' : 'md:flex-row-reverse'}`}
-                  initial={{ opacity: 0, x: index % 2 === 0 ? -20 : 20 }}
-                  whileInView={{ opacity: 1, x: 0 }}
-                  viewport={{ margin: "-50px" }}
-                  transition={{ duration: 0.5, delay: index * 0.05 }}
-                >
-                  {/* Timeline dot */}
-                  <div className="absolute left-4 md:left-1/2 w-3 h-3 -translate-x-1/2 rounded-full bg-white dark:bg-gray-900 border-4 border-violet-500 z-10" />
-
-                  {/* Content */}
-                  <div className={`ml-12 md:ml-0 md:w-1/2 ${index % 2 === 0 ? 'md:pr-12 md:text-right' : 'md:pl-12'}`}>
-                    <motion.div
-                      className="p-4 bg-white dark:bg-gray-800/80 rounded-xl border border-violet-100 dark:border-violet-900/50 shadow-sm hover:shadow-md transition-shadow"
-                      whileHover={{ y: -2 }}
-                    >
-                      <span className={`inline-block px-3 py-1 rounded-full text-xs font-medium mb-2 ${
-                        item.type === 'education'
-                          ? 'bg-violet-100 dark:bg-violet-900/30 text-violet-700 dark:text-violet-300'
-                          : item.type === 'research'
-                          ? 'bg-indigo-100 dark:bg-indigo-900/30 text-indigo-700 dark:text-indigo-300'
-                          : 'bg-emerald-100 dark:bg-emerald-900/30 text-emerald-700 dark:text-emerald-300'
-                      }`}>
-                        {item.year}
-                      </span>
-                      <h3 className="text-lg font-semibold text-gray-900 dark:text-white">{item.title}</h3>
-                      <p className="text-violet-600 dark:text-violet-400 font-medium">{item.subtitle}</p>
-                      {item.org && <p className="text-gray-600 dark:text-gray-400 text-sm">{item.org}</p>}
-                      {item.detail && <p className="text-gray-500 dark:text-gray-500 text-sm mt-1">{item.detail}</p>}
-                    </motion.div>
-                  </div>
-                </motion.div>
-              ))}
-            </div>
+          {/* Tabs */}
+          <div className="flex gap-2 mb-6 p-1 bg-gray-100 dark:bg-gray-800/50 rounded-xl">
+            {[
+              { id: 'education' as const, label: 'Education', icon: '🎓', count: 2 },
+              { id: 'work' as const, label: 'Work', icon: '💼', count: 3 },
+              { id: 'research' as const, label: 'Research', icon: '🔬', count: 3 },
+            ].map((tab) => (
+              <button
+                key={tab.id}
+                onClick={() => setActiveTab(tab.id)}
+                className={`flex-1 px-4 py-2.5 rounded-lg font-medium text-sm transition-all duration-200 flex items-center justify-center gap-2 ${
+                  activeTab === tab.id
+                    ? 'bg-white dark:bg-gray-700 text-violet-600 dark:text-violet-400 shadow-sm'
+                    : 'text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-200'
+                }`}
+              >
+                <span>{tab.icon}</span>
+                <span className="hidden sm:inline">{tab.label}</span>
+                <span className="text-xs opacity-60">({tab.count})</span>
+              </button>
+            ))}
           </div>
+
+          {/* Timeline Content */}
+          <AnimatePresence mode="wait">
+            <motion.div
+              key={activeTab}
+              initial={{ opacity: 0, y: 10 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -10 }}
+              transition={{ duration: 0.2 }}
+              className="relative"
+            >
+              {/* Timeline line */}
+              <div className="absolute left-3 top-0 bottom-0 w-0.5 bg-gradient-to-b from-violet-500 via-indigo-500 to-purple-500 rounded-full" />
+
+              <div className="space-y-4">
+                {(() => {
+                  const allItems = [
+                    { year: '2024.09 - Current', title: 'M.S. Candidate', subtitle: 'Convergence Security Engineering', org: 'Sungshin Women\'s University', detail: 'Advisor: Ilgu Lee | GPA: 4.5/4.5', type: 'education' as const },
+                    { year: '2019.03 - 2023.02', title: 'B.S.', subtitle: 'Convergence Security Engineering', org: 'Sungshin Women\'s University', detail: 'GPA: 4.33/4.5', type: 'education' as const },
+                    { year: '2025.03 - 08', title: 'Research Assistant (RA)', subtitle: 'CSE Lab', org: 'Sungshin Women\'s University', detail: 'Advisor: Ilgu Lee', type: 'work' as const },
+                    { year: '2024.03 - 06', title: 'Community Manager', subtitle: 'Protocol Camp 6th', org: 'Hanwha Life (Dreamplus)', detail: '', type: 'work' as const },
+                    { year: '2023.07 - 08', title: 'Community Manager', subtitle: 'SWF Accelerator', org: 'Hanwha Life (Dreamplus)', detail: '', type: 'work' as const },
+                    { year: '2022.03 - 2023.01', title: 'Undergraduate Internship', subtitle: 'Pwnlab', org: 'Sungshin Women\'s University', detail: 'Advisor: Daehee Jang', type: 'research' as const },
+                    { year: '2022.01 - 02', title: 'Undergraduate Internship', subtitle: 'NSSec', org: 'Sungshin Women\'s University', detail: 'Advisor: Sungmin Kim', type: 'research' as const },
+                    { year: '2021.03 - 12', title: 'Undergraduate Internship', subtitle: 'CSE Lab', org: 'Sungshin Women\'s University', detail: 'Advisor: Ilgu Lee', type: 'research' as const },
+                  ];
+                  const filteredItems = allItems.filter(item => item.type === activeTab);
+
+                  return filteredItems.map((item, index) => (
+                    <motion.div
+                      key={index}
+                      className="relative pl-8"
+                      initial={{ opacity: 0, x: -10 }}
+                      animate={{ opacity: 1, x: 0 }}
+                      transition={{ duration: 0.3, delay: index * 0.1 }}
+                    >
+                      {/* Timeline dot */}
+                      <div className={`absolute left-0 top-4 w-6 h-6 rounded-full flex items-center justify-center z-10 ${
+                        activeTab === 'education'
+                          ? 'bg-violet-500'
+                          : activeTab === 'work'
+                          ? 'bg-emerald-500'
+                          : 'bg-indigo-500'
+                      }`}>
+                        <div className="w-2 h-2 rounded-full bg-white" />
+                      </div>
+
+                      {/* Content Card */}
+                      <motion.div
+                        className="p-4 bg-white dark:bg-gray-800/80 rounded-xl border border-gray-200 dark:border-gray-700 shadow-sm hover:shadow-md transition-all"
+                        whileHover={{ x: 4 }}
+                      >
+                        <div className="flex flex-wrap items-center gap-2 mb-2">
+                          <span className={`px-2.5 py-0.5 rounded-full text-xs font-medium ${
+                            activeTab === 'education'
+                              ? 'bg-violet-100 dark:bg-violet-900/30 text-violet-700 dark:text-violet-300'
+                              : activeTab === 'work'
+                              ? 'bg-emerald-100 dark:bg-emerald-900/30 text-emerald-700 dark:text-emerald-300'
+                              : 'bg-indigo-100 dark:bg-indigo-900/30 text-indigo-700 dark:text-indigo-300'
+                          }`}>
+                            {item.year}
+                          </span>
+                        </div>
+                        <h3 className="text-lg font-semibold text-gray-900 dark:text-white">{item.title}</h3>
+                        <p className="text-violet-600 dark:text-violet-400 font-medium text-sm">{item.subtitle}</p>
+                        {item.org && <p className="text-gray-600 dark:text-gray-400 text-sm">{item.org}</p>}
+                        {item.detail && <p className="text-gray-500 dark:text-gray-500 text-xs mt-1">{item.detail}</p>}
+                      </motion.div>
+                    </motion.div>
+                  ));
+                })()}
+              </div>
+            </motion.div>
+          </AnimatePresence>
         </motion.section>
 
         {/* Publications */}
