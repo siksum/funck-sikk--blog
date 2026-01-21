@@ -878,12 +878,6 @@ export default function SikkPostsManagementPage() {
           <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 overflow-hidden">
             {loading ? (
               <div className="p-8 text-center text-gray-500">로딩 중...</div>
-            ) : filteredPosts.length === 0 ? (
-              <div className="p-8 text-center text-gray-500">
-                {posts.length === 0
-                  ? '포스트가 없습니다.'
-                  : '검색 결과가 없습니다.'}
-              </div>
             ) : (
               <>
                 {/* Mobile Card View */}
@@ -894,13 +888,20 @@ export default function SikkPostsManagementPage() {
                       type="checkbox"
                       checked={selectedPosts.size === filteredPosts.length && filteredPosts.length > 0}
                       onChange={toggleSelectAll}
-                      className="w-4 h-4 rounded border-gray-300 text-pink-600 focus:ring-pink-500"
+                      disabled={filteredPosts.length === 0}
+                      className="w-4 h-4 rounded border-gray-300 text-pink-600 focus:ring-pink-500 disabled:opacity-50"
                     />
                     <span className="text-xs text-gray-600 dark:text-gray-400">
                       전체 선택 ({filteredPosts.length}개)
                     </span>
                   </div>
-                  {filteredPosts.map((post) => (
+                  {filteredPosts.length === 0 ? (
+                    <div className="p-8 text-center text-gray-500">
+                      {posts.length === 0
+                        ? '포스트가 없습니다.'
+                        : '검색 결과가 없습니다.'}
+                    </div>
+                  ) : filteredPosts.map((post) => (
                     <div key={post.slug} className="p-4">
                       <div className="flex items-start justify-between gap-2">
                         <div className="flex items-start gap-3 flex-1 min-w-0">
@@ -987,7 +988,8 @@ export default function SikkPostsManagementPage() {
                             type="checkbox"
                             checked={selectedPosts.size === filteredPosts.length && filteredPosts.length > 0}
                             onChange={toggleSelectAll}
-                            className="w-4 h-4 rounded border-gray-300 text-pink-600 focus:ring-pink-500"
+                            disabled={filteredPosts.length === 0}
+                            className="w-4 h-4 rounded border-gray-300 text-pink-600 focus:ring-pink-500 disabled:opacity-50"
                           />
                         </th>
                         <th
@@ -1035,7 +1037,15 @@ export default function SikkPostsManagementPage() {
                       </tr>
                     </thead>
                     <tbody className="divide-y divide-gray-200 dark:divide-gray-700">
-                      {filteredPosts.map((post) => (
+                      {filteredPosts.length === 0 ? (
+                        <tr>
+                          <td colSpan={7} className="px-6 py-8 text-center text-gray-500">
+                            {posts.length === 0
+                              ? '포스트가 없습니다.'
+                              : '검색 결과가 없습니다.'}
+                          </td>
+                        </tr>
+                      ) : filteredPosts.map((post) => (
                         <tr key={post.slug} className={`hover:bg-gray-50 dark:hover:bg-gray-700/50 ${selectedPosts.has(post.slug) ? 'bg-pink-50 dark:bg-pink-900/10' : ''}`}>
                           <td className="px-4 py-4 text-center">
                             <input
