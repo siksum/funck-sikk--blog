@@ -2161,7 +2161,7 @@ export default function MyWorldDashboard() {
                   </div>
 
                   {/* Multi-day event bars overlay */}
-                  <div className="absolute inset-0 pointer-events-none overflow-hidden w-full max-w-full" style={{ borderRadius: '0.5rem' }}>
+                  <div className="absolute inset-0 pointer-events-none overflow-hidden" style={{ borderRadius: '0.5rem', clipPath: 'inset(0 round 0.5rem)' }}>
                     {getMultiDayEventBars.map((bar, barIndex) => {
                       const totalRows = Math.ceil((startingDayOfWeek + daysInMonth) / 7);
                       const rowHeight = 100 / totalRows;
@@ -2197,6 +2197,8 @@ export default function MyWorldDashboard() {
                             color: '#374151',
                             borderRadius: bar.isStart && bar.isEnd ? '4px' : bar.isStart ? '4px 0 0 4px' : bar.isEnd ? '0 4px 4px 0' : '0',
                             overflow: 'hidden',
+                            textOverflow: 'ellipsis',
+                            whiteSpace: 'nowrap',
                           }}
                           title={`${bar.event.title} (드래그하여 이동)`}
                           onClick={(e) => {
@@ -2396,6 +2398,8 @@ export default function MyWorldDashboard() {
                             color: '#374151',
                             borderRadius: bar.isStart && bar.isEnd ? '4px' : bar.isStart ? '4px 0 0 4px' : bar.isEnd ? '0 4px 4px 0' : '0',
                             overflow: 'hidden',
+                            textOverflow: 'ellipsis',
+                            whiteSpace: 'nowrap',
                           }}
                           title={`${bar.event.title} (드래그하여 이동)`}
                           onClick={(e) => {
