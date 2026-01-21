@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useMemo } from 'react';
+import { useState, useEffect, useMemo, useRef, useCallback } from 'react';
 
 interface DailyEntry {
   id?: string;
@@ -152,6 +152,58 @@ export default function MyWorldDashboard() {
     isAllDay?: boolean;
     event?: CalendarEvent;
   } | null>(null);
+
+  // Long press for mobile context menu
+  const longPressTimerRef = useRef<NodeJS.Timeout | null>(null);
+  const longPressTouchRef = useRef<{ x: number; y: number } | null>(null);
+
+  const handleTouchStart = useCallback((e: React.TouchEvent, event: CalendarEvent) => {
+    const touch = e.touches[0];
+    longPressTouchRef.current = { x: touch.clientX, y: touch.clientY };
+    longPressTimerRef.current = setTimeout(() => {
+      if (longPressTouchRef.current) {
+        setContextMenu({
+          x: longPressTouchRef.current.x,
+          y: longPressTouchRef.current.y,
+          type: 'event',
+          event: event,
+        });
+      }
+    }, 500);
+  }, []);
+
+  const handleTouchEnd = useCallback(() => {
+    if (longPressTimerRef.current) {
+      clearTimeout(longPressTimerRef.current);
+      longPressTimerRef.current = null;
+    }
+    longPressTouchRef.current = null;
+  }, []);
+
+  const handleTouchMove = useCallback(() => {
+    // Cancel long press if user moves finger
+    if (longPressTimerRef.current) {
+      clearTimeout(longPressTimerRef.current);
+      longPressTimerRef.current = null;
+    }
+  }, []);
+
+  const handleEmptyTouchStart = useCallback((e: React.TouchEvent, date: string, hour?: number, isAllDay?: boolean) => {
+    const touch = e.touches[0];
+    longPressTouchRef.current = { x: touch.clientX, y: touch.clientY };
+    longPressTimerRef.current = setTimeout(() => {
+      if (longPressTouchRef.current) {
+        setContextMenu({
+          x: longPressTouchRef.current.x,
+          y: longPressTouchRef.current.y,
+          type: 'empty',
+          date: date,
+          hour: hour,
+          isAllDay: isAllDay,
+        });
+      }
+    }, 500);
+  }, []);
 
   // Daily entry form state
   const [dailyForm, setDailyForm] = useState<DailyEntry>({
@@ -2057,6 +2109,9 @@ export default function MyWorldDashboard() {
                                       event: event,
                                     });
                                   }}
+                                  onTouchStart={(e) => handleTouchStart(e, event)}
+                                  onTouchEnd={handleTouchEnd}
+                                  onTouchMove={handleTouchMove}
                                   className={`text-xs px-1 py-0.5 rounded truncate font-medium cursor-grab active:cursor-grabbing
                                     hover:scale-105 hover:shadow-lg transition-all duration-300 ease-out select-none ${
                                     draggingEvent?.id === event.id ? 'opacity-40 scale-90 shadow-xl ring-2 ring-violet-400' : ''
@@ -2127,6 +2182,9 @@ export default function MyWorldDashboard() {
                               event: bar.event,
                             });
                           }}
+                          onTouchStart={(e) => handleTouchStart(e, bar.event)}
+                          onTouchEnd={handleTouchEnd}
+                          onTouchMove={handleTouchMove}
                         >
                           {bar.isStart && bar.event.title}
                         </div>
@@ -2250,6 +2308,9 @@ export default function MyWorldDashboard() {
                                 event: event,
                               });
                             }}
+                            onTouchStart={(e) => handleTouchStart(e, event)}
+                            onTouchEnd={handleTouchEnd}
+                            onTouchMove={handleTouchMove}
                             className={`text-xs px-1 py-0.5 rounded truncate cursor-grab active:cursor-grabbing
                               hover:scale-105 hover:shadow-lg transition-all duration-300 ease-out font-medium mb-0.5 select-none ${
                               draggingEvent?.id === event.id ? 'opacity-40 scale-90 shadow-xl ring-2 ring-violet-400' : ''
@@ -2307,6 +2368,9 @@ export default function MyWorldDashboard() {
                               event: bar.event,
                             });
                           }}
+                          onTouchStart={(e) => handleTouchStart(e, bar.event)}
+                          onTouchEnd={handleTouchEnd}
+                          onTouchMove={handleTouchMove}
                         >
                           {bar.isStart && bar.event.title}
                         </div>
@@ -2405,6 +2469,9 @@ export default function MyWorldDashboard() {
                                   event: event,
                                 });
                               }}
+                              onTouchStart={(e) => handleTouchStart(e, event)}
+                              onTouchEnd={handleTouchEnd}
+                              onTouchMove={handleTouchMove}
                               className="absolute left-0.5 right-0.5 rounded px-1 py-0.5 text-xs overflow-hidden cursor-pointer hover:opacity-80 transition-opacity"
                               style={{
                                 top: `${position.top}px`,
@@ -3092,10 +3159,36 @@ export default function MyWorldDashboard() {
       {showEventModal && (
         <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
           <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-xl w-full max-w-lg max-h-[90vh] overflow-y-auto">
-            <div className="p-6 border-b border-gray-200 dark:border-gray-700">
+            <div className="p-6 border-b border-gray-200 dark:border-gray-700 flex items-center justify-between">
               <h3 className="text-lg font-semibold text-gray-900 dark:text-white">
                 {editingEvent ? '일정 수정' : '일정 추가'}
               </h3>
+              <button
+                onClick={() => {
+                  setShowEventModal(false);
+                  setEditingEvent(null);
+                  setEventForm({
+                    title: '',
+                    description: '',
+                    type: '일반',
+                    color: '#c4b5fd',
+                    isAllDay: true,
+                    reminder: false,
+                    startDate: '',
+                    endDate: '',
+                    startTime: '09:00',
+                    endTime: '10:00',
+                    location: '',
+                    url: '',
+                  });
+                }}
+                className="p-1 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
+                aria-label="닫기"
+              >
+                <svg className="w-5 h-5 text-gray-500 dark:text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                </svg>
+              </button>
             </div>
             <div className="p-6 space-y-4">
               {/* Title */}
