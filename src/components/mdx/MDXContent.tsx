@@ -197,12 +197,12 @@ export default function MDXContent({ content }: MDXContentProps) {
                 </div>
               </blockquote>
             ),
-            a: ({ href, children }) => (
+            a: ({ href, children, className, target, rel }) => (
               <a
                 href={href}
-                className="text-violet-600 dark:text-violet-400 hover:underline underline-offset-2 decoration-violet-400/50"
-                target={href?.startsWith('http') ? '_blank' : undefined}
-                rel={href?.startsWith('http') ? 'noopener noreferrer' : undefined}
+                className={className || "text-violet-600 dark:text-violet-400 hover:underline underline-offset-2 decoration-violet-400/50"}
+                target={target || (href?.startsWith('http') ? '_blank' : undefined)}
+                rel={rel || (href?.startsWith('http') ? 'noopener noreferrer' : undefined)}
               >
                 {children}
               </a>
