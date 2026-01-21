@@ -27,6 +27,7 @@ export async function GET(request: NextRequest, context: RouteContext) {
       category: post.category || '',
       tags: post.tags,
       thumbnail: post.thumbnail || undefined,
+      thumbnailPosition: post.thumbnailPosition,
       isPublic: post.isPublic,
       content: post.content,
     });
@@ -40,7 +41,7 @@ export async function PUT(request: NextRequest, context: RouteContext) {
   try {
     const { slug } = await context.params;
     const body = await request.json();
-    const { title, description, category, tags, content, date, isPublic, thumbnail } = body;
+    const { title, description, category, tags, content, date, isPublic, thumbnail, thumbnailPosition } = body;
 
     if (!title) {
       return NextResponse.json({ error: 'Title is required' }, { status: 400 });
@@ -68,6 +69,7 @@ export async function PUT(request: NextRequest, context: RouteContext) {
         category: category || '',
         tags: tags || [],
         thumbnail: thumbnail || null,
+        thumbnailPosition: thumbnailPosition ?? 50,
         isPublic: isPublic !== false,
         date: postDate,
       },
