@@ -1,6 +1,6 @@
 import { notFound, redirect } from 'next/navigation';
 import Link from 'next/link';
-import { getSikkPostBySlugAsync, getAllSikkPostsAsync, getRelatedSikkPostsAsync, getAdjacentSikkPostsAsync, getSikkRootCategoriesAsync } from '@/lib/sikk';
+import { getSikkPostBySlugAsync, getAllSikkPostsAsync, getRelatedSikkPostsAsync, getAdjacentSikkPostsAsync, getSikkRootCategoriesAsync, getSikkSectionsAsync } from '@/lib/sikk';
 import MDXContent from '@/components/mdx/MDXContent';
 import ReadingProgressBar from '@/components/blog/ReadingProgressBar';
 import PostNavigation from '@/components/blog/PostNavigation';
@@ -94,10 +94,11 @@ export default async function SikkPostPage({ params }: SikkPostPageProps) {
   });
 
   const readingTime = calculateReadingTime(post.content);
-  const [relatedPosts, { prevPost, nextPost }, categories] = await Promise.all([
+  const [relatedPosts, { prevPost, nextPost }, categories, sections] = await Promise.all([
     getRelatedSikkPostsAsync(slug, 3),
     getAdjacentSikkPostsAsync(slug),
     getSikkRootCategoriesAsync(),
+    getSikkSectionsAsync(),
   ]);
   const difficulty = estimateDifficulty(post.content, post.tags);
 
@@ -111,6 +112,7 @@ export default async function SikkPostPage({ params }: SikkPostPageProps) {
         relatedPosts={relatedPosts}
         categories={categories}
         currentCategorySlugPath={post.categorySlugPath}
+        sections={sections}
       >
         {/* Banner Image */}
         {post.thumbnail && (

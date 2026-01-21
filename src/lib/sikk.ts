@@ -176,14 +176,29 @@ async function buildSikkCategoryTreeAsync(): Promise<CategoryTreeNode> {
 
 export async function getSikkRootCategoriesAsync(): Promise<Category[]> {
   const tree = await buildSikkCategoryTreeAsync();
-  return Object.values(tree.children).map((node) => ({
-    name: node.name,
-    slug: node.slug,
-    count: node.count,
-    path: node.path,
-    slugPath: node.slugPath,
-    depth: 0,
-  }));
+  return Object.values(tree.children)
+    .map((child) => ({
+      name: child.name,
+      slug: child.slug,
+      count: child.count,
+      path: child.path,
+      slugPath: child.slugPath,
+      depth: 0,
+      children:
+        Object.values(child.children).length > 0
+          ? Object.values(child.children)
+              .map((c) => ({
+                name: c.name,
+                slug: c.slug,
+                count: c.count,
+                path: c.path,
+                slugPath: c.slugPath,
+                depth: 1,
+              }))
+              .sort((a, b) => a.name.localeCompare(b.name, 'ko'))
+          : undefined,
+    }))
+    .sort((a, b) => a.name.localeCompare(b.name, 'ko'));
 }
 
 export async function getSikkRootCategoriesWithTagsAsync(): Promise<{
@@ -428,4 +443,24 @@ export function getSikkChildCategories(): Category[] {
 
 export function getSikkChildCategoriesWithTags(): { name: string; count: number; tags: string[]; slugPath: string[] }[] {
   throw new Error('Use getSikkChildCategoriesWithTagsAsync instead - sync functions are deprecated');
+}
+
+// ============ SECTIONS ============
+
+export async function getSikkSectionsAsync() {
+  try {
+    const sections = await prisma.sikkSection.findMany({
+      include: {
+        categories: {
+          where: { parentId: null },
+          orderBy: { order: 'asc' },
+        },
+      },
+      orderBy: { order: 'asc' },
+    });
+    return sections;
+  } catch (error) {
+    console.error('Failed to fetch sikk sections:', error);
+    return [];
+  }
 }
