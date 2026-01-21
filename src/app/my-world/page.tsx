@@ -2020,7 +2020,7 @@ export default function MyWorldDashboard() {
                 </div>
 
                 {/* Calendar Grid */}
-                <div className="relative flex-1 w-full" style={{ isolation: 'isolate', overflow: 'hidden', contain: 'strict' }}>
+                <div className="relative flex-1 w-full min-w-0" style={{ isolation: 'isolate', overflow: 'clip', contain: 'layout paint' }}>
                   <div className="grid grid-cols-7 border border-gray-200 dark:border-gray-700 rounded-lg overflow-hidden h-full w-full">
                     {/* Empty cells for days before the first day of the month */}
                     {Array.from({ length: startingDayOfWeek }).map((_, index) => (
@@ -2161,7 +2161,7 @@ export default function MyWorldDashboard() {
                   </div>
 
                   {/* Multi-day event bars overlay */}
-                  <div className="absolute inset-0 pointer-events-none" style={{ overflow: 'hidden', borderRadius: '0.5rem', clipPath: 'inset(0 round 0.5rem)', contain: 'strict' }}>
+                  <div className="absolute inset-0 pointer-events-none" style={{ overflow: 'clip', borderRadius: '0.5rem' }}>
                     {getMultiDayEventBars.map((bar, barIndex) => {
                       const totalRows = Math.ceil((startingDayOfWeek + daysInMonth) / 7);
                       const rowHeight = 100 / totalRows;
@@ -2171,13 +2171,12 @@ export default function MyWorldDashboard() {
                       const barsInSameRow = getMultiDayEventBars.filter(b => b.row === bar.row);
                       const barIndexInRow = barsInSameRow.findIndex(b => b.event.id === bar.event.id);
 
-                      // Calculate positions using left and explicit width for reliable containment
-                      const leftPercent = bar.startCol * colWidth;
-                      // Clamp span to not exceed remaining columns (7 - startCol)
+                      // Calculate positions - clamp span to remaining columns
                       const maxSpan = 7 - bar.startCol;
                       const clampedSpan = Math.min(bar.span, maxSpan);
-                      // Calculate width as percentage, clamped to remaining space
-                      const widthPercent = clampedSpan * colWidth;
+                      // Use pure percentages with small inset for gaps (no pixel offsets that can cause issues on mobile)
+                      const leftPercent = bar.startCol * colWidth + 0.3;
+                      const widthPercent = clampedSpan * colWidth - 0.6;
 
                       return (
                         <div
@@ -2190,9 +2189,8 @@ export default function MyWorldDashboard() {
                             draggingEvent?.id === bar.event.id ? 'opacity-40 scale-95 shadow-xl ring-2 ring-violet-400' : ''
                           }`}
                           style={{
-                            left: `calc(${leftPercent}% + 2px)`,
-                            width: `calc(${widthPercent}% - 4px)`,
-                            maxWidth: `calc(${100 - leftPercent}% - 4px)`,
+                            left: `${leftPercent}%`,
+                            width: `${widthPercent}%`,
                             top: `calc(${bar.row * rowHeight}% + 22px + ${barIndexInRow * 20}px)`,
                             height: '18px',
                             backgroundColor: getPastelColor(bar.event.color),
@@ -2201,6 +2199,7 @@ export default function MyWorldDashboard() {
                             overflow: 'hidden',
                             textOverflow: 'ellipsis',
                             whiteSpace: 'nowrap',
+                            boxSizing: 'border-box',
                           }}
                           title={`${bar.event.title} (드래그하여 이동)`}
                           onClick={(e) => {
@@ -2373,15 +2372,16 @@ export default function MyWorldDashboard() {
                   })}
                 </div>
                 {/* Multi-day event bars overlay - hidden on mobile */}
-                <div className="absolute top-0 left-0 right-0 pointer-events-none grid-cols-8 hidden sm:grid" style={{ overflow: 'hidden' }}>
+                <div className="absolute top-0 left-0 right-0 pointer-events-none grid-cols-8 hidden sm:grid" style={{ overflow: 'clip' }}>
                   <div className="w-14"></div>
-                  <div className="col-span-7 relative" style={{ overflow: 'hidden', contain: 'strict' }}>
+                  <div className="col-span-7 relative" style={{ overflow: 'clip' }}>
                     {getWeeklyMultiDayEventBars.map((bar, barIndex) => {
                       const colWidth = 100 / 7;
-                      const leftPercent = bar.startCol * colWidth;
                       const maxSpan = 7 - bar.startCol;
                       const clampedSpan = Math.min(bar.span, maxSpan);
-                      const widthPercent = clampedSpan * colWidth;
+                      // Use pure percentages with small inset for gaps
+                      const leftPercent = bar.startCol * colWidth + 0.3;
+                      const widthPercent = clampedSpan * colWidth - 0.6;
                       return (
                         <div
                           key={`weekly-${bar.event.id}`}
@@ -2393,9 +2393,8 @@ export default function MyWorldDashboard() {
                             draggingEvent?.id === bar.event.id ? 'opacity-40 scale-95 shadow-xl ring-2 ring-violet-400' : ''
                           }`}
                           style={{
-                            left: `calc(${leftPercent}% + 2px)`,
-                            width: `calc(${widthPercent}% - 4px)`,
-                            maxWidth: `calc(${100 - leftPercent}% - 4px)`,
+                            left: `${leftPercent}%`,
+                            width: `${widthPercent}%`,
                             top: `${4 + barIndex * 22}px`,
                             height: '20px',
                             backgroundColor: getPastelColor(bar.event.color),
@@ -2404,6 +2403,7 @@ export default function MyWorldDashboard() {
                             overflow: 'hidden',
                             textOverflow: 'ellipsis',
                             whiteSpace: 'nowrap',
+                            boxSizing: 'border-box',
                           }}
                           title={`${bar.event.title} (드래그하여 이동)`}
                           onClick={(e) => {
