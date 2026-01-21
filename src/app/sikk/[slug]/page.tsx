@@ -117,13 +117,15 @@ export default async function SikkPostPage({ params }: SikkPostPageProps) {
         {/* Banner Image */}
         {post.thumbnail && (
           <div className="mb-8 -mx-4 sm:-mx-6 lg:-mx-8 rounded-xl overflow-hidden">
-            <div className="relative w-full h-48 sm:h-64 md:h-80">
-              <img
-                src={post.thumbnail}
-                alt={post.title}
-                className="w-full h-full object-cover"
-              />
-            </div>
+            <div
+              className="relative w-full h-48 sm:h-64 md:h-80 bg-gray-200 dark:bg-gray-700"
+              style={{
+                backgroundImage: `url(${post.thumbnail})`,
+                backgroundSize: `${post.thumbnailScale || 100}%`,
+                backgroundPosition: `center ${post.thumbnailPosition || 50}%`,
+                backgroundRepeat: 'no-repeat',
+              }}
+            />
           </div>
         )}
 

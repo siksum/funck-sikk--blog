@@ -1077,17 +1077,15 @@ export default function PostEditor({ initialData = {}, isEdit = false }: PostEdi
         {formData.thumbnail && (
           <div className="mt-3 space-y-3">
             {/* Banner preview - matches blog display height (h-80 = 320px) */}
-            <div className="relative h-80 rounded-xl overflow-hidden border border-gray-300 dark:border-gray-600">
-              <img
-                src={formData.thumbnail}
-                alt="Banner preview"
-                className="w-full h-full object-cover"
-                style={{
-                  objectPosition: `center ${formData.thumbnailPosition}%`,
-                  transform: `scale(${(formData.thumbnailScale || 100) / 100})`,
-                  transformOrigin: `center ${formData.thumbnailPosition}%`,
-                }}
-              />
+            <div
+              className="relative h-80 rounded-xl overflow-hidden border border-gray-300 dark:border-gray-600 bg-gray-200 dark:bg-gray-700"
+              style={{
+                backgroundImage: `url(${formData.thumbnail})`,
+                backgroundSize: `${formData.thumbnailScale || 100}%`,
+                backgroundPosition: `center ${formData.thumbnailPosition}%`,
+                backgroundRepeat: 'no-repeat',
+              }}
+            >
               <div className="absolute bottom-2 left-2 px-2 py-1 bg-black/50 text-white text-xs rounded">
                 실제 블로그 미리보기 (320px)
               </div>
