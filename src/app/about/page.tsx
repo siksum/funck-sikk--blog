@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import Image from 'next/image';
 
@@ -17,6 +17,14 @@ export default function AboutPage() {
   });
   const [activeTab, setActiveTab] = useState<'education' | 'work' | 'research'>('education');
   const [activePubTab, setActivePubTab] = useState<'journals' | 'international' | 'domestic'>('journals');
+  const [lastUpdated, setLastUpdated] = useState('');
+
+  useEffect(() => {
+    fetch('/api/admin/about')
+      .then(res => res.json())
+      .then(data => setLastUpdated(data.lastUpdated || ''))
+      .catch(() => {});
+  }, []);
 
   // Collapsible section header component
   const SectionHeader = ({
@@ -940,7 +948,7 @@ export default function AboutPage() {
 
         {/* Footer */}
         <div className="text-center text-sm text-gray-400 dark:text-gray-500 pt-8 border-t border-gray-200 dark:border-gray-800">
-          Last Updated: 2025.12.09
+          Last Updated: {lastUpdated || '...'}
         </div>
       </div>
     </div>

@@ -28,8 +28,10 @@ export async function PUT(request: Request) {
   try {
     const data = await request.json();
 
-    // Update lastUpdated
-    data.lastUpdated = new Date().toISOString().split('T')[0].replace(/-/g, '.');
+    // Use user-provided lastUpdated, or auto-generate if empty
+    if (!data.lastUpdated) {
+      data.lastUpdated = new Date().toISOString().split('T')[0].replace(/-/g, '.');
+    }
 
     await fs.writeFile(DATA_FILE_PATH, JSON.stringify(data, null, 2), 'utf-8');
 
