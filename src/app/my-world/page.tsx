@@ -1518,14 +1518,14 @@ export default function MyWorldDashboard() {
                       type="date"
                       value={archiveStartDate}
                       onChange={(e) => setArchiveStartDate(e.target.value)}
-                      className="text-xs px-2 py-1 rounded-lg border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-900"
+                      className="text-xs px-2 py-1 rounded-lg border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-900 text-gray-900 dark:text-white"
                     />
                     <span className="text-xs text-gray-400">~</span>
                     <input
                       type="date"
                       value={archiveEndDate}
                       onChange={(e) => setArchiveEndDate(e.target.value)}
-                      className="text-xs px-2 py-1 rounded-lg border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-900"
+                      className="text-xs px-2 py-1 rounded-lg border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-900 text-gray-900 dark:text-white"
                     />
                   </div>
                 )}
@@ -2004,7 +2004,7 @@ export default function MyWorldDashboard() {
                 </div>
 
                 {/* Calendar Grid */}
-                <div className="relative flex-1">
+                <div className="relative flex-1 overflow-hidden">
                   <div className="grid grid-cols-7 border border-gray-200 dark:border-gray-700 rounded-lg overflow-hidden h-full">
                     {/* Empty cells for days before the first day of the month */}
                     {Array.from({ length: startingDayOfWeek }).map((_, index) => (
@@ -2138,7 +2138,7 @@ export default function MyWorldDashboard() {
                   </div>
 
                   {/* Multi-day event bars overlay */}
-                  <div className="absolute inset-0 pointer-events-none" style={{ borderRadius: '0.5rem' }}>
+                  <div className="absolute inset-0 pointer-events-none overflow-hidden" style={{ borderRadius: '0.5rem' }}>
                     {getMultiDayEventBars.map((bar, barIndex) => {
                       const totalRows = Math.ceil((startingDayOfWeek + daysInMonth) / 7);
                       const rowHeight = 100 / totalRows;

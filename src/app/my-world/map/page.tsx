@@ -852,7 +852,7 @@ export default function MapPage() {
                           value={infoWindowTags || selectedMarker.tags.join(', ')}
                           onChange={(e) => setInfoWindowTags(e.target.value)}
                           placeholder="태그 수정 (쉼표 구분)"
-                          className="w-full px-2 py-1 text-xs border border-gray-200 rounded"
+                          className="w-full px-2 py-1 text-xs border border-gray-200 rounded bg-white text-gray-900"
                           onClick={(e) => {
                             e.stopPropagation();
                             if (!infoWindowTags) {
