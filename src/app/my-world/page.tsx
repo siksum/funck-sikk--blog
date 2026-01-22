@@ -2180,13 +2180,15 @@ export default function MyWorldDashboard() {
                     if (viewType === 'month') {
                       let targetDate: Date;
 
-                      // Priority: selectedDate > lastFocusedEventDate > currentMonth/today
-                      if (selectedDate) {
-                        // Use the selected date
-                        targetDate = new Date(selectedDate + 'T00:00:00');
-                      } else if (lastFocusedEventDate) {
+                      // Priority: lastFocusedEventDate > selectedDate > currentMonth/today
+                      if (lastFocusedEventDate) {
                         // Use the last clicked event's date
                         targetDate = new Date(lastFocusedEventDate + 'T00:00:00');
+                        // Clear it after use
+                        setLastFocusedEventDate(null);
+                      } else if (selectedDate) {
+                        // Use the selected date
+                        targetDate = new Date(selectedDate + 'T00:00:00');
                       } else {
                         // Check if today is in the current month
                         const now = new Date();
