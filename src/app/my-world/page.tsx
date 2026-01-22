@@ -2192,17 +2192,27 @@ export default function MyWorldDashboard() {
               <div className="flex bg-gray-100 dark:bg-gray-700 rounded-lg p-0.5">
                 <button
                   onClick={() => {
-                    // When switching to week view, sync weekStartDate with currentMonth
+                    // When switching to week view, sync weekStartDate with the relevant date
                     if (viewType === 'month') {
-                      // Check if today is in the current month
-                      const now = new Date();
                       let targetDate: Date;
-                      if (now.getFullYear() === currentMonth.getFullYear() && now.getMonth() === currentMonth.getMonth()) {
-                        // Today is in the current month - use today's week
-                        targetDate = now;
+
+                      // Priority: selectedDate > editingEvent > currentMonth/today
+                      if (selectedDate) {
+                        // Use the selected date
+                        targetDate = new Date(selectedDate + 'T00:00:00');
+                      } else if (editingEvent) {
+                        // Use the editing event's start date
+                        targetDate = new Date(editingEvent.date.split('T')[0] + 'T00:00:00');
                       } else {
-                        // Use the first day of the current month
-                        targetDate = new Date(currentMonth.getFullYear(), currentMonth.getMonth(), 1);
+                        // Check if today is in the current month
+                        const now = new Date();
+                        if (now.getFullYear() === currentMonth.getFullYear() && now.getMonth() === currentMonth.getMonth()) {
+                          // Today is in the current month - use today's week
+                          targetDate = now;
+                        } else {
+                          // Use the first day of the current month
+                          targetDate = new Date(currentMonth.getFullYear(), currentMonth.getMonth(), 1);
+                        }
                       }
                       // Find the Sunday of that week
                       const dayOfWeek = targetDate.getDay();
@@ -2680,9 +2690,9 @@ export default function MyWorldDashboard() {
                   })}
                 </div>
                 {/* Multi-day event bars overlay - hidden on mobile */}
-                <div className="absolute inset-0 pointer-events-none hidden sm:flex" style={{ overflow: 'clip' }}>
+                <div className="absolute inset-0 pointer-events-none hidden sm:flex overflow-hidden">
                   <div className="w-14 flex-shrink-0"></div>
-                  <div className="flex-1 relative" style={{ overflow: 'clip' }}>
+                  <div className="flex-1 relative overflow-hidden">
                     {getWeeklyMultiDayEventBars.map((bar, barIndex) => {
                       const colWidth = 100 / 7;
                       const maxSpan = 7 - bar.startCol;
