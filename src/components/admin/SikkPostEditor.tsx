@@ -3,7 +3,6 @@
 import { useState, useRef, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import dynamic from 'next/dynamic';
-import MDXContent from '@/components/mdx/MDXContent';
 import TableEditor from './TableEditor';
 import CodeBlockEditor from './CodeBlockEditor';
 import ColumnEditor from './ColumnEditor';
@@ -75,7 +74,6 @@ export default function SikkPostEditor({ initialData = {}, isEdit = false }: Sik
   const pdfInputRef = useRef<HTMLInputElement>(null);
   const [saving, setSaving] = useState(false);
   const [uploading, setUploading] = useState(false);
-  const [activeTab, setActiveTab] = useState<'edit' | 'preview' | 'split'>('split');
   const [showTableEditor, setShowTableEditor] = useState(false);
   const [showCodeBlockEditor, setShowCodeBlockEditor] = useState(false);
   const [showCodeLanguageDropdown, setShowCodeLanguageDropdown] = useState(false);
@@ -1124,144 +1122,86 @@ export default function SikkPostEditor({ initialData = {}, isEdit = false }: Sik
         </div>
       </div>
 
-      {/* View Mode Tabs */}
-      <div className="flex gap-2 border-b border-gray-200 dark:border-gray-700">
-        <button
-          type="button"
-          onClick={() => setActiveTab('edit')}
-          className={`px-4 py-2 text-sm font-medium transition-colors ${
-            activeTab === 'edit'
-              ? 'text-pink-600 dark:text-pink-400 border-b-2 border-pink-600 dark:border-pink-400'
-              : 'text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white'
-          }`}
-        >
-          편집
-        </button>
-        <button
-          type="button"
-          onClick={() => setActiveTab('preview')}
-          className={`px-4 py-2 text-sm font-medium transition-colors ${
-            activeTab === 'preview'
-              ? 'text-pink-600 dark:text-pink-400 border-b-2 border-pink-600 dark:border-pink-400'
-              : 'text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white'
-          }`}
-        >
-          미리보기
-        </button>
-        <button
-          type="button"
-          onClick={() => setActiveTab('split')}
-          className={`px-4 py-2 text-sm font-medium transition-colors ${
-            activeTab === 'split'
-              ? 'text-pink-600 dark:text-pink-400 border-b-2 border-pink-600 dark:border-pink-400'
-              : 'text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white'
-          }`}
-        >
-          분할 보기
-        </button>
-      </div>
-
-      {/* Content Editor & Preview */}
-      <div
-        className={`${
-          activeTab === 'split' ? 'grid grid-cols-1 lg:grid-cols-2 gap-4' : ''
-        }`}
-      >
-        {/* Editor - Using TipTap for rich text editing */}
-        {(activeTab === 'edit' || activeTab === 'split') && (
-          <div className="relative">
-            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-              내용 (Rich Text Editor)
-            </label>
-            <TipTapEditor
-              content={formData.content}
-              onSave={async (html) => {
-                setFormData({ ...formData, content: html });
-              }}
-              onCancel={() => {
-                // Do nothing - cancel is handled by the main form
-              }}
-              placeholder="포스트 내용을 작성하세요..."
-            />
-          </div>
-        )}
-
-        {/* Preview */}
-        {(activeTab === 'preview' || activeTab === 'split') && (
-          <div>
-            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-              미리보기
-            </label>
-            <div className="h-[740px] border border-gray-300 dark:border-gray-600 rounded-lg bg-gray-50 dark:bg-gray-900 overflow-y-auto">
-              {formData.content || formData.title ? (
-                <div className="text-gray-900 dark:text-gray-100">
-                  {/* Banner Image Preview */}
-                  {formData.thumbnail && (
-                    <div className="mb-6 rounded-t-lg overflow-hidden">
-                      <div
-                        className="w-full h-48 bg-gray-200 dark:bg-gray-700"
-                        style={{
-                          backgroundImage: `url(${formData.thumbnail})`,
-                          backgroundSize: `${formData.thumbnailScale || 100}%`,
-                          backgroundPosition: `center ${formData.thumbnailPosition}%`,
-                          backgroundRepeat: 'no-repeat',
-                        }}
-                      />
-                    </div>
-                  )}
-                  <div className="p-6">
-                  {/* Post Header Preview */}
-                  <header className="mb-6 pb-6 border-b-2 border-pink-400 dark:border-pink-500">
-                    {formData.category && (
-                      <div className="flex items-center text-sm mb-3 text-gray-600 dark:text-gray-400">
-                        <span>Sikk</span>
-                        <span className="mx-2">/</span>
-                        <span className="text-pink-600 dark:text-pink-400">{formData.category}</span>
-                      </div>
-                    )}
-                    {formData.title && (
-                      <h1 className="text-2xl md:text-3xl font-bold mb-3 text-gray-900 dark:text-white">
-                        {formData.title}
-                      </h1>
-                    )}
-                    {formData.description && (
-                      <p className="text-base mb-4 text-gray-700 dark:text-gray-300">
-                        {formData.description}
-                      </p>
-                    )}
-                    <div className="flex flex-wrap items-center gap-3 text-sm text-gray-600 dark:text-gray-400">
-                      <time>{formData.date || new Date().toLocaleDateString('ko-KR')}</time>
-                      {!formData.isPublic && (
-                        <span className="px-2 py-0.5 rounded text-xs bg-yellow-100 dark:bg-yellow-900/30 text-yellow-800 dark:text-yellow-300">
-                          비공개
-                        </span>
-                      )}
-                      {formData.tags && (
-                        <div className="flex flex-wrap gap-2">
-                          {formData.tags.split(',').filter(Boolean).map((tag, i) => (
-                            <span
-                              key={i}
-                              className="px-2 py-0.5 rounded text-xs bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-300"
-                            >
-                              #{tag.trim()}
-                            </span>
-                          ))}
-                        </div>
-                      )}
-                    </div>
-                  </header>
-                  {/* Content Preview */}
-                  <MDXContent content={formData.content} />
-                  </div>
-                </div>
-              ) : (
-                <p className="text-gray-400 dark:text-gray-500 text-center mt-20">
-                  내용을 입력하면 미리보기가 표시됩니다.
-                </p>
-              )}
+      {/* Content Editor - Sikk Style */}
+      <div className="rounded-xl overflow-hidden" style={{ backgroundColor: 'var(--background)' }}>
+        {/* Header Preview */}
+        <div className="p-6 pb-0">
+          {/* Banner Image */}
+          {formData.thumbnail && (
+            <div className="mb-6 -mx-6 -mt-6 rounded-t-xl overflow-hidden">
+              <div
+                className="w-full h-48 sm:h-64"
+                style={{
+                  backgroundImage: `url(${formData.thumbnail})`,
+                  backgroundSize: `${formData.thumbnailScale || 100}%`,
+                  backgroundPosition: `center ${formData.thumbnailPosition}%`,
+                  backgroundRepeat: 'no-repeat',
+                  backgroundColor: 'var(--background-secondary)',
+                }}
+              />
             </div>
+          )}
+
+          {/* Breadcrumb */}
+          <div className="flex items-center text-sm mb-4" style={{ color: 'var(--foreground)', opacity: 0.7 }}>
+            <span>Sikk</span>
+            {formData.category && (
+              <>
+                <span className="mx-2">/</span>
+                <span className="text-pink-600 dark:text-pink-400">{formData.category}</span>
+              </>
+            )}
           </div>
-        )}
+
+          {/* Title */}
+          {formData.title && (
+            <h1 className="text-3xl md:text-4xl font-bold mb-4" style={{ color: 'var(--foreground)' }}>
+              {formData.title}
+            </h1>
+          )}
+
+          {/* Description */}
+          {formData.description && (
+            <p className="text-lg mb-4" style={{ color: 'var(--foreground)', opacity: 0.8 }}>
+              {formData.description}
+            </p>
+          )}
+
+          {/* Meta */}
+          <div className="flex flex-wrap items-center gap-4 text-sm mb-6" style={{ color: 'var(--foreground)', opacity: 0.7 }}>
+            <time>{formData.date || new Date().toLocaleDateString('ko-KR')}</time>
+            {formData.tags && formData.tags.split(',').filter(Boolean).length > 0 && (
+              <div className="flex flex-wrap gap-2">
+                {formData.tags.split(',').filter(Boolean).map((tag, i) => (
+                  <span
+                    key={i}
+                    className="px-2 py-1 rounded text-xs"
+                    style={{ backgroundColor: 'var(--tag-bg)', color: 'var(--tag-text)' }}
+                  >
+                    #{tag.trim()}
+                  </span>
+                ))}
+              </div>
+            )}
+          </div>
+
+          {/* Pink Divider */}
+          <hr className="border-t-2 border-pink-400 dark:border-pink-500 mb-6" />
+        </div>
+
+        {/* TipTap Editor */}
+        <div className="px-6 pb-6">
+          <TipTapEditor
+            content={formData.content}
+            onSave={async (html) => {
+              setFormData({ ...formData, content: html });
+            }}
+            onCancel={() => {
+              // Do nothing - cancel is handled by the main form
+            }}
+            placeholder="포스트 내용을 작성하세요..."
+          />
+        </div>
       </div>
 
       {/* Actions */}
