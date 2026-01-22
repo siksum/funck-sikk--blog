@@ -621,7 +621,8 @@ export default function DatabaseDetailPage({ params }: DatabasePageProps) {
         );
       }
 
-      if (column.type === 'select' && column.options) {
+      if (column.type === 'select') {
+        const options = column.options || [];
         return (
           <select
             value={editValue}
@@ -634,7 +635,7 @@ export default function DatabaseDetailPage({ params }: DatabasePageProps) {
             autoFocus
           >
             <option value="">선택...</option>
-            {column.options.map((opt) => (
+            {options.map((opt) => (
               <option key={opt} value={opt}>
                 {opt}
               </option>
