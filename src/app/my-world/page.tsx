@@ -144,6 +144,7 @@ export default function MyWorldDashboard() {
   // Event Modal State
   const [showEventModal, setShowEventModal] = useState(false);
   const [editingEvent, setEditingEvent] = useState<CalendarEvent | null>(null);
+  const [lastFocusedEventDate, setLastFocusedEventDate] = useState<string | null>(null);
   const [eventForm, setEventForm] = useState({
     title: '',
     description: '',
@@ -1002,6 +1003,8 @@ export default function MyWorldDashboard() {
     if (event) {
       // Edit mode
       setEditingEvent(event);
+      // Track the event date for week navigation
+      setLastFocusedEventDate(event.date.split('T')[0]);
       const startDate = event.date.split('T')[0];
       const endDate = event.endDate ? event.endDate.split('T')[0] : startDate;
       const startTime = event.isAllDay ? '09:00' : event.date.split('T')[1]?.substring(0, 5) || '09:00';
@@ -2177,13 +2180,13 @@ export default function MyWorldDashboard() {
                     if (viewType === 'month') {
                       let targetDate: Date;
 
-                      // Priority: selectedDate > editingEvent > currentMonth/today
+                      // Priority: selectedDate > lastFocusedEventDate > currentMonth/today
                       if (selectedDate) {
                         // Use the selected date
                         targetDate = new Date(selectedDate + 'T00:00:00');
-                      } else if (editingEvent) {
-                        // Use the editing event's start date
-                        targetDate = new Date(editingEvent.date.split('T')[0] + 'T00:00:00');
+                      } else if (lastFocusedEventDate) {
+                        // Use the last clicked event's date
+                        targetDate = new Date(lastFocusedEventDate + 'T00:00:00');
                       } else {
                         // Check if today is in the current month
                         const now = new Date();
@@ -2671,9 +2674,9 @@ export default function MyWorldDashboard() {
                   })}
                 </div>
                 {/* Multi-day event bars overlay - hidden on mobile */}
-                <div className="absolute inset-0 pointer-events-none hidden sm:flex overflow-hidden">
-                  <div className="w-14 flex-shrink-0"></div>
-                  <div className="flex-1 relative overflow-hidden">
+                <div className="absolute inset-0 pointer-events-none hidden sm:grid grid-cols-8 overflow-hidden">
+                  <div></div>
+                  <div className="col-span-7 relative overflow-hidden">
                     {getWeeklyMultiDayEventBars.map((bar, barIndex) => {
                       const colWidth = 100 / 7;
                       const maxSpan = 7 - bar.startCol;
