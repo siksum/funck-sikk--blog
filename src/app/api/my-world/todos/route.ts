@@ -21,13 +21,8 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ error: 'Date is required' }, { status: 400 });
     }
 
-    // In development, always use 'dev-user' for consistency
-    // In production, require actual user id
-    const userId = isProduction ? session?.user?.id : 'dev-user';
-
-    if (!userId) {
-      return NextResponse.json({ error: 'User not found' }, { status: 401 });
-    }
+    // Use actual user id if logged in, otherwise 'dev-user' for development
+    const userId = session?.user?.id || 'dev-user';
 
     const date = new Date(dateStr);
     date.setHours(0, 0, 0, 0);
@@ -86,9 +81,8 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // In development, always use 'dev-user' for consistency
-    // In production, require actual user id
-    const userId = isProduction ? session?.user?.id : 'dev-user';
+    // Use actual user id if logged in, otherwise 'dev-user' for development
+    const userId = session?.user?.id || 'dev-user';
 
     if (!userId) {
       return NextResponse.json({ error: 'User not found' }, { status: 401 });
