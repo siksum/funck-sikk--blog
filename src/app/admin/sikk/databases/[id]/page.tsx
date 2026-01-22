@@ -1084,9 +1084,11 @@ export default function DatabaseDetailPage({ params }: DatabasePageProps) {
                     {/* Resize handle */}
                     <div
                       onMouseDown={(e) => handleResizeStart(e, column.id)}
-                      className="absolute right-0 top-0 h-full w-1 cursor-col-resize hover:bg-pink-500 transition-colors"
+                      className="absolute right-0 top-0 h-full w-2 cursor-col-resize group/resize z-10"
                       style={{ transform: 'translateX(50%)' }}
-                    />
+                    >
+                      <div className="absolute inset-y-0 left-1/2 w-0.5 -translate-x-1/2 bg-gray-300 dark:bg-gray-600 group-hover/resize:bg-pink-500 group-hover/resize:w-1 transition-all" />
+                    </div>
                   </th>
                 ))}
                 <th className="px-4 py-3 text-right text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider w-20">
