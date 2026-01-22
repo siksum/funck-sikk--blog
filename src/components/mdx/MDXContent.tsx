@@ -99,8 +99,35 @@ export const mdxComponents = {
   Private,
 };
 
+// Check if content is pure HTML (from TipTap editor)
+function isHtmlContent(content: string): boolean {
+  const trimmed = content.trim();
+  // Check if content starts with HTML tags commonly output by TipTap
+  return trimmed.startsWith('<p>') || trimmed.startsWith('<h') || trimmed.startsWith('<div') || trimmed.startsWith('<ul') || trimmed.startsWith('<ol');
+}
+
 export default function MDXContent({ content }: MDXContentProps) {
   const [lightboxImage, setLightboxImage] = useState<{ src: string; alt: string } | null>(null);
+
+  // If content is pure HTML, render it directly to preserve inline styles
+  if (isHtmlContent(content)) {
+    return (
+      <>
+        <article
+          className="max-w-none prose prose-violet dark:prose-invert"
+          style={{ color: 'var(--foreground)' }}
+          dangerouslySetInnerHTML={{ __html: content }}
+        />
+        {lightboxImage && (
+          <ImageLightbox
+            src={lightboxImage.src}
+            alt={lightboxImage.alt}
+            onClose={() => setLightboxImage(null)}
+          />
+        )}
+      </>
+    );
+  }
 
   return (
     <>
@@ -336,50 +363,6 @@ export default function MDXContent({ content }: MDXContentProps) {
             hr: () => (
               <hr className="my-8 border-t border-violet-200 dark:border-violet-500/30" />
             ),
-            // Preserve span styles (for text color)
-            span: ({ style, children, ...props }) => {
-              console.log('=== SPAN DEBUG ===');
-              console.log('style:', style, typeof style);
-              console.log('props:', props);
-              console.log('==================');
-              // Convert style string to object if needed
-              const styleObj = typeof style === 'string'
-                ? style.split(';').filter(Boolean).reduce((acc, rule) => {
-                    const [prop, value] = rule.split(':').map(s => s.trim());
-                    if (prop && value) {
-                      // Convert CSS property to camelCase
-                      const camelProp = prop.replace(/-([a-z])/g, (_, c) => c.toUpperCase());
-                      acc[camelProp] = value;
-                    }
-                    return acc;
-                  }, {} as Record<string, string>)
-                : style;
-              return (
-                <span style={styleObj} {...props}>
-                  {children}
-                </span>
-              );
-            },
-            // Preserve mark styles (for highlights)
-            mark: ({ style, children, ...props }) => {
-              // Convert style string to object if needed
-              const styleObj = typeof style === 'string'
-                ? style.split(';').filter(Boolean).reduce((acc, rule) => {
-                    const [prop, value] = rule.split(':').map(s => s.trim());
-                    if (prop && value) {
-                      // Convert CSS property to camelCase
-                      const camelProp = prop.replace(/-([a-z])/g, (_, c) => c.toUpperCase());
-                      acc[camelProp] = value;
-                    }
-                    return acc;
-                  }, {} as Record<string, string>)
-                : style;
-              return (
-                <mark style={styleObj} {...props}>
-                  {children}
-                </mark>
-              );
-            },
             img: ({ src, alt }) => {
               const imgSrc = typeof src === 'string' ? src : '';
               return (
