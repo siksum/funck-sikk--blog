@@ -70,6 +70,11 @@ export default function DatabaseTableView({
   const [hiddenColumns, setHiddenColumns] = useState<Set<string>>(new Set());
   const [showColumnVisibilityMenu, setShowColumnVisibilityMenu] = useState(false);
 
+  // Bulk selection state
+  const [selectedItems, setSelectedItems] = useState<Set<string>>(new Set());
+  const [showBulkCategoryMenu, setShowBulkCategoryMenu] = useState(false);
+  const [showBulkDateMenu, setShowBulkDateMenu] = useState(false);
+  const [bulkDate, setBulkDate] = useState<string>(new Date().toISOString().split('T')[0]);
 
   const handleAddItem = useCallback(async () => {
     // Create default data for new item
@@ -144,6 +149,118 @@ export default function DatabaseTableView({
       console.error('Failed to delete item:', error);
     }
   }, [databaseId, router]);
+
+  // Bulk selection handlers
+  const toggleSelectItem = useCallback((itemId: string) => {
+    setSelectedItems((prev) => {
+      const next = new Set(prev);
+      if (next.has(itemId)) {
+        next.delete(itemId);
+      } else {
+        next.add(itemId);
+      }
+      return next;
+    });
+  }, []);
+
+  const clearSelection = useCallback(() => {
+    setSelectedItems(new Set());
+    setShowBulkCategoryMenu(false);
+    setShowBulkDateMenu(false);
+  }, []);
+
+  // Bulk delete
+  const handleBulkDelete = useCallback(async () => {
+    if (selectedItems.size === 0) return;
+    if (!confirm(`${selectedItems.size}개의 항목을 삭제하시겠습니까?`)) return;
+
+    try {
+      const deletePromises = Array.from(selectedItems).map((itemId) =>
+        fetch(`/api/sikk/databases/${databaseId}/items/${itemId}`, {
+          method: 'DELETE',
+        })
+      );
+
+      await Promise.all(deletePromises);
+      setItems((prev) => prev.filter((i) => !selectedItems.has(i.id)));
+      setSelectedItems(new Set());
+      router.refresh();
+    } catch (error) {
+      console.error('Failed to bulk delete:', error);
+    }
+  }, [databaseId, selectedItems, router]);
+
+  // Bulk category change
+  const handleBulkCategoryChange = useCallback(async (category: string) => {
+    if (selectedItems.size === 0) return;
+
+    const selectColumn = columns.find((c) => c.type === 'select');
+    if (!selectColumn) return;
+
+    try {
+      const updatePromises = Array.from(selectedItems).map((itemId) => {
+        const item = items.find((i) => i.id === itemId);
+        if (!item) return Promise.resolve();
+
+        return fetch(`/api/sikk/databases/${databaseId}/items/${itemId}`, {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            data: { ...item.data, [selectColumn.id]: category },
+          }),
+        });
+      });
+
+      await Promise.all(updatePromises);
+      setItems((prev) =>
+        prev.map((item) =>
+          selectedItems.has(item.id)
+            ? { ...item, data: { ...item.data, [selectColumn.id]: category } }
+            : item
+        )
+      );
+      setShowBulkCategoryMenu(false);
+      router.refresh();
+    } catch (error) {
+      console.error('Failed to bulk update category:', error);
+    }
+  }, [databaseId, columns, items, selectedItems, router]);
+
+  // Bulk date change
+  const handleBulkDateChange = useCallback(async () => {
+    if (selectedItems.size === 0 || !bulkDate) return;
+
+    const dateColumn = columns.find((c) => c.type === 'date');
+    if (!dateColumn) return;
+
+    try {
+      const updatePromises = Array.from(selectedItems).map((itemId) => {
+        const item = items.find((i) => i.id === itemId);
+        if (!item) return Promise.resolve();
+
+        return fetch(`/api/sikk/databases/${databaseId}/items/${itemId}`, {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            data: { ...item.data, [dateColumn.id]: bulkDate },
+          }),
+        });
+      });
+
+      await Promise.all(updatePromises);
+      setItems((prev) =>
+        prev.map((item) =>
+          selectedItems.has(item.id)
+            ? { ...item, data: { ...item.data, [dateColumn.id]: bulkDate } }
+            : item
+        )
+      );
+      setShowBulkDateMenu(false);
+      router.refresh();
+    } catch (error) {
+      console.error('Failed to bulk update date:', error);
+    }
+  }, [databaseId, columns, items, selectedItems, bulkDate, router]);
 
   // Column drag and drop handlers
   const handleColumnDragStart = (columnId: string) => {
@@ -411,6 +528,17 @@ export default function DatabaseTableView({
 
     return { items: itemsList, groups: null };
   }, [items, columns, sortColumn, sortDirection, filterColumn, filterValue, groupByColumn]);
+
+  // Toggle select all (depends on processedItems)
+  const toggleSelectAll = useCallback(() => {
+    const currentItems = processedItems.items;
+    const allSelected = currentItems.every((item) => selectedItems.has(item.id));
+    if (allSelected) {
+      setSelectedItems(new Set());
+    } else {
+      setSelectedItems(new Set(currentItems.map((item) => item.id)));
+    }
+  }, [processedItems.items, selectedItems]);
 
   // Get unique values for filter dropdown
   const getUniqueValues = (columnId: string) => {
@@ -847,12 +975,124 @@ export default function DatabaseTableView({
         )}
       </div>
 
+      {/* Bulk Action Bar */}
+      {isAdmin && selectedItems.size > 0 && (
+        <div className="mb-4 p-3 bg-pink-50 dark:bg-pink-900/20 rounded-lg border border-pink-200 dark:border-pink-800/50 flex flex-wrap items-center gap-3">
+          <div className="flex items-center gap-2">
+            <span className="text-sm font-medium text-pink-700 dark:text-pink-400">
+              {selectedItems.size}개 선택됨
+            </span>
+            <button
+              onClick={clearSelection}
+              className="text-xs text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200"
+            >
+              선택 해제
+            </button>
+          </div>
+
+          <div className="h-4 w-px bg-pink-200 dark:bg-pink-800" />
+
+          {/* Bulk Delete */}
+          <button
+            onClick={handleBulkDelete}
+            className="px-3 py-1.5 text-xs bg-red-500 text-white rounded hover:bg-red-600 transition-colors flex items-center gap-1"
+          >
+            <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+            </svg>
+            삭제
+          </button>
+
+          {/* Bulk Category Change */}
+          {columns.some((c) => c.type === 'select') && (
+            <div className="relative">
+              <button
+                onClick={() => {
+                  setShowBulkCategoryMenu(!showBulkCategoryMenu);
+                  setShowBulkDateMenu(false);
+                }}
+                className="px-3 py-1.5 text-xs bg-purple-500 text-white rounded hover:bg-purple-600 transition-colors flex items-center gap-1"
+              >
+                <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A1.994 1.994 0 013 12V7a4 4 0 014-4z" />
+                </svg>
+                카테고리 변경
+              </button>
+              {showBulkCategoryMenu && (
+                <div className="absolute top-full left-0 mt-1 z-50 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg shadow-lg min-w-[150px] py-1">
+                  {columns.find((c) => c.type === 'select')?.options?.map((opt) => (
+                    <button
+                      key={opt}
+                      onClick={() => handleBulkCategoryChange(opt)}
+                      className="w-full px-3 py-2 text-left text-sm hover:bg-purple-50 dark:hover:bg-purple-900/20 text-gray-700 dark:text-gray-300"
+                    >
+                      {opt}
+                    </button>
+                  ))}
+                  <button
+                    onClick={() => handleBulkCategoryChange('')}
+                    className="w-full px-3 py-2 text-left text-sm hover:bg-gray-50 dark:hover:bg-gray-700 text-gray-500 dark:text-gray-400 border-t border-gray-100 dark:border-gray-700"
+                  >
+                    (없음)
+                  </button>
+                </div>
+              )}
+            </div>
+          )}
+
+          {/* Bulk Date Change */}
+          {columns.some((c) => c.type === 'date') && (
+            <div className="relative">
+              <button
+                onClick={() => {
+                  setShowBulkDateMenu(!showBulkDateMenu);
+                  setShowBulkCategoryMenu(false);
+                }}
+                className="px-3 py-1.5 text-xs bg-blue-500 text-white rounded hover:bg-blue-600 transition-colors flex items-center gap-1"
+              >
+                <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                </svg>
+                날짜 변경
+              </button>
+              {showBulkDateMenu && (
+                <div className="absolute top-full left-0 mt-1 z-50 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg shadow-lg p-3">
+                  <input
+                    type="date"
+                    value={bulkDate}
+                    onChange={(e) => setBulkDate(e.target.value)}
+                    className="px-2 py-1 text-sm border border-gray-300 dark:border-gray-600 rounded bg-white dark:bg-gray-900 text-gray-900 dark:text-white"
+                  />
+                  <button
+                    onClick={handleBulkDateChange}
+                    className="mt-2 w-full px-3 py-1.5 text-xs bg-blue-500 text-white rounded hover:bg-blue-600"
+                  >
+                    적용
+                  </button>
+                </div>
+              )}
+            </div>
+          )}
+        </div>
+      )}
+
       {/* Table */}
       <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-pink-200 dark:border-pink-800/50">
         <div className="overflow-x-auto">
           <table className="min-w-full divide-y divide-gray-200 dark:divide-gray-700" style={{ tableLayout: 'fixed' }}>
             <thead className="bg-gray-50 dark:bg-gray-700">
               <tr>
+                {/* Checkbox column */}
+                {isAdmin && (
+                  <th className="w-10 px-3 py-3">
+                    <input
+                      type="checkbox"
+                      checked={processedItems.items.length > 0 && processedItems.items.every((item) => selectedItems.has(item.id))}
+                      onChange={toggleSelectAll}
+                      className="rounded border-gray-300 dark:border-gray-600 text-pink-500 focus:ring-pink-500"
+                    />
+                  </th>
+                )}
                 {visibleColumns.map((column) => (
                   <th
                     key={column.id}
@@ -904,7 +1144,7 @@ export default function DatabaseTableView({
               {processedItems.items.length === 0 ? (
                 <tr>
                   <td
-                    colSpan={visibleColumns.length + (isAdmin ? 1 : 0)}
+                    colSpan={visibleColumns.length + (isAdmin ? 2 : 0)}
                     className="px-4 py-8 text-center text-gray-500"
                   >
                     {filterValue ? '필터 조건에 맞는 항목이 없습니다.' : '항목이 없습니다.'}
@@ -916,14 +1156,26 @@ export default function DatabaseTableView({
                   <>
                     <tr key={`group-${groupName}`} className="bg-purple-50 dark:bg-purple-900/20">
                       <td
-                        colSpan={visibleColumns.length + (isAdmin ? 1 : 0)}
+                        colSpan={visibleColumns.length + (isAdmin ? 2 : 0)}
                         className="px-4 py-2 text-sm font-semibold text-purple-700 dark:text-purple-400"
                       >
                         {groupName} ({groupItems.length})
                       </td>
                     </tr>
                     {groupItems.map((item) => (
-                      <tr key={item.id} className="hover:bg-gray-50 dark:hover:bg-gray-700/50">
+                      <tr key={item.id} className={`hover:bg-gray-50 dark:hover:bg-gray-700/50 ${selectedItems.has(item.id) ? 'bg-pink-50 dark:bg-pink-900/10' : ''}`}>
+                        {/* Checkbox */}
+                        {isAdmin && (
+                          <td className="w-10 px-3 py-3">
+                            <input
+                              type="checkbox"
+                              checked={selectedItems.has(item.id)}
+                              onChange={() => toggleSelectItem(item.id)}
+                              onClick={(e) => e.stopPropagation()}
+                              className="rounded border-gray-300 dark:border-gray-600 text-pink-500 focus:ring-pink-500"
+                            />
+                          </td>
+                        )}
                         {visibleColumns.map((column) => (
                           <td
                             key={column.id}
@@ -953,7 +1205,19 @@ export default function DatabaseTableView({
               ) : (
                 // Regular view
                 processedItems.items.map((item) => (
-                  <tr key={item.id} className="hover:bg-gray-50 dark:hover:bg-gray-700/50">
+                  <tr key={item.id} className={`hover:bg-gray-50 dark:hover:bg-gray-700/50 ${selectedItems.has(item.id) ? 'bg-pink-50 dark:bg-pink-900/10' : ''}`}>
+                    {/* Checkbox */}
+                    {isAdmin && (
+                      <td className="w-10 px-3 py-3">
+                        <input
+                          type="checkbox"
+                          checked={selectedItems.has(item.id)}
+                          onChange={() => toggleSelectItem(item.id)}
+                          onClick={(e) => e.stopPropagation()}
+                          className="rounded border-gray-300 dark:border-gray-600 text-pink-500 focus:ring-pink-500"
+                        />
+                      </td>
+                    )}
                     {visibleColumns.map((column) => (
                       <td
                         key={column.id}
