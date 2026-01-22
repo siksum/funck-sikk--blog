@@ -32,6 +32,7 @@ interface BlogDatabase {
   title: string;
   description: string | null;
   slug: string;
+  category: string | null;
   _count: { items: number };
 }
 
@@ -94,6 +95,12 @@ export default function BlogPageContent({
             slugPath: [dbCat.slug],
           };
         });
+        // Filter databases that belong to this section's categories
+        const sectionDatabases = databases.filter((db) => {
+          if (!db.category) return false;
+          const dbMainCategory = db.category.split('/')[0];
+          return categoryNames.includes(dbMainCategory);
+        });
         return {
           section: {
             title: section.title,
@@ -101,6 +108,7 @@ export default function BlogPageContent({
             categoryNames,
           },
           categories: sectionCategories,
+          databases: sectionDatabases,
         };
       });
     }
@@ -110,9 +118,23 @@ export default function BlogPageContent({
       const sectionCategories = rootCategoriesWithTags.filter(
         (cat) => section.categoryNames.includes(cat.name)
       );
-      return { section, categories: sectionCategories };
+      // Filter databases for fallback sections
+      const sectionDatabases = databases.filter((db) => {
+        if (!db.category) return false;
+        const dbMainCategory = db.category.split('/')[0];
+        return section.categoryNames.includes(dbMainCategory);
+      });
+      return { section, categories: sectionCategories, databases: sectionDatabases };
     });
-  }, [rootCategoriesWithTags, sections]);
+  }, [rootCategoriesWithTags, sections, databases]);
+
+  // Get uncategorized databases (those without category or not matching any section)
+  const uncategorizedDatabases = useMemo(() => {
+    const categorizedDbIds = new Set(
+      groupedCategories.flatMap(g => g.databases?.map(db => db.id) || [])
+    );
+    return databases.filter(db => !categorizedDbIds.has(db.id));
+  }, [databases, groupedCategories]);
 
   const renderCategoryCards = (sectionCategories: CategoryWithTags[]) => {
     if (sectionCategories.length === 0) {
@@ -236,20 +258,20 @@ export default function BlogPageContent({
 
           {/* Main Content - Category Sections */}
           <div className="lg:col-span-3 lg:order-last space-y-16">
-            {/* Databases Section */}
-            {databases.length > 0 && (
+            {/* Uncategorized Databases Section */}
+            {uncategorizedDatabases.length > 0 && (
               <section>
                 <div className="mb-8 pb-4 border-b-2 border-violet-300 dark:border-violet-500">
                   <h2 className="text-3xl md:text-4xl font-extrabold mb-2 text-transparent bg-clip-text bg-gradient-to-r from-violet-600 to-indigo-500 dark:from-violet-300 dark:to-indigo-400">
                     데이터베이스
                   </h2>
                   <p className="text-sm" style={{ color: 'var(--foreground-muted)' }}>
-                    {databases.length}개의 데이터베이스
+                    {uncategorizedDatabases.length}개의 데이터베이스
                   </p>
                 </div>
                 {viewMode === 'list' ? (
                   <div className="space-y-3">
-                    {databases.map((db) => (
+                    {uncategorizedDatabases.map((db) => (
                       <BlogDatabaseCard
                         key={db.id}
                         id={db.id}
@@ -263,7 +285,7 @@ export default function BlogPageContent({
                   </div>
                 ) : (
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                    {databases.map((db) => (
+                    {uncategorizedDatabases.map((db) => (
                       <BlogDatabaseCard
                         key={db.id}
                         id={db.id}
@@ -278,7 +300,7 @@ export default function BlogPageContent({
               </section>
             )}
 
-            {groupedCategories.map(({ section, categories: sectionCategories }) => (
+            {groupedCategories.map(({ section, categories: sectionCategories, databases: sectionDatabases }) => (
               <section key={section.title}>
                 <div className="mb-8 pb-4 border-b-2 border-violet-300 dark:border-violet-500">
                   <h2 className="text-3xl md:text-4xl font-extrabold mb-2 text-transparent bg-clip-text bg-gradient-to-r from-violet-600 to-indigo-500 dark:from-violet-300 dark:to-indigo-400">
@@ -288,7 +310,58 @@ export default function BlogPageContent({
                     {section.description}
                   </p>
                 </div>
-                {renderCategoryCards(sectionCategories)}
+                {/* Databases in this section */}
+                {sectionDatabases && sectionDatabases.length > 0 && (
+                  <div className="mb-6">
+                    <h3 className="text-lg font-semibold mb-4 text-violet-600 dark:text-violet-400">
+                      데이터베이스
+                    </h3>
+                    {viewMode === 'list' ? (
+                      <div className="space-y-3">
+                        {sectionDatabases.map((db) => (
+                          <BlogDatabaseCard
+                            key={db.id}
+                            id={db.id}
+                            title={db.title}
+                            description={db.description}
+                            slug={db.slug}
+                            itemCount={db._count.items}
+                            variant="list"
+                          />
+                        ))}
+                      </div>
+                    ) : (
+                      <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-5">
+                        {sectionDatabases.map((db) => (
+                          <BlogDatabaseCard
+                            key={db.id}
+                            id={db.id}
+                            title={db.title}
+                            description={db.description}
+                            slug={db.slug}
+                            itemCount={db._count.items}
+                          />
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                )}
+                {/* Categories in this section */}
+                {sectionCategories.length > 0 && (
+                  <div>
+                    {sectionDatabases && sectionDatabases.length > 0 && (
+                      <h3 className="text-lg font-semibold mb-4 text-violet-600 dark:text-violet-400">
+                        카테고리
+                      </h3>
+                    )}
+                    {renderCategoryCards(sectionCategories)}
+                  </div>
+                )}
+                {sectionCategories.length === 0 && (!sectionDatabases || sectionDatabases.length === 0) && (
+                  <p className="text-sm" style={{ color: 'var(--foreground-muted)' }}>
+                    아직 등록된 콘텐츠가 없습니다.
+                  </p>
+                )}
               </section>
             ))}
           </div>

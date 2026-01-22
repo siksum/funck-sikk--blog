@@ -32,7 +32,12 @@ async function getBlogDatabases() {
   try {
     const databases = await prisma.blogDatabase.findMany({
       where: { isPublic: true },
-      include: {
+      select: {
+        id: true,
+        title: true,
+        description: true,
+        slug: true,
+        category: true,
         _count: {
           select: { items: true },
         },
