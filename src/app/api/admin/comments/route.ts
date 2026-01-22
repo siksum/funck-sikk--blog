@@ -28,8 +28,29 @@ export async function GET() {
   });
 
   // Get all posts to map slugs to titles and categories
-  const posts = await getAllPostsAsync(true);
-  const postMap = new Map(posts.map(p => [p.slug, { title: p.title, category: p.category }]));
+  // 1. MDX posts
+  const mdxPosts = await getAllPostsAsync(true);
+  const postMap = new Map(mdxPosts.map(p => [p.slug, { title: p.title, category: p.category }]));
+
+  // 2. Database posts (Post model)
+  const dbPosts = await prisma.post.findMany({
+    select: { slug: true, title: true, category: true },
+  });
+  dbPosts.forEach(p => {
+    if (!postMap.has(p.slug)) {
+      postMap.set(p.slug, { title: p.title, category: p.category });
+    }
+  });
+
+  // 3. Sikk posts (SikkPost model)
+  const sikkPosts = await prisma.sikkPost.findMany({
+    select: { slug: true, title: true, category: true },
+  });
+  sikkPosts.forEach(p => {
+    if (!postMap.has(p.slug)) {
+      postMap.set(p.slug, { title: p.title, category: p.category });
+    }
+  });
 
   // Group comments by post
   const groupedByPost: Record<string, {
