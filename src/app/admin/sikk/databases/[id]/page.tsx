@@ -94,28 +94,9 @@ export default function DatabaseDetailPage({ params }: DatabasePageProps) {
     return options;
   }, [categories]);
 
-  // Create a mapping from category name to slug
-  const categoryNameToSlug = useMemo(() => {
-    const mapping: Record<string, string> = {};
-    categories.forEach((cat) => {
-      mapping[cat.name] = cat.slug;
-      cat.children.forEach((sub) => {
-        mapping[sub.name] = sub.slug;
-      });
-    });
-    return mapping;
-  }, [categories]);
-
-  // Generate database URL based on category (using slugs, not names)
+  // Generate database URL - simple /sikk/db/[slug] format
   const getDatabaseViewUrl = () => {
     if (!database) return '/sikk';
-    if (database.category) {
-      const slugPath = database.category.split('/').map(name => {
-        const slug = categoryNameToSlug[name];
-        return encodeURIComponent(slug || name);
-      }).join('/');
-      return `/sikk/category/${slugPath}/${database.slug}`;
-    }
     return `/sikk/db/${database.slug}`;
   };
 

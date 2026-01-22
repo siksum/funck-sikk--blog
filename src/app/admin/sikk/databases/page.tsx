@@ -46,28 +46,8 @@ export default function SikkDatabasesPage() {
     return options;
   }, [categories]);
 
-  // Create a mapping from category name to slug
-  const categoryNameToSlug = useMemo(() => {
-    const mapping: Record<string, string> = {};
-    categories.forEach((cat) => {
-      mapping[cat.name] = cat.slug;
-      cat.children.forEach((sub) => {
-        mapping[sub.name] = sub.slug;
-      });
-    });
-    return mapping;
-  }, [categories]);
-
-  // Generate database URL based on category (using slugs, not names)
+  // Generate database URL - simple /sikk/db/[slug] format
   const getDatabaseUrl = (db: Database) => {
-    if (db.category) {
-      // Convert category names to slugs
-      const slugPath = db.category.split('/').map(name => {
-        const slug = categoryNameToSlug[name];
-        return encodeURIComponent(slug || name);
-      }).join('/');
-      return `/sikk/category/${slugPath}/${db.slug}`;
-    }
     return `/sikk/db/${db.slug}`;
   };
 

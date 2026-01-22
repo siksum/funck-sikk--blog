@@ -39,10 +39,8 @@ export default function SikkDatabaseCard({
   categorySlugPath,
   variant = 'card',
 }: SikkDatabaseCardProps) {
-  // Generate URL based on category path
-  const href = categorySlugPath
-    ? `/sikk/category/${categorySlugPath.map(s => encodeURIComponent(s)).join('/')}/${slug}`
-    : `/sikk/db/${slug}`;
+  // Simple URL format: /sikk/db/[slug]
+  const href = `/sikk/db/${slug}`;
 
   // List variant
   if (variant === 'list') {
