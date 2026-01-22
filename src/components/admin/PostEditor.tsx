@@ -905,6 +905,7 @@ export default function PostEditor({ initialData = {}, isEdit = false }: PostEdi
             <TipTapEditor
               content={formData.content}
               onSave={handleContentSave}
+              onChange={(html) => setFormData(prev => ({ ...prev, content: html }))}
               onCancel={() => {
                 // Do nothing - cancel is handled by the main form
               }}

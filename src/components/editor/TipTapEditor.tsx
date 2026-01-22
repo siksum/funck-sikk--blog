@@ -85,6 +85,7 @@ interface TipTapEditorProps {
   content: string;
   onSave: (markdown: string) => Promise<void>;
   onCancel: () => void;
+  onChange?: (html: string) => void;
   placeholder?: string;
 }
 
@@ -92,6 +93,7 @@ export default function TipTapEditor({
   content,
   onSave,
   onCancel,
+  onChange,
   placeholder = '내용을 입력하세요...',
 }: TipTapEditorProps) {
   const [isSaving, setIsSaving] = useState(false);
@@ -161,8 +163,12 @@ export default function TipTapEditor({
         class: 'tiptap-editor prose prose-violet dark:prose-invert max-w-none focus:outline-none',
       },
     },
-    onUpdate: () => {
+    onUpdate: ({ editor }) => {
       setHasChanges(true);
+      // Sync content back to parent in real-time
+      if (onChange) {
+        onChange(editor.getHTML());
+      }
     },
   });
 
