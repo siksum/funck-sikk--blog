@@ -36,6 +36,27 @@ async function getSections() {
   }
 }
 
+async function getDatabasesByCategory(categoryPath: string) {
+  try {
+    const databases = await prisma.blogDatabase.findMany({
+      where: {
+        category: categoryPath,
+        isPublic: true,
+      },
+      orderBy: { createdAt: 'desc' },
+      include: {
+        _count: {
+          select: { items: true },
+        },
+      },
+    });
+    return databases;
+  } catch (error) {
+    console.error('Failed to fetch databases:', error);
+    return [];
+  }
+}
+
 export async function generateMetadata({ params }: CategoryPageProps) {
   const { slug } = await params;
   const slugPath = slug || [];
@@ -69,7 +90,9 @@ export default async function CategoryPage({ params }: CategoryPageProps) {
     notFound();
   }
 
-  const [childCategories, directPosts, allPosts, recentPosts, categories, tags, sections] = await Promise.all([
+  const categoryPathString = category.path.join('/');
+
+  const [childCategories, directPosts, allPosts, recentPosts, categories, tags, sections, databases] = await Promise.all([
     getChildCategoriesWithTagsAsync(slugPath),
     getPostsByCategoryPathAsync(slugPath, false),
     getPostsByCategoryPathAsync(slugPath, true),
@@ -77,6 +100,7 @@ export default async function CategoryPage({ params }: CategoryPageProps) {
     getRootCategoriesAsync(),
     getAllTagsAsync(),
     getSections(),
+    getDatabasesByCategory(categoryPathString),
   ]);
 
   return (
@@ -93,6 +117,7 @@ export default async function CategoryPage({ params }: CategoryPageProps) {
       categories={categories}
       tags={tags}
       sections={sections}
+      databases={databases}
     />
   );
 }

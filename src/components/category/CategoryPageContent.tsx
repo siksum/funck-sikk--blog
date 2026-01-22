@@ -6,6 +6,7 @@ import { Post, Category } from '@/types';
 import CategoryCard from '@/components/category/CategoryCard';
 import Sidebar from '@/components/sidebar/Sidebar';
 import PostCard from '@/components/post/PostCard';
+import BlogDatabaseCard from '@/components/blog/BlogDatabaseCard';
 
 interface ChildCategory {
   name: string;
@@ -22,6 +23,17 @@ interface DBSection {
   categories: { id: string; name: string; slug: string }[];
 }
 
+interface BlogDatabase {
+  id: string;
+  title: string;
+  description: string | null;
+  slug: string;
+  category: string | null;
+  _count: {
+    items: number;
+  };
+}
+
 interface CategoryPageContentProps {
   category: {
     name: string;
@@ -35,6 +47,7 @@ interface CategoryPageContentProps {
   categories: Category[];
   tags: { name: string; count: number }[];
   sections?: DBSection[];
+  databases?: BlogDatabase[];
 }
 
 export default function CategoryPageContent({
@@ -46,6 +59,7 @@ export default function CategoryPageContent({
   categories,
   tags,
   sections,
+  databases = [],
 }: CategoryPageContentProps) {
   const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
   const [searchTerm, setSearchTerm] = useState('');
@@ -254,6 +268,50 @@ export default function CategoryPageContent({
               </section>
             )}
 
+            {/* Databases in this category */}
+            {databases.length > 0 && (
+              <section className="mb-12">
+                <div className="flex items-center justify-between mb-6 pb-4 border-b-2 border-violet-300 dark:border-violet-500">
+                  <div>
+                    <h2 className="text-3xl md:text-4xl font-extrabold mb-2 text-transparent bg-clip-text bg-gradient-to-r from-violet-600 to-indigo-500 dark:from-violet-300 dark:to-indigo-400">
+                      데이터베이스
+                    </h2>
+                    <p className="text-sm" style={{ color: 'var(--foreground-muted)' }}>
+                      {databases.length}개의 데이터베이스
+                    </p>
+                  </div>
+                </div>
+                {viewMode === 'list' ? (
+                  <div className="space-y-3">
+                    {databases.map((db) => (
+                      <BlogDatabaseCard
+                        key={db.id}
+                        id={db.id}
+                        title={db.title}
+                        description={db.description}
+                        slug={db.slug}
+                        itemCount={db._count.items}
+                        variant="list"
+                      />
+                    ))}
+                  </div>
+                ) : (
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    {databases.map((db) => (
+                      <BlogDatabaseCard
+                        key={db.id}
+                        id={db.id}
+                        title={db.title}
+                        description={db.description}
+                        slug={db.slug}
+                        itemCount={db._count.items}
+                      />
+                    ))}
+                  </div>
+                )}
+              </section>
+            )}
+
             {/* Posts in this category */}
             {directPosts.length > 0 && (
               <section>
@@ -405,12 +463,12 @@ export default function CategoryPageContent({
               </section>
             )}
 
-            {directPosts.length === 0 && childCategories.length === 0 && (
+            {directPosts.length === 0 && childCategories.length === 0 && databases.length === 0 && (
               <p
                 className="text-center py-12"
                 style={{ color: 'var(--foreground-muted)' }}
               >
-                이 카테고리에 포스트가 없습니다.
+                이 카테고리에 콘텐츠가 없습니다.
               </p>
             )}
           </div>
