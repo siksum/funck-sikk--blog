@@ -118,6 +118,18 @@ interface DBCategory {
   children: DBCategory[];
 }
 
+interface BlogDatabase {
+  id: string;
+  title: string;
+  description: string | null;
+  slug: string;
+  category: string | null;
+  isPublic: boolean;
+  _count?: {
+    items: number;
+  };
+}
+
 export default function PostsManagementPage() {
   const [posts, setPosts] = useState<Post[]>([]);
   const [loading, setLoading] = useState(true);
@@ -163,6 +175,10 @@ export default function PostsManagementPage() {
   const [editingSection, setEditingSection] = useState<DBSection | null>(null);
   const [editingSectionTitle, setEditingSectionTitle] = useState('');
   const [editingSectionDescription, setEditingSectionDescription] = useState('');
+
+  // Database state
+  const [databases, setDatabases] = useState<BlogDatabase[]>([]);
+  const [editingDbCategoryId, setEditingDbCategoryId] = useState<string | null>(null);
 
   // Build post count map from posts
   const postCountMap = useMemo(() => {
@@ -297,6 +313,26 @@ export default function PostsManagementPage() {
     });
   }, [posts, selectedCategory, selectedSubcategory, searchTerm, sortBy, sortOrder, startDate, endDate, selectedSection, dbSections]);
 
+  // Filter databases by category (similar to posts)
+  const filteredDatabases = useMemo(() => {
+    return databases.filter((db) => {
+      const cat = db.category || '';
+      const parts = cat.split('/');
+      const mainCategory = parts[0] || '';
+      const subCategory = parts[1] || null;
+
+      const matchesCategoryDirect = selectedCategory === 'all' || mainCategory === selectedCategory;
+      const matchesSubcategoryDirect = !selectedSubcategory || subCategory === selectedSubcategory || mainCategory === selectedSubcategory;
+
+      const matchesSearch =
+        searchTerm === '' ||
+        db.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        db.slug.toLowerCase().includes(searchTerm.toLowerCase());
+
+      return (matchesCategoryDirect || matchesSubcategoryDirect) && matchesSearch;
+    });
+  }, [databases, selectedCategory, selectedSubcategory, searchTerm]);
+
   // Toggle sort
   const handleSort = (column: 'date' | 'title' | 'category') => {
     if (sortBy === column) {
@@ -319,8 +355,22 @@ export default function PostsManagementPage() {
     }
   };
 
+  // Fetch all blog databases
+  const fetchDatabases = async () => {
+    try {
+      const res = await fetch('/api/blog/databases');
+      const data = await res.json();
+      if (Array.isArray(data)) {
+        setDatabases(data);
+      }
+    } catch (error) {
+      console.error('Failed to fetch databases:', error);
+    }
+  };
+
   useEffect(() => {
     fetchPosts();
+    fetchDatabases();
   }, []);
 
   // Fetch categories from database
@@ -599,6 +649,25 @@ export default function PostsManagementPage() {
       }
     } catch (error) {
       console.error('Failed to change category:', error);
+    }
+  };
+
+  // Change database category
+  const handleChangeDatabaseCategory = async (db: BlogDatabase, newCategory: string) => {
+    try {
+      const response = await fetch(`/api/blog/databases/${db.id}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ category: newCategory }),
+      });
+      if (response.ok) {
+        setDatabases(databases.map((d) =>
+          d.id === db.id ? { ...d, category: newCategory } : d
+        ));
+        setEditingDbCategoryId(null);
+      }
+    } catch (error) {
+      console.error('Failed to change database category:', error);
     }
   };
 
@@ -1158,14 +1227,17 @@ export default function PostsManagementPage() {
                       </tr>
                     </thead>
                     <tbody className="divide-y divide-gray-200 dark:divide-gray-700">
-                      {filteredPosts.length === 0 ? (
+                      {filteredPosts.length === 0 && filteredDatabases.length === 0 ? (
                         <tr>
                           <td colSpan={7} className="px-6 py-8 text-center text-gray-500">
-                            {posts.length === 0 ? '포스트가 없습니다.' : '검색 결과가 없습니다.'}
+                            {posts.length === 0 && databases.length === 0
+                              ? '포스트가 없습니다.'
+                              : '검색 결과가 없습니다.'}
                           </td>
                         </tr>
                       ) : (
-                      filteredPosts.map((post) => (
+                      <>
+                      {filteredPosts.map((post) => (
                         <tr key={post.slug} className={`hover:bg-gray-50 dark:hover:bg-gray-700/50 ${selectedPosts.has(post.slug) ? 'bg-violet-50 dark:bg-violet-900/10' : ''}`}>
                           <td className="px-4 py-4 text-center">
                             <input
@@ -1264,7 +1336,95 @@ export default function PostsManagementPage() {
                             </div>
                           </td>
                         </tr>
-                      ))
+                      ))}
+                      {/* Database rows */}
+                      {filteredDatabases.map((db) => (
+                        <tr key={`db-${db.id}`} className="hover:bg-purple-50 dark:hover:bg-purple-900/10 bg-purple-50/30 dark:bg-purple-900/5">
+                          <td className="px-4 py-4 text-center">
+                            {/* No checkbox for databases */}
+                          </td>
+                          <td className="px-6 py-4">
+                            <Link
+                              href={`/admin/blog/databases/${db.id}`}
+                              className="flex items-center gap-2 hover:text-purple-600 dark:hover:text-purple-400 transition-colors"
+                            >
+                              <svg className="w-4 h-4 text-purple-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 7v10c0 2.21 3.582 4 8 4s8-1.79 8-4V7M4 7c0 2.21 3.582 4 8 4s8-1.79 8-4M4 7c0-2.21 3.582-4 8-4s8 1.79 8 4" />
+                              </svg>
+                              <div>
+                                <div className="text-sm font-medium text-gray-900 dark:text-white hover:text-purple-600 dark:hover:text-purple-400">
+                                  {db.title}
+                                </div>
+                                <div className="text-xs text-gray-500 dark:text-gray-400 mt-1">
+                                  {db._count?.items || 0}개 항목 · /blog/db/{db.slug}
+                                </div>
+                              </div>
+                            </Link>
+                          </td>
+                          <td className="px-6 py-4 whitespace-nowrap relative">
+                            {editingDbCategoryId === db.id ? (
+                              <div className="relative">
+                                <select
+                                  value={db.category || ''}
+                                  onChange={(e) => handleChangeDatabaseCategory(db, e.target.value)}
+                                  onBlur={() => setEditingDbCategoryId(null)}
+                                  autoFocus
+                                  className="px-2 py-1 text-xs bg-white dark:bg-gray-800 border border-purple-400 rounded focus:outline-none focus:ring-2 focus:ring-purple-500 text-gray-900 dark:text-white"
+                                >
+                                  <option value="">미분류</option>
+                                  {categoryOptions.map((opt) => (
+                                    <option key={opt.value} value={opt.value}>
+                                      {opt.label}
+                                    </option>
+                                  ))}
+                                </select>
+                              </div>
+                            ) : (
+                              <button
+                                onClick={() => setEditingDbCategoryId(db.id)}
+                                className="px-2 py-1 text-xs bg-purple-100 dark:bg-purple-900/30 text-purple-800 dark:text-purple-300 rounded border border-purple-200 dark:border-purple-800 hover:bg-purple-200 dark:hover:bg-purple-900/50 hover:border-purple-400 transition-colors cursor-pointer"
+                                title="클릭하여 카테고리 변경"
+                              >
+                                {db.category || '미분류'}
+                              </button>
+                            )}
+                          </td>
+                          <td className="px-6 py-4">
+                            <span className="px-2 py-0.5 text-xs bg-purple-100 dark:bg-purple-900/30 text-purple-600 dark:text-purple-400 rounded">
+                              데이터베이스
+                            </span>
+                          </td>
+                          <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">
+                            -
+                          </td>
+                          <td className="px-6 py-4 whitespace-nowrap text-center">
+                            <span className={`px-2 py-1 text-xs rounded-full font-medium ${
+                              db.isPublic
+                                ? 'bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-400'
+                                : 'bg-gray-100 dark:bg-gray-700 text-gray-500 dark:text-gray-400'
+                            }`}>
+                              {db.isPublic ? '공개' : '비공개'}
+                            </span>
+                          </td>
+                          <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+                            <div className="flex justify-end gap-2">
+                              <Link
+                                href={`/blog/db/${db.slug}`}
+                                className="px-2 py-1 text-gray-600 hover:text-gray-900 dark:text-gray-400 dark:hover:text-white rounded hover:bg-gray-100 dark:hover:bg-gray-700"
+                              >
+                                보기
+                              </Link>
+                              <Link
+                                href={`/admin/blog/databases/${db.id}`}
+                                className="px-2 py-1 text-purple-600 hover:text-purple-900 dark:text-purple-400 dark:hover:text-purple-300 rounded hover:bg-purple-50 dark:hover:bg-purple-900/20"
+                              >
+                                편집
+                              </Link>
+                            </div>
+                          </td>
+                        </tr>
+                      ))}
+                      </>
                       )}
                     </tbody>
                   </table>
