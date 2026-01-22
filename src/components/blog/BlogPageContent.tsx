@@ -4,6 +4,7 @@ import { useState, useMemo } from 'react';
 import { Post, Category } from '@/types';
 import CategoryCard from '@/components/category/CategoryCard';
 import Sidebar from '@/components/sidebar/Sidebar';
+import BlogDatabaseCard from '@/components/blog/BlogDatabaseCard';
 
 interface CategoryWithTags {
   name: string;
@@ -26,12 +27,21 @@ interface DBSection {
   categories: DBCategory[];
 }
 
+interface BlogDatabase {
+  id: string;
+  title: string;
+  description: string | null;
+  slug: string;
+  _count: { items: number };
+}
+
 interface BlogPageContentProps {
   rootCategoriesWithTags: CategoryWithTags[];
   recentPosts: Post[];
   categories: Category[];
   tags: { name: string; count: number }[];
   sections: DBSection[];
+  databases?: BlogDatabase[];
 }
 
 // Fallback config for when no sections are configured in DB
@@ -59,6 +69,7 @@ export default function BlogPageContent({
   categories,
   tags,
   sections,
+  databases = [],
 }: BlogPageContentProps) {
   const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
 
@@ -225,6 +236,48 @@ export default function BlogPageContent({
 
           {/* Main Content - Category Sections */}
           <div className="lg:col-span-3 lg:order-last space-y-16">
+            {/* Databases Section */}
+            {databases.length > 0 && (
+              <section>
+                <div className="mb-8 pb-4 border-b-2 border-violet-300 dark:border-violet-500">
+                  <h2 className="text-3xl md:text-4xl font-extrabold mb-2 text-transparent bg-clip-text bg-gradient-to-r from-violet-600 to-indigo-500 dark:from-violet-300 dark:to-indigo-400">
+                    데이터베이스
+                  </h2>
+                  <p className="text-sm" style={{ color: 'var(--foreground-muted)' }}>
+                    {databases.length}개의 데이터베이스
+                  </p>
+                </div>
+                {viewMode === 'list' ? (
+                  <div className="space-y-3">
+                    {databases.map((db) => (
+                      <BlogDatabaseCard
+                        key={db.id}
+                        id={db.id}
+                        title={db.title}
+                        description={db.description}
+                        slug={db.slug}
+                        itemCount={db._count.items}
+                        variant="list"
+                      />
+                    ))}
+                  </div>
+                ) : (
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    {databases.map((db) => (
+                      <BlogDatabaseCard
+                        key={db.id}
+                        id={db.id}
+                        title={db.title}
+                        description={db.description}
+                        slug={db.slug}
+                        itemCount={db._count.items}
+                      />
+                    ))}
+                  </div>
+                )}
+              </section>
+            )}
+
             {groupedCategories.map(({ section, categories: sectionCategories }) => (
               <section key={section.title}>
                 <div className="mb-8 pb-4 border-b-2 border-violet-300 dark:border-violet-500">

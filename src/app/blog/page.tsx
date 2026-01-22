@@ -28,13 +28,32 @@ async function getSections() {
   }
 }
 
+async function getBlogDatabases() {
+  try {
+    const databases = await prisma.blogDatabase.findMany({
+      where: { isPublic: true },
+      include: {
+        _count: {
+          select: { items: true },
+        },
+      },
+      orderBy: { createdAt: 'desc' },
+    });
+    return databases;
+  } catch (error) {
+    console.error('Failed to fetch blog databases:', error);
+    return [];
+  }
+}
+
 export default async function BlogPage() {
-  const [recentPosts, categories, tags, rootCategoriesWithTags, sections] = await Promise.all([
+  const [recentPosts, categories, tags, rootCategoriesWithTags, sections, databases] = await Promise.all([
     getRecentPostsAsync(5),
     getRootCategoriesAsync(),
     getAllTagsAsync(),
     getRootCategoriesWithTagsAsync(),
     getSections(),
+    getBlogDatabases(),
   ]);
 
   return (
@@ -44,6 +63,7 @@ export default async function BlogPage() {
       categories={categories}
       tags={tags}
       sections={sections}
+      databases={databases}
     />
   );
 }
