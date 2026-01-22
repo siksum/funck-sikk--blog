@@ -338,6 +338,10 @@ export default function MDXContent({ content }: MDXContentProps) {
             ),
             // Preserve span styles (for text color)
             span: ({ style, children, ...props }) => {
+              console.log('=== SPAN DEBUG ===');
+              console.log('style:', style, typeof style);
+              console.log('props:', props);
+              console.log('==================');
               // Convert style string to object if needed
               const styleObj = typeof style === 'string'
                 ? style.split(';').filter(Boolean).reduce((acc, rule) => {
