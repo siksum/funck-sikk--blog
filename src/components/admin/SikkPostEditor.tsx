@@ -757,6 +757,38 @@ export default function SikkPostEditor({ initialData = {}, isEdit = false }: Sik
     }
   };
 
+  // Save content immediately when TipTap save is triggered (for real-time sync)
+  const handleContentSave = async (html: string) => {
+    // Update local state
+    setFormData(prev => ({ ...prev, content: html }));
+
+    // If editing existing post, save to database immediately
+    if (isEdit && formData.slug) {
+      try {
+        const tagsArray = formData.tags
+          .split(',')
+          .map((tag) => tag.trim())
+          .filter(Boolean);
+
+        const response = await fetch(`/api/sikk/${formData.slug}`, {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            ...formData,
+            content: html,
+            tags: tagsArray,
+          }),
+        });
+
+        if (!response.ok) {
+          console.error('Failed to auto-save content');
+        }
+      } catch (error) {
+        console.error('Failed to auto-save:', error);
+      }
+    }
+  };
+
   return (
     <form onSubmit={handleSubmit} className="space-y-6">
       {/* Management Buttons */}
@@ -1194,14 +1226,12 @@ export default function SikkPostEditor({ initialData = {}, isEdit = false }: Sik
           <div className="px-6 pb-6">
             <TipTapEditor
               content={formData.content}
-              onSave={async (html) => {
-                setFormData({ ...formData, content: html });
-              }}
+              onSave={handleContentSave}
               onCancel={() => {
-              // Do nothing - cancel is handled by the main form
-            }}
-            placeholder="포스트 내용을 작성하세요..."
-          />
+                // Do nothing - cancel is handled by the main form
+              }}
+              placeholder="포스트 내용을 작성하세요..."
+            />
         </div>
         </div>
       </div>
