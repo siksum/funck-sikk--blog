@@ -50,6 +50,7 @@ export default function DatabaseDetailPage({ params }: DatabasePageProps) {
   const [loading, setLoading] = useState(true);
   const [editingCell, setEditingCell] = useState<{ itemId: string; columnId: string } | null>(null);
   const [editValue, setEditValue] = useState<string>('');
+  const [dropdownPosition, setDropdownPosition] = useState<{ top: number; left: number } | null>(null);
   const [showColumnModal, setShowColumnModal] = useState(false);
   const [newColumnName, setNewColumnName] = useState('');
   const [newColumnType, setNewColumnType] = useState<Column['type']>('text');
@@ -594,9 +595,18 @@ export default function DatabaseDetailPage({ params }: DatabasePageProps) {
     setHiddenColumns(new Set());
   };
 
-  const startEditing = (itemId: string, columnId: string, currentValue: unknown) => {
+  const startEditing = (itemId: string, columnId: string, currentValue: unknown, event?: React.MouseEvent) => {
     setEditingCell({ itemId, columnId });
     setEditValue(String(currentValue || ''));
+
+    // Set dropdown position for select cells
+    if (event) {
+      const rect = (event.currentTarget as HTMLElement).getBoundingClientRect();
+      setDropdownPosition({
+        top: rect.bottom + 4,
+        left: rect.left,
+      });
+    }
   };
 
   const renderCell = (item: Item, column: Column) => {
@@ -627,18 +637,30 @@ export default function DatabaseDetailPage({ params }: DatabasePageProps) {
           <>
             {/* Backdrop to close dropdown when clicking outside */}
             <div
-              className="fixed inset-0 z-40"
-              onClick={() => setEditingCell(null)}
+              className="fixed inset-0 z-[9998]"
+              onClick={() => {
+                setEditingCell(null);
+                setDropdownPosition(null);
+              }}
             />
-            <div className="relative">
-              <div className="px-2 py-1 text-sm border border-pink-400 rounded bg-white dark:bg-gray-900 text-gray-900 dark:text-white cursor-pointer">
-                {editValue || '선택...'}
-              </div>
-              <div className="absolute left-0 top-full mt-1 z-50 min-w-[200px] max-h-48 overflow-y-auto bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg shadow-lg">
+            {/* Current value display */}
+            <div className="px-2 py-1 text-sm border border-pink-400 rounded bg-white dark:bg-gray-900 text-gray-900 dark:text-white">
+              {editValue || '선택...'}
+            </div>
+            {/* Dropdown menu with fixed position */}
+            {dropdownPosition && (
+              <div
+                className="fixed z-[9999] min-w-[200px] max-h-48 overflow-y-auto bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg shadow-xl"
+                style={{
+                  top: dropdownPosition.top,
+                  left: dropdownPosition.left,
+                }}
+              >
                 <button
                   type="button"
                   onClick={() => {
                     handleUpdateCell(item.id, column.id, '');
+                    setDropdownPosition(null);
                   }}
                   className="w-full px-3 py-2 text-left text-sm text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-700"
                 >
@@ -650,6 +672,7 @@ export default function DatabaseDetailPage({ params }: DatabasePageProps) {
                     type="button"
                     onClick={() => {
                       handleUpdateCell(item.id, column.id, opt);
+                      setDropdownPosition(null);
                     }}
                     className={`w-full px-3 py-2 text-left text-sm hover:bg-pink-50 dark:hover:bg-pink-900/20 ${
                       editValue === opt ? 'bg-pink-100 dark:bg-pink-900/30 text-pink-700 dark:text-pink-400' : 'text-gray-900 dark:text-white'
@@ -659,7 +682,7 @@ export default function DatabaseDetailPage({ params }: DatabasePageProps) {
                   </button>
                 ))}
               </div>
-            </div>
+            )}
           </>
         );
       }
@@ -1156,7 +1179,7 @@ export default function DatabaseDetailPage({ params }: DatabasePageProps) {
                               className={`px-4 py-3 cursor-pointer hover:bg-pink-50 dark:hover:bg-pink-900/10 ${
                                 isEditing ? 'overflow-visible z-10 relative' : 'overflow-hidden'
                               }`}
-                              onClick={() => startEditing(item.id, column.id, item.data[column.id])}
+                              onClick={(e) => startEditing(item.id, column.id, item.data[column.id], e)}
                             >
                               {renderCell(item, column)}
                             </td>
@@ -1189,7 +1212,7 @@ export default function DatabaseDetailPage({ params }: DatabasePageProps) {
                           className={`px-4 py-3 cursor-pointer hover:bg-pink-50 dark:hover:bg-pink-900/10 ${
                             isEditing ? 'overflow-visible z-10 relative' : 'overflow-hidden'
                           }`}
-                          onClick={() => startEditing(item.id, column.id, item.data[column.id])}
+                          onClick={(e) => startEditing(item.id, column.id, item.data[column.id], e)}
                         >
                           {renderCell(item, column)}
                         </td>
