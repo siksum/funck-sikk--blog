@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useMemo, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 
@@ -52,6 +52,23 @@ export default function DatabaseTableView({
 
   // File upload state
   const [uploadingCell, setUploadingCell] = useState<{ itemId: string; columnId: string } | null>(null);
+
+  // Column width resizing state
+  const [columnWidths, setColumnWidths] = useState<Record<string, number>>({});
+  const [resizingColumn, setResizingColumn] = useState<string | null>(null);
+  const [resizeStartX, setResizeStartX] = useState(0);
+  const [resizeStartWidth, setResizeStartWidth] = useState(0);
+
+  // Sort/Filter/Group state
+  const [sortColumn, setSortColumn] = useState<string | null>(null);
+  const [sortDirection, setSortDirection] = useState<'asc' | 'desc'>('asc');
+  const [groupByColumn, setGroupByColumn] = useState<string | null>(null);
+  const [filterColumn, setFilterColumn] = useState<string | null>(null);
+  const [filterValue, setFilterValue] = useState<string>('');
+
+  // Hidden columns state
+  const [hiddenColumns, setHiddenColumns] = useState<Set<string>>(new Set());
+  const [showColumnVisibilityMenu, setShowColumnVisibilityMenu] = useState(false);
 
   const handleAddItem = useCallback(async () => {
     // Create default data for new item
@@ -313,6 +330,122 @@ export default function DatabaseTableView({
     }
   };
 
+  // Column resize handlers
+  const handleResizeStart = (e: React.MouseEvent, columnId: string) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setResizingColumn(columnId);
+    setResizeStartX(e.clientX);
+    setResizeStartWidth(columnWidths[columnId] || 150);
+  };
+
+  useEffect(() => {
+    if (!resizingColumn) return;
+
+    const handleMouseMove = (e: MouseEvent) => {
+      const diff = e.clientX - resizeStartX;
+      const newWidth = Math.max(80, resizeStartWidth + diff);
+      setColumnWidths((prev) => ({ ...prev, [resizingColumn]: newWidth }));
+    };
+
+    const handleMouseUp = () => {
+      setResizingColumn(null);
+    };
+
+    document.addEventListener('mousemove', handleMouseMove);
+    document.addEventListener('mouseup', handleMouseUp);
+
+    return () => {
+      document.removeEventListener('mousemove', handleMouseMove);
+      document.removeEventListener('mouseup', handleMouseUp);
+    };
+  }, [resizingColumn, resizeStartX, resizeStartWidth]);
+
+  // Processed items with sort/filter/group
+  const processedItems = useMemo(() => {
+    let itemsList = [...items];
+
+    // Filter
+    if (filterColumn && filterValue) {
+      itemsList = itemsList.filter((item) => {
+        const value = item.data[filterColumn];
+        if (value === null || value === undefined) return false;
+        return String(value).toLowerCase().includes(filterValue.toLowerCase());
+      });
+    }
+
+    // Sort
+    if (sortColumn) {
+      itemsList.sort((a, b) => {
+        const aVal = a.data[sortColumn];
+        const bVal = b.data[sortColumn];
+
+        if (aVal === bVal) return 0;
+        if (aVal === null || aVal === undefined) return 1;
+        if (bVal === null || bVal === undefined) return -1;
+
+        const comparison = String(aVal).localeCompare(String(bVal));
+        return sortDirection === 'asc' ? comparison : -comparison;
+      });
+    }
+
+    // Group
+    if (groupByColumn) {
+      const groups: Record<string, Item[]> = {};
+      itemsList.forEach((item) => {
+        let groupKey = item.data[groupByColumn];
+
+        // For date columns, extract year
+        const column = columns.find((c) => c.id === groupByColumn);
+        if (column?.type === 'date' && groupKey) {
+          groupKey = String(groupKey).substring(0, 4); // Extract year
+        }
+
+        const key = groupKey ? String(groupKey) : '(없음)';
+        if (!groups[key]) groups[key] = [];
+        groups[key].push(item);
+      });
+      return { items: itemsList, groups };
+    }
+
+    return { items: itemsList, groups: null };
+  }, [items, columns, sortColumn, sortDirection, filterColumn, filterValue, groupByColumn]);
+
+  // Get unique values for filter dropdown
+  const getUniqueValues = (columnId: string) => {
+    const values = new Set<string>();
+    items.forEach((item) => {
+      const val = item.data[columnId];
+      if (val !== null && val !== undefined && val !== '') {
+        values.add(String(val));
+      }
+    });
+    return Array.from(values).sort();
+  };
+
+  // Visible columns (excluding hidden ones)
+  const visibleColumns = useMemo(() => {
+    return columns.filter((col) => !hiddenColumns.has(col.id));
+  }, [columns, hiddenColumns]);
+
+  // Toggle column visibility
+  const toggleColumnVisibility = (columnId: string) => {
+    setHiddenColumns((prev) => {
+      const next = new Set(prev);
+      if (next.has(columnId)) {
+        next.delete(columnId);
+      } else {
+        next.add(columnId);
+      }
+      return next;
+    });
+  };
+
+  // Show all columns
+  const showAllColumns = () => {
+    setHiddenColumns(new Set());
+  };
+
   const startEditing = (itemId: string, columnId: string, currentValue: unknown) => {
     if (!isAdmin) return;
     setEditingCell({ itemId, columnId });
@@ -572,102 +705,294 @@ export default function DatabaseTableView({
   };
 
   return (
-    <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-pink-200 dark:border-pink-800/50 overflow-hidden">
-      <div className="overflow-x-auto">
-        <table className="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
-          <thead className="bg-gray-50 dark:bg-gray-700">
-            <tr>
-              {columns.map((column) => (
-                <th
-                  key={column.id}
-                  draggable={isAdmin}
-                  onDragStart={() => handleColumnDragStart(column.id)}
-                  onDragOver={(e) => handleColumnDragOver(e, column.id)}
-                  onDragLeave={handleColumnDragLeave}
-                  onDrop={() => handleColumnDrop(column.id)}
-                  onDragEnd={handleColumnDragEnd}
-                  className={`px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider transition-all ${
-                    isAdmin ? 'cursor-grab active:cursor-grabbing' : ''
-                  } ${draggedColumnId === column.id ? 'opacity-50' : ''} ${
-                    dragOverColumnId === column.id
-                      ? 'bg-pink-100 dark:bg-pink-900/30 border-l-2 border-pink-500'
-                      : ''
-                  }`}
-                >
-                  <div className="flex items-center gap-1">
-                    {isAdmin && (
-                      <svg
-                        className="w-3 h-3 text-gray-400 flex-shrink-0"
-                        fill="currentColor"
-                        viewBox="0 0 20 20"
-                      >
-                        <path d="M7 2a2 2 0 1 0 .001 4.001A2 2 0 0 0 7 2zm0 6a2 2 0 1 0 .001 4.001A2 2 0 0 0 7 8zm0 6a2 2 0 1 0 .001 4.001A2 2 0 0 0 7 14zm6-8a2 2 0 1 0-.001-4.001A2 2 0 0 0 13 6zm0 2a2 2 0 1 0 .001 4.001A2 2 0 0 0 13 8zm0 6a2 2 0 1 0 .001 4.001A2 2 0 0 0 13 14z" />
-                      </svg>
-                    )}
-                    {column.name}
-                  </div>
-                </th>
+    <div>
+      {/* View Options Toolbar */}
+      <div className="flex flex-wrap gap-2 mb-4 p-3 bg-gray-50 dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700">
+        {/* Sort */}
+        <div className="flex items-center gap-1">
+          <span className="text-xs text-gray-500 dark:text-gray-400">정렬:</span>
+          <select
+            value={sortColumn || ''}
+            onChange={(e) => setSortColumn(e.target.value || null)}
+            className="px-2 py-1 text-xs border border-gray-200 dark:border-gray-700 rounded bg-white dark:bg-gray-900 text-gray-900 dark:text-white"
+          >
+            <option value="">없음</option>
+            {columns.map((col) => (
+              <option key={col.id} value={col.id}>{col.name}</option>
+            ))}
+          </select>
+          {sortColumn && (
+            <button
+              onClick={() => setSortDirection((d) => d === 'asc' ? 'desc' : 'asc')}
+              className="px-2 py-1 text-xs bg-gray-200 dark:bg-gray-700 rounded hover:bg-gray-300 dark:hover:bg-gray-600"
+            >
+              {sortDirection === 'asc' ? '↑ 오름차순' : '↓ 내림차순'}
+            </button>
+          )}
+        </div>
+
+        {/* Group */}
+        <div className="flex items-center gap-1">
+          <span className="text-xs text-gray-500 dark:text-gray-400">그룹:</span>
+          <select
+            value={groupByColumn || ''}
+            onChange={(e) => setGroupByColumn(e.target.value || null)}
+            className="px-2 py-1 text-xs border border-gray-200 dark:border-gray-700 rounded bg-white dark:bg-gray-900 text-gray-900 dark:text-white"
+          >
+            <option value="">없음</option>
+            {columns.filter((col) => col.type === 'select' || col.type === 'date').map((col) => (
+              <option key={col.id} value={col.id}>
+                {col.name}{col.type === 'date' ? ' (연도별)' : ''}
+              </option>
+            ))}
+          </select>
+        </div>
+
+        {/* Filter */}
+        <div className="flex items-center gap-1">
+          <span className="text-xs text-gray-500 dark:text-gray-400">필터:</span>
+          <select
+            value={filterColumn || ''}
+            onChange={(e) => {
+              setFilterColumn(e.target.value || null);
+              setFilterValue('');
+            }}
+            className="px-2 py-1 text-xs border border-gray-200 dark:border-gray-700 rounded bg-white dark:bg-gray-900 text-gray-900 dark:text-white"
+          >
+            <option value="">없음</option>
+            {columns.map((col) => (
+              <option key={col.id} value={col.id}>{col.name}</option>
+            ))}
+          </select>
+          {filterColumn && (
+            <select
+              value={filterValue}
+              onChange={(e) => setFilterValue(e.target.value)}
+              className="px-2 py-1 text-xs border border-gray-200 dark:border-gray-700 rounded bg-white dark:bg-gray-900 text-gray-900 dark:text-white"
+            >
+              <option value="">전체</option>
+              {getUniqueValues(filterColumn).map((val) => (
+                <option key={val} value={val}>{val}</option>
               ))}
-              {isAdmin && (
-                <th className="px-4 py-3 text-right text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider w-16">
-                  ...
-                </th>
-              )}
-            </tr>
-          </thead>
-          <tbody className="divide-y divide-gray-200 dark:divide-gray-700">
-            {items.length === 0 ? (
-              <tr>
-                <td
-                  colSpan={columns.length + (isAdmin ? 1 : 0)}
-                  className="px-4 py-8 text-center text-gray-500"
+            </select>
+          )}
+        </div>
+
+        {/* Column Visibility */}
+        <div className="relative flex items-center gap-1">
+          <button
+            onClick={() => setShowColumnVisibilityMenu(!showColumnVisibilityMenu)}
+            className="px-2 py-1 text-xs border border-gray-200 dark:border-gray-700 rounded bg-white dark:bg-gray-900 text-gray-900 dark:text-white hover:bg-gray-50 dark:hover:bg-gray-800 flex items-center gap-1"
+          >
+            <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+            </svg>
+            열 표시 ({visibleColumns.length}/{columns.length})
+          </button>
+          {showColumnVisibilityMenu && (
+            <div className="absolute top-full left-0 mt-1 z-50 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg shadow-lg min-w-[180px] p-2">
+              <div className="text-xs font-medium text-gray-500 dark:text-gray-400 mb-2 px-2">
+                열 표시/숨기기
+              </div>
+              <div className="max-h-48 overflow-y-auto space-y-1">
+                {columns.map((col) => (
+                  <label
+                    key={col.id}
+                    className="flex items-center gap-2 px-2 py-1 hover:bg-gray-50 dark:hover:bg-gray-700 rounded cursor-pointer text-sm"
+                  >
+                    <input
+                      type="checkbox"
+                      checked={!hiddenColumns.has(col.id)}
+                      onChange={() => toggleColumnVisibility(col.id)}
+                      className="rounded border-gray-300 dark:border-gray-600 text-pink-500 focus:ring-pink-500"
+                    />
+                    <span className="text-gray-700 dark:text-gray-300">{col.name}</span>
+                  </label>
+                ))}
+              </div>
+              {hiddenColumns.size > 0 && (
+                <button
+                  onClick={showAllColumns}
+                  className="mt-2 w-full px-2 py-1 text-xs text-pink-500 hover:text-pink-700 text-center"
                 >
-                  항목이 없습니다.
-                </td>
-              </tr>
-            ) : (
-              items.map((item) => (
-                <tr key={item.id} className="hover:bg-gray-50 dark:hover:bg-gray-700/50">
-                  {columns.map((column) => (
-                    <td
-                      key={column.id}
-                      className={`px-4 py-3 ${isAdmin ? 'cursor-pointer hover:bg-pink-50 dark:hover:bg-pink-900/10' : ''}`}
-                      onClick={() => startEditing(item.id, column.id, item.data[column.id])}
-                    >
-                      {renderCell(item, column)}
-                    </td>
-                  ))}
-                  {isAdmin && (
-                    <td className="px-4 py-3 text-right">
-                      <button
-                        onClick={() => handleDeleteItem(item.id)}
-                        className="p-1 text-gray-400 hover:text-red-500 rounded hover:bg-red-50 dark:hover:bg-red-900/20"
-                      >
-                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-                        </svg>
-                      </button>
-                    </td>
-                  )}
-                </tr>
-              ))
-            )}
-          </tbody>
-        </table>
+                  모두 표시
+                </button>
+              )}
+              <button
+                onClick={() => setShowColumnVisibilityMenu(false)}
+                className="mt-1 w-full px-2 py-1 text-xs text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200 text-center"
+              >
+                닫기
+              </button>
+            </div>
+          )}
+        </div>
+
+        {/* Reset */}
+        {(sortColumn || groupByColumn || filterColumn || hiddenColumns.size > 0) && (
+          <button
+            onClick={() => {
+              setSortColumn(null);
+              setGroupByColumn(null);
+              setFilterColumn(null);
+              setFilterValue('');
+              setHiddenColumns(new Set());
+            }}
+            className="px-2 py-1 text-xs text-red-500 hover:text-red-700"
+          >
+            초기화
+          </button>
+        )}
       </div>
 
-      {/* Add Item Button (Admin Only) */}
-      {isAdmin && (
-        <button
-          onClick={handleAddItem}
-          className="w-full px-4 py-3 text-left text-sm text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-700/50 border-t border-gray-200 dark:border-gray-700 transition-colors flex items-center gap-2"
-        >
-          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
-          </svg>
-          새 페이지
-        </button>
-      )}
+      {/* Table */}
+      <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-pink-200 dark:border-pink-800/50 overflow-hidden">
+        <div className="overflow-x-auto">
+          <table className="min-w-full divide-y divide-gray-200 dark:divide-gray-700" style={{ tableLayout: 'fixed' }}>
+            <thead className="bg-gray-50 dark:bg-gray-700">
+              <tr>
+                {visibleColumns.map((column) => (
+                  <th
+                    key={column.id}
+                    draggable={isAdmin}
+                    onDragStart={() => handleColumnDragStart(column.id)}
+                    onDragOver={(e) => handleColumnDragOver(e, column.id)}
+                    onDragLeave={handleColumnDragLeave}
+                    onDrop={() => handleColumnDrop(column.id)}
+                    onDragEnd={handleColumnDragEnd}
+                    style={{ width: columnWidths[column.id] || 150 }}
+                    className={`group relative px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider transition-all ${
+                      isAdmin ? 'cursor-grab active:cursor-grabbing' : ''
+                    } ${draggedColumnId === column.id ? 'opacity-50' : ''} ${
+                      dragOverColumnId === column.id
+                        ? 'bg-pink-100 dark:bg-pink-900/30 border-l-2 border-pink-500'
+                        : ''
+                    }`}
+                  >
+                    <div className="flex items-center gap-1">
+                      {isAdmin && (
+                        <svg
+                          className="w-3 h-3 text-gray-400 flex-shrink-0"
+                          fill="currentColor"
+                          viewBox="0 0 20 20"
+                        >
+                          <path d="M7 2a2 2 0 1 0 .001 4.001A2 2 0 0 0 7 2zm0 6a2 2 0 1 0 .001 4.001A2 2 0 0 0 7 8zm0 6a2 2 0 1 0 .001 4.001A2 2 0 0 0 7 14zm6-8a2 2 0 1 0-.001-4.001A2 2 0 0 0 13 6zm0 2a2 2 0 1 0 .001 4.001A2 2 0 0 0 13 8zm0 6a2 2 0 1 0 .001 4.001A2 2 0 0 0 13 14z" />
+                        </svg>
+                      )}
+                      <span className="truncate">{column.name}</span>
+                    </div>
+                    {/* Resize handle */}
+                    <div
+                      onMouseDown={(e) => handleResizeStart(e, column.id)}
+                      className="absolute right-0 top-0 h-full w-1 cursor-col-resize hover:bg-pink-500 transition-colors"
+                      style={{ transform: 'translateX(50%)' }}
+                    />
+                  </th>
+                ))}
+                {isAdmin && (
+                  <th className="px-4 py-3 text-right text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider w-16">
+                    ...
+                  </th>
+                )}
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-gray-200 dark:divide-gray-700">
+              {processedItems.items.length === 0 ? (
+                <tr>
+                  <td
+                    colSpan={visibleColumns.length + (isAdmin ? 1 : 0)}
+                    className="px-4 py-8 text-center text-gray-500"
+                  >
+                    {filterValue ? '필터 조건에 맞는 항목이 없습니다.' : '항목이 없습니다.'}
+                  </td>
+                </tr>
+              ) : processedItems.groups ? (
+                // Grouped view
+                Object.entries(processedItems.groups).map(([groupName, groupItems]) => (
+                  <>
+                    <tr key={`group-${groupName}`} className="bg-purple-50 dark:bg-purple-900/20">
+                      <td
+                        colSpan={visibleColumns.length + (isAdmin ? 1 : 0)}
+                        className="px-4 py-2 text-sm font-semibold text-purple-700 dark:text-purple-400"
+                      >
+                        {groupName} ({groupItems.length})
+                      </td>
+                    </tr>
+                    {groupItems.map((item) => (
+                      <tr key={item.id} className="hover:bg-gray-50 dark:hover:bg-gray-700/50">
+                        {visibleColumns.map((column) => (
+                          <td
+                            key={column.id}
+                            style={{ width: columnWidths[column.id] || 150 }}
+                            className={`px-4 py-3 overflow-hidden ${isAdmin ? 'cursor-pointer hover:bg-pink-50 dark:hover:bg-pink-900/10' : ''}`}
+                            onClick={() => startEditing(item.id, column.id, item.data[column.id])}
+                          >
+                            {renderCell(item, column)}
+                          </td>
+                        ))}
+                        {isAdmin && (
+                          <td className="px-4 py-3 text-right">
+                            <button
+                              onClick={() => handleDeleteItem(item.id)}
+                              className="p-1 text-gray-400 hover:text-red-500 rounded hover:bg-red-50 dark:hover:bg-red-900/20"
+                            >
+                              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                              </svg>
+                            </button>
+                          </td>
+                        )}
+                      </tr>
+                    ))}
+                  </>
+                ))
+              ) : (
+                // Regular view
+                processedItems.items.map((item) => (
+                  <tr key={item.id} className="hover:bg-gray-50 dark:hover:bg-gray-700/50">
+                    {visibleColumns.map((column) => (
+                      <td
+                        key={column.id}
+                        style={{ width: columnWidths[column.id] || 150 }}
+                        className={`px-4 py-3 overflow-hidden ${isAdmin ? 'cursor-pointer hover:bg-pink-50 dark:hover:bg-pink-900/10' : ''}`}
+                        onClick={() => startEditing(item.id, column.id, item.data[column.id])}
+                      >
+                        {renderCell(item, column)}
+                      </td>
+                    ))}
+                    {isAdmin && (
+                      <td className="px-4 py-3 text-right">
+                        <button
+                          onClick={() => handleDeleteItem(item.id)}
+                          className="p-1 text-gray-400 hover:text-red-500 rounded hover:bg-red-50 dark:hover:bg-red-900/20"
+                        >
+                          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                          </svg>
+                        </button>
+                      </td>
+                    )}
+                  </tr>
+                ))
+              )}
+            </tbody>
+          </table>
+        </div>
+
+        {/* Add Item Button (Admin Only) */}
+        {isAdmin && (
+          <button
+            onClick={handleAddItem}
+            className="w-full px-4 py-3 text-left text-sm text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-700/50 border-t border-gray-200 dark:border-gray-700 transition-colors flex items-center gap-2"
+          >
+            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
+            </svg>
+            새 페이지
+          </button>
+        )}
+      </div>
     </div>
   );
 }
