@@ -1,6 +1,7 @@
 'use client';
 
-import { useState, useEffect, useMemo, useRef } from 'react';
+import { useState, useEffect, useMemo, useRef, useCallback } from 'react';
+import { useSearchParams, useRouter } from 'next/navigation';
 import Link from 'next/link';
 
 // Mobile category filter dropdown component
@@ -147,13 +148,19 @@ interface DBCategory {
 }
 
 export default function SikkPostsManagementPage() {
+  const router = useRouter();
+  const searchParams = useSearchParams();
+
   const [posts, setPosts] = useState<Post[]>([]);
   const [loading, setLoading] = useState(true);
-  const [selectedCategory, setSelectedCategory] = useState<string>('all');
-  const [selectedSubcategory, setSelectedSubcategory] = useState<string | null>(null);
-  const [selectedSection, setSelectedSection] = useState<string | null>(null);
-  const [searchTerm, setSearchTerm] = useState('');
-  const [expandedCategories, setExpandedCategories] = useState<Set<string>>(new Set());
+  const [selectedCategory, setSelectedCategory] = useState<string>(() => searchParams.get('cat') || 'all');
+  const [selectedSubcategory, setSelectedSubcategory] = useState<string | null>(() => searchParams.get('subcat') || null);
+  const [selectedSection, setSelectedSection] = useState<string | null>(() => searchParams.get('section') || null);
+  const [searchTerm, setSearchTerm] = useState(() => searchParams.get('q') || '');
+  const [expandedCategories, setExpandedCategories] = useState<Set<string>>(() => {
+    const expanded = searchParams.get('expanded');
+    return expanded ? new Set(expanded.split(',')) : new Set();
+  });
 
   // Database state
   const [databases, setDatabases] = useState<Database[]>([]);
@@ -166,16 +173,17 @@ export default function SikkPostsManagementPage() {
 
   // Category change state
   const [editingCategorySlug, setEditingCategorySlug] = useState<string | null>(null);
+  const [editingDbCategoryId, setEditingDbCategoryId] = useState<string | null>(null);
   const [showBulkCategoryDropdown, setShowBulkCategoryDropdown] = useState(false);
   const bulkCategoryDropdownRef = useRef<HTMLDivElement>(null);
 
   // Sorting state
-  const [sortBy, setSortBy] = useState<'date' | 'title' | 'category'>('date');
-  const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('desc');
+  const [sortBy, setSortBy] = useState<'date' | 'title' | 'category'>(() => (searchParams.get('sortBy') as 'date' | 'title' | 'category') || 'date');
+  const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>(() => (searchParams.get('sortOrder') as 'asc' | 'desc') || 'desc');
 
   // Date filter state
-  const [startDate, setStartDate] = useState<string>('');
-  const [endDate, setEndDate] = useState<string>('');
+  const [startDate, setStartDate] = useState<string>(() => searchParams.get('startDate') || '');
+  const [endDate, setEndDate] = useState<string>(() => searchParams.get('endDate') || '');
 
   // Category management state
   const [showCategoryModal, setShowCategoryModal] = useState(false);
@@ -196,6 +204,20 @@ export default function SikkPostsManagementPage() {
   const [editingSection, setEditingSection] = useState<DBSection | null>(null);
   const [editingSectionTitle, setEditingSectionTitle] = useState('');
   const [editingSectionDescription, setEditingSectionDescription] = useState('');
+
+  // URL param update helper
+  const updateUrlParams = useCallback((updates: Record<string, string | null>) => {
+    const params = new URLSearchParams(searchParams.toString());
+    Object.entries(updates).forEach(([key, value]) => {
+      if (value === null || value === '' || (key === 'cat' && value === 'all')) {
+        params.delete(key);
+      } else {
+        params.set(key, value);
+      }
+    });
+    const newUrl = params.toString() ? `?${params.toString()}` : window.location.pathname;
+    router.replace(newUrl, { scroll: false });
+  }, [searchParams, router]);
 
   // Build post count map from posts
   const postCountMap = useMemo(() => {
@@ -298,6 +320,8 @@ export default function SikkPostsManagementPage() {
       } else {
         next.add(category);
       }
+      const expandedStr = Array.from(next).join(',');
+      updateUrlParams({ expanded: expandedStr || null });
       return next;
     });
   };
@@ -355,10 +379,14 @@ export default function SikkPostsManagementPage() {
   // Toggle sort
   const handleSort = (column: 'date' | 'title' | 'category') => {
     if (sortBy === column) {
-      setSortOrder(sortOrder === 'asc' ? 'desc' : 'asc');
+      const newOrder = sortOrder === 'asc' ? 'desc' : 'asc';
+      setSortOrder(newOrder);
+      updateUrlParams({ sortBy: column, sortOrder: newOrder });
     } else {
+      const newOrder = column === 'date' ? 'desc' : 'asc';
       setSortBy(column);
-      setSortOrder(column === 'date' ? 'desc' : 'asc');
+      setSortOrder(newOrder);
+      updateUrlParams({ sortBy: column, sortOrder: newOrder });
     }
   };
 
@@ -706,6 +734,27 @@ export default function SikkPostsManagementPage() {
     }
   };
 
+  // Change database category
+  const handleChangeDatabaseCategory = async (db: Database, newCategory: string) => {
+    try {
+      const response = await fetch(`/api/sikk/databases/${db.id}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          category: newCategory || null,
+        }),
+      });
+      if (response.ok) {
+        setDatabases(databases.map((d) =>
+          d.id === db.id ? { ...d, category: newCategory || null } : d
+        ));
+        setEditingDbCategoryId(null);
+      }
+    } catch (error) {
+      console.error('Failed to change database category:', error);
+    }
+  };
+
   // Multi-select functions
   const toggleSelectPost = (slug: string) => {
     setSelectedPosts((prev) => {
@@ -852,21 +901,30 @@ export default function SikkPostsManagementPage() {
           type="text"
           placeholder="제목, 슬러그, 태그로 검색..."
           value={searchTerm}
-          onChange={(e) => setSearchTerm(e.target.value)}
+          onChange={(e) => {
+            setSearchTerm(e.target.value);
+            updateUrlParams({ q: e.target.value || null });
+          }}
           className="flex-1 px-4 py-2 text-sm bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-pink-500 text-gray-900 dark:text-white"
         />
         <div className="flex items-center gap-2">
           <input
             type="date"
             value={startDate}
-            onChange={(e) => setStartDate(e.target.value)}
+            onChange={(e) => {
+              setStartDate(e.target.value);
+              updateUrlParams({ startDate: e.target.value || null });
+            }}
             className="px-3 py-2 text-sm bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-pink-500 text-gray-900 dark:text-white"
           />
           <span className="text-gray-500 dark:text-gray-400">~</span>
           <input
             type="date"
             value={endDate}
-            onChange={(e) => setEndDate(e.target.value)}
+            onChange={(e) => {
+              setEndDate(e.target.value);
+              updateUrlParams({ endDate: e.target.value || null });
+            }}
             className="px-3 py-2 text-sm bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-pink-500 text-gray-900 dark:text-white"
           />
           {(startDate || endDate) && (
@@ -874,6 +932,7 @@ export default function SikkPostsManagementPage() {
               onClick={() => {
                 setStartDate('');
                 setEndDate('');
+                updateUrlParams({ startDate: null, endDate: null });
               }}
               className="px-2 py-1 text-xs text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200"
             >
@@ -961,6 +1020,7 @@ export default function SikkPostsManagementPage() {
         onSelect={(cat, sub) => {
           setSelectedCategory(cat);
           setSelectedSubcategory(sub);
+          updateUrlParams({ cat: cat, subcat: sub });
         }}
       />
 
@@ -981,6 +1041,7 @@ export default function SikkPostsManagementPage() {
                   setSelectedSubcategory(null);
                   setSelectedSection(null);
                   setSelectedDatabase(null);
+                  updateUrlParams({ cat: null, subcat: null, section: null });
                 }}
                 className={`w-full flex items-center justify-between py-2 text-sm transition-colors ${
                   selectedCategory === 'all' && !selectedSection && !selectedDatabase
@@ -1001,10 +1062,12 @@ export default function SikkPostsManagementPage() {
                   <button
                     onClick={() => {
                       if (section) {
-                        setSelectedSection(selectedSection === section.id ? null : section.id);
+                        const newSectionId = selectedSection === section.id ? null : section.id;
+                        setSelectedSection(newSectionId);
                         setSelectedCategory('all');
                         setSelectedSubcategory(null);
                         setSelectedDatabase(null);
+                        updateUrlParams({ section: newSectionId, cat: null, subcat: null });
                       }
                     }}
                     className={`w-full text-left text-xs font-semibold uppercase tracking-wider mb-2 pb-1 border-b transition-colors ${
@@ -1026,6 +1089,7 @@ export default function SikkPostsManagementPage() {
                           setSelectedSubcategory(null);
                           setSelectedSection(null);
                           setSelectedDatabase(null);
+                          updateUrlParams({ cat: category.name, subcat: null, section: null });
                         }}
                         className={`w-full flex items-center justify-between py-2 text-sm transition-colors ${
                           selectedCategory === category.name && !selectedSubcategory && !selectedDatabase
@@ -1056,6 +1120,7 @@ export default function SikkPostsManagementPage() {
                                 setSelectedCategory(category.name);
                                 setSelectedSubcategory(sub.name);
                                 setSelectedDatabase(null);
+                                updateUrlParams({ cat: category.name, subcat: sub.name });
                               }}
                               className={`w-full flex items-center justify-between py-1.5 text-sm transition-colors ${
                                 selectedCategory === category.name && selectedSubcategory === sub.name && !selectedDatabase
@@ -1397,10 +1462,33 @@ export default function SikkPostsManagementPage() {
                                 </div>
                               </div>
                             </td>
-                            <td className="px-6 py-4 whitespace-nowrap">
-                              <span className="px-2 py-1 text-xs bg-purple-100 dark:bg-purple-900/30 text-purple-800 dark:text-purple-300 rounded">
-                                {db.category || '미분류'}
-                              </span>
+                            <td className="px-6 py-4 whitespace-nowrap relative">
+                              {editingDbCategoryId === db.id ? (
+                                <div className="relative">
+                                  <select
+                                    value={db.category || ''}
+                                    onChange={(e) => handleChangeDatabaseCategory(db, e.target.value)}
+                                    onBlur={() => setEditingDbCategoryId(null)}
+                                    autoFocus
+                                    className="px-2 py-1 text-xs bg-white dark:bg-gray-800 border border-purple-400 rounded focus:outline-none focus:ring-2 focus:ring-purple-500 text-gray-900 dark:text-white"
+                                  >
+                                    <option value="">미분류</option>
+                                    {categoryOptions.map((opt) => (
+                                      <option key={opt.value} value={opt.value}>
+                                        {opt.label}
+                                      </option>
+                                    ))}
+                                  </select>
+                                </div>
+                              ) : (
+                                <button
+                                  onClick={() => setEditingDbCategoryId(db.id)}
+                                  className="px-2 py-1 text-xs bg-purple-100 dark:bg-purple-900/30 text-purple-800 dark:text-purple-300 rounded border border-purple-200 dark:border-purple-800 hover:bg-purple-200 dark:hover:bg-purple-900/50 hover:border-purple-400 transition-colors cursor-pointer"
+                                  title="클릭하여 카테고리 변경"
+                                >
+                                  {db.category || '미분류'}
+                                </button>
+                              )}
                             </td>
                             <td className="px-6 py-4">
                               <span className="px-2 py-0.5 text-xs bg-purple-100 dark:bg-purple-900/30 text-purple-600 dark:text-purple-400 rounded">
