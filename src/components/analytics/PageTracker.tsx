@@ -5,7 +5,7 @@ import { usePathname } from 'next/navigation';
 import { useSession } from 'next-auth/react';
 
 // Admin emails that should not be tracked
-const ADMIN_EMAILS = ['sikk@sikk.kr'];
+const ADMIN_EMAILS = ['sikk@sikk.kr', 'namyoung0718@gmail.com'];
 const ADMIN_MARKER_KEY = 'blog_admin_no_track';
 
 export default function PageTracker() {

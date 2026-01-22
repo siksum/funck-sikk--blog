@@ -7,6 +7,7 @@ import { createHash } from 'crypto';
 const ADMIN_EMAILS = [
   process.env.ADMIN_EMAIL,
   'sikk@sikk.kr',
+  'namyoung0718@gmail.com',
 ].filter(Boolean);
 
 // Admin IPs that should not be tracked
