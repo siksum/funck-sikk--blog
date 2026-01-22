@@ -18,7 +18,7 @@ import { Markdown } from 'tiptap-markdown';
 import { useCallback, useEffect, useState } from 'react';
 import EditorToolbar from './menus/EditorToolbar';
 import BubbleMenuComponent from './menus/BubbleMenu';
-import { Callout, MermaidBlock, PrivateBlock } from './extensions';
+import { Callout, MermaidBlock, PrivateBlock, SelectBlock } from './extensions';
 import './styles/editor.css';
 
 const lowlight = createLowlight(common);
@@ -83,6 +83,7 @@ export default function TipTapEditor({
       Callout,
       MermaidBlock,
       PrivateBlock,
+      SelectBlock,
       Markdown.configure({
         html: true,
         tightLists: true,
