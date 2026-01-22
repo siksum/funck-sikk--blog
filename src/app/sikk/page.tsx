@@ -29,24 +29,6 @@ async function getSikkSections() {
   }
 }
 
-async function getSikkDatabases() {
-  try {
-    const databases = await prisma.sikkDatabase.findMany({
-      where: { isPublic: true },
-      orderBy: { createdAt: 'desc' },
-      include: {
-        _count: {
-          select: { items: true },
-        },
-      },
-    });
-    return databases;
-  } catch (error) {
-    console.error('Failed to fetch sikk databases:', error);
-    return [];
-  }
-}
-
 export default async function SikkPage() {
   // Check admin access
   const session = await auth();
@@ -54,13 +36,12 @@ export default async function SikkPage() {
     redirect('/');
   }
 
-  const [recentPosts, categories, tags, rootCategoriesWithTags, sections, databases] = await Promise.all([
+  const [recentPosts, categories, tags, rootCategoriesWithTags, sections] = await Promise.all([
     getRecentSikkPostsAsync(5),
     getSikkRootCategoriesAsync(),
     getAllSikkTagsAsync(),
     getSikkRootCategoriesWithTagsAsync(),
     getSikkSections(),
-    getSikkDatabases(),
   ]);
 
   return (
@@ -70,7 +51,6 @@ export default async function SikkPage() {
       categories={categories}
       tags={tags}
       sections={sections}
-      databases={databases}
     />
   );
 }

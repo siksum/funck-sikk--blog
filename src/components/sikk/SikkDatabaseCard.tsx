@@ -8,6 +8,7 @@ interface SikkDatabaseCardProps {
   description: string | null;
   slug: string;
   itemCount: number;
+  categorySlugPath?: string[];
   variant?: 'card' | 'list';
 }
 
@@ -35,9 +36,13 @@ export default function SikkDatabaseCard({
   description,
   slug,
   itemCount,
+  categorySlugPath,
   variant = 'card',
 }: SikkDatabaseCardProps) {
-  const href = `/sikk/db/${slug}`;
+  // Generate URL based on category path
+  const href = categorySlugPath
+    ? `/sikk/category/${categorySlugPath.map(s => encodeURIComponent(s)).join('/')}/db/${slug}`
+    : `/sikk/db/${slug}`;
 
   // List variant
   if (variant === 'list') {
