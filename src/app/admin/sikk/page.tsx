@@ -1060,8 +1060,16 @@ export default function SikkPostsManagementPage() {
                               </span>
                             </button>
                           ))}
-                          {/* Databases under this subcategory */}
-                          {databasesByCategory[`${category.name}/${sub.name}`]?.map((db) => (
+                          {/* Databases under this subcategory - check both formats (full path and subcategory only) */}
+                          {(() => {
+                            const fullPath = `${category.name}/${sub.name}`;
+                            const subOnly = sub.name;
+                            const dbsFullPath = databasesByCategory[fullPath] || [];
+                            const dbsSubOnly = (databasesByCategory[subOnly] || []).filter(
+                              (db) => !dbsFullPath.some((d) => d.id === db.id)
+                            );
+                            return [...dbsFullPath, ...dbsSubOnly];
+                          })().map((db) => (
                             <button
                               key={db.id}
                               onClick={() => {
