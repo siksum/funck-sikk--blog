@@ -59,7 +59,7 @@ export default function DatabaseDetailPage({ params }: DatabasePageProps) {
   const [dragOverColumnId, setDragOverColumnId] = useState<string | null>(null);
 
   // Select options editing state
-  const [editingSelectColumn, setEditingSelectColumn] = useState<string | null>(null);
+  const [editingSelectCell, setEditingSelectCell] = useState<{ itemId: string; columnId: string } | null>(null);
   const [newSelectOption, setNewSelectOption] = useState('');
 
   // File upload state
@@ -589,7 +589,7 @@ export default function DatabaseDetailPage({ params }: DatabasePageProps) {
 
     if (column.type === 'select') {
       const selectValue = String(value || '');
-      const isEditingOptions = editingSelectColumn === column.id;
+      const isEditingOptions = editingSelectCell?.itemId === item.id && editingSelectCell?.columnId === column.id;
 
       return (
         <div className="relative">
@@ -604,7 +604,7 @@ export default function DatabaseDetailPage({ params }: DatabasePageProps) {
             <button
               onClick={(e) => {
                 e.stopPropagation();
-                setEditingSelectColumn(isEditingOptions ? null : column.id);
+                setEditingSelectCell(isEditingOptions ? null : { itemId: item.id, columnId: column.id });
               }}
               className="p-0.5 text-gray-400 hover:text-purple-500 rounded hover:bg-purple-50 dark:hover:bg-purple-900/20"
               title="옵션 편집"
@@ -661,7 +661,7 @@ export default function DatabaseDetailPage({ params }: DatabasePageProps) {
                 </button>
               </div>
               <button
-                onClick={() => setEditingSelectColumn(null)}
+                onClick={() => setEditingSelectCell(null)}
                 className="mt-2 w-full px-2 py-1 text-xs text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200"
               >
                 닫기
