@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useCallback, useMemo, useEffect } from 'react';
+import { createPortal } from 'react-dom';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 
@@ -69,6 +70,9 @@ export default function DatabaseTableView({
   // Hidden columns state
   const [hiddenColumns, setHiddenColumns] = useState<Set<string>>(new Set());
   const [showColumnVisibilityMenu, setShowColumnVisibilityMenu] = useState(false);
+
+  // Dropdown position state for Portal rendering
+  const [dropdownPosition, setDropdownPosition] = useState<{ top: number; left: number } | null>(null);
 
   const handleAddItem = useCallback(async () => {
     // Create default data for new item
@@ -446,10 +450,23 @@ export default function DatabaseTableView({
     setHiddenColumns(new Set());
   };
 
-  const startEditing = (itemId: string, columnId: string, currentValue: unknown) => {
+  const startEditing = (itemId: string, columnId: string, currentValue: unknown, event?: React.MouseEvent) => {
     if (!isAdmin) return;
     setEditingCell({ itemId, columnId });
     setEditValue(String(currentValue || ''));
+
+    // Calculate dropdown position for select cells
+    const column = columns.find((c) => c.id === columnId);
+    if (column?.type === 'select' && event) {
+      const target = event.currentTarget as HTMLElement;
+      const rect = target.getBoundingClientRect();
+      setDropdownPosition({
+        top: rect.bottom + 4,
+        left: rect.left,
+      });
+    } else {
+      setDropdownPosition(null);
+    }
   };
 
   const renderCell = (item: Item, column: Column) => {
@@ -476,23 +493,60 @@ export default function DatabaseTableView({
 
       if (column.type === 'select' && column.options) {
         return (
-          <select
-            value={editValue}
-            onChange={(e) => {
-              setEditValue(e.target.value);
-              handleUpdateCell(item.id, column.id, e.target.value);
-            }}
-            onBlur={() => setEditingCell(null)}
-            className="w-full px-2 py-1 text-sm border border-pink-400 rounded focus:outline-none focus:ring-2 focus:ring-pink-500 bg-white dark:bg-gray-900 text-gray-900 dark:text-white"
-            autoFocus
-          >
-            <option value="">선택...</option>
-            {column.options.map((opt) => (
-              <option key={opt} value={opt}>
-                {opt}
-              </option>
-            ))}
-          </select>
+          <>
+            {/* Current value display */}
+            <div className="px-2 py-1 text-sm border border-pink-400 rounded bg-white dark:bg-gray-900 text-gray-900 dark:text-white">
+              {editValue || '선택...'}
+            </div>
+            {/* Portal: Render dropdown outside of table to avoid overflow clipping */}
+            {dropdownPosition && typeof document !== 'undefined' && createPortal(
+              <>
+                {/* Backdrop to close dropdown when clicking outside */}
+                <div
+                  className="fixed inset-0"
+                  style={{ zIndex: 99998 }}
+                  onClick={() => {
+                    setEditingCell(null);
+                    setDropdownPosition(null);
+                  }}
+                />
+                {/* Dropdown menu */}
+                <div
+                  className="fixed min-w-[200px] max-h-48 overflow-y-auto bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg shadow-xl"
+                  style={{
+                    zIndex: 99999,
+                    top: dropdownPosition.top,
+                    left: dropdownPosition.left,
+                  }}
+                >
+                  <div
+                    className="px-3 py-2 hover:bg-gray-100 dark:hover:bg-gray-700 cursor-pointer text-sm text-gray-500"
+                    onClick={() => {
+                      handleUpdateCell(item.id, column.id, '');
+                      setDropdownPosition(null);
+                    }}
+                  >
+                    선택...
+                  </div>
+                  {column.options.map((opt) => (
+                    <div
+                      key={opt}
+                      className={`px-3 py-2 hover:bg-gray-100 dark:hover:bg-gray-700 cursor-pointer text-sm ${
+                        editValue === opt ? 'bg-pink-50 dark:bg-pink-900/30 text-pink-600 dark:text-pink-400' : 'text-gray-900 dark:text-white'
+                      }`}
+                      onClick={() => {
+                        handleUpdateCell(item.id, column.id, opt);
+                        setDropdownPosition(null);
+                      }}
+                    >
+                      {opt}
+                    </div>
+                  ))}
+                </div>
+              </>,
+              document.body
+            )}
+          </>
         );
       }
 
@@ -926,7 +980,7 @@ export default function DatabaseTableView({
                             key={column.id}
                             style={{ width: columnWidths[column.id] || 150 }}
                             className={`px-4 py-3 overflow-hidden ${isAdmin ? 'cursor-pointer hover:bg-pink-50 dark:hover:bg-pink-900/10' : ''}`}
-                            onClick={() => startEditing(item.id, column.id, item.data[column.id])}
+                            onClick={(e) => startEditing(item.id, column.id, item.data[column.id], e)}
                           >
                             {renderCell(item, column)}
                           </td>
