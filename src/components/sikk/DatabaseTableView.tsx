@@ -501,11 +501,11 @@ export default function DatabaseTableView({
             </div>
             {/* Portal: Render dropdown outside of table to avoid overflow clipping */}
             {dropdownPosition && typeof document !== 'undefined' && createPortal(
-              <>
+              <div style={{ position: 'fixed', inset: 0, zIndex: 2147483647, pointerEvents: 'none' }}>
                 {/* Backdrop to close dropdown when clicking outside */}
                 <div
-                  className="fixed inset-0"
-                  style={{ zIndex: 99998 }}
+                  className="absolute inset-0"
+                  style={{ pointerEvents: 'auto' }}
                   onClick={() => {
                     setEditingCell(null);
                     setDropdownPosition(null);
@@ -513,11 +513,12 @@ export default function DatabaseTableView({
                 />
                 {/* Dropdown menu */}
                 <div
-                  className="fixed min-w-[200px] max-h-48 overflow-y-auto bg-white dark:bg-gray-800 border-2 border-pink-300 dark:border-pink-700 rounded-lg shadow-2xl"
+                  className="absolute min-w-[200px] max-h-48 overflow-y-auto bg-white dark:bg-gray-800 border-2 border-pink-500 rounded-lg"
                   style={{
-                    zIndex: 99999,
+                    pointerEvents: 'auto',
                     top: dropdownPosition.top,
                     left: dropdownPosition.left,
+                    boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.5)',
                   }}
                 >
                   <div
@@ -544,7 +545,7 @@ export default function DatabaseTableView({
                     </div>
                   ))}
                 </div>
-              </>,
+              </div>,
               document.body
             )}
           </>
