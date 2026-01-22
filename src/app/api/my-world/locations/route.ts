@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { auth } from '@/lib/auth';
 import { prisma } from '@/lib/db';
+import { getAdminUserId } from '@/lib/get-admin-user-id';
 
 const isProduction = process.env.NODE_ENV === 'production';
 
@@ -16,7 +17,7 @@ export async function GET(request: NextRequest) {
   const category = searchParams.get('category');
 
   try {
-    const userId = session?.user?.id || 'dev-user';
+    const userId = await getAdminUserId(session?.user?.id, session?.user?.email);
     const where: any = { userId };
 
     if (category) {
@@ -54,7 +55,7 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const userId = session?.user?.id || 'dev-user';
+    const userId = await getAdminUserId(session?.user?.id, session?.user?.email);
 
     const location = await prisma.mapLocation.create({
       data: {

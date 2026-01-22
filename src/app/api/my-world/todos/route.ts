@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { auth } from '@/lib/auth';
 import { prisma } from '@/lib/db';
+import { getAdminUserId } from '@/lib/get-admin-user-id';
 
 const isProduction = process.env.NODE_ENV === 'production';
 
@@ -21,8 +22,8 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ error: 'Date is required' }, { status: 400 });
     }
 
-    // Use actual user id if logged in, otherwise 'dev-user' for development
-    const userId = session?.user?.id || 'dev-user';
+    // Get user ID - for admin, always use the admin user's data
+    const userId = await getAdminUserId(session?.user?.id, session?.user?.email);
 
     const date = new Date(dateStr);
     date.setHours(0, 0, 0, 0);
@@ -81,12 +82,8 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Use actual user id if logged in, otherwise 'dev-user' for development
-    const userId = session?.user?.id || 'dev-user';
-
-    if (!userId) {
-      return NextResponse.json({ error: 'User not found' }, { status: 401 });
-    }
+    // Get user ID - for admin, always use the admin user's data
+    const userId = await getAdminUserId(session?.user?.id, session?.user?.email);
 
     const todoDate = new Date(date);
     todoDate.setHours(0, 0, 0, 0);

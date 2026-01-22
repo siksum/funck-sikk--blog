@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { auth } from '@/lib/auth';
 import { prisma } from '@/lib/db';
+import { getAdminUserId } from '@/lib/get-admin-user-id';
 
 const isProduction = process.env.NODE_ENV === 'production';
 
@@ -18,9 +19,8 @@ export async function GET(request: NextRequest) {
   const month = searchParams.get('month');
 
   try {
-    const where: any = {
-      userId: session?.user?.id || 'dev-user',
-    };
+    const userId = await getAdminUserId(session?.user?.id, session?.user?.email);
+    const where: any = { userId };
 
     if (year && month) {
       const startDate = new Date(parseInt(year), parseInt(month) - 1, 1);
@@ -66,7 +66,7 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const userId = session?.user?.id || 'dev-user';
+    const userId = await getAdminUserId(session?.user?.id, session?.user?.email);
     const entryDate = new Date(date);
     entryDate.setUTCHours(0, 0, 0, 0);
 
