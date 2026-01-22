@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useCallback, useMemo, use } from 'react';
+import { useState, useEffect, useCallback, useMemo, use, useRef } from 'react';
 import Link from 'next/link';
 import { useRouter, useSearchParams } from 'next/navigation';
 
@@ -102,8 +102,18 @@ export default function DatabaseDetailPage({ params }: DatabasePageProps) {
     router.replace(newUrl, { scroll: false });
   }, [searchParams, router]);
 
-  // Sync state with URL params on navigation (searchParams changes after hydration)
+  // Track previous URL to detect actual navigation
+  const prevUrlRef = useRef<string>('');
+
+  // Sync state with URL params on navigation (only when URL actually changes from external navigation)
   useEffect(() => {
+    const currentUrl = searchParams.toString();
+
+    // Skip if this is the same URL (prevents resetting on state updates)
+    if (prevUrlRef.current === currentUrl) return;
+    prevUrlRef.current = currentUrl;
+
+    // Only sync non-empty values from URL (don't reset to defaults on hydration)
     const sort = searchParams.get('sort');
     const dir = searchParams.get('dir') as 'asc' | 'desc' | null;
     const group = searchParams.get('group');
@@ -111,12 +121,12 @@ export default function DatabaseDetailPage({ params }: DatabasePageProps) {
     const filterVal = searchParams.get('filterVal');
     const hidden = searchParams.get('hidden');
 
-    setSortColumn(sort || null);
-    setSortDirection(dir || 'asc');
-    setGroupByColumn(group || null);
-    setFilterColumn(filterCol || null);
-    setFilterValue(filterVal || '');
-    setHiddenColumns(hidden ? new Set(hidden.split(',')) : new Set());
+    if (sort !== null) setSortColumn(sort);
+    if (dir !== null) setSortDirection(dir);
+    if (group !== null) setGroupByColumn(group);
+    if (filterCol !== null) setFilterColumn(filterCol);
+    if (filterVal !== null) setFilterValue(filterVal);
+    if (hidden !== null) setHiddenColumns(new Set(hidden.split(',')));
   }, [searchParams]);
 
   // Bulk selection state

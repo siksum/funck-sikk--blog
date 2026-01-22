@@ -219,8 +219,18 @@ export default function SikkPostsManagementPage() {
     router.replace(newUrl, { scroll: false });
   }, [searchParams, router]);
 
-  // Sync state with URL params on navigation (searchParams changes after hydration)
+  // Track previous URL to detect actual navigation
+  const prevUrlRef = useRef<string>('');
+
+  // Sync state with URL params on navigation (only when URL actually changes from external navigation)
   useEffect(() => {
+    const currentUrl = searchParams.toString();
+
+    // Skip if this is the same URL (prevents resetting on state updates)
+    if (prevUrlRef.current === currentUrl) return;
+    prevUrlRef.current = currentUrl;
+
+    // Only sync non-empty values from URL (don't reset to defaults on hydration)
     const cat = searchParams.get('cat');
     const subcat = searchParams.get('subcat');
     const section = searchParams.get('section');
@@ -231,15 +241,15 @@ export default function SikkPostsManagementPage() {
     const startDateParam = searchParams.get('startDate');
     const endDateParam = searchParams.get('endDate');
 
-    setSelectedCategory(cat || 'all');
-    setSelectedSubcategory(subcat || null);
-    setSelectedSection(section || null);
-    setSearchTerm(q || '');
-    setExpandedCategories(expanded ? new Set(expanded.split(',')) : new Set());
-    setSortBy(sortByParam || 'date');
-    setSortOrder(sortOrderParam || 'desc');
-    setStartDate(startDateParam || '');
-    setEndDate(endDateParam || '');
+    if (cat !== null) setSelectedCategory(cat || 'all');
+    if (subcat !== null) setSelectedSubcategory(subcat);
+    if (section !== null) setSelectedSection(section);
+    if (q !== null) setSearchTerm(q);
+    if (expanded !== null) setExpandedCategories(new Set(expanded.split(',')));
+    if (sortByParam !== null) setSortBy(sortByParam);
+    if (sortOrderParam !== null) setSortOrder(sortOrderParam);
+    if (startDateParam !== null) setStartDate(startDateParam);
+    if (endDateParam !== null) setEndDate(endDateParam);
   }, [searchParams]);
 
   // Build post count map from posts
