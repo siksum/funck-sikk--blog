@@ -29,12 +29,12 @@ export async function GET() {
   // Get all posts from database to map slugs to titles and categories
   const postMap = new Map<string, { title: string; category: string }>();
 
-  // 1. Blog posts (Post model)
-  const dbPosts = await prisma.post.findMany({
+  // 1. Blog posts (BlogPost model)
+  const dbPosts = await prisma.blogPost.findMany({
     select: { slug: true, title: true, category: true },
   });
   dbPosts.forEach(p => {
-    postMap.set(p.slug, { title: p.title, category: p.category });
+    postMap.set(p.slug, { title: p.title, category: p.category || '미분류' });
   });
 
   // 2. Sikk posts (SikkPost model)

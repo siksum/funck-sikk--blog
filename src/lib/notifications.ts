@@ -118,7 +118,7 @@ export async function sendCommentNotification(
 
   // Get post title from database
   let postTitle = postSlug;
-  const blogPost = await prisma.post.findFirst({
+  const blogPost = await prisma.blogPost.findFirst({
     where: { slug: postSlug },
     select: { title: true },
   });
