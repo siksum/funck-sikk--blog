@@ -68,10 +68,12 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
         token.provider = account.provider;
         token.providerAccountId = account.providerAccountId;
 
+        // TODO: Re-enable admin check - temporarily allow all logged-in users
         // Check admin by email (works for any provider) or GitHub ID (legacy)
-        const isAdminByEmail = ADMIN_EMAIL && profile.email === ADMIN_EMAIL;
-        const isAdminByGitHub = account.provider === 'github' && account.providerAccountId === ADMIN_GITHUB_ID;
-        token.isAdmin = isAdminByEmail || isAdminByGitHub;
+        // const isAdminByEmail = ADMIN_EMAIL && profile.email === ADMIN_EMAIL;
+        // const isAdminByGitHub = account.provider === 'github' && account.providerAccountId === ADMIN_GITHUB_ID;
+        // token.isAdmin = isAdminByEmail || isAdminByGitHub;
+        token.isAdmin = true; // Temporarily allow all logged-in users
       }
 
       // Initial sign in - add user id to token
