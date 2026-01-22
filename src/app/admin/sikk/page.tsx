@@ -834,6 +834,19 @@ export default function SikkPostsManagementPage() {
     }
   };
 
+  const handleDeleteDatabase = async (id: string, title: string) => {
+    if (!confirm(`"${title}" 데이터베이스를 삭제하시겠습니까? 모든 항목이 함께 삭제됩니다.`)) return;
+
+    try {
+      const response = await fetch(`/api/sikk/databases/${id}`, { method: 'DELETE' });
+      if (response.ok) {
+        setDatabases(databases.filter((db) => db.id !== id));
+      }
+    } catch (error) {
+      console.error('Failed to delete database:', error);
+    }
+  };
+
   const handleToggleVisibility = async (post: Post) => {
     try {
       const response = await fetch(`/api/sikk/${post.slug}`, {
@@ -1666,6 +1679,12 @@ export default function SikkPostsManagementPage() {
                                 >
                                   편집
                                 </Link>
+                                <button
+                                  onClick={() => handleDeleteDatabase(db.id, db.title)}
+                                  className="px-2 py-1 text-red-600 hover:text-red-900 dark:text-red-400 dark:hover:text-red-300 rounded hover:bg-red-50 dark:hover:bg-red-900/20"
+                                >
+                                  삭제
+                                </button>
                               </div>
                             </td>
                           </tr>
