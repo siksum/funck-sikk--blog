@@ -410,7 +410,8 @@ export default function SikkPostsManagementPage() {
     return grouped;
   }, [sidebarCategories, dbSections]);
 
-  // Filter databases by category (similar to posts)
+  // Filter databases by category
+  // Show databases when: 전체보기, specific category match, or section containing the category
   const filteredDatabases = useMemo(() => {
     return databases.filter((db) => {
       const cat = db.category || '';
@@ -423,24 +424,33 @@ export default function SikkPostsManagementPage() {
         db.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
         db.slug.toLowerCase().includes(searchTerm.toLowerCase());
 
+      if (!matchesSearch) return false;
+
+      // If viewing all with no section filter, show all databases
+      if (selectedCategory === 'all' && !selectedSection && !selectedSubcategory) {
+        return true;
+      }
+
       // Section filter - if section is selected, only show databases in that section's categories
       if (selectedSection) {
         const section = dbSections.find(s => s.id === selectedSection);
         if (section) {
           const sectionCategoryNames = section.categories?.map(c => c.name) || [];
-          const matchesSection = sectionCategoryNames.includes(mainCategory);
-          if (!matchesSection) return false;
+          if (!sectionCategoryNames.includes(mainCategory)) return false;
         }
       }
 
-      // Category filter - only apply if not viewing all and no section is selected
-      if (selectedCategory !== 'all' || selectedSubcategory) {
-        const matchesCategoryDirect = mainCategory === selectedCategory;
-        const matchesSubcategoryDirect = !selectedSubcategory || subCategory === selectedSubcategory || mainCategory === selectedSubcategory;
-        if (!matchesCategoryDirect && !matchesSubcategoryDirect) return false;
+      // Category filter - if specific category is selected, must match
+      if (selectedCategory !== 'all') {
+        if (mainCategory !== selectedCategory) return false;
       }
 
-      return matchesSearch;
+      // Subcategory filter
+      if (selectedSubcategory) {
+        if (subCategory !== selectedSubcategory && mainCategory !== selectedSubcategory) return false;
+      }
+
+      return true;
     });
   }, [databases, selectedCategory, selectedSubcategory, searchTerm, selectedSection, dbSections]);
 
