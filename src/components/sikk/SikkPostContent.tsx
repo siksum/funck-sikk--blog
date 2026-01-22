@@ -260,6 +260,7 @@ export default function SikkPostContent({ content, slug, isAdmin, initialMetadat
           <TipTapEditor
             content={currentContent}
             onSave={handleSave}
+            onChange={setCurrentContent}
             onCancel={handleCancel}
             placeholder="포스트 내용을 입력하세요..."
           />
