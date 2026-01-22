@@ -667,6 +667,19 @@ export default function MyWorldDashboard() {
     const updatedTodos = todos.map((todo, index) => ({ ...todo, order: index }));
     setTodos(updatedTodos);
 
+    // Sync to archive view if showing
+    if (showTodoArchive) {
+      setArchiveTodos(prev => {
+        const updatedIds = new Set(updatedTodos.map(t => t.id));
+        const otherTodos = prev.filter(t => !updatedIds.has(t.id));
+        return [...otherTodos, ...updatedTodos].sort((a, b) => {
+          const dateCompare = b.date.localeCompare(a.date);
+          if (dateCompare !== 0) return dateCompare;
+          return (a.order || 0) - (b.order || 0);
+        });
+      });
+    }
+
     // Update the order in the database for affected items
     try {
       await Promise.all(
@@ -752,6 +765,12 @@ export default function MyWorldDashboard() {
         return (a.order || 0) - (b.order || 0);
       });
     });
+
+    // Sync to main view if the date matches
+    if (dateKey === todoDate) {
+      const setTodos = category === 'personal' ? setPersonalTodos : setResearchTodos;
+      setTodos(updatedTodos);
+    }
 
     // Update in database
     try {
