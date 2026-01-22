@@ -36,28 +36,83 @@ interface CategoryPageProps {
 export const revalidate = 10;
 
 // Parse the slugPath to determine route type
-function parseSlugPath(slugPath: string[]) {
+// New URL structure: /sikk/category/[categoryPath]/[dbSlug]/[?itemId]
+// No longer requires /db/ in the path
+async function parseSlugPath(slugPath: string[]) {
+  // Legacy support: if 'db' is in the path, use old parsing logic
   const dbIndex = slugPath.indexOf('db');
+  if (dbIndex !== -1) {
+    const categorySlugPath = slugPath.slice(0, dbIndex);
+    const dbSlug = slugPath[dbIndex + 1];
+    const itemId = slugPath[dbIndex + 2];
 
-  if (dbIndex === -1) {
-    // Normal category route
-    return { type: 'category' as const, categorySlugPath: slugPath };
+    if (!dbSlug) {
+      return { type: 'invalid' as const };
+    }
+
+    if (itemId) {
+      return { type: 'database-item' as const, categorySlugPath, dbSlug, itemId };
+    }
+
+    return { type: 'database' as const, categorySlugPath, dbSlug };
   }
 
-  // Database route: [...categoryPath, 'db', dbSlug, ?itemId]
-  const categorySlugPath = slugPath.slice(0, dbIndex);
-  const dbSlug = slugPath[dbIndex + 1];
-  const itemId = slugPath[dbIndex + 2];
+  // New URL structure: try to detect database by checking last segment
+  if (slugPath.length >= 2) {
+    // Check if last segment is a database slug under parent category
+    const possibleDbSlug = slugPath[slugPath.length - 1];
+    const possibleCategoryPath = slugPath.slice(0, -1);
+    const categoryPathString = possibleCategoryPath.join('/');
 
-  if (!dbSlug) {
-    return { type: 'invalid' as const };
+    // Check if a database exists with this slug under this category
+    const database = await prisma.sikkDatabase.findFirst({
+      where: {
+        slug: possibleDbSlug,
+        category: {
+          startsWith: categoryPathString,
+        },
+      },
+      select: { slug: true, category: true },
+    });
+
+    if (database && database.category === categoryPathString) {
+      return { type: 'database' as const, categorySlugPath: possibleCategoryPath, dbSlug: possibleDbSlug };
+    }
+
+    // Check if it's a database item (last two segments: dbSlug/itemId)
+    if (slugPath.length >= 3) {
+      const possibleItemId = slugPath[slugPath.length - 1];
+      const possibleDbSlug2 = slugPath[slugPath.length - 2];
+      const possibleCategoryPath2 = slugPath.slice(0, -2);
+      const categoryPathString2 = possibleCategoryPath2.join('/');
+
+      const database2 = await prisma.sikkDatabase.findFirst({
+        where: {
+          slug: possibleDbSlug2,
+          category: categoryPathString2,
+        },
+        select: { id: true, slug: true },
+      });
+
+      if (database2) {
+        // Check if item exists
+        const item = await prisma.sikkDatabaseItem.findFirst({
+          where: {
+            id: possibleItemId,
+            databaseId: database2.id,
+          },
+          select: { id: true },
+        });
+
+        if (item) {
+          return { type: 'database-item' as const, categorySlugPath: possibleCategoryPath2, dbSlug: possibleDbSlug2, itemId: possibleItemId };
+        }
+      }
+    }
   }
 
-  if (itemId) {
-    return { type: 'database-item' as const, categorySlugPath, dbSlug, itemId };
-  }
-
-  return { type: 'database' as const, categorySlugPath, dbSlug };
+  // Normal category route
+  return { type: 'category' as const, categorySlugPath: slugPath };
 }
 
 async function getSikkSections() {
@@ -101,7 +156,7 @@ async function getDatabasesByCategory(categoryPath: string) {
 
 export async function generateMetadata({ params }: CategoryPageProps) {
   const { slugPath } = await params;
-  const parsed = parseSlugPath(slugPath);
+  const parsed = await parseSlugPath(slugPath);
 
   if (parsed.type === 'invalid') {
     return { title: 'Not Found' };
@@ -174,7 +229,7 @@ export default async function SikkCategoryPage({ params }: CategoryPageProps) {
 
   const isAdmin = session?.user?.isAdmin || false;
   const { slugPath } = await params;
-  const parsed = parseSlugPath(slugPath);
+  const parsed = await parseSlugPath(slugPath);
 
   if (parsed.type === 'invalid') {
     notFound();
@@ -214,7 +269,7 @@ export default async function SikkCategoryPage({ params }: CategoryPageProps) {
     const titleColumn = columns.find((c) => c.type === 'title');
     const data = item.data as Record<string, unknown>;
     const title = titleColumn ? String(data[titleColumn.id] || '제목 없음') : '제목 없음';
-    const databaseUrl = `/sikk/category/${parsed.categorySlugPath.map(s => encodeURIComponent(s)).join('/')}/db/${parsed.dbSlug}`;
+    const databaseUrl = `/sikk/category/${parsed.categorySlugPath.map(s => encodeURIComponent(s)).join('/')}/${parsed.dbSlug}`;
 
     return (
       <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
