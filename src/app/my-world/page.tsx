@@ -387,6 +387,16 @@ export default function MyWorldDashboard() {
     fetchMonthData();
   }, [currentMonth]);
 
+  // Sync currentMonth with weekStartDate when in weekly view
+  useEffect(() => {
+    if (viewType === 'week') {
+      const weekMonth = new Date(weekStartDate.getFullYear(), weekStartDate.getMonth(), 1);
+      if (currentMonth.getFullYear() !== weekMonth.getFullYear() || currentMonth.getMonth() !== weekMonth.getMonth()) {
+        setCurrentMonth(weekMonth);
+      }
+    }
+  }, [weekStartDate, viewType]);
+
   // Load daily entry when selected date changes
   useEffect(() => {
     const loadDailyEntry = async () => {
