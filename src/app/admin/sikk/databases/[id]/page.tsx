@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect, useCallback, useMemo, use } from 'react';
+import { createPortal } from 'react-dom';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 
@@ -635,53 +636,59 @@ export default function DatabaseDetailPage({ params }: DatabasePageProps) {
         const options = column.options || [];
         return (
           <>
-            {/* Backdrop to close dropdown when clicking outside */}
-            <div
-              className="fixed inset-0 z-[9998]"
-              onClick={() => {
-                setEditingCell(null);
-                setDropdownPosition(null);
-              }}
-            />
             {/* Current value display */}
             <div className="px-2 py-1 text-sm border border-pink-400 rounded bg-white dark:bg-gray-900 text-gray-900 dark:text-white">
               {editValue || '선택...'}
             </div>
-            {/* Dropdown menu with fixed position */}
-            {dropdownPosition && (
-              <div
-                className="fixed z-[9999] min-w-[200px] max-h-48 overflow-y-auto bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg shadow-xl"
-                style={{
-                  top: dropdownPosition.top,
-                  left: dropdownPosition.left,
-                }}
-              >
-                <button
-                  type="button"
+            {/* Portal: Render dropdown outside of table to avoid overflow clipping */}
+            {dropdownPosition && typeof document !== 'undefined' && createPortal(
+              <>
+                {/* Backdrop to close dropdown when clicking outside */}
+                <div
+                  className="fixed inset-0"
+                  style={{ zIndex: 99998 }}
                   onClick={() => {
-                    handleUpdateCell(item.id, column.id, '');
+                    setEditingCell(null);
                     setDropdownPosition(null);
                   }}
-                  className="w-full px-3 py-2 text-left text-sm text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-700"
+                />
+                {/* Dropdown menu */}
+                <div
+                  className="fixed min-w-[200px] max-h-48 overflow-y-auto bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg shadow-xl"
+                  style={{
+                    zIndex: 99999,
+                    top: dropdownPosition.top,
+                    left: dropdownPosition.left,
+                  }}
                 >
-                  선택...
-                </button>
-                {options.map((opt) => (
                   <button
-                    key={opt}
                     type="button"
                     onClick={() => {
-                      handleUpdateCell(item.id, column.id, opt);
+                      handleUpdateCell(item.id, column.id, '');
                       setDropdownPosition(null);
                     }}
-                    className={`w-full px-3 py-2 text-left text-sm hover:bg-pink-50 dark:hover:bg-pink-900/20 ${
-                      editValue === opt ? 'bg-pink-100 dark:bg-pink-900/30 text-pink-700 dark:text-pink-400' : 'text-gray-900 dark:text-white'
-                    }`}
+                    className="w-full px-3 py-2 text-left text-sm text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-700"
                   >
-                    {opt}
+                    선택...
                   </button>
-                ))}
-              </div>
+                  {options.map((opt) => (
+                    <button
+                      key={opt}
+                      type="button"
+                      onClick={() => {
+                        handleUpdateCell(item.id, column.id, opt);
+                        setDropdownPosition(null);
+                      }}
+                      className={`w-full px-3 py-2 text-left text-sm hover:bg-pink-50 dark:hover:bg-pink-900/20 ${
+                        editValue === opt ? 'bg-pink-100 dark:bg-pink-900/30 text-pink-700 dark:text-pink-400' : 'text-gray-900 dark:text-white'
+                      }`}
+                    >
+                      {opt}
+                    </button>
+                  ))}
+                </div>
+              </>,
+              document.body
             )}
           </>
         );
