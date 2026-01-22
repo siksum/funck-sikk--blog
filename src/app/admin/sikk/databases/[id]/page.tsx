@@ -1,7 +1,6 @@
 'use client';
 
 import { useState, useEffect, useCallback, useMemo, use } from 'react';
-import { createPortal } from 'react-dom';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 
@@ -51,7 +50,6 @@ export default function DatabaseDetailPage({ params }: DatabasePageProps) {
   const [loading, setLoading] = useState(true);
   const [editingCell, setEditingCell] = useState<{ itemId: string; columnId: string } | null>(null);
   const [editValue, setEditValue] = useState<string>('');
-  const [dropdownPosition, setDropdownPosition] = useState<{ top: number; left: number } | null>(null);
   const [showColumnModal, setShowColumnModal] = useState(false);
   const [newColumnName, setNewColumnName] = useState('');
   const [newColumnType, setNewColumnType] = useState<Column['type']>('text');
@@ -596,18 +594,9 @@ export default function DatabaseDetailPage({ params }: DatabasePageProps) {
     setHiddenColumns(new Set());
   };
 
-  const startEditing = (itemId: string, columnId: string, currentValue: unknown, event?: React.MouseEvent) => {
+  const startEditing = (itemId: string, columnId: string, currentValue: unknown) => {
     setEditingCell({ itemId, columnId });
     setEditValue(String(currentValue || ''));
-
-    // Set dropdown position for select cells
-    if (event) {
-      const rect = (event.currentTarget as HTMLElement).getBoundingClientRect();
-      setDropdownPosition({
-        top: rect.bottom + 4,
-        left: rect.left,
-      });
-    }
   };
 
   const renderCell = (item: Item, column: Column) => {
@@ -635,62 +624,23 @@ export default function DatabaseDetailPage({ params }: DatabasePageProps) {
       if (column.type === 'select') {
         const options = column.options || [];
         return (
-          <>
-            {/* Current value display */}
-            <div className="px-2 py-1 text-sm border border-pink-400 rounded bg-white dark:bg-gray-900 text-gray-900 dark:text-white">
-              {editValue || '선택...'}
-            </div>
-            {/* Portal: Render dropdown outside of table to avoid overflow clipping */}
-            {dropdownPosition && typeof document !== 'undefined' && createPortal(
-              <>
-                {/* Backdrop to close dropdown when clicking outside */}
-                <div
-                  className="fixed inset-0"
-                  style={{ zIndex: 99998 }}
-                  onClick={() => {
-                    setEditingCell(null);
-                    setDropdownPosition(null);
-                  }}
-                />
-                {/* Dropdown menu */}
-                <div
-                  className="fixed min-w-[200px] max-h-48 overflow-y-auto bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg shadow-xl"
-                  style={{
-                    zIndex: 99999,
-                    top: dropdownPosition.top,
-                    left: dropdownPosition.left,
-                  }}
-                >
-                  <button
-                    type="button"
-                    onClick={() => {
-                      handleUpdateCell(item.id, column.id, '');
-                      setDropdownPosition(null);
-                    }}
-                    className="w-full px-3 py-2 text-left text-sm text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-700"
-                  >
-                    선택...
-                  </button>
-                  {options.map((opt) => (
-                    <button
-                      key={opt}
-                      type="button"
-                      onClick={() => {
-                        handleUpdateCell(item.id, column.id, opt);
-                        setDropdownPosition(null);
-                      }}
-                      className={`w-full px-3 py-2 text-left text-sm hover:bg-pink-50 dark:hover:bg-pink-900/20 ${
-                        editValue === opt ? 'bg-pink-100 dark:bg-pink-900/30 text-pink-700 dark:text-pink-400' : 'text-gray-900 dark:text-white'
-                      }`}
-                    >
-                      {opt}
-                    </button>
-                  ))}
-                </div>
-              </>,
-              document.body
-            )}
-          </>
+          <select
+            value={editValue}
+            onChange={(e) => {
+              setEditValue(e.target.value);
+              handleUpdateCell(item.id, column.id, e.target.value);
+            }}
+            onBlur={() => setEditingCell(null)}
+            className="w-full px-2 py-1 text-sm border-2 border-pink-400 rounded focus:outline-none focus:ring-2 focus:ring-pink-500 bg-white dark:bg-gray-900 text-gray-900 dark:text-white cursor-pointer"
+            autoFocus
+          >
+            <option value="">선택...</option>
+            {options.map((opt) => (
+              <option key={opt} value={opt}>
+                {opt}
+              </option>
+            ))}
+          </select>
         );
       }
 
@@ -1096,8 +1046,8 @@ export default function DatabaseDetailPage({ params }: DatabasePageProps) {
       </div>
 
       {/* Table View */}
-      <div className={`bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 ${editingCell ? 'overflow-visible' : 'overflow-hidden'}`}>
-        <div className={editingCell ? 'overflow-visible' : 'overflow-x-auto'}>
+      <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700">
+        <div className="overflow-x-auto">
           <table className="min-w-full divide-y divide-gray-200 dark:divide-gray-700" style={{ tableLayout: 'fixed' }}>
             <thead className="bg-gray-50 dark:bg-gray-700">
               <tr>
@@ -1183,10 +1133,8 @@ export default function DatabaseDetailPage({ params }: DatabasePageProps) {
                             <td
                               key={column.id}
                               style={{ width: columnWidths[column.id] || 150 }}
-                              className={`px-4 py-3 cursor-pointer hover:bg-pink-50 dark:hover:bg-pink-900/10 ${
-                                isEditing ? 'overflow-visible z-10 relative' : 'overflow-hidden'
-                              }`}
-                              onClick={(e) => startEditing(item.id, column.id, item.data[column.id], e)}
+                              className="px-4 py-3 cursor-pointer hover:bg-pink-50 dark:hover:bg-pink-900/10"
+                              onClick={() => startEditing(item.id, column.id, item.data[column.id])}
                             >
                               {renderCell(item, column)}
                             </td>
@@ -1210,21 +1158,16 @@ export default function DatabaseDetailPage({ params }: DatabasePageProps) {
                 // Regular view
                 processedItems.items.map((item) => (
                   <tr key={item.id} className="hover:bg-gray-50 dark:hover:bg-gray-700/50">
-                    {visibleColumns.map((column) => {
-                      const isEditing = editingCell?.itemId === item.id && editingCell?.columnId === column.id;
-                      return (
+                    {visibleColumns.map((column) => (
                         <td
                           key={column.id}
                           style={{ width: columnWidths[column.id] || 150 }}
-                          className={`px-4 py-3 cursor-pointer hover:bg-pink-50 dark:hover:bg-pink-900/10 ${
-                            isEditing ? 'overflow-visible z-10 relative' : 'overflow-hidden'
-                          }`}
-                          onClick={(e) => startEditing(item.id, column.id, item.data[column.id], e)}
+                          className="px-4 py-3 cursor-pointer hover:bg-pink-50 dark:hover:bg-pink-900/10"
+                          onClick={() => startEditing(item.id, column.id, item.data[column.id])}
                         >
                           {renderCell(item, column)}
                         </td>
-                      );
-                    })}
+                      ))}
                     <td className="px-4 py-3 text-right">
                       <button
                         onClick={() => handleDeleteItem(item.id)}
