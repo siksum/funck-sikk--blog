@@ -20,9 +20,12 @@ export async function GET(request: NextRequest) {
     const userId = session?.user?.id || 'dev-user';
     let where: any = { userId };
 
+    console.log('[API Calendar] Fetching for userId:', userId, 'year:', year, 'month:', month);
+
     if (year && month) {
       const monthStart = new Date(parseInt(year), parseInt(month) - 1, 1);
       const monthEnd = new Date(parseInt(year), parseInt(month), 0, 23, 59, 59);
+      console.log('[API Calendar] Date range:', monthStart.toISOString(), 'to', monthEnd.toISOString());
       // Fetch events that:
       // 1. Start within the month, OR
       // 2. End within the month (for multi-day events), OR
@@ -60,10 +63,18 @@ export async function GET(request: NextRequest) {
       };
     }
 
+    // First, let's see ALL events for this user (no date filter)
+    const allEvents = await prisma.calendarEvent.findMany({
+      where: { userId },
+      orderBy: { date: 'asc' },
+    });
+    console.log('[API Calendar] All events for user:', allEvents.length, allEvents.map(e => ({ title: e.title, date: e.date, endDate: e.endDate })));
+
     const events = await prisma.calendarEvent.findMany({
       where,
       orderBy: { date: 'asc' },
     });
+    console.log('[API Calendar] Filtered events:', events.length);
 
     return NextResponse.json(events);
   } catch (error) {
