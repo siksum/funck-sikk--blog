@@ -734,6 +734,12 @@ export default function SikkPostsManagementPage() {
           Sikk 포스트 관리
         </h1>
         <div className="flex flex-wrap gap-2 w-full sm:w-auto">
+          <Link
+            href="/admin/sikk/databases"
+            className="flex-1 sm:flex-none px-3 sm:px-4 py-2 text-sm text-center bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors"
+          >
+            데이터베이스
+          </Link>
           <button
             onClick={() => setShowSectionModal(true)}
             className="flex-1 sm:flex-none px-3 sm:px-4 py-2 text-sm bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors"
