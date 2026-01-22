@@ -100,6 +100,37 @@ export default function TipTapEditor({
         bulletListMarker: '-',
         transformPastedText: true,
         transformCopiedText: true,
+        transformers: {
+          textStyle: {
+            // Output HTML span for text color
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
+            open: (_state: any, mark: any) => {
+              const color = mark.attrs?.color;
+              if (color) {
+                return `<span style="color: ${color}">`;
+              }
+              return '';
+            },
+            close: (_state: unknown, mark: { attrs?: { color?: string } }) => {
+              if (mark.attrs?.color) {
+                return '</span>';
+              }
+              return '';
+            },
+          },
+          highlight: {
+            // Output HTML mark for highlights
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
+            open: (_state: any, mark: any) => {
+              const color = mark.attrs?.color;
+              if (color) {
+                return `<mark style="background-color: ${color}">`;
+              }
+              return '<mark>';
+            },
+            close: () => '</mark>',
+          },
+        },
       }),
     ],
     content,
