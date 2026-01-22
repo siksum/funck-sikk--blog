@@ -31,15 +31,27 @@ interface DatabaseTableViewProps {
 export default function DatabaseTableView({
   databaseId,
   databaseSlug,
-  columns,
+  columns: initialColumns,
   items: initialItems,
   isAdmin,
   categorySlugPath,
 }: DatabaseTableViewProps) {
   const router = useRouter();
+  const [columns, setColumns] = useState(initialColumns);
   const [items, setItems] = useState(initialItems);
   const [editingCell, setEditingCell] = useState<{ itemId: string; columnId: string } | null>(null);
   const [editValue, setEditValue] = useState<string>('');
+
+  // Drag and drop state for columns
+  const [draggedColumnId, setDraggedColumnId] = useState<string | null>(null);
+  const [dragOverColumnId, setDragOverColumnId] = useState<string | null>(null);
+
+  // Select options editing state
+  const [editingSelectColumn, setEditingSelectColumn] = useState<string | null>(null);
+  const [newSelectOption, setNewSelectOption] = useState('');
+
+  // File upload state
+  const [uploadingCell, setUploadingCell] = useState<{ itemId: string; columnId: string } | null>(null);
 
   const handleAddItem = useCallback(async () => {
     // Create default data for new item
@@ -115,6 +127,192 @@ export default function DatabaseTableView({
     }
   }, [databaseId, router]);
 
+  // Column drag and drop handlers
+  const handleColumnDragStart = (columnId: string) => {
+    if (!isAdmin) return;
+    setDraggedColumnId(columnId);
+  };
+
+  const handleColumnDragOver = (e: React.DragEvent, columnId: string) => {
+    e.preventDefault();
+    if (draggedColumnId && draggedColumnId !== columnId) {
+      setDragOverColumnId(columnId);
+    }
+  };
+
+  const handleColumnDragLeave = () => {
+    setDragOverColumnId(null);
+  };
+
+  const handleColumnDrop = async (targetColumnId: string) => {
+    if (!draggedColumnId || draggedColumnId === targetColumnId) {
+      setDraggedColumnId(null);
+      setDragOverColumnId(null);
+      return;
+    }
+
+    const newColumns = [...columns];
+    const draggedIndex = newColumns.findIndex((c) => c.id === draggedColumnId);
+    const targetIndex = newColumns.findIndex((c) => c.id === targetColumnId);
+
+    if (draggedIndex === -1 || targetIndex === -1) return;
+
+    // Remove dragged column and insert at target position
+    const [draggedColumn] = newColumns.splice(draggedIndex, 1);
+    newColumns.splice(targetIndex, 0, draggedColumn);
+
+    setColumns(newColumns);
+    setDraggedColumnId(null);
+    setDragOverColumnId(null);
+
+    // Save to backend
+    try {
+      await fetch(`/api/sikk/databases/${databaseId}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ columns: newColumns }),
+      });
+      router.refresh();
+    } catch (error) {
+      console.error('Failed to reorder columns:', error);
+      setColumns(initialColumns); // Revert on error
+    }
+  };
+
+  const handleColumnDragEnd = () => {
+    setDraggedColumnId(null);
+    setDragOverColumnId(null);
+  };
+
+  // Select options editing handlers
+  const handleAddSelectOption = async (columnId: string) => {
+    if (!newSelectOption.trim()) return;
+
+    const column = columns.find((c) => c.id === columnId);
+    if (!column) return;
+
+    const newOptions = [...(column.options || []), newSelectOption.trim()];
+    const newColumns = columns.map((c) =>
+      c.id === columnId ? { ...c, options: newOptions } : c
+    );
+
+    setColumns(newColumns);
+    setNewSelectOption('');
+
+    try {
+      await fetch(`/api/sikk/databases/${databaseId}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ columns: newColumns }),
+      });
+      router.refresh();
+    } catch (error) {
+      console.error('Failed to add select option:', error);
+    }
+  };
+
+  const handleRemoveSelectOption = async (columnId: string, optionToRemove: string) => {
+    const column = columns.find((c) => c.id === columnId);
+    if (!column) return;
+
+    const newOptions = (column.options || []).filter((opt) => opt !== optionToRemove);
+    const newColumns = columns.map((c) =>
+      c.id === columnId ? { ...c, options: newOptions } : c
+    );
+
+    setColumns(newColumns);
+
+    try {
+      await fetch(`/api/sikk/databases/${databaseId}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ columns: newColumns }),
+      });
+      router.refresh();
+    } catch (error) {
+      console.error('Failed to remove select option:', error);
+    }
+  };
+
+  // File upload handlers
+  const handleFileUpload = async (itemId: string, columnId: string, files: FileList) => {
+    setUploadingCell({ itemId, columnId });
+
+    const item = items.find((i) => i.id === itemId);
+    if (!item) return;
+
+    const existingFiles = Array.isArray(item.data[columnId]) ? item.data[columnId] as string[] : [];
+    const uploadedUrls: string[] = [];
+
+    try {
+      for (const file of Array.from(files)) {
+        const formData = new FormData();
+        formData.append('file', file);
+
+        const res = await fetch('/api/upload', {
+          method: 'POST',
+          body: formData,
+        });
+
+        if (res.ok) {
+          const data = await res.json();
+          uploadedUrls.push(data.url);
+        }
+      }
+
+      const newFiles = [...existingFiles, ...uploadedUrls];
+
+      // Update item data
+      const updateRes = await fetch(`/api/sikk/databases/${databaseId}/items/${itemId}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          data: { ...item.data, [columnId]: newFiles },
+        }),
+      });
+
+      if (updateRes.ok) {
+        setItems((prev) =>
+          prev.map((i) =>
+            i.id === itemId ? { ...i, data: { ...i.data, [columnId]: newFiles } } : i
+          )
+        );
+      }
+    } catch (error) {
+      console.error('Failed to upload files:', error);
+    } finally {
+      setUploadingCell(null);
+    }
+  };
+
+  const handleRemoveFile = async (itemId: string, columnId: string, fileUrl: string) => {
+    const item = items.find((i) => i.id === itemId);
+    if (!item) return;
+
+    const existingFiles = Array.isArray(item.data[columnId]) ? item.data[columnId] as string[] : [];
+    const newFiles = existingFiles.filter((f) => f !== fileUrl);
+
+    try {
+      const res = await fetch(`/api/sikk/databases/${databaseId}/items/${itemId}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          data: { ...item.data, [columnId]: newFiles },
+        }),
+      });
+
+      if (res.ok) {
+        setItems((prev) =>
+          prev.map((i) =>
+            i.id === itemId ? { ...i, data: { ...i.data, [columnId]: newFiles } } : i
+          )
+        );
+      }
+    } catch (error) {
+      console.error('Failed to remove file:', error);
+    }
+  };
+
   const startEditing = (itemId: string, columnId: string, currentValue: unknown) => {
     if (!isAdmin) return;
     setEditingCell({ itemId, columnId });
@@ -184,12 +382,13 @@ export default function DatabaseTableView({
     // Display value
     if (column.type === 'files') {
       const files = Array.isArray(value) ? value : [];
+      const isUploading = uploadingCell?.itemId === item.id && uploadingCell?.columnId === column.id;
+
       return (
-        <div className="flex flex-wrap gap-1">
-          {files.length > 0 ? (
-            files.map((file: string, i: number) => (
+        <div className="flex flex-wrap gap-1 items-center">
+          {files.map((file: string, i: number) => (
+            <div key={i} className="relative group inline-flex items-center">
               <a
-                key={i}
                 href={file}
                 target="_blank"
                 rel="noopener noreferrer"
@@ -198,8 +397,43 @@ export default function DatabaseTableView({
               >
                 {file.split('/').pop()}
               </a>
-            ))
-          ) : (
+              {isAdmin && (
+                <button
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    handleRemoveFile(item.id, column.id, file);
+                  }}
+                  className="absolute -top-1 -right-1 w-4 h-4 bg-red-500 text-white rounded-full text-xs opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center"
+                >
+                  ×
+                </button>
+              )}
+            </div>
+          ))}
+          {isAdmin && (
+            <label className="px-2 py-0.5 text-xs bg-pink-100 dark:bg-pink-900/30 text-pink-700 dark:text-pink-400 rounded cursor-pointer hover:bg-pink-200 dark:hover:bg-pink-900/50 transition-colors">
+              {isUploading ? (
+                <span className="animate-pulse">업로드 중...</span>
+              ) : (
+                <>
+                  <span>+ 파일</span>
+                  <input
+                    type="file"
+                    multiple
+                    className="hidden"
+                    accept="image/*,.pdf"
+                    onChange={(e) => {
+                      if (e.target.files && e.target.files.length > 0) {
+                        handleFileUpload(item.id, column.id, e.target.files);
+                        e.target.value = '';
+                      }
+                    }}
+                  />
+                </>
+              )}
+            </label>
+          )}
+          {files.length === 0 && !isAdmin && (
             <span className="text-gray-400 dark:text-gray-500 text-sm">-</span>
           )}
         </div>
@@ -225,12 +459,89 @@ export default function DatabaseTableView({
 
     if (column.type === 'select') {
       const selectValue = String(value || '');
-      return selectValue ? (
-        <span className="px-2 py-0.5 text-xs bg-purple-100 dark:bg-purple-900/30 text-purple-700 dark:text-purple-400 rounded">
-          {selectValue}
-        </span>
-      ) : (
-        <span className="text-gray-400 dark:text-gray-500 text-sm">-</span>
+      const isEditingOptions = editingSelectColumn === column.id;
+
+      return (
+        <div className="relative">
+          <div className="flex items-center gap-1">
+            {selectValue ? (
+              <span className="px-2 py-0.5 text-xs bg-purple-100 dark:bg-purple-900/30 text-purple-700 dark:text-purple-400 rounded">
+                {selectValue}
+              </span>
+            ) : (
+              <span className="text-gray-400 dark:text-gray-500 text-sm">-</span>
+            )}
+            {isAdmin && (
+              <button
+                onClick={(e) => {
+                  e.stopPropagation();
+                  setEditingSelectColumn(isEditingOptions ? null : column.id);
+                }}
+                className="p-0.5 text-gray-400 hover:text-purple-500 rounded hover:bg-purple-50 dark:hover:bg-purple-900/20"
+                title="옵션 편집"
+              >
+                <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" />
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                </svg>
+              </button>
+            )}
+          </div>
+
+          {/* Select options editor popup */}
+          {isEditingOptions && isAdmin && (
+            <div
+              className="absolute z-50 top-full left-0 mt-1 p-3 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg shadow-lg min-w-[200px]"
+              onClick={(e) => e.stopPropagation()}
+            >
+              <div className="text-xs font-medium text-gray-500 dark:text-gray-400 mb-2">
+                옵션 관리
+              </div>
+              <div className="space-y-1 mb-2 max-h-32 overflow-y-auto">
+                {(column.options || []).map((opt) => (
+                  <div
+                    key={opt}
+                    className="flex items-center justify-between gap-2 px-2 py-1 bg-gray-50 dark:bg-gray-700 rounded text-sm"
+                  >
+                    <span>{opt}</span>
+                    <button
+                      onClick={() => handleRemoveSelectOption(column.id, opt)}
+                      className="text-red-500 hover:text-red-700 text-xs"
+                    >
+                      ×
+                    </button>
+                  </div>
+                ))}
+              </div>
+              <div className="flex gap-1">
+                <input
+                  type="text"
+                  value={newSelectOption}
+                  onChange={(e) => setNewSelectOption(e.target.value)}
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter') {
+                      handleAddSelectOption(column.id);
+                    }
+                  }}
+                  placeholder="새 옵션 추가"
+                  className="flex-1 px-2 py-1 text-sm border border-gray-300 dark:border-gray-600 rounded bg-white dark:bg-gray-900 text-gray-900 dark:text-white"
+                />
+                <button
+                  onClick={() => handleAddSelectOption(column.id)}
+                  className="px-2 py-1 bg-purple-500 text-white rounded text-sm hover:bg-purple-600"
+                >
+                  추가
+                </button>
+              </div>
+              <button
+                onClick={() => setEditingSelectColumn(null)}
+                className="mt-2 w-full px-2 py-1 text-xs text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200"
+              >
+                닫기
+              </button>
+            </div>
+          )}
+        </div>
       );
     }
 
@@ -269,9 +580,32 @@ export default function DatabaseTableView({
               {columns.map((column) => (
                 <th
                   key={column.id}
-                  className="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider"
+                  draggable={isAdmin}
+                  onDragStart={() => handleColumnDragStart(column.id)}
+                  onDragOver={(e) => handleColumnDragOver(e, column.id)}
+                  onDragLeave={handleColumnDragLeave}
+                  onDrop={() => handleColumnDrop(column.id)}
+                  onDragEnd={handleColumnDragEnd}
+                  className={`px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider transition-all ${
+                    isAdmin ? 'cursor-grab active:cursor-grabbing' : ''
+                  } ${draggedColumnId === column.id ? 'opacity-50' : ''} ${
+                    dragOverColumnId === column.id
+                      ? 'bg-pink-100 dark:bg-pink-900/30 border-l-2 border-pink-500'
+                      : ''
+                  }`}
                 >
-                  {column.name}
+                  <div className="flex items-center gap-1">
+                    {isAdmin && (
+                      <svg
+                        className="w-3 h-3 text-gray-400 flex-shrink-0"
+                        fill="currentColor"
+                        viewBox="0 0 20 20"
+                      >
+                        <path d="M7 2a2 2 0 1 0 .001 4.001A2 2 0 0 0 7 2zm0 6a2 2 0 1 0 .001 4.001A2 2 0 0 0 7 8zm0 6a2 2 0 1 0 .001 4.001A2 2 0 0 0 7 14zm6-8a2 2 0 1 0-.001-4.001A2 2 0 0 0 13 6zm0 2a2 2 0 1 0 .001 4.001A2 2 0 0 0 13 8zm0 6a2 2 0 1 0 .001 4.001A2 2 0 0 0 13 14z" />
+                      </svg>
+                    )}
+                    {column.name}
+                  </div>
                 </th>
               ))}
               {isAdmin && (
