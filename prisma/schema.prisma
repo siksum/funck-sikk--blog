@@ -292,11 +292,6 @@ model DailyEntry {
   dinner    String?
   snack     String?
 
-  // 재정
-  income      Int @default(0)
-  expense     Int @default(0)
-  expenseNote String?
-
   // 감정 (0-10 스케일)
   joy        Int @default(0)
   depression Int @default(0)

@@ -19,9 +19,6 @@ interface DailyEntry {
   lunch: string | null;
   dinner: string | null;
   snack: string | null;
-  income: number;
-  expense: number;
-  expenseNote: string | null;
   joy: number;
   depression: number;
   anxiety: number;
@@ -59,9 +56,6 @@ export default function DailyEntryForm({ date, initialData }: Props) {
     lunch: null,
     dinner: null,
     snack: null,
-    income: 0,
-    expense: 0,
-    expenseNote: null,
     joy: 0,
     depression: 0,
     anxiety: 0,
@@ -340,49 +334,6 @@ export default function DailyEntryForm({ date, initialData }: Props) {
               onChange={(e) => setForm({ ...form, snack: e.target.value || null })}
               className="w-40 px-3 py-1 rounded-lg border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
               placeholder="입력"
-            />
-          </Row>
-        </Section>
-
-        {/* 재정 섹션 */}
-        <Section title="재정">
-          <Row icon="➕" label="소득">
-            <div className="flex items-center gap-1">
-              <span className="text-gray-500">₩</span>
-              <input
-                type="number"
-                min="0"
-                value={form.income || ''}
-                onChange={(e) =>
-                  setForm({ ...form, income: parseInt(e.target.value) || 0 })
-                }
-                className="w-28 px-3 py-1 rounded-lg border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white text-right"
-                placeholder="0"
-              />
-            </div>
-          </Row>
-          <Row icon="➖" label="지출">
-            <div className="flex items-center gap-1">
-              <span className="text-gray-500">₩</span>
-              <input
-                type="number"
-                min="0"
-                value={form.expense || ''}
-                onChange={(e) =>
-                  setForm({ ...form, expense: parseInt(e.target.value) || 0 })
-                }
-                className="w-28 px-3 py-1 rounded-lg border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white text-right"
-                placeholder="0"
-              />
-            </div>
-          </Row>
-          <Row icon="📝" label="지출 메모">
-            <input
-              type="text"
-              value={form.expenseNote || ''}
-              onChange={(e) => setForm({ ...form, expenseNote: e.target.value || null })}
-              className="w-40 px-3 py-1 rounded-lg border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
-              placeholder="내역"
             />
           </Row>
         </Section>
