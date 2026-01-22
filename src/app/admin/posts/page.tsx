@@ -728,6 +728,12 @@ export default function PostsManagementPage() {
             카테고리 관리
           </button>
           <Link
+            href="/admin/blog/databases"
+            className="flex-1 sm:flex-none px-3 sm:px-4 py-2 text-sm text-center bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors"
+          >
+            데이터베이스
+          </Link>
+          <Link
             href="/admin/new"
             className="flex-1 sm:flex-none px-3 sm:px-4 py-2 text-sm text-center bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
           >
