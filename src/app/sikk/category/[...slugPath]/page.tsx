@@ -61,51 +61,59 @@ async function parseSlugPath(slugPath: string[]) {
   if (slugPath.length >= 2) {
     // Check if last segment is a database slug under parent category
     const possibleDbSlug = slugPath[slugPath.length - 1];
-    const possibleCategoryPath = slugPath.slice(0, -1);
-    const categoryPathString = possibleCategoryPath.join('/');
+    const possibleCategorySlugPath = slugPath.slice(0, -1);
 
-    // Check if a database exists with this slug under this category
-    const database = await prisma.sikkDatabase.findFirst({
-      where: {
-        slug: possibleDbSlug,
-        category: {
-          startsWith: categoryPathString,
+    // First, get the actual category to convert slugPath to category names (path)
+    const category = await getSikkCategoryBySlugPathAsync(possibleCategorySlugPath);
+    if (category) {
+      // Use the category's path (names) instead of slugs for database lookup
+      const categoryPathString = category.path.join('/');
+
+      // Check if a database exists with this slug under this category
+      const database = await prisma.sikkDatabase.findFirst({
+        where: {
+          slug: possibleDbSlug,
+          category: categoryPathString,
         },
-      },
-      select: { slug: true, category: true },
-    });
+        select: { slug: true, category: true },
+      });
 
-    if (database && database.category === categoryPathString) {
-      return { type: 'database' as const, categorySlugPath: possibleCategoryPath, dbSlug: possibleDbSlug };
+      if (database) {
+        return { type: 'database' as const, categorySlugPath: possibleCategorySlugPath, dbSlug: possibleDbSlug };
+      }
     }
 
     // Check if it's a database item (last two segments: dbSlug/itemId)
     if (slugPath.length >= 3) {
       const possibleItemId = slugPath[slugPath.length - 1];
       const possibleDbSlug2 = slugPath[slugPath.length - 2];
-      const possibleCategoryPath2 = slugPath.slice(0, -2);
-      const categoryPathString2 = possibleCategoryPath2.join('/');
+      const possibleCategorySlugPath2 = slugPath.slice(0, -2);
 
-      const database2 = await prisma.sikkDatabase.findFirst({
-        where: {
-          slug: possibleDbSlug2,
-          category: categoryPathString2,
-        },
-        select: { id: true, slug: true },
-      });
+      const category2 = await getSikkCategoryBySlugPathAsync(possibleCategorySlugPath2);
+      if (category2) {
+        const categoryPathString2 = category2.path.join('/');
 
-      if (database2) {
-        // Check if item exists
-        const item = await prisma.sikkDatabaseItem.findFirst({
+        const database2 = await prisma.sikkDatabase.findFirst({
           where: {
-            id: possibleItemId,
-            databaseId: database2.id,
+            slug: possibleDbSlug2,
+            category: categoryPathString2,
           },
-          select: { id: true },
+          select: { id: true, slug: true },
         });
 
-        if (item) {
-          return { type: 'database-item' as const, categorySlugPath: possibleCategoryPath2, dbSlug: possibleDbSlug2, itemId: possibleItemId };
+        if (database2) {
+          // Check if item exists
+          const item = await prisma.sikkDatabaseItem.findFirst({
+            where: {
+              id: possibleItemId,
+              databaseId: database2.id,
+            },
+            select: { id: true },
+          });
+
+          if (item) {
+            return { type: 'database-item' as const, categorySlugPath: possibleCategorySlugPath2, dbSlug: possibleDbSlug2, itemId: possibleItemId };
+          }
         }
       }
     }
