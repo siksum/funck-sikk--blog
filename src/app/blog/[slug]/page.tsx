@@ -1,7 +1,6 @@
 import { notFound } from 'next/navigation';
 import Link from 'next/link';
 import { getPostBySlugAsync, getAllPostsAsync, getRelatedPostsAsync, getAdjacentPostsAsync, getRootCategoriesAsync } from '@/lib/posts';
-import MDXContent from '@/components/mdx/MDXContent';
 import CommentSection from '@/components/comments/CommentSection';
 import ReadingProgressBar from '@/components/blog/ReadingProgressBar';
 import PostNavigation from '@/components/blog/PostNavigation';
@@ -13,6 +12,7 @@ import KeyboardNavigation from '@/components/blog/KeyboardNavigation';
 import HighlightShare from '@/components/blog/HighlightShare';
 import DifficultyBadge from '@/components/blog/DifficultyBadge';
 import BlogPostLayout from '@/components/blog/BlogPostLayout';
+import BlogPostContent from '@/components/blog/BlogPostContent';
 import { auth } from '@/lib/auth';
 import { prisma } from '@/lib/db';
 
@@ -94,18 +94,16 @@ export default async function BlogPostPage({ params }: BlogPostPageProps) {
     notFound();
   }
 
+  // Check admin status
+  const session = await auth();
+  const isAdmin = session?.user?.isAdmin || false;
+
   // Check if post is private
   const isPrivate = !post.isPublic;
-  let isAdmin = false;
 
-  if (isPrivate) {
-    const session = await auth();
-    isAdmin = session?.user?.isAdmin || false;
-
-    // If post is private and user is not admin, show 404
-    if (!isAdmin) {
-      notFound();
-    }
+  // If post is private and user is not admin, show 404
+  if (isPrivate && !isAdmin) {
+    notFound();
   }
 
   const formattedDate = new Date(post.date).toLocaleDateString('ko-KR', {
@@ -210,7 +208,22 @@ export default async function BlogPostPage({ params }: BlogPostPageProps) {
         <hr className="mb-8 border-t-2 border-violet-400 dark:border-violet-500" />
 
         {/* Content */}
-        <MDXContent content={post.content} />
+        <BlogPostContent
+          content={post.content}
+          slug={slug}
+          isAdmin={isAdmin}
+          initialMetadata={{
+            title: post.title,
+            description: post.description || '',
+            date: post.date,
+            tags: post.tags,
+            category: post.category || '',
+            isPublic: post.isPublic,
+            thumbnail: post.thumbnail,
+            thumbnailPosition: post.thumbnailPosition,
+            thumbnailScale: post.thumbnailScale,
+          }}
+        />
 
         {/* Violet Divider before comments */}
         <hr className="my-8 border-t-2 border-violet-400 dark:border-violet-500" />
