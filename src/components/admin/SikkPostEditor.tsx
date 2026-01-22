@@ -1126,15 +1126,15 @@ export default function SikkPostEditor({ initialData = {}, isEdit = false }: Sik
       <div className="rounded-xl overflow-hidden" style={{ backgroundColor: 'var(--background)' }}>
         {/* Header Preview */}
         <div className="p-6 pb-0">
-          {/* Banner Image */}
+          {/* Banner Image - Same styling as actual Sikk page */}
           {formData.thumbnail && (
             <div className="mb-6 -mx-6 -mt-6 rounded-t-xl overflow-hidden">
               <div
-                className="w-full h-48 sm:h-64"
+                className="relative w-full h-48 sm:h-64 md:h-80"
                 style={{
                   backgroundImage: `url(${formData.thumbnail})`,
                   backgroundSize: `${formData.thumbnailScale || 100}%`,
-                  backgroundPosition: `center ${formData.thumbnailPosition}%`,
+                  backgroundPosition: `center ${formData.thumbnailPosition || 50}%`,
                   backgroundRepeat: 'no-repeat',
                   backgroundColor: 'var(--background-secondary)',
                 }}
