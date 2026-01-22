@@ -17,7 +17,7 @@ import { TextStyle } from '@tiptap/extension-text-style';
 import { Color } from '@tiptap/extension-color';
 import { Highlight } from '@tiptap/extension-highlight';
 import { common, createLowlight } from 'lowlight';
-import solidity from 'highlight.js/lib/languages/solidity';
+import { solidity } from 'highlightjs-solidity';
 import { Markdown } from 'tiptap-markdown';
 import { useCallback, useEffect, useState } from 'react';
 import EditorToolbar from './menus/EditorToolbar';
