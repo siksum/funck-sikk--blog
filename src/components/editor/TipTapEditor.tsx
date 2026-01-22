@@ -197,6 +197,11 @@ export default function TipTapEditor({
     try {
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       const markdown = (editor.storage as any).markdown.getMarkdown();
+      const html = editor.getHTML();
+      console.log('=== Editor Debug ===');
+      console.log('HTML:', html);
+      console.log('Markdown:', markdown);
+      console.log('====================');
       await onSave(markdown);
       setLastSaved(new Date());
       setHasChanges(false);
