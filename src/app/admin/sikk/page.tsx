@@ -428,9 +428,19 @@ export default function SikkPostsManagementPage() {
         db.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
         db.slug.toLowerCase().includes(searchTerm.toLowerCase());
 
-      return (matchesCategoryDirect || matchesSubcategoryDirect) && matchesSearch;
+      // Section filter (same as posts)
+      let matchesSection = true;
+      if (selectedSection) {
+        const section = dbSections.find(s => s.id === selectedSection);
+        if (section) {
+          const sectionCategoryNames = section.categories?.map(c => c.name) || [];
+          matchesSection = sectionCategoryNames.includes(mainCategory);
+        }
+      }
+
+      return (matchesCategoryDirect || matchesSubcategoryDirect) && matchesSearch && matchesSection;
     });
-  }, [databases, selectedCategory, selectedSubcategory, searchTerm]);
+  }, [databases, selectedCategory, selectedSubcategory, searchTerm, selectedSection, dbSections]);
 
   const toggleCategory = (category: string) => {
     setExpandedCategories((prev) => {
