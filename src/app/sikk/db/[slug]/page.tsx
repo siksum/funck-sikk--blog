@@ -1,3 +1,4 @@
+import { Suspense } from 'react';
 import { notFound } from 'next/navigation';
 import Link from 'next/link';
 import { prisma } from '@/lib/db';
@@ -105,13 +106,15 @@ export default async function DatabasePage({ params }: DatabasePageProps) {
       </header>
 
       {/* Table View */}
-      <DatabaseTableView
-        databaseId={database.id}
-        databaseSlug={database.slug}
-        columns={columns}
-        items={items}
-        isAdmin={isAdmin}
-      />
+      <Suspense fallback={<div className="text-center py-8 text-gray-500">로딩 중...</div>}>
+        <DatabaseTableView
+          databaseId={database.id}
+          databaseSlug={database.slug}
+          columns={columns}
+          items={items}
+          isAdmin={isAdmin}
+        />
+      </Suspense>
 
       {/* Footer */}
       <footer className="mt-12 pt-8 border-t" style={{ borderColor: 'var(--card-border)' }}>
