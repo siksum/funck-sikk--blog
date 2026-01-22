@@ -624,23 +624,43 @@ export default function DatabaseDetailPage({ params }: DatabasePageProps) {
       if (column.type === 'select') {
         const options = column.options || [];
         return (
-          <select
-            value={editValue}
-            onChange={(e) => {
-              setEditValue(e.target.value);
-              handleUpdateCell(item.id, column.id, e.target.value);
-            }}
-            onBlur={() => setEditingCell(null)}
-            className="w-full px-2 py-1 text-sm border border-pink-400 rounded focus:outline-none focus:ring-2 focus:ring-pink-500 bg-white dark:bg-gray-900 text-gray-900 dark:text-white"
-            autoFocus
-          >
-            <option value="">선택...</option>
-            {options.map((opt) => (
-              <option key={opt} value={opt}>
-                {opt}
-              </option>
-            ))}
-          </select>
+          <>
+            {/* Backdrop to close dropdown when clicking outside */}
+            <div
+              className="fixed inset-0 z-40"
+              onClick={() => setEditingCell(null)}
+            />
+            <div className="relative">
+              <div className="px-2 py-1 text-sm border border-pink-400 rounded bg-white dark:bg-gray-900 text-gray-900 dark:text-white cursor-pointer">
+                {editValue || '선택...'}
+              </div>
+              <div className="absolute left-0 top-full mt-1 z-50 min-w-[200px] max-h-48 overflow-y-auto bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg shadow-lg">
+                <button
+                  type="button"
+                  onClick={() => {
+                    handleUpdateCell(item.id, column.id, '');
+                  }}
+                  className="w-full px-3 py-2 text-left text-sm text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-700"
+                >
+                  선택...
+                </button>
+                {options.map((opt) => (
+                  <button
+                    key={opt}
+                    type="button"
+                    onClick={() => {
+                      handleUpdateCell(item.id, column.id, opt);
+                    }}
+                    className={`w-full px-3 py-2 text-left text-sm hover:bg-pink-50 dark:hover:bg-pink-900/20 ${
+                      editValue === opt ? 'bg-pink-100 dark:bg-pink-900/30 text-pink-700 dark:text-pink-400' : 'text-gray-900 dark:text-white'
+                    }`}
+                  >
+                    {opt}
+                  </button>
+                ))}
+              </div>
+            </div>
+          </>
         );
       }
 
