@@ -1568,19 +1568,22 @@ export default function SikkPostsManagementPage() {
                               {/* No checkbox for databases */}
                             </td>
                             <td className="px-6 py-4">
-                              <div className="flex items-center gap-2">
+                              <Link
+                                href={`/admin/sikk/databases/${db.id}`}
+                                className="flex items-center gap-2 hover:text-purple-600 dark:hover:text-purple-400 transition-colors"
+                              >
                                 <svg className="w-4 h-4 text-purple-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 7v10c0 2.21 3.582 4 8 4s8-1.79 8-4V7M4 7c0 2.21 3.582 4 8 4s8-1.79 8-4M4 7c0-2.21 3.582-4 8-4s8 1.79 8 4" />
                                 </svg>
                                 <div>
-                                  <div className="text-sm font-medium text-gray-900 dark:text-white">
+                                  <div className="text-sm font-medium text-gray-900 dark:text-white hover:text-purple-600 dark:hover:text-purple-400">
                                     {db.title}
                                   </div>
                                   <div className="text-xs text-gray-500 dark:text-gray-400 mt-1">
                                     {db._count?.items || 0}개 항목 · /sikk/db/{db.slug}
                                   </div>
                                 </div>
-                              </div>
+                              </Link>
                             </td>
                             <td className="px-6 py-4 whitespace-nowrap relative">
                               {editingDbCategoryId === db.id ? (
