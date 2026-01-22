@@ -1040,60 +1040,64 @@ export default function SikkPostsManagementPage() {
                       {/* Subcategories */}
                       {expandedCategories.has(category.name) && category.children.length > 0 && (
                         <div className="ml-6 space-y-1">
-                          {category.children.map((sub) => (
-                            <button
-                              key={sub.id}
-                              onClick={() => {
-                                setSelectedCategory(category.name);
-                                setSelectedSubcategory(sub.name);
-                                setSelectedDatabase(null);
-                              }}
-                              className={`w-full flex items-center justify-between py-1.5 text-sm transition-colors ${
-                                selectedCategory === category.name && selectedSubcategory === sub.name && !selectedDatabase
-                                  ? 'text-pink-600 dark:text-pink-400 font-medium'
-                                  : 'text-gray-500 dark:text-gray-400 hover:text-pink-600 dark:hover:text-pink-400'
-                              }`}
-                            >
-                              <span>{sub.name}</span>
-                              <span className="text-xs text-gray-400 dark:text-gray-500">
-                                {sub.postCount}
-                              </span>
-                            </button>
-                          ))}
-                          {/* Databases under this subcategory - check both formats (full path and subcategory only) */}
-                          {(() => {
+                          {category.children.map((sub) => {
+                            // Get databases for this subcategory
                             const fullPath = `${category.name}/${sub.name}`;
                             const subOnly = sub.name;
                             const dbsFullPath = databasesByCategory[fullPath] || [];
                             const dbsSubOnly = (databasesByCategory[subOnly] || []).filter(
                               (db) => !dbsFullPath.some((d) => d.id === db.id)
                             );
-                            return [...dbsFullPath, ...dbsSubOnly];
-                          })().map((db) => (
-                            <button
-                              key={db.id}
-                              onClick={() => {
-                                fetchDatabaseWithItems(db.id);
-                                setSelectedCategory(category.name);
-                                setSelectedSubcategory(sub.name);
-                              }}
-                              className={`w-full flex items-center justify-between py-1.5 text-sm transition-colors pl-4 ${
-                                selectedDatabase?.id === db.id
-                                  ? 'text-purple-600 dark:text-purple-400 font-medium'
-                                  : 'text-gray-500 dark:text-gray-400 hover:text-purple-600 dark:hover:text-purple-400'
-                              }`}
-                            >
-                              <span className="flex items-center gap-1">
-                                <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 7v10c0 2.21 3.582 4 8 4s8-1.79 8-4V7M4 7c0 2.21 3.582 4 8 4s8-1.79 8-4M4 7c0-2.21 3.582-4 8-4s8 1.79 8 4" />
-                                </svg>
-                                {db.title}
-                              </span>
-                              <span className="text-xs text-gray-400 dark:text-gray-500">
-                                {db._count?.items || 0}
-                              </span>
-                            </button>
-                          ))}
+                            const subcategoryDatabases = [...dbsFullPath, ...dbsSubOnly];
+
+                            return (
+                              <div key={sub.id}>
+                                <button
+                                  onClick={() => {
+                                    setSelectedCategory(category.name);
+                                    setSelectedSubcategory(sub.name);
+                                    setSelectedDatabase(null);
+                                  }}
+                                  className={`w-full flex items-center justify-between py-1.5 text-sm transition-colors ${
+                                    selectedCategory === category.name && selectedSubcategory === sub.name && !selectedDatabase
+                                      ? 'text-pink-600 dark:text-pink-400 font-medium'
+                                      : 'text-gray-500 dark:text-gray-400 hover:text-pink-600 dark:hover:text-pink-400'
+                                  }`}
+                                >
+                                  <span>{sub.name}</span>
+                                  <span className="text-xs text-gray-400 dark:text-gray-500">
+                                    {sub.postCount}
+                                  </span>
+                                </button>
+                                {/* Databases under this subcategory */}
+                                {subcategoryDatabases.map((db) => (
+                                  <button
+                                    key={db.id}
+                                    onClick={() => {
+                                      fetchDatabaseWithItems(db.id);
+                                      setSelectedCategory(category.name);
+                                      setSelectedSubcategory(sub.name);
+                                    }}
+                                    className={`w-full flex items-center justify-between py-1.5 text-sm transition-colors pl-4 ${
+                                      selectedDatabase?.id === db.id
+                                        ? 'text-purple-600 dark:text-purple-400 font-medium'
+                                        : 'text-gray-500 dark:text-gray-400 hover:text-purple-600 dark:hover:text-purple-400'
+                                    }`}
+                                  >
+                                    <span className="flex items-center gap-1">
+                                      <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 7v10c0 2.21 3.582 4 8 4s8-1.79 8-4V7M4 7c0 2.21 3.582 4 8 4s8-1.79 8-4M4 7c0-2.21 3.582-4 8-4s8 1.79 8 4" />
+                                      </svg>
+                                      {db.title}
+                                    </span>
+                                    <span className="text-xs text-gray-400 dark:text-gray-500">
+                                      {db._count?.items || 0}
+                                    </span>
+                                  </button>
+                                ))}
+                              </div>
+                            );
+                          })}
                         </div>
                       )}
                       {/* Databases directly under this category (not subcategory) */}
