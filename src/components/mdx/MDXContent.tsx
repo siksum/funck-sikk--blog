@@ -114,7 +114,7 @@ export default function MDXContent({ content }: MDXContentProps) {
     return (
       <>
         <article
-          className="max-w-none prose prose-violet dark:prose-invert"
+          className="max-w-none mdx-html-content"
           style={{ color: 'var(--foreground)' }}
           dangerouslySetInnerHTML={{ __html: content }}
         />
