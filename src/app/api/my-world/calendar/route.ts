@@ -140,12 +140,14 @@ export async function POST(request: NextRequest) {
 
     // For all-day events created today, also send immediate notification
     if (shouldRemind && isAllDay) {
-      const todayStart = new Date(now);
-      todayStart.setHours(0, 0, 0, 0);
-      const todayEnd = new Date(now);
-      todayEnd.setHours(23, 59, 59, 999);
+      // Compare dates using date strings to avoid timezone issues
+      const eventDateStr = eventDate.toISOString().split('T')[0];
+      const todayStr = now.toISOString().split('T')[0];
 
-      if (eventDate >= todayStart && eventDate <= todayEnd) {
+      // Also check if eventDate is for "today" in local context (the date string passed from frontend)
+      const inputDateStr = typeof date === 'string' ? date.split('T')[0] : eventDateStr;
+
+      if (eventDateStr === todayStr || inputDateStr === todayStr) {
         const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:3000';
 
         await sendPushToUsers([userId], {

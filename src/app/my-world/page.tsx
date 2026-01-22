@@ -3689,26 +3689,24 @@ export default function MyWorldDashboard() {
                 </div>
               )}
 
-              {/* Reminder Toggle (only for timed events) */}
-              {!eventForm.isAllDay && (
-                <div className="flex items-center justify-between">
-                  <label className="text-sm font-medium text-gray-700 dark:text-gray-300">
-                    30분 전 알림
-                  </label>
-                  <button
-                    onClick={() => setEventForm({ ...eventForm, reminder: !eventForm.reminder })}
-                    className={`relative w-12 h-6 rounded-full transition-colors ${
-                      eventForm.reminder ? 'bg-violet-600' : 'bg-gray-300 dark:bg-gray-600'
+              {/* Reminder Toggle */}
+              <div className="flex items-center justify-between">
+                <label className="text-sm font-medium text-gray-700 dark:text-gray-300">
+                  {eventForm.isAllDay ? '오전 10시 알림' : '30분 전 알림'}
+                </label>
+                <button
+                  onClick={() => setEventForm({ ...eventForm, reminder: !eventForm.reminder })}
+                  className={`relative w-12 h-6 rounded-full transition-colors ${
+                    eventForm.reminder ? 'bg-violet-600' : 'bg-gray-300 dark:bg-gray-600'
+                  }`}
+                >
+                  <div
+                    className={`absolute top-0.5 w-5 h-5 bg-white rounded-full shadow transition-transform ${
+                      eventForm.reminder ? 'translate-x-6' : 'translate-x-0.5'
                     }`}
-                  >
-                    <div
-                      className={`absolute top-0.5 w-5 h-5 bg-white rounded-full shadow transition-transform ${
-                        eventForm.reminder ? 'translate-x-6' : 'translate-x-0.5'
-                      }`}
-                    />
-                  </button>
-                </div>
-              )}
+                  />
+                </button>
+              </div>
 
               {/* Location */}
               <div>

@@ -62,16 +62,16 @@ export async function GET(request: NextRequest) {
     }
   }
 
-  // 2. All-day events: remind at 8 AM on the day of the event
+  // 2. All-day events: remind at 10 AM on the day of the event
   const todayStart = new Date(now);
   todayStart.setHours(0, 0, 0, 0);
   const todayEnd = new Date(now);
   todayEnd.setHours(23, 59, 59, 999);
 
-  // Check if current time is between 8:00 AM and 8:10 AM (10 min window for cron)
+  // Check if current time is between 10:00 AM and 10:10 AM (10 min window for cron)
   const currentHour = now.getHours();
   const currentMinute = now.getMinutes();
-  const isReminderTime = currentHour === 8 && currentMinute < 10;
+  const isReminderTime = currentHour === 10 && currentMinute < 10;
 
   if (isReminderTime) {
     const allDayEvents = await prisma.calendarEvent.findMany({
