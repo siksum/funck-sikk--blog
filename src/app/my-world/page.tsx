@@ -76,23 +76,17 @@ const todoStatusConfig = {
 };
 
 const eventColors = [
-  // 기본 파스텔
-  { name: '보라', value: '#c4b5fd' },
-  { name: '파랑', value: '#93c5fd' },
-  { name: '초록', value: '#86efac' },
-  { name: '노랑', value: '#fde047' },
-  { name: '주황', value: '#fdba74' },
+  // 구분되는 파스텔 톤 (10색)
   { name: '빨강', value: '#fca5a5' },
-  { name: '핑크', value: '#f9a8d4' },
-  // 추가 파스텔
-  { name: '인디고', value: '#a5b4fc' },
-  { name: '시안', value: '#67e8f9' },
-  { name: '청록', value: '#5eead4' },
+  { name: '주황', value: '#fdba74' },
+  { name: '노랑', value: '#fde047' },
   { name: '라임', value: '#bef264' },
-  { name: '앰버', value: '#fcd34d' },
-  { name: '로즈', value: '#fda4af' },
-  { name: '퓨시아', value: '#f0abfc' },
-  { name: '슬레이트', value: '#cbd5e1' },
+  { name: '초록', value: '#86efac' },
+  { name: '시안', value: '#67e8f9' },
+  { name: '파랑', value: '#93c5fd' },
+  { name: '보라', value: '#c4b5fd' },
+  { name: '핑크', value: '#f9a8d4' },
+  { name: '회색', value: '#d1d5db' },
 ];
 
 // Convert old saturated colors to pastel equivalents
