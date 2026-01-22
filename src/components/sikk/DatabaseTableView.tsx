@@ -76,6 +76,11 @@ export default function DatabaseTableView({
   const [showBulkDateMenu, setShowBulkDateMenu] = useState(false);
   const [bulkDate, setBulkDate] = useState<string>(new Date().toISOString().split('T')[0]);
 
+  // Add column state
+  const [showColumnModal, setShowColumnModal] = useState(false);
+  const [newColumnName, setNewColumnName] = useState('');
+  const [newColumnType, setNewColumnType] = useState<Column['type']>('text');
+
   const handleAddItem = useCallback(async () => {
     // Create default data for new item
     const defaultData: Record<string, unknown> = {};
@@ -261,6 +266,60 @@ export default function DatabaseTableView({
       console.error('Failed to bulk update date:', error);
     }
   }, [databaseId, columns, items, selectedItems, bulkDate, router]);
+
+  // Add column handler
+  const handleAddColumn = useCallback(async () => {
+    if (!newColumnName.trim()) return;
+
+    const newColumn: Column = {
+      id: `col_${Date.now()}`,
+      name: newColumnName.trim(),
+      type: newColumnType,
+      ...(newColumnType === 'select' && { options: [] }),
+    };
+
+    const newColumns = [...columns, newColumn];
+
+    try {
+      const res = await fetch(`/api/sikk/databases/${databaseId}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ columns: newColumns }),
+      });
+
+      if (res.ok) {
+        setColumns(newColumns);
+        setNewColumnName('');
+        setNewColumnType('text');
+        setShowColumnModal(false);
+        router.refresh();
+      }
+    } catch (error) {
+      console.error('Failed to add column:', error);
+    }
+  }, [databaseId, columns, newColumnName, newColumnType, router]);
+
+  // Delete column handler
+  const handleDeleteColumn = useCallback(async (columnId: string) => {
+    if (!confirm('이 열을 삭제하시겠습니까?')) return;
+
+    const newColumns = columns.filter((c) => c.id !== columnId);
+
+    try {
+      const res = await fetch(`/api/sikk/databases/${databaseId}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ columns: newColumns }),
+      });
+
+      if (res.ok) {
+        setColumns(newColumns);
+        router.refresh();
+      }
+    } catch (error) {
+      console.error('Failed to delete column:', error);
+    }
+  }, [databaseId, columns, router]);
 
   // Column drag and drop handlers
   const handleColumnDragStart = (columnId: string) => {
@@ -958,6 +1017,19 @@ export default function DatabaseTableView({
           )}
         </div>
 
+        {/* Add Column Button (Admin) */}
+        {isAdmin && (
+          <button
+            onClick={() => setShowColumnModal(true)}
+            className="px-2 py-1 text-xs border border-pink-200 dark:border-pink-700 rounded bg-white dark:bg-gray-900 text-pink-600 dark:text-pink-400 hover:bg-pink-50 dark:hover:bg-pink-900/20 flex items-center gap-1"
+          >
+            <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
+            </svg>
+            열 추가
+          </button>
+        )}
+
         {/* Reset */}
         {(sortColumn || groupByColumn || filterColumn || hiddenColumns.size > 0) && (
           <button
@@ -1122,6 +1194,20 @@ export default function DatabaseTableView({
                         </svg>
                       )}
                       <span className="truncate">{column.name}</span>
+                      {isAdmin && (
+                        <button
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            handleDeleteColumn(column.id);
+                          }}
+                          className="opacity-0 group-hover:opacity-100 p-0.5 text-red-500 hover:text-red-700 transition-opacity flex-shrink-0"
+                          title="열 삭제"
+                        >
+                          <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                          </svg>
+                        </button>
+                      )}
                     </div>
                     {/* Resize handle */}
                     <div
@@ -1260,6 +1346,69 @@ export default function DatabaseTableView({
           </button>
         )}
       </div>
+
+      {/* Add Column Modal */}
+      {showColumnModal && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
+          <div className="bg-white dark:bg-gray-800 rounded-xl shadow-xl w-full max-w-md mx-4 p-6">
+            <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">
+              새 열 추가
+            </h3>
+            <div className="space-y-4">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                  열 이름
+                </label>
+                <input
+                  type="text"
+                  value={newColumnName}
+                  onChange={(e) => setNewColumnName(e.target.value)}
+                  placeholder="열 이름"
+                  className="w-full px-3 py-2 border border-gray-200 dark:border-gray-700 rounded-lg bg-white dark:bg-gray-900 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-pink-500"
+                  autoFocus
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                  열 타입
+                </label>
+                <select
+                  value={newColumnType}
+                  onChange={(e) => setNewColumnType(e.target.value as Column['type'])}
+                  className="w-full px-3 py-2 border border-gray-200 dark:border-gray-700 rounded-lg bg-white dark:bg-gray-900 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-pink-500"
+                >
+                  <option value="text">텍스트</option>
+                  <option value="title">제목 (링크)</option>
+                  <option value="date">날짜</option>
+                  <option value="number">숫자</option>
+                  <option value="url">URL</option>
+                  <option value="files">파일</option>
+                  <option value="select">선택</option>
+                </select>
+              </div>
+            </div>
+            <div className="flex justify-end gap-2 mt-6">
+              <button
+                onClick={() => {
+                  setShowColumnModal(false);
+                  setNewColumnName('');
+                  setNewColumnType('text');
+                }}
+                className="px-4 py-2 text-sm text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
+              >
+                취소
+              </button>
+              <button
+                onClick={handleAddColumn}
+                disabled={!newColumnName.trim()}
+                className="px-4 py-2 text-sm bg-pink-600 text-white rounded-lg hover:bg-pink-700 disabled:opacity-50 transition-colors"
+              >
+                추가
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
