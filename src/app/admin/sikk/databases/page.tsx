@@ -46,6 +46,15 @@ export default function SikkDatabasesPage() {
     return options;
   }, [categories]);
 
+  // Generate database URL based on category
+  const getDatabaseUrl = (db: Database) => {
+    if (db.category) {
+      const categoryPath = db.category.split('/').map(s => encodeURIComponent(s)).join('/');
+      return `/sikk/category/${categoryPath}/${db.slug}`;
+    }
+    return `/sikk/db/${db.slug}`;
+  };
+
   const fetchDatabases = async () => {
     try {
       const res = await fetch('/api/sikk/databases');
@@ -186,12 +195,12 @@ export default function SikkDatabasesPage() {
                     )}
                     <div className="flex items-center gap-4 text-xs text-gray-400 dark:text-gray-500">
                       <span>{db._count.items}개 항목</span>
-                      <span>/sikk/db/{db.slug}</span>
+                      <span>{getDatabaseUrl(db)}</span>
                     </div>
                   </div>
                   <div className="flex gap-2">
                     <Link
-                      href={`/sikk/db/${db.slug}`}
+                      href={getDatabaseUrl(db)}
                       className="px-3 py-1.5 text-xs text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
                     >
                       보기
