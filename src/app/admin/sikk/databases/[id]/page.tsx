@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useCallback, useMemo, use } from 'react';
 import Link from 'next/link';
-import { useRouter } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
 
 interface Column {
   id: string;
@@ -45,6 +45,7 @@ interface DatabasePageProps {
 export default function DatabaseDetailPage({ params }: DatabasePageProps) {
   const { id } = use(params);
   const router = useRouter();
+  const searchParams = useSearchParams();
   const [database, setDatabase] = useState<Database | null>(null);
   const [categories, setCategories] = useState<DBCategory[]>([]);
   const [loading, setLoading] = useState(true);
@@ -71,16 +72,35 @@ export default function DatabaseDetailPage({ params }: DatabasePageProps) {
   const [resizeStartX, setResizeStartX] = useState(0);
   const [resizeStartWidth, setResizeStartWidth] = useState(0);
 
-  // Sort/Filter/Group state
-  const [sortColumn, setSortColumn] = useState<string | null>(null);
-  const [sortDirection, setSortDirection] = useState<'asc' | 'desc'>('asc');
-  const [groupByColumn, setGroupByColumn] = useState<string | null>(null);
-  const [filterColumn, setFilterColumn] = useState<string | null>(null);
-  const [filterValue, setFilterValue] = useState<string>('');
+  // Sort/Filter/Group state - initialize from URL params
+  const [sortColumn, setSortColumn] = useState<string | null>(() => searchParams.get('sort') || null);
+  const [sortDirection, setSortDirection] = useState<'asc' | 'desc'>(() => (searchParams.get('dir') as 'asc' | 'desc') || 'asc');
+  const [groupByColumn, setGroupByColumn] = useState<string | null>(() => searchParams.get('group') || null);
+  const [filterColumn, setFilterColumn] = useState<string | null>(() => searchParams.get('filterCol') || null);
+  const [filterValue, setFilterValue] = useState<string>(() => searchParams.get('filterVal') || '');
 
-  // Hidden columns state
-  const [hiddenColumns, setHiddenColumns] = useState<Set<string>>(new Set());
+  // Hidden columns state - initialize from URL params
+  const [hiddenColumns, setHiddenColumns] = useState<Set<string>>(() => {
+    const hidden = searchParams.get('hidden');
+    return hidden ? new Set(hidden.split(',')) : new Set();
+  });
   const [showColumnVisibilityMenu, setShowColumnVisibilityMenu] = useState(false);
+
+  // Update URL when state changes
+  const updateUrlParams = useCallback((updates: Record<string, string | null>) => {
+    const params = new URLSearchParams(searchParams.toString());
+
+    Object.entries(updates).forEach(([key, value]) => {
+      if (value === null || value === '') {
+        params.delete(key);
+      } else {
+        params.set(key, value);
+      }
+    });
+
+    const newUrl = params.toString() ? `?${params.toString()}` : window.location.pathname;
+    router.replace(newUrl, { scroll: false });
+  }, [searchParams, router]);
 
   // Bulk selection state
   const [selectedItems, setSelectedItems] = useState<Set<string>>(new Set());
@@ -699,6 +719,9 @@ export default function DatabaseDetailPage({ params }: DatabasePageProps) {
       } else {
         next.add(columnId);
       }
+      // Update URL
+      const hiddenStr = Array.from(next).join(',');
+      updateUrlParams({ hidden: hiddenStr || null });
       return next;
     });
   };
@@ -706,6 +729,7 @@ export default function DatabaseDetailPage({ params }: DatabasePageProps) {
   // Show all columns
   const showAllColumns = () => {
     setHiddenColumns(new Set());
+    updateUrlParams({ hidden: null });
   };
 
   const startEditing = (itemId: string, columnId: string, currentValue: unknown) => {
@@ -1026,7 +1050,11 @@ export default function DatabaseDetailPage({ params }: DatabasePageProps) {
           <span className="text-xs text-gray-500 dark:text-gray-400">정렬:</span>
           <select
             value={sortColumn || ''}
-            onChange={(e) => setSortColumn(e.target.value || null)}
+            onChange={(e) => {
+              const value = e.target.value || null;
+              setSortColumn(value);
+              updateUrlParams({ sort: value });
+            }}
             className="px-2 py-1 text-xs border border-gray-200 dark:border-gray-700 rounded bg-white dark:bg-gray-900 text-gray-900 dark:text-white"
           >
             <option value="">없음</option>
@@ -1036,7 +1064,11 @@ export default function DatabaseDetailPage({ params }: DatabasePageProps) {
           </select>
           {sortColumn && (
             <button
-              onClick={() => setSortDirection((d) => d === 'asc' ? 'desc' : 'asc')}
+              onClick={() => {
+                const newDir = sortDirection === 'asc' ? 'desc' : 'asc';
+                setSortDirection(newDir);
+                updateUrlParams({ dir: newDir });
+              }}
               className="px-2 py-1 text-xs bg-gray-200 dark:bg-gray-700 rounded hover:bg-gray-300 dark:hover:bg-gray-600"
             >
               {sortDirection === 'asc' ? '↑ 오름차순' : '↓ 내림차순'}
@@ -1049,7 +1081,11 @@ export default function DatabaseDetailPage({ params }: DatabasePageProps) {
           <span className="text-xs text-gray-500 dark:text-gray-400">그룹:</span>
           <select
             value={groupByColumn || ''}
-            onChange={(e) => setGroupByColumn(e.target.value || null)}
+            onChange={(e) => {
+              const value = e.target.value || null;
+              setGroupByColumn(value);
+              updateUrlParams({ group: value });
+            }}
             className="px-2 py-1 text-xs border border-gray-200 dark:border-gray-700 rounded bg-white dark:bg-gray-900 text-gray-900 dark:text-white"
           >
             <option value="">없음</option>
@@ -1067,8 +1103,10 @@ export default function DatabaseDetailPage({ params }: DatabasePageProps) {
           <select
             value={filterColumn || ''}
             onChange={(e) => {
-              setFilterColumn(e.target.value || null);
+              const value = e.target.value || null;
+              setFilterColumn(value);
               setFilterValue('');
+              updateUrlParams({ filterCol: value, filterVal: null });
             }}
             className="px-2 py-1 text-xs border border-gray-200 dark:border-gray-700 rounded bg-white dark:bg-gray-900 text-gray-900 dark:text-white"
           >
@@ -1080,7 +1118,11 @@ export default function DatabaseDetailPage({ params }: DatabasePageProps) {
           {filterColumn && (
             <select
               value={filterValue}
-              onChange={(e) => setFilterValue(e.target.value)}
+              onChange={(e) => {
+                const value = e.target.value;
+                setFilterValue(value);
+                updateUrlParams({ filterVal: value || null });
+              }}
               className="px-2 py-1 text-xs border border-gray-200 dark:border-gray-700 rounded bg-white dark:bg-gray-900 text-gray-900 dark:text-white"
             >
               <option value="">전체</option>
@@ -1151,6 +1193,15 @@ export default function DatabaseDetailPage({ params }: DatabasePageProps) {
               setFilterColumn(null);
               setFilterValue('');
               setHiddenColumns(new Set());
+              // Clear all URL params
+              updateUrlParams({
+                sort: null,
+                dir: null,
+                group: null,
+                filterCol: null,
+                filterVal: null,
+                hidden: null,
+              });
             }}
             className="px-2 py-1 text-xs text-red-500 hover:text-red-700"
           >
