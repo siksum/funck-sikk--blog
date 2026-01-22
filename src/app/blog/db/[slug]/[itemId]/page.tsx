@@ -1,7 +1,7 @@
 import { notFound } from 'next/navigation';
 import { prisma } from '@/lib/db';
 import { auth } from '@/lib/auth';
-import DatabaseItemView from '@/components/sikk/DatabaseItemView';
+import BlogDatabaseItemView from '@/components/blog/BlogDatabaseItemView';
 
 export const revalidate = 10;
 
@@ -19,7 +19,7 @@ interface DatabaseItemPageProps {
 export async function generateMetadata({ params }: DatabaseItemPageProps) {
   const { slug, itemId } = await params;
 
-  const database = await prisma.sikkDatabase.findUnique({
+  const database = await prisma.blogDatabase.findUnique({
     where: { slug },
     select: { title: true, columns: true },
   });
@@ -28,7 +28,7 @@ export async function generateMetadata({ params }: DatabaseItemPageProps) {
     return { title: 'Not Found' };
   }
 
-  const item = await prisma.sikkDatabaseItem.findFirst({
+  const item = await prisma.blogDatabaseItem.findFirst({
     where: { id: itemId, database: { slug } },
     select: { data: true },
   });
@@ -43,14 +43,14 @@ export async function generateMetadata({ params }: DatabaseItemPageProps) {
   const title = titleColumn ? String(data[titleColumn.id] || '제목 없음') : '제목 없음';
 
   return {
-    title: `${title} | ${database.title} | func(sikk)`,
+    title: `${title} | ${database.title} | Blog`,
   };
 }
 
 export default async function DatabaseItemPage({ params }: DatabaseItemPageProps) {
   const { slug, itemId } = await params;
 
-  const database = await prisma.sikkDatabase.findUnique({
+  const database = await prisma.blogDatabase.findUnique({
     where: { slug },
     select: { id: true, title: true, slug: true, columns: true, isPublic: true },
   });
@@ -67,7 +67,7 @@ export default async function DatabaseItemPage({ params }: DatabaseItemPageProps
     notFound();
   }
 
-  const item = await prisma.sikkDatabaseItem.findFirst({
+  const item = await prisma.blogDatabaseItem.findFirst({
     where: { id: itemId, databaseId: database.id },
   });
 
@@ -79,7 +79,7 @@ export default async function DatabaseItemPage({ params }: DatabaseItemPageProps
   const data = item.data as Record<string, unknown>;
 
   return (
-    <DatabaseItemView
+    <BlogDatabaseItemView
       databaseId={database.id}
       databaseSlug={database.slug}
       databaseTitle={database.title}

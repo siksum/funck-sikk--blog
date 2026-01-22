@@ -297,6 +297,37 @@ model BlogPost {
   @@index([isPublic])
 }
 
+// ============ BLOG DATABASES ============
+
+model BlogDatabase {
+  id          String             @id @default(cuid())
+  title       String
+  description String?
+  slug        String             @unique
+  category    String?            // Category path (e.g., "개발/React")
+  columns     Json               // Array of { id, name, type, options? } objects
+  items       BlogDatabaseItem[]
+  isPublic    Boolean            @default(true)
+  createdAt   DateTime           @default(now())
+  updatedAt   DateTime           @updatedAt
+
+  @@index([category])
+}
+
+model BlogDatabaseItem {
+  id          String       @id @default(cuid())
+  databaseId  String
+  database    BlogDatabase @relation(fields: [databaseId], references: [id], onDelete: Cascade)
+  data        Json         // { [columnId]: value }
+  order       Int          @default(0)
+  content     String       @default("") // Page content (like BlogPost)
+  createdAt   DateTime     @default(now())
+  updatedAt   DateTime     @updatedAt
+
+  @@index([databaseId])
+  @@index([order])
+}
+
 // ============ MY WORLD - DAILY TRACKER ============
 
 model DailyEntry {

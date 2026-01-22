@@ -3,7 +3,7 @@ import { notFound } from 'next/navigation';
 import Link from 'next/link';
 import { prisma } from '@/lib/db';
 import { auth } from '@/lib/auth';
-import DatabaseTableView from '@/components/sikk/DatabaseTableView';
+import BlogDatabaseTableView from '@/components/blog/BlogDatabaseTableView';
 
 export const revalidate = 10;
 
@@ -28,7 +28,7 @@ interface DatabasePageProps {
 
 export async function generateMetadata({ params }: DatabasePageProps) {
   const { slug } = await params;
-  const database = await prisma.sikkDatabase.findUnique({
+  const database = await prisma.blogDatabase.findUnique({
     where: { slug },
     select: { title: true, description: true },
   });
@@ -38,7 +38,7 @@ export async function generateMetadata({ params }: DatabasePageProps) {
   }
 
   return {
-    title: `${database.title} | func(sikk)`,
+    title: `${database.title} | Blog`,
     description: database.description || '',
   };
 }
@@ -46,7 +46,7 @@ export async function generateMetadata({ params }: DatabasePageProps) {
 export default async function DatabasePage({ params }: DatabasePageProps) {
   const { slug } = await params;
 
-  const database = await prisma.sikkDatabase.findUnique({
+  const database = await prisma.blogDatabase.findUnique({
     where: { slug },
     include: {
       items: {
@@ -75,8 +75,8 @@ export default async function DatabasePage({ params }: DatabasePageProps) {
       {/* Header */}
       <header className="mb-8">
         <div className="flex items-center text-sm mb-4" style={{ color: 'var(--foreground)', opacity: 0.7 }}>
-          <Link href="/sikk" className="hover:text-pink-600 dark:hover:text-pink-400 transition-colors">
-            Sikk
+          <Link href="/blog" className="hover:text-violet-600 dark:hover:text-violet-400 transition-colors">
+            Blog
           </Link>
           <span className="mx-2">/</span>
           <span>데이터베이스</span>
@@ -96,8 +96,8 @@ export default async function DatabasePage({ params }: DatabasePageProps) {
 
           {isAdmin && (
             <Link
-              href={`/admin/sikk/databases/${database.id}`}
-              className="flex-shrink-0 px-4 py-2 bg-pink-500 text-white rounded-lg hover:bg-pink-600 transition-colors text-sm"
+              href={`/admin/blog/databases/${database.id}`}
+              className="flex-shrink-0 px-4 py-2 bg-violet-500 text-white rounded-lg hover:bg-violet-600 transition-colors text-sm"
             >
               편집
             </Link>
@@ -107,7 +107,7 @@ export default async function DatabasePage({ params }: DatabasePageProps) {
 
       {/* Table View */}
       <Suspense fallback={<div className="text-center py-8 text-gray-500">로딩 중...</div>}>
-        <DatabaseTableView
+        <BlogDatabaseTableView
           databaseId={database.id}
           databaseSlug={database.slug}
           columns={columns}
@@ -119,8 +119,8 @@ export default async function DatabasePage({ params }: DatabasePageProps) {
       {/* Footer */}
       <footer className="mt-12 pt-8 border-t" style={{ borderColor: 'var(--card-border)' }}>
         <Link
-          href="/sikk"
-          className="inline-flex items-center text-pink-600 dark:text-pink-400 hover:underline"
+          href="/blog"
+          className="inline-flex items-center text-violet-600 dark:text-violet-400 hover:underline"
         >
           <svg
             className="w-4 h-4 mr-2"
@@ -135,7 +135,7 @@ export default async function DatabasePage({ params }: DatabasePageProps) {
               d="M10 19l-7-7m0 0l7-7m-7 7h18"
             />
           </svg>
-          Sikk 목록으로 돌아가기
+          Blog 목록으로 돌아가기
         </Link>
       </footer>
     </div>

@@ -227,7 +227,7 @@ export async function generateMetadata({ params }: CategoryPageProps) {
     return { title: 'Not Found' };
   }
 
-  const columns = database.columns as Column[];
+  const columns = database.columns as unknown as Column[];
   const titleColumn = columns.find((c) => c.type === 'title');
   const data = item.data as Record<string, unknown>;
   const title = titleColumn ? String(data[titleColumn.id] || '제목 없음') : '제목 없음';
@@ -308,7 +308,7 @@ export default async function SikkCategoryPage({ params }: CategoryPageProps) {
       notFound();
     }
 
-    const columns = database.columns as Column[];
+    const columns = database.columns as unknown as Column[];
     const titleColumn = columns.find((c) => c.type === 'title');
     const data = item.data as Record<string, unknown>;
     const title = titleColumn ? String(data[titleColumn.id] || '제목 없음') : '제목 없음';
@@ -424,7 +424,7 @@ export default async function SikkCategoryPage({ params }: CategoryPageProps) {
       notFound();
     }
 
-    const columns = database.columns as Column[];
+    const columns = database.columns as unknown as Column[];
     const items = database.items as unknown as Item[];
 
     return (
