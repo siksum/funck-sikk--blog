@@ -196,12 +196,41 @@ export default function TipTapEditor({
     setIsSaving(true);
     try {
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      const markdown = (editor.storage as any).markdown.getMarkdown();
+      let markdown = (editor.storage as any).markdown.getMarkdown();
       const html = editor.getHTML();
-      console.log('=== Editor Debug ===');
-      console.log('HTML:', html);
-      console.log('Markdown:', markdown);
-      console.log('====================');
+
+      // Post-process: Extract colored text spans from HTML and inject into markdown
+      // Match spans with color style in HTML
+      const colorSpanRegex = /<span style="color:\s*([^"]+)"[^>]*>([^<]*)<\/span>/g;
+      const coloredSpans: { color: string; text: string }[] = [];
+      let match;
+      while ((match = colorSpanRegex.exec(html)) !== null) {
+        coloredSpans.push({ color: match[1], text: match[2] });
+      }
+
+      // Replace plain text with HTML spans in markdown for colored text
+      for (const span of coloredSpans) {
+        if (span.text && markdown.includes(span.text)) {
+          markdown = markdown.replace(
+            span.text,
+            `<span style="color: ${span.color}">${span.text}</span>`
+          );
+        }
+      }
+
+      // Also handle highlight/mark tags
+      const markRegex = /<mark[^>]*style="background-color:\s*([^"]+)"[^>]*>([^<]*)<\/mark>/g;
+      while ((match = markRegex.exec(html)) !== null) {
+        const text = match[2];
+        const color = match[1];
+        if (text && markdown.includes(text)) {
+          markdown = markdown.replace(
+            text,
+            `<mark style="background-color: ${color}">${text}</mark>`
+          );
+        }
+      }
+
       await onSave(markdown);
       setLastSaved(new Date());
       setHasChanges(false);
