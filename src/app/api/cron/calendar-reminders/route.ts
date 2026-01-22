@@ -16,6 +16,21 @@ export async function GET(request: NextRequest) {
   const results = { sent: 0, errors: [] as string[] };
   const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:3000';
 
+  // Get all admin users' push subscriptions (handles multiple OAuth accounts)
+  const adminUsers = await prisma.user.findMany({
+    where: { isAdmin: true },
+    include: { pushSubscriptions: true },
+  });
+  const allAdminSubscriptions = adminUsers.flatMap((u) => u.pushSubscriptions);
+
+  if (allAdminSubscriptions.length === 0) {
+    return NextResponse.json({
+      success: true,
+      message: 'No admin push subscriptions found',
+      ...results,
+    });
+  }
+
   // 1. Timed events (not all-day): remind 30 minutes before
   const timedEvents = await prisma.calendarEvent.findMany({
     where: {
@@ -27,18 +42,9 @@ export async function GET(request: NextRequest) {
         lte: thirtyMinutesFromNow,
       },
     },
-    include: {
-      user: {
-        include: {
-          pushSubscriptions: true,
-        },
-      },
-    },
   });
 
   for (const event of timedEvents) {
-    if (!event.user?.pushSubscriptions?.length) continue;
-
     const minutesUntil = Math.round((event.date.getTime() - now.getTime()) / 60000);
     const timeText = minutesUntil <= 0 ? '곧 시작됩니다' : `${minutesUntil}분 후 시작`;
 
@@ -50,7 +56,7 @@ export async function GET(request: NextRequest) {
     };
 
     try {
-      const result = await sendPushToSubscriptions(event.user.pushSubscriptions, payload);
+      const result = await sendPushToSubscriptions(allAdminSubscriptions, payload);
       results.sent += result.sent;
 
       await prisma.calendarEvent.update({
@@ -84,18 +90,9 @@ export async function GET(request: NextRequest) {
           lte: todayEnd,
         },
       },
-      include: {
-        user: {
-          include: {
-            pushSubscriptions: true,
-          },
-        },
-      },
     });
 
     for (const event of allDayEvents) {
-      if (!event.user?.pushSubscriptions?.length) continue;
-
       const payload = {
         title: `📅 오늘 일정: ${event.title}`,
         body: event.location ? `장소: ${event.location}` : '오늘 예정된 일정입니다',
@@ -104,7 +101,7 @@ export async function GET(request: NextRequest) {
       };
 
       try {
-        const result = await sendPushToSubscriptions(event.user.pushSubscriptions, payload);
+        const result = await sendPushToSubscriptions(allAdminSubscriptions, payload);
         results.sent += result.sent;
 
         await prisma.calendarEvent.update({

@@ -115,6 +115,15 @@ export async function POST(request: NextRequest) {
       },
     });
 
+    // Get all admin user IDs for notifications (handles multiple OAuth accounts)
+    const getAdminUserIds = async () => {
+      const adminUsers = await prisma.user.findMany({
+        where: { isAdmin: true },
+        select: { id: true },
+      });
+      return adminUsers.map((u) => u.id);
+    };
+
     // If reminder is enabled and event is within 30 minutes, send notification immediately
     if (shouldRemind && !isAllDay) {
       const minutesUntil = Math.round((eventDate.getTime() - now.getTime()) / 60000);
@@ -122,8 +131,9 @@ export async function POST(request: NextRequest) {
       if (minutesUntil <= 30 && minutesUntil > -5) {
         const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:3000';
         const timeText = minutesUntil <= 0 ? '곧 시작됩니다' : `${minutesUntil}분 후 시작`;
+        const adminUserIds = await getAdminUserIds();
 
-        await sendPushToUsers([userId], {
+        await sendPushToUsers(adminUserIds, {
           title: `⏰ ${title}`,
           body: `${timeText}${location ? ` - ${location}` : ''}`,
           icon: '/icons/icon-192x192.png',
@@ -149,8 +159,9 @@ export async function POST(request: NextRequest) {
 
       if (eventDateStr === todayStr || inputDateStr === todayStr) {
         const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:3000';
+        const adminUserIds = await getAdminUserIds();
 
-        await sendPushToUsers([userId], {
+        await sendPushToUsers(adminUserIds, {
           title: `📅 오늘 일정: ${title}`,
           body: location ? `장소: ${location}` : '오늘 예정된 일정입니다',
           icon: '/icons/icon-192x192.png',
