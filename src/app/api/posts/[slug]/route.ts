@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { revalidatePath } from 'next/cache';
 import { prisma } from '@/lib/db';
 
 export const dynamic = 'force-dynamic';
@@ -77,6 +78,10 @@ export async function PUT(request: NextRequest, context: RouteContext) {
       },
     });
 
+    // Revalidate the blog post page and blog listing
+    revalidatePath(`/blog/${slug}`);
+    revalidatePath('/blog');
+
     return NextResponse.json({ success: true, slug: post.slug });
   } catch (error) {
     console.error('Failed to update post:', error);
@@ -101,6 +106,9 @@ export async function DELETE(request: NextRequest, context: RouteContext) {
     await prisma.blogPost.delete({
       where: { slug },
     });
+
+    // Revalidate the blog listing
+    revalidatePath('/blog');
 
     return NextResponse.json({ success: true });
   } catch (error) {

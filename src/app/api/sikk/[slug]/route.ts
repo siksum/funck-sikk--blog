@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { revalidatePath } from 'next/cache';
 import { prisma } from '@/lib/db';
 
 export const dynamic = 'force-dynamic';
@@ -79,6 +80,10 @@ export async function PUT(request: NextRequest, context: RouteContext) {
       } as Parameters<typeof prisma.sikkPost.update>[0]['data'],
     });
 
+    // Revalidate the sikk post page and sikk listing
+    revalidatePath(`/sikk/${slug}`);
+    revalidatePath('/sikk');
+
     return NextResponse.json({ success: true, slug: post.slug });
   } catch (error) {
     console.error('Failed to update sikk post:', error);
@@ -103,6 +108,9 @@ export async function DELETE(request: NextRequest, context: RouteContext) {
     await prisma.sikkPost.delete({
       where: { slug },
     });
+
+    // Revalidate the sikk listing
+    revalidatePath('/sikk');
 
     return NextResponse.json({ success: true });
   } catch (error) {
