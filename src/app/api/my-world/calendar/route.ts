@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { auth } from '@/lib/auth';
 import { prisma } from '@/lib/db';
 import { getAdminUserId } from '@/lib/get-admin-user-id';
+import { sendPushToUsers } from '@/lib/notifications';
 
 const isProduction = process.env.NODE_ENV === 'production';
 
@@ -94,22 +95,73 @@ export async function POST(request: NextRequest) {
     }
 
     const userId = await getAdminUserId(session?.user?.id, session?.user?.email);
+    const eventDate = new Date(date);
+    const now = new Date();
+    const shouldRemind = reminder ?? true;
 
     const event = await prisma.calendarEvent.create({
       data: {
         userId,
         title,
         description,
-        date: new Date(date),
+        date: eventDate,
         endDate: endDate ? new Date(endDate) : null,
         type,
         color,
         location,
         url,
         isAllDay: isAllDay ?? true,
-        reminder: reminder ?? true,
+        reminder: shouldRemind,
       },
     });
+
+    // If reminder is enabled and event is within 30 minutes, send notification immediately
+    if (shouldRemind && !isAllDay) {
+      const minutesUntil = Math.round((eventDate.getTime() - now.getTime()) / 60000);
+
+      if (minutesUntil <= 30 && minutesUntil > -5) {
+        const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:3000';
+        const timeText = minutesUntil <= 0 ? '곧 시작됩니다' : `${minutesUntil}분 후 시작`;
+
+        await sendPushToUsers([userId], {
+          title: `⏰ ${title}`,
+          body: `${timeText}${location ? ` - ${location}` : ''}`,
+          icon: '/icons/icon-192x192.png',
+          url: `${baseUrl}/my-world`,
+        });
+
+        // Mark reminder as sent
+        await prisma.calendarEvent.update({
+          where: { id: event.id },
+          data: { reminderSentAt: now },
+        });
+      }
+    }
+
+    // For all-day events created today, also send immediate notification
+    if (shouldRemind && isAllDay) {
+      const todayStart = new Date(now);
+      todayStart.setHours(0, 0, 0, 0);
+      const todayEnd = new Date(now);
+      todayEnd.setHours(23, 59, 59, 999);
+
+      if (eventDate >= todayStart && eventDate <= todayEnd) {
+        const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:3000';
+
+        await sendPushToUsers([userId], {
+          title: `📅 오늘 일정: ${title}`,
+          body: location ? `장소: ${location}` : '오늘 예정된 일정입니다',
+          icon: '/icons/icon-192x192.png',
+          url: `${baseUrl}/my-world`,
+        });
+
+        // Mark reminder as sent
+        await prisma.calendarEvent.update({
+          where: { id: event.id },
+          data: { reminderSentAt: now },
+        });
+      }
+    }
 
     return NextResponse.json(event);
   } catch (error) {
