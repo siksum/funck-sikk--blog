@@ -94,6 +94,31 @@ export default function DatabaseDetailPage({ params }: DatabasePageProps) {
     return options;
   }, [categories]);
 
+  // Create a mapping from category name to slug
+  const categoryNameToSlug = useMemo(() => {
+    const mapping: Record<string, string> = {};
+    categories.forEach((cat) => {
+      mapping[cat.name] = cat.slug;
+      cat.children.forEach((sub) => {
+        mapping[sub.name] = sub.slug;
+      });
+    });
+    return mapping;
+  }, [categories]);
+
+  // Generate database URL based on category (using slugs, not names)
+  const getDatabaseViewUrl = () => {
+    if (!database) return '/sikk';
+    if (database.category) {
+      const slugPath = database.category.split('/').map(name => {
+        const slug = categoryNameToSlug[name];
+        return encodeURIComponent(slug || name);
+      }).join('/');
+      return `/sikk/category/${slugPath}/${database.slug}`;
+    }
+    return `/sikk/db/${database.slug}`;
+  };
+
   const fetchDatabase = useCallback(async () => {
     try {
       const res = await fetch(`/api/sikk/databases/${id}`);
@@ -890,10 +915,7 @@ export default function DatabaseDetailPage({ params }: DatabasePageProps) {
             + 열 추가
           </button>
           <Link
-            href={database.category
-              ? `/sikk/category/${database.category.split('/').map((s: string) => encodeURIComponent(s)).join('/')}/${database.slug}`
-              : `/sikk/db/${database.slug}`
-            }
+            href={getDatabaseViewUrl()}
             className="px-3 py-1.5 text-sm text-pink-600 dark:text-pink-400 border border-pink-200 dark:border-pink-800 rounded-lg hover:bg-pink-50 dark:hover:bg-pink-900/20 transition-colors"
           >
             페이지 보기
