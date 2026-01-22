@@ -218,6 +218,34 @@ model SikkCategory {
   @@index([sectionId])
 }
 
+// ============ SIKK DATABASES ============
+
+model SikkDatabase {
+  id          String             @id @default(cuid())
+  title       String
+  description String?
+  slug        String             @unique
+  columns     Json               // Array of { id, name, type, options? } objects
+  items       SikkDatabaseItem[]
+  isPublic    Boolean            @default(true)
+  createdAt   DateTime           @default(now())
+  updatedAt   DateTime           @updatedAt
+}
+
+model SikkDatabaseItem {
+  id          String       @id @default(cuid())
+  databaseId  String
+  database    SikkDatabase @relation(fields: [databaseId], references: [id], onDelete: Cascade)
+  data        Json         // { [columnId]: value }
+  order       Int          @default(0)
+  content     String       @default("") // Page content (like SikkPost)
+  createdAt   DateTime     @default(now())
+  updatedAt   DateTime     @updatedAt
+
+  @@index([databaseId])
+  @@index([order])
+}
+
 // ============ SIKK POSTS ============
 
 model SikkPost {
