@@ -254,6 +254,7 @@ export default function MyWorldDashboard() {
   const [researchTodos, setResearchTodos] = useState<Todo[]>([]);
   const [newPersonalTodo, setNewPersonalTodo] = useState('');
   const [newResearchTodo, setNewResearchTodo] = useState('');
+  const [editingTodo, setEditingTodo] = useState<{ id: string; content: string; category: 'personal' | 'research' } | null>(null);
 
   // Daily list view state
   const [showDailyList, setShowDailyList] = useState(false);
@@ -589,6 +590,30 @@ export default function MyWorldDashboard() {
       }
     } catch (error) {
       console.error('Failed to delete todo:', error);
+    }
+  };
+
+  const updateTodoContent = async (id: string, content: string, category: 'personal' | 'research') => {
+    if (!content.trim()) return;
+
+    try {
+      const res = await fetch(`/api/my-world/todos/${id}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ content: content.trim() }),
+      });
+
+      if (res.ok) {
+        const updatedTodo = await res.json();
+        if (category === 'personal') {
+          setPersonalTodos(prev => prev.map(t => t.id === id ? updatedTodo : t));
+        } else {
+          setResearchTodos(prev => prev.map(t => t.id === id ? updatedTodo : t));
+        }
+        setEditingTodo(null);
+      }
+    } catch (error) {
+      console.error('Failed to update todo:', error);
     }
   };
 
@@ -1709,6 +1734,7 @@ export default function MyWorldDashboard() {
             {personalTodos.map((todo) => {
               const status = todo.status || 'not_started';
               const statusConfig = todoStatusConfig[status];
+              const isEditing = editingTodo?.id === todo.id;
               return (
                 <div
                   key={todo.id}
@@ -1721,17 +1747,46 @@ export default function MyWorldDashboard() {
                   >
                     {statusConfig.label}
                   </button>
-                  <span className={`flex-1 text-sm ${status === 'completed' ? 'line-through text-gray-400' : 'text-gray-700 dark:text-gray-300'}`}>
-                    • {todo.content}
-                  </span>
-                  <button
-                    onClick={() => deleteTodo(todo.id, 'personal')}
-                    className="opacity-0 group-hover:opacity-100 text-gray-400 hover:text-red-500 transition-opacity"
-                  >
-                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-                    </svg>
-                  </button>
+                  {isEditing ? (
+                    <form
+                      onSubmit={(e) => {
+                        e.preventDefault();
+                        updateTodoContent(todo.id, editingTodo.content, 'personal');
+                      }}
+                      className="flex-1 flex gap-1"
+                    >
+                      <input
+                        type="text"
+                        value={editingTodo.content}
+                        onChange={(e) => setEditingTodo({ ...editingTodo, content: e.target.value })}
+                        className="flex-1 text-sm px-2 py-0.5 rounded border border-violet-300 dark:border-violet-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:outline-none focus:ring-1 focus:ring-violet-500"
+                        autoFocus
+                        onKeyDown={(e) => {
+                          if (e.key === 'Escape') setEditingTodo(null);
+                        }}
+                      />
+                      <button type="submit" className="text-violet-500 hover:text-violet-700 text-xs">저장</button>
+                      <button type="button" onClick={() => setEditingTodo(null)} className="text-gray-400 hover:text-gray-600 text-xs">취소</button>
+                    </form>
+                  ) : (
+                    <span
+                      onClick={() => setEditingTodo({ id: todo.id, content: todo.content, category: 'personal' })}
+                      className={`flex-1 text-sm cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-700 px-1 rounded ${status === 'completed' ? 'line-through text-gray-400' : 'text-gray-700 dark:text-gray-300'}`}
+                      title="클릭하여 수정"
+                    >
+                      • {todo.content}
+                    </span>
+                  )}
+                  {!isEditing && (
+                    <button
+                      onClick={() => deleteTodo(todo.id, 'personal')}
+                      className="opacity-0 group-hover:opacity-100 text-gray-400 hover:text-red-500 transition-opacity"
+                    >
+                      <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                      </svg>
+                    </button>
+                  )}
                 </div>
               );
             })}
@@ -1773,6 +1828,7 @@ export default function MyWorldDashboard() {
             {researchTodos.map((todo) => {
               const status = todo.status || 'not_started';
               const statusConfig = todoStatusConfig[status];
+              const isEditing = editingTodo?.id === todo.id;
               return (
                 <div
                   key={todo.id}
@@ -1785,17 +1841,46 @@ export default function MyWorldDashboard() {
                   >
                     {statusConfig.label}
                   </button>
-                  <span className={`flex-1 text-sm ${status === 'completed' ? 'line-through text-gray-400' : 'text-gray-700 dark:text-gray-300'}`}>
-                    • {todo.content}
-                  </span>
-                  <button
-                    onClick={() => deleteTodo(todo.id, 'research')}
-                    className="opacity-0 group-hover:opacity-100 text-gray-400 hover:text-red-500 transition-opacity"
-                  >
-                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-                    </svg>
-                  </button>
+                  {isEditing ? (
+                    <form
+                      onSubmit={(e) => {
+                        e.preventDefault();
+                        updateTodoContent(todo.id, editingTodo.content, 'research');
+                      }}
+                      className="flex-1 flex gap-1"
+                    >
+                      <input
+                        type="text"
+                        value={editingTodo.content}
+                        onChange={(e) => setEditingTodo({ ...editingTodo, content: e.target.value })}
+                        className="flex-1 text-sm px-2 py-0.5 rounded border border-pink-300 dark:border-pink-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:outline-none focus:ring-1 focus:ring-pink-500"
+                        autoFocus
+                        onKeyDown={(e) => {
+                          if (e.key === 'Escape') setEditingTodo(null);
+                        }}
+                      />
+                      <button type="submit" className="text-pink-500 hover:text-pink-700 text-xs">저장</button>
+                      <button type="button" onClick={() => setEditingTodo(null)} className="text-gray-400 hover:text-gray-600 text-xs">취소</button>
+                    </form>
+                  ) : (
+                    <span
+                      onClick={() => setEditingTodo({ id: todo.id, content: todo.content, category: 'research' })}
+                      className={`flex-1 text-sm cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-700 px-1 rounded ${status === 'completed' ? 'line-through text-gray-400' : 'text-gray-700 dark:text-gray-300'}`}
+                      title="클릭하여 수정"
+                    >
+                      • {todo.content}
+                    </span>
+                  )}
+                  {!isEditing && (
+                    <button
+                      onClick={() => deleteTodo(todo.id, 'research')}
+                      className="opacity-0 group-hover:opacity-100 text-gray-400 hover:text-red-500 transition-opacity"
+                    >
+                      <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                      </svg>
+                    </button>
+                  )}
                 </div>
               );
             })}
