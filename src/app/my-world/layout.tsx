@@ -20,11 +20,10 @@ export default async function MyWorldLayout({
     }
   }
 
-  // TODO: Re-enable admin auth check
   // 프로덕션에서만 인증 체크 (로컬 개발 시 항상 접근 가능)
-  // if (process.env.NODE_ENV === 'production' && !session?.user?.isAdmin) {
-  //   redirect('/auth/signin?callbackUrl=/my-world');
-  // }
+  if (process.env.NODE_ENV === 'production' && !session?.user?.isAdmin) {
+    redirect('/auth/signin?callbackUrl=/my-world');
+  }
 
   return (
     <div

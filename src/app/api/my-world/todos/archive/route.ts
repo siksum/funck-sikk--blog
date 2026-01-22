@@ -21,7 +21,13 @@ export async function GET(request: NextRequest) {
     const completedOnly = searchParams.get('completedOnly') === 'true';
     const sortOrder = searchParams.get('sortOrder') || 'desc';
 
-    const userId = session?.user?.id || 'dev-user';
+    // In development, always use 'dev-user' for consistency
+    // In production, require actual user id
+    const userId = isProduction ? session?.user?.id : 'dev-user';
+
+    if (!userId) {
+      return NextResponse.json({ error: 'User not found' }, { status: 401 });
+    }
 
     const where: any = { userId };
 

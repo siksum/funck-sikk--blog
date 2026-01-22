@@ -11,10 +11,9 @@ export default async function AdminLayout({
 }) {
   const session = await auth();
 
-  // TODO: Re-enable admin auth check
-  // if (!isDev && !session?.user?.isAdmin) {
-  //   redirect('/auth/signin?callbackUrl=/admin');
-  // }
+  if (!isDev && !session?.user?.isAdmin) {
+    redirect('/auth/signin?callbackUrl=/admin');
+  }
 
   const user = session?.user ?? { name: 'Dev Admin', image: null };
 

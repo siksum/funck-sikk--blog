@@ -21,7 +21,13 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ error: 'Date is required' }, { status: 400 });
     }
 
-    const userId = session?.user?.id || 'dev-user';
+    // In development, always use 'dev-user' for consistency
+    // In production, require actual user id
+    const userId = isProduction ? session?.user?.id : 'dev-user';
+
+    if (!userId) {
+      return NextResponse.json({ error: 'User not found' }, { status: 401 });
+    }
 
     const date = new Date(dateStr);
     date.setHours(0, 0, 0, 0);
@@ -80,7 +86,13 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const userId = session?.user?.id || 'dev-user';
+    // In development, always use 'dev-user' for consistency
+    // In production, require actual user id
+    const userId = isProduction ? session?.user?.id : 'dev-user';
+
+    if (!userId) {
+      return NextResponse.json({ error: 'User not found' }, { status: 401 });
+    }
 
     const todoDate = new Date(date);
     todoDate.setHours(0, 0, 0, 0);

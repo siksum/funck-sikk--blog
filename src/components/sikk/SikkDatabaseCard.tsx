@@ -24,11 +24,11 @@ const databaseIcon = (
   </svg>
 );
 
-// Colors for database cards
+// Colors for database cards (pink theme for sikk)
 const colors = {
-  iconBg: 'bg-purple-500',
-  neonBorder: 'border-purple-300 dark:border-purple-500/60',
-  neonGlow: 'hover:shadow-[0_0_20px_rgba(168,85,247,0.3)] dark:hover:shadow-[0_0_20px_rgba(168,85,247,0.4)]',
+  iconBg: 'bg-pink-500',
+  neonBorder: 'border-pink-300 dark:border-pink-500/60',
+  neonGlow: 'hover:shadow-[0_0_20px_rgba(236,72,153,0.3)] dark:hover:shadow-[0_0_20px_rgba(236,72,153,0.4)]',
 };
 
 export default function SikkDatabaseCard({
@@ -49,7 +49,7 @@ export default function SikkDatabaseCard({
         <article
           className={`relative rounded-xl overflow-hidden transition-all duration-300
             border ${colors.neonBorder} category-card
-            hover:border-purple-400 dark:hover:border-purple-400`}
+            hover:border-pink-400 dark:hover:border-pink-400`}
           style={{ background: 'var(--card-bg)' }}
         >
           <div className="relative p-4 flex items-center gap-4">
@@ -65,12 +65,12 @@ export default function SikkDatabaseCard({
             <div className="flex-1 min-w-0">
               <div className="flex items-center gap-2">
                 <h3
-                  className="text-sm font-semibold group-hover:text-purple-600 dark:group-hover:text-purple-400 transition-colors line-clamp-1"
+                  className="text-sm font-semibold group-hover:text-pink-600 dark:group-hover:text-pink-400 transition-colors line-clamp-1"
                   style={{ color: 'var(--foreground)' }}
                 >
                   {title}
                 </h3>
-                <span className="px-1.5 py-0.5 text-xs rounded bg-purple-100 dark:bg-purple-900/30 text-purple-700 dark:text-purple-400">
+                <span className="px-1.5 py-0.5 text-xs rounded bg-pink-100 dark:bg-pink-900/30 text-pink-700 dark:text-pink-400">
                   DB
                 </span>
               </div>
@@ -91,7 +91,7 @@ export default function SikkDatabaseCard({
 
             {/* Arrow */}
             <svg
-              className="w-5 h-5 text-gray-400 group-hover:text-purple-500 transition-colors flex-shrink-0"
+              className="w-5 h-5 text-gray-400 group-hover:text-pink-500 transition-colors flex-shrink-0"
               fill="none"
               stroke="currentColor"
               viewBox="0 0 24 24"
@@ -126,12 +126,12 @@ export default function SikkDatabaseCard({
             <div className="flex-1 min-w-0">
               <div className="flex items-center gap-2">
                 <h3
-                  className="text-base font-semibold group-hover:text-purple-600 dark:group-hover:text-purple-400 transition-colors line-clamp-1"
+                  className="text-base font-semibold group-hover:text-pink-600 dark:group-hover:text-pink-400 transition-colors line-clamp-1"
                   style={{ color: 'var(--foreground)' }}
                 >
                   {title}
                 </h3>
-                <span className="px-1.5 py-0.5 text-xs rounded bg-purple-100 dark:bg-purple-900/30 text-purple-700 dark:text-purple-400">
+                <span className="px-1.5 py-0.5 text-xs rounded bg-pink-100 dark:bg-pink-900/30 text-pink-700 dark:text-pink-400">
                   DB
                 </span>
               </div>
