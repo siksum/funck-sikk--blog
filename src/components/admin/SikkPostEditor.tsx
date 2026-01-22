@@ -37,6 +37,7 @@ interface SikkPostEditorProps {
     content?: string;
     date?: string;
     isPublic?: boolean;
+    status?: 'not_started' | 'in_progress' | 'completed';
     thumbnail?: string;
     thumbnailPosition?: number;
     thumbnailScale?: number;

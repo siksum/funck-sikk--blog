@@ -139,6 +139,7 @@ export default function MyWorldDashboard() {
   const [showTypeManager, setShowTypeManager] = useState(false);
   const [newTypeName, setNewTypeName] = useState('');
   const [newTypeColor, setNewTypeColor] = useState('#c4b5fd');
+  const [editingTypeColor, setEditingTypeColor] = useState<string | null>(null);
 
   // Event Modal State
   const [showEventModal, setShowEventModal] = useState(false);
@@ -2158,6 +2159,25 @@ export default function MyWorldDashboard() {
               <div className="flex bg-gray-100 dark:bg-gray-700 rounded-lg p-0.5">
                 <button
                   onClick={() => {
+                    // When switching to week view, sync weekStartDate with currentMonth
+                    if (viewType === 'month') {
+                      // Check if today is in the current month
+                      const now = new Date();
+                      let targetDate: Date;
+                      if (now.getFullYear() === currentMonth.getFullYear() && now.getMonth() === currentMonth.getMonth()) {
+                        // Today is in the current month - use today's week
+                        targetDate = now;
+                      } else {
+                        // Use the first day of the current month
+                        targetDate = new Date(currentMonth.getFullYear(), currentMonth.getMonth(), 1);
+                      }
+                      // Find the Sunday of that week
+                      const dayOfWeek = targetDate.getDay();
+                      const newStart = new Date(targetDate);
+                      newStart.setDate(targetDate.getDate() - dayOfWeek);
+                      newStart.setHours(0, 0, 0, 0);
+                      setWeekStartDate(newStart);
+                    }
                     setViewType('week');
                     setShowWeekPicker(false);
                     setShowMonthPicker(false);
@@ -3663,7 +3683,10 @@ export default function MyWorldDashboard() {
                     유형
                   </label>
                   <button
-                    onClick={() => setShowTypeManager(!showTypeManager)}
+                    onClick={() => {
+                      setShowTypeManager(!showTypeManager);
+                      setEditingTypeColor(null);
+                    }}
                     className="text-xs text-violet-600 dark:text-violet-400 hover:underline"
                   >
                     {showTypeManager ? '닫기' : '유형 관리'}
@@ -3712,26 +3735,32 @@ export default function MyWorldDashboard() {
                           key={type.name}
                           className="flex items-center gap-2 p-2 bg-white dark:bg-gray-700 rounded-lg"
                         >
-                          <div className="relative group">
+                          <div className="relative">
                             <button
-                              className="w-6 h-6 rounded-full border-2 border-gray-200 dark:border-gray-600"
+                              onClick={() => setEditingTypeColor(editingTypeColor === type.name ? null : type.name)}
+                              className="w-6 h-6 rounded-full border-2 border-gray-200 dark:border-gray-600 hover:scale-110 transition-transform"
                               style={{ backgroundColor: type.color }}
                               title="클릭하여 색상 변경"
                             />
                             {/* Color picker dropdown */}
-                            <div className="absolute left-0 top-8 z-10 hidden group-hover:flex flex-wrap gap-1 p-2 bg-white dark:bg-gray-800 rounded-lg shadow-lg border border-gray-200 dark:border-gray-600 w-[180px]">
-                              {eventColors.map((color) => (
-                                <button
-                                  key={color.value}
-                                  onClick={() => updateTypeColor(type.name, color.value)}
-                                  className={`w-5 h-5 rounded-full transition-transform hover:scale-110 ${
-                                    type.color === color.value ? 'ring-2 ring-offset-1 ring-violet-500' : ''
-                                  }`}
-                                  style={{ backgroundColor: color.value }}
-                                  title={color.name}
-                                />
-                              ))}
-                            </div>
+                            {editingTypeColor === type.name && (
+                              <div className="absolute left-0 top-8 z-10 flex flex-wrap gap-1 p-2 bg-white dark:bg-gray-800 rounded-lg shadow-lg border border-gray-200 dark:border-gray-600 w-[180px]">
+                                {eventColors.map((color) => (
+                                  <button
+                                    key={color.value}
+                                    onClick={() => {
+                                      updateTypeColor(type.name, color.value);
+                                      setEditingTypeColor(null);
+                                    }}
+                                    className={`w-5 h-5 rounded-full transition-transform hover:scale-110 ${
+                                      type.color === color.value ? 'ring-2 ring-offset-1 ring-violet-500' : ''
+                                    }`}
+                                    style={{ backgroundColor: color.value }}
+                                    title={color.name}
+                                  />
+                                ))}
+                              </div>
+                            )}
                           </div>
                           <span className="flex-1 text-sm text-gray-700 dark:text-gray-300">{type.name}</span>
                           <button
