@@ -496,16 +496,16 @@ export default function DatabaseTableView({
         return (
           <>
             {/* Current value display */}
-            <div className="px-2 py-1 text-sm border-2 border-pink-400 rounded bg-white dark:bg-gray-900 text-gray-900 dark:text-white">
+            <div className="px-2 py-1 text-sm border border-pink-400 rounded bg-white dark:bg-gray-900 text-gray-900 dark:text-white">
               {editValue || '선택...'}
             </div>
             {/* Portal: Render dropdown outside of table to avoid overflow clipping */}
             {dropdownPosition && typeof document !== 'undefined' && createPortal(
-              <div style={{ position: 'fixed', inset: 0, zIndex: 2147483647, pointerEvents: 'none' }}>
+              <>
                 {/* Backdrop to close dropdown when clicking outside */}
                 <div
-                  className="absolute inset-0"
-                  style={{ pointerEvents: 'auto' }}
+                  className="fixed inset-0"
+                  style={{ zIndex: 99998 }}
                   onClick={() => {
                     setEditingCell(null);
                     setDropdownPosition(null);
@@ -513,39 +513,40 @@ export default function DatabaseTableView({
                 />
                 {/* Dropdown menu */}
                 <div
-                  className="absolute min-w-[200px] max-h-48 overflow-y-auto bg-white dark:bg-gray-800 border-2 border-pink-500 rounded-lg"
+                  className="fixed min-w-[200px] max-h-48 overflow-y-auto bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg shadow-xl"
                   style={{
-                    pointerEvents: 'auto',
+                    zIndex: 99999,
                     top: dropdownPosition.top,
                     left: dropdownPosition.left,
-                    boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.5)',
                   }}
                 >
-                  <div
-                    className="px-3 py-2 hover:bg-gray-100 dark:hover:bg-gray-700 cursor-pointer text-sm text-gray-500"
+                  <button
+                    type="button"
                     onClick={() => {
                       handleUpdateCell(item.id, column.id, '');
                       setDropdownPosition(null);
                     }}
+                    className="w-full px-3 py-2 text-left text-sm text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-700"
                   >
                     선택...
-                  </div>
+                  </button>
                   {options.map((opt) => (
-                    <div
+                    <button
                       key={opt}
-                      className={`px-3 py-2 hover:bg-gray-100 dark:hover:bg-gray-700 cursor-pointer text-sm ${
-                        editValue === opt ? 'bg-pink-50 dark:bg-pink-900/30 text-pink-600 dark:text-pink-400' : 'text-gray-900 dark:text-white'
-                      }`}
+                      type="button"
                       onClick={() => {
                         handleUpdateCell(item.id, column.id, opt);
                         setDropdownPosition(null);
                       }}
+                      className={`w-full px-3 py-2 text-left text-sm hover:bg-pink-50 dark:hover:bg-pink-900/20 ${
+                        editValue === opt ? 'bg-pink-100 dark:bg-pink-900/30 text-pink-700 dark:text-pink-400' : 'text-gray-900 dark:text-white'
+                      }`}
                     >
                       {opt}
-                    </div>
+                    </button>
                   ))}
                 </div>
-              </div>,
+              </>,
               document.body
             )}
           </>
