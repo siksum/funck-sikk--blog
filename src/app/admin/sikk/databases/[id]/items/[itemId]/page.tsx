@@ -49,6 +49,7 @@ export default function AdminDatabaseItemPage() {
   const [isEditing, setIsEditing] = useState(false);
   const [editingField, setEditingField] = useState<string | null>(null);
   const [editValue, setEditValue] = useState('');
+  const [uploadingFile, setUploadingFile] = useState(false);
 
   useEffect(() => {
     const fetchData = async () => {
@@ -116,6 +117,46 @@ export default function AdminDatabaseItemPage() {
     setEditingField(columnId);
     setEditValue(String(currentValue || ''));
   };
+
+  const handleFileUpload = useCallback(async (columnId: string, files: FileList) => {
+    if (!item) return;
+    setUploadingFile(true);
+
+    const existingFiles = Array.isArray(item.data[columnId]) ? item.data[columnId] as string[] : [];
+    const uploadedUrls: string[] = [];
+
+    try {
+      for (const file of Array.from(files)) {
+        const formData = new FormData();
+        formData.append('file', file);
+
+        const res = await fetch('/api/upload', {
+          method: 'POST',
+          body: formData,
+        });
+
+        if (res.ok) {
+          const data = await res.json();
+          uploadedUrls.push(data.url);
+        }
+      }
+
+      const newFiles = [...existingFiles, ...uploadedUrls];
+      await handleUpdateField(columnId, newFiles);
+    } catch (error) {
+      console.error('File upload error:', error);
+    } finally {
+      setUploadingFile(false);
+    }
+  }, [item, handleUpdateField]);
+
+  const handleRemoveFile = useCallback(async (columnId: string, fileUrl: string) => {
+    if (!item) return;
+
+    const existingFiles = Array.isArray(item.data[columnId]) ? item.data[columnId] as string[] : [];
+    const newFiles = existingFiles.filter((f) => f !== fileUrl);
+    await handleUpdateField(columnId, newFiles);
+  }, [item, handleUpdateField]);
 
   if (loading) {
     return (
@@ -197,13 +238,63 @@ export default function AdminDatabaseItemPage() {
         )}
 
         {/* Metadata Fields */}
-        <div className="space-y-2 text-sm">
+        <div className="space-y-3 text-sm">
           {columns
             .filter((c) => c.type !== 'title')
             .map((column) => (
-              <div key={column.id} className="flex items-center gap-2">
-                <span className="font-medium text-gray-500 dark:text-gray-400 w-24">{column.name}:</span>
-                {editingField === column.id ? (
+              <div key={column.id} className="flex items-start gap-2">
+                <span className="font-medium text-gray-500 dark:text-gray-400 w-28 pt-1">{column.name}:</span>
+
+                {/* Files type - special handling */}
+                {column.type === 'files' ? (
+                  <div className="flex-1">
+                    <div className="flex flex-wrap gap-2 mb-2">
+                      {Array.isArray(item.data[column.id]) && (item.data[column.id] as string[]).map((file, i) => (
+                        <div key={i} className="relative group inline-flex items-center">
+                          <a
+                            href={file}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="px-2 py-1 text-xs bg-gray-100 dark:bg-gray-700 rounded truncate max-w-[150px] hover:bg-gray-200 dark:hover:bg-gray-600"
+                            title={file}
+                          >
+                            {file.split('/').pop()}
+                          </a>
+                          <button
+                            onClick={() => handleRemoveFile(column.id, file)}
+                            className="absolute -top-1 -right-1 w-4 h-4 bg-red-500 text-white rounded-full text-xs opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center"
+                          >
+                            ×
+                          </button>
+                        </div>
+                      ))}
+                    </div>
+                    <label className="inline-flex items-center gap-1 px-3 py-1.5 text-xs bg-pink-100 dark:bg-pink-900/30 text-pink-700 dark:text-pink-400 rounded cursor-pointer hover:bg-pink-200 dark:hover:bg-pink-900/50 transition-colors">
+                      {uploadingFile ? (
+                        <span className="animate-pulse">업로드 중...</span>
+                      ) : (
+                        <>
+                          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
+                          </svg>
+                          <span>파일 추가</span>
+                          <input
+                            type="file"
+                            multiple
+                            className="hidden"
+                            accept="image/*,.pdf,.doc,.docx,.xls,.xlsx"
+                            onChange={(e) => {
+                              if (e.target.files && e.target.files.length > 0) {
+                                handleFileUpload(column.id, e.target.files);
+                                e.target.value = '';
+                              }
+                            }}
+                          />
+                        </>
+                      )}
+                    </label>
+                  </div>
+                ) : editingField === column.id ? (
                   <div className="flex items-center gap-2 flex-1">
                     {column.type === 'select' ? (
                       <select
@@ -226,6 +317,10 @@ export default function AdminDatabaseItemPage() {
                         value={editValue}
                         onChange={(e) => setEditValue(e.target.value)}
                         onBlur={() => handleUpdateField(column.id, editValue)}
+                        onKeyDown={(e) => {
+                          if (e.key === 'Enter') handleUpdateField(column.id, editValue);
+                          if (e.key === 'Escape') setEditingField(null);
+                        }}
                         className="px-2 py-1 border border-pink-400 rounded bg-white dark:bg-gray-900 text-gray-900 dark:text-white"
                         autoFocus
                       />
@@ -275,8 +370,6 @@ export default function AdminDatabaseItemPage() {
                       >
                         {String(item.data[column.id])}
                       </a>
-                    ) : column.type === 'files' && Array.isArray(item.data[column.id]) ? (
-                      `${(item.data[column.id] as string[]).length}개 파일`
                     ) : item.data[column.id] ? (
                       String(item.data[column.id])
                     ) : (
