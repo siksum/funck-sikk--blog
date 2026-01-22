@@ -28,6 +28,59 @@ import './styles/editor.css';
 const lowlight = createLowlight(common);
 lowlight.register('solidity', solidity);
 
+// Custom TextStyle extension with markdown serialization
+const TextStyleWithMarkdown = TextStyle.extend({
+  addStorage() {
+    return {
+      markdown: {
+        serialize: {
+          open(_state: unknown, mark: { attrs?: { color?: string } }) {
+            const color = mark.attrs?.color;
+            if (color) {
+              return `<span style="color: ${color}">`;
+            }
+            return '';
+          },
+          close(_state: unknown, mark: { attrs?: { color?: string } }) {
+            if (mark.attrs?.color) {
+              return '</span>';
+            }
+            return '';
+          },
+        },
+        parse: {
+          // Handled by markdown-it with html option
+        },
+      },
+    };
+  },
+});
+
+// Custom Highlight extension with markdown serialization
+const HighlightWithMarkdown = Highlight.extend({
+  addStorage() {
+    return {
+      markdown: {
+        serialize: {
+          open(_state: unknown, mark: { attrs?: { color?: string } }) {
+            const color = mark.attrs?.color;
+            if (color) {
+              return `<mark style="background-color: ${color}">`;
+            }
+            return '<mark>';
+          },
+          close() {
+            return '</mark>';
+          },
+        },
+        parse: {
+          // Handled by markdown-it with html option
+        },
+      },
+    };
+  },
+});
+
 interface TipTapEditorProps {
   content: string;
   onSave: (markdown: string) => Promise<void>;
@@ -85,9 +138,9 @@ export default function TipTapEditor({
           class: 'youtube-wrapper',
         },
       }),
-      TextStyle,
+      TextStyleWithMarkdown,
       Color,
-      Highlight.configure({
+      HighlightWithMarkdown.configure({
         multicolor: true,
       }),
       Callout,
@@ -100,37 +153,6 @@ export default function TipTapEditor({
         bulletListMarker: '-',
         transformPastedText: true,
         transformCopiedText: true,
-        transformers: {
-          textStyle: {
-            // Output HTML span for text color
-            // eslint-disable-next-line @typescript-eslint/no-explicit-any
-            open: (_state: any, mark: any) => {
-              const color = mark.attrs?.color;
-              if (color) {
-                return `<span style="color: ${color}">`;
-              }
-              return '';
-            },
-            close: (_state: unknown, mark: { attrs?: { color?: string } }) => {
-              if (mark.attrs?.color) {
-                return '</span>';
-              }
-              return '';
-            },
-          },
-          highlight: {
-            // Output HTML mark for highlights
-            // eslint-disable-next-line @typescript-eslint/no-explicit-any
-            open: (_state: any, mark: any) => {
-              const color = mark.attrs?.color;
-              if (color) {
-                return `<mark style="background-color: ${color}">`;
-              }
-              return '<mark>';
-            },
-            close: () => '</mark>',
-          },
-        },
       }),
     ],
     content,
