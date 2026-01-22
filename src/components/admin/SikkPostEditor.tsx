@@ -1122,85 +1122,87 @@ export default function SikkPostEditor({ initialData = {}, isEdit = false }: Sik
         </div>
       </div>
 
-      {/* Content Editor - Sikk Style */}
-      <div className="rounded-xl overflow-hidden" style={{ backgroundColor: 'var(--background)' }}>
-        {/* Header Preview */}
-        <div className="p-6 pb-0">
-          {/* Banner Image - Same styling as actual Sikk page */}
-          {formData.thumbnail && (
-            <div className="mb-6 -mx-6 -mt-6 rounded-t-xl overflow-hidden">
-              <div
-                className="relative w-full h-48 sm:h-64 md:h-80"
-                style={{
-                  backgroundImage: `url(${formData.thumbnail})`,
-                  backgroundSize: `${formData.thumbnailScale || 100}%`,
-                  backgroundPosition: `center ${formData.thumbnailPosition || 50}%`,
-                  backgroundRepeat: 'no-repeat',
-                  backgroundColor: 'var(--background-secondary)',
-                }}
-              />
+      {/* Content Editor - Sikk Style (matches narrow view layout) */}
+      <div className="max-w-4xl mx-auto">
+        {/* Banner Image - Taller like actual Sikk page */}
+        {formData.thumbnail && (
+          <div className="mb-8 rounded-xl overflow-hidden">
+            <div
+              className="relative w-full h-64 sm:h-80 md:h-96"
+              style={{
+                backgroundImage: `url(${formData.thumbnail})`,
+                backgroundSize: `${formData.thumbnailScale || 100}%`,
+                backgroundPosition: `center ${formData.thumbnailPosition || 50}%`,
+                backgroundRepeat: 'no-repeat',
+                backgroundColor: 'var(--background-secondary)',
+              }}
+            />
+          </div>
+        )}
+
+        {/* Content Card */}
+        <div className="rounded-xl overflow-hidden" style={{ backgroundColor: 'var(--card-bg)' }}>
+          <div className="p-6 pb-0">
+            {/* Breadcrumb */}
+            <div className="flex items-center text-sm mb-4" style={{ color: 'var(--foreground)', opacity: 0.7 }}>
+              <span>Sikk</span>
+              {formData.category && (
+                <>
+                  <span className="mx-2">/</span>
+                  <span className="text-pink-600 dark:text-pink-400">{formData.category}</span>
+                </>
+              )}
             </div>
-          )}
 
-          {/* Breadcrumb */}
-          <div className="flex items-center text-sm mb-4" style={{ color: 'var(--foreground)', opacity: 0.7 }}>
-            <span>Sikk</span>
-            {formData.category && (
-              <>
-                <span className="mx-2">/</span>
-                <span className="text-pink-600 dark:text-pink-400">{formData.category}</span>
-              </>
+            {/* Title */}
+            {formData.title && (
+              <h1 className="text-3xl md:text-4xl font-bold mb-4" style={{ color: 'var(--foreground)' }}>
+                {formData.title}
+              </h1>
             )}
+
+            {/* Description */}
+            {formData.description && (
+              <p className="text-lg mb-4" style={{ color: 'var(--foreground)', opacity: 0.8 }}>
+                {formData.description}
+              </p>
+            )}
+
+            {/* Meta */}
+            <div className="flex flex-wrap items-center gap-4 text-sm mb-6" style={{ color: 'var(--foreground)', opacity: 0.7 }}>
+              <time>{formData.date || new Date().toLocaleDateString('ko-KR')}</time>
+              {formData.tags && formData.tags.split(',').filter(Boolean).length > 0 && (
+                <div className="flex flex-wrap gap-2">
+                  {formData.tags.split(',').filter(Boolean).map((tag, i) => (
+                    <span
+                      key={i}
+                      className="px-2 py-1 rounded text-xs"
+                      style={{ backgroundColor: 'var(--tag-bg)', color: 'var(--tag-text)' }}
+                    >
+                      #{tag.trim()}
+                    </span>
+                  ))}
+                </div>
+              )}
+            </div>
+
+            {/* Pink Divider */}
+            <hr className="border-t-2 border-pink-400 dark:border-pink-500 mb-6" />
           </div>
 
-          {/* Title */}
-          {formData.title && (
-            <h1 className="text-3xl md:text-4xl font-bold mb-4" style={{ color: 'var(--foreground)' }}>
-              {formData.title}
-            </h1>
-          )}
-
-          {/* Description */}
-          {formData.description && (
-            <p className="text-lg mb-4" style={{ color: 'var(--foreground)', opacity: 0.8 }}>
-              {formData.description}
-            </p>
-          )}
-
-          {/* Meta */}
-          <div className="flex flex-wrap items-center gap-4 text-sm mb-6" style={{ color: 'var(--foreground)', opacity: 0.7 }}>
-            <time>{formData.date || new Date().toLocaleDateString('ko-KR')}</time>
-            {formData.tags && formData.tags.split(',').filter(Boolean).length > 0 && (
-              <div className="flex flex-wrap gap-2">
-                {formData.tags.split(',').filter(Boolean).map((tag, i) => (
-                  <span
-                    key={i}
-                    className="px-2 py-1 rounded text-xs"
-                    style={{ backgroundColor: 'var(--tag-bg)', color: 'var(--tag-text)' }}
-                  >
-                    #{tag.trim()}
-                  </span>
-                ))}
-              </div>
-            )}
-          </div>
-
-          {/* Pink Divider */}
-          <hr className="border-t-2 border-pink-400 dark:border-pink-500 mb-6" />
-        </div>
-
-        {/* TipTap Editor */}
-        <div className="px-6 pb-6">
-          <TipTapEditor
-            content={formData.content}
-            onSave={async (html) => {
-              setFormData({ ...formData, content: html });
-            }}
-            onCancel={() => {
+          {/* TipTap Editor */}
+          <div className="px-6 pb-6">
+            <TipTapEditor
+              content={formData.content}
+              onSave={async (html) => {
+                setFormData({ ...formData, content: html });
+              }}
+              onCancel={() => {
               // Do nothing - cancel is handled by the main form
             }}
             placeholder="포스트 내용을 작성하세요..."
           />
+        </div>
         </div>
       </div>
 
