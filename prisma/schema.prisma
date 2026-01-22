@@ -225,11 +225,14 @@ model SikkDatabase {
   title       String
   description String?
   slug        String             @unique
+  category    String?            // Category path (e.g., "성신여자대학교/1번")
   columns     Json               // Array of { id, name, type, options? } objects
   items       SikkDatabaseItem[]
   isPublic    Boolean            @default(true)
   createdAt   DateTime           @default(now())
   updatedAt   DateTime           @updatedAt
+
+  @@index([category])
 }
 
 model SikkDatabaseItem {

@@ -38,7 +38,7 @@ export async function PUT(request: NextRequest, context: RouteContext) {
   try {
     const { id } = await context.params;
     const body = await request.json();
-    const { title, description, columns, isPublic } = body;
+    const { title, description, columns, isPublic, category } = body;
 
     const existing = await prisma.sikkDatabase.findUnique({
       where: { id },
@@ -55,10 +55,12 @@ export async function PUT(request: NextRequest, context: RouteContext) {
         ...(description !== undefined && { description }),
         ...(columns !== undefined && { columns }),
         ...(isPublic !== undefined && { isPublic }),
+        ...(category !== undefined && { category }),
       },
     });
 
     revalidatePath(`/sikk/db/${existing.slug}`);
+    revalidatePath('/sikk');
 
     return NextResponse.json(database);
   } catch (error) {
