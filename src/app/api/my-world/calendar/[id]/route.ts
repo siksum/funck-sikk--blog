@@ -36,7 +36,7 @@ export async function PUT(
         location,
         url,
         isAllDay: isAllDay ?? true,
-        reminder: reminder ?? false,
+        reminder: reminder ?? true,
       },
     });
 

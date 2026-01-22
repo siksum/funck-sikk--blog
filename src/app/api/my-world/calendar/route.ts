@@ -107,7 +107,7 @@ export async function POST(request: NextRequest) {
         location,
         url,
         isAllDay: isAllDay ?? true,
-        reminder: reminder ?? false,
+        reminder: reminder ?? true,
       },
     });
 
