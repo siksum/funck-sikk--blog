@@ -2033,6 +2033,7 @@ export default function MyWorldDashboard() {
                       const dateStr = getDateStr(day);
                       const entry = getEntryForDate(day);
                       const singleDayEvents = getSingleDayEventsForDate(day);
+                      const allEventsForDay = getEventsForDate(day); // All events including multi-day (for mobile dots)
                       const holiday = getHolidayForDate(day);
                       const dayOfWeek = (startingDayOfWeek + index) % 7;
                       const isSunday = dayOfWeek === 0;
@@ -2097,14 +2098,14 @@ export default function MyWorldDashboard() {
                             )}
                           </div>
 
-                          {/* Space for multi-day event bars */}
+                          {/* Space for multi-day event bars - desktop only */}
                           {multiDayBarsInRow.length > 0 && (
-                            <div style={{ height: `${multiDayBarsInRow.length * 20}px` }} />
+                            <div className="hidden sm:block" style={{ height: `${multiDayBarsInRow.length * 20}px` }} />
                           )}
 
-                          {/* Single-day events list */}
+                          {/* Single-day events list - desktop only */}
                           {singleDayEvents.length > 0 && (
-                            <div className="space-y-0.5 mt-0.5">
+                            <div className="space-y-0.5 mt-0.5 hidden sm:block">
                               {singleDayEvents.slice(0, holiday ? 1 : 2).map((event) => (
                                 <div
                                   key={event.id}
@@ -2151,17 +2152,34 @@ export default function MyWorldDashboard() {
                             </div>
                           )}
 
-                          {/* Daily Entry Score Indicator */}
+                          {/* Mobile event indicator dots */}
+                          {allEventsForDay.length > 0 && (
+                            <div className="flex flex-wrap gap-0.5 mt-1 sm:hidden justify-center">
+                              {allEventsForDay.slice(0, 4).map((event) => (
+                                <div
+                                  key={event.id}
+                                  className="w-1.5 h-1.5 rounded-full"
+                                  style={{ backgroundColor: event.color || '#8B5CF6' }}
+                                  title={event.title}
+                                />
+                              ))}
+                              {allEventsForDay.length > 4 && (
+                                <div className="text-[8px] text-gray-400">+{allEventsForDay.length - 4}</div>
+                              )}
+                            </div>
+                          )}
+
+                          {/* Daily Entry Score Indicator - desktop only */}
                           {entry && entry.dayScore !== null && (
-                            <div className={`absolute bottom-1 right-1 w-2 h-2 rounded-full ${getScoreColor(entry.dayScore)}`} />
+                            <div className={`absolute bottom-1 right-1 w-2 h-2 rounded-full hidden sm:block ${getScoreColor(entry.dayScore)}`} />
                           )}
                         </button>
                       );
                     })}
                   </div>
 
-                  {/* Multi-day event bars overlay */}
-                  <div className="absolute inset-0 pointer-events-none" style={{ overflow: 'clip', borderRadius: '0.5rem' }}>
+                  {/* Multi-day event bars overlay - hidden on mobile */}
+                  <div className="absolute inset-0 pointer-events-none hidden sm:block" style={{ overflow: 'clip', borderRadius: '0.5rem' }}>
                     {getMultiDayEventBars.map((bar, barIndex) => {
                       const totalRows = Math.ceil((startingDayOfWeek + daysInMonth) / 7);
                       const rowHeight = 100 / totalRows;
