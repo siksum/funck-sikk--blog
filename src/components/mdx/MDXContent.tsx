@@ -337,17 +337,45 @@ export default function MDXContent({ content }: MDXContentProps) {
               <hr className="my-8 border-t border-violet-200 dark:border-violet-500/30" />
             ),
             // Preserve span styles (for text color)
-            span: ({ style, children, ...props }) => (
-              <span style={style} {...props}>
-                {children}
-              </span>
-            ),
+            span: ({ style, children, ...props }) => {
+              // Convert style string to object if needed
+              const styleObj = typeof style === 'string'
+                ? style.split(';').filter(Boolean).reduce((acc, rule) => {
+                    const [prop, value] = rule.split(':').map(s => s.trim());
+                    if (prop && value) {
+                      // Convert CSS property to camelCase
+                      const camelProp = prop.replace(/-([a-z])/g, (_, c) => c.toUpperCase());
+                      acc[camelProp] = value;
+                    }
+                    return acc;
+                  }, {} as Record<string, string>)
+                : style;
+              return (
+                <span style={styleObj} {...props}>
+                  {children}
+                </span>
+              );
+            },
             // Preserve mark styles (for highlights)
-            mark: ({ style, children, ...props }) => (
-              <mark style={style} {...props}>
-                {children}
-              </mark>
-            ),
+            mark: ({ style, children, ...props }) => {
+              // Convert style string to object if needed
+              const styleObj = typeof style === 'string'
+                ? style.split(';').filter(Boolean).reduce((acc, rule) => {
+                    const [prop, value] = rule.split(':').map(s => s.trim());
+                    if (prop && value) {
+                      // Convert CSS property to camelCase
+                      const camelProp = prop.replace(/-([a-z])/g, (_, c) => c.toUpperCase());
+                      acc[camelProp] = value;
+                    }
+                    return acc;
+                  }, {} as Record<string, string>)
+                : style;
+              return (
+                <mark style={styleObj} {...props}>
+                  {children}
+                </mark>
+              );
+            },
             img: ({ src, alt }) => {
               const imgSrc = typeof src === 'string' ? src : '';
               return (
