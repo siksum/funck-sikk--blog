@@ -36,6 +36,59 @@ function ToolbarDivider() {
   return <div className="w-px h-6 bg-pink-200 dark:bg-pink-500/30 mx-1" />;
 }
 
+// Common programming languages for code blocks
+const CODE_LANGUAGES = [
+  { value: 'javascript', label: 'JavaScript' },
+  { value: 'typescript', label: 'TypeScript' },
+  { value: 'python', label: 'Python' },
+  { value: 'java', label: 'Java' },
+  { value: 'c', label: 'C' },
+  { value: 'cpp', label: 'C++' },
+  { value: 'csharp', label: 'C#' },
+  { value: 'go', label: 'Go' },
+  { value: 'rust', label: 'Rust' },
+  { value: 'ruby', label: 'Ruby' },
+  { value: 'php', label: 'PHP' },
+  { value: 'swift', label: 'Swift' },
+  { value: 'kotlin', label: 'Kotlin' },
+  { value: 'sql', label: 'SQL' },
+  { value: 'html', label: 'HTML' },
+  { value: 'css', label: 'CSS' },
+  { value: 'json', label: 'JSON' },
+  { value: 'yaml', label: 'YAML' },
+  { value: 'markdown', label: 'Markdown' },
+  { value: 'bash', label: 'Bash' },
+  { value: 'plaintext', label: 'Plain Text' },
+];
+
+// Emoji categories
+const EMOJI_CATEGORIES = [
+  {
+    name: '자주 사용',
+    emojis: ['😀', '😂', '🥰', '😎', '🤔', '👍', '👎', '❤️', '🔥', '✨', '🎉', '💯'],
+  },
+  {
+    name: '표정',
+    emojis: ['😊', '😄', '😁', '😆', '😅', '🤣', '😇', '🙂', '😉', '😌', '😍', '🥳', '😏', '😒', '😞', '😔', '😟', '😕', '🙁', '☹️', '😣', '😖', '😫', '😩'],
+  },
+  {
+    name: '손/동작',
+    emojis: ['👋', '🤚', '🖐️', '✋', '🖖', '👌', '🤌', '🤏', '✌️', '🤞', '🤟', '🤘', '🤙', '👈', '👉', '👆', '👇', '☝️', '👍', '👎', '✊', '👊', '🤛', '🤜', '👏', '🙌', '🙏'],
+  },
+  {
+    name: '사물',
+    emojis: ['💻', '📱', '⌨️', '🖥️', '🖨️', '🔌', '💡', '📷', '📹', '🎥', '📺', '📻', '🎙️', '🎚️', '🎛️', '⏰', '🔔', '📣', '📢', '💾', '📀', '📁', '📂', '📋', '📝'],
+  },
+  {
+    name: '기호',
+    emojis: ['❤️', '🧡', '💛', '💚', '💙', '💜', '🖤', '🤍', '🤎', '❣️', '💕', '💞', '💓', '💗', '💖', '💘', '💝', '⭐', '🌟', '✨', '⚡', '🔥', '💥', '❄️', '☀️', '🌈'],
+  },
+  {
+    name: '화살표',
+    emojis: ['⬆️', '↗️', '➡️', '↘️', '⬇️', '↙️', '⬅️', '↖️', '↕️', '↔️', '↩️', '↪️', '⤴️', '⤵️', '🔃', '🔄', '🔙', '🔚', '🔛', '🔜', '🔝'],
+  },
+];
+
 export default function EditorToolbar({ editor, onSave, onCancel }: EditorToolbarProps) {
   const [showLinkInput, setShowLinkInput] = useState(false);
   const [linkUrl, setLinkUrl] = useState('');
@@ -44,6 +97,8 @@ export default function EditorToolbar({ editor, onSave, onCancel }: EditorToolba
   const [showYoutubeInput, setShowYoutubeInput] = useState(false);
   const [youtubeUrl, setYoutubeUrl] = useState('');
   const [showCalloutMenu, setShowCalloutMenu] = useState(false);
+  const [showEmojiPicker, setShowEmojiPicker] = useState(false);
+  const [showCodeLanguages, setShowCodeLanguages] = useState(false);
 
   const setLink = useCallback(() => {
     if (linkUrl) {
@@ -114,6 +169,41 @@ export default function EditorToolbar({ editor, onSave, onCancel }: EditorToolba
           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 20l4-16m4 4l4 4-4 4M6 16l-4-4 4-4" />
         </svg>
       </ToolbarButton>
+
+      {/* Emoji Picker */}
+      <div className="relative">
+        <ToolbarButton
+          onClick={() => setShowEmojiPicker(!showEmojiPicker)}
+          title="이모지"
+        >
+          <span className="text-lg">😀</span>
+        </ToolbarButton>
+        {showEmojiPicker && (
+          <div className="absolute top-full left-0 mt-2 p-2 bg-white dark:bg-gray-800 rounded-lg shadow-lg border border-pink-200 dark:border-pink-500/40 z-20 w-72 max-h-64 overflow-y-auto">
+            {EMOJI_CATEGORIES.map((category) => (
+              <div key={category.name} className="mb-2">
+                <div className="text-xs font-semibold text-gray-500 dark:text-gray-400 mb-1 px-1">
+                  {category.name}
+                </div>
+                <div className="flex flex-wrap gap-1">
+                  {category.emojis.map((emoji) => (
+                    <button
+                      key={emoji}
+                      onClick={() => {
+                        editor.chain().focus().insertContent(emoji).run();
+                        setShowEmojiPicker(false);
+                      }}
+                      className="w-7 h-7 flex items-center justify-center hover:bg-pink-100 dark:hover:bg-pink-500/20 rounded text-lg"
+                    >
+                      {emoji}
+                    </button>
+                  ))}
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
 
       <ToolbarDivider />
 
@@ -188,15 +278,34 @@ export default function EditorToolbar({ editor, onSave, onCancel }: EditorToolba
         </svg>
       </ToolbarButton>
 
-      <ToolbarButton
-        onClick={() => editor.chain().focus().toggleCodeBlock().run()}
-        isActive={editor.isActive('codeBlock')}
-        title="코드 블록"
-      >
-        <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 5h16a1 1 0 011 1v12a1 1 0 01-1 1H4a1 1 0 01-1-1V6a1 1 0 011-1zm4 7l2 2-2 2m4 0h4" />
-        </svg>
-      </ToolbarButton>
+      {/* Code Block with Language Selection */}
+      <div className="relative">
+        <ToolbarButton
+          onClick={() => setShowCodeLanguages(!showCodeLanguages)}
+          isActive={editor.isActive('codeBlock')}
+          title="코드 블록"
+        >
+          <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 5h16a1 1 0 011 1v12a1 1 0 01-1 1H4a1 1 0 01-1-1V6a1 1 0 011-1zm4 7l2 2-2 2m4 0h4" />
+          </svg>
+        </ToolbarButton>
+        {showCodeLanguages && (
+          <div className="absolute top-full left-0 mt-2 p-2 bg-white dark:bg-gray-800 rounded-lg shadow-lg border border-pink-200 dark:border-pink-500/40 z-20 w-40 max-h-64 overflow-y-auto">
+            {CODE_LANGUAGES.map((lang) => (
+              <button
+                key={lang.value}
+                onClick={() => {
+                  editor.chain().focus().toggleCodeBlock({ language: lang.value }).run();
+                  setShowCodeLanguages(false);
+                }}
+                className="w-full text-left px-2 py-1 text-sm rounded hover:bg-pink-100 dark:hover:bg-pink-500/20"
+              >
+                {lang.label}
+              </button>
+            ))}
+          </div>
+        )}
+      </div>
 
       <ToolbarButton
         onClick={() => editor.chain().focus().setHorizontalRule().run()}
