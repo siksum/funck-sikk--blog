@@ -30,8 +30,6 @@ export async function GET(request: NextRequest) {
     });
 
     const totalEntries = entries.length;
-    const thisMonthExpense = entries.reduce((sum, e) => sum + (e.expense || 0), 0);
-    const thisMonthIncome = entries.reduce((sum, e) => sum + (e.income || 0), 0);
 
     const scoresWithValue = entries.filter((e) => e.dayScore !== null);
     const avgDayScore =
@@ -49,8 +47,6 @@ export async function GET(request: NextRequest) {
 
     return NextResponse.json({
       totalEntries,
-      thisMonthExpense,
-      thisMonthIncome,
       avgDayScore,
       avgSleepHours,
     });

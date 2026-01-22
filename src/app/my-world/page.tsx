@@ -16,9 +16,6 @@ interface DailyEntry {
   lunch: string | null;
   dinner: string | null;
   snack: string | null;
-  income: number;
-  expense: number;
-  expenseNote: string | null;
   joy: number;
   depression: number;
   anxiety: number;
@@ -46,7 +43,6 @@ interface CalendarEvent {
 
 interface Stats {
   totalEntries: number;
-  thisMonthIncome: number;
   avgDayScore: number;
   avgSleepHours: number;
 }
@@ -241,9 +237,6 @@ export default function MyWorldDashboard() {
     lunch: null,
     dinner: null,
     snack: null,
-    income: 0,
-    expense: 0,
-    expenseNote: null,
     joy: 0,
     depression: 0,
     anxiety: 0,
@@ -411,9 +404,6 @@ export default function MyWorldDashboard() {
           lunch: null,
           dinner: null,
           snack: null,
-          income: 0,
-          expense: 0,
-          expenseNote: null,
           joy: 0,
           depression: 0,
           anxiety: 0,
@@ -444,9 +434,6 @@ export default function MyWorldDashboard() {
             lunch: null,
             dinner: null,
             snack: null,
-            income: 0,
-            expense: 0,
-            expenseNote: null,
             joy: 0,
             depression: 0,
             anxiety: 0,
@@ -1492,8 +1479,6 @@ export default function MyWorldDashboard() {
     const medicineCount = filteredEntries.filter(e => e.medicine).length;
     const headacheCount = filteredEntries.filter(e => e.headache).length;
     const periodCount = filteredEntries.filter(e => e.period).length;
-    const totalIncome = filteredEntries.reduce((sum, e) => sum + (e.income || 0), 0);
-    const totalExpense = filteredEntries.reduce((sum, e) => sum + (e.expense || 0), 0);
 
     // Emotion averages
     const emotions = {
@@ -1525,8 +1510,6 @@ export default function MyWorldDashboard() {
       medicineCount,
       headacheCount,
       periodCount,
-      totalIncome,
-      totalExpense,
       emotions,
     };
   }, [allDailyEntries, statsPeriod]);
@@ -3197,16 +3180,6 @@ export default function MyWorldDashboard() {
                                     😴 {entry.sleepHours}h
                                   </span>
                                 )}
-                                {(entry.income > 0) && (
-                                  <span className="px-1.5 py-0.5 bg-green-50 dark:bg-green-900/30 text-green-600 dark:text-green-400 rounded">
-                                    +{entry.income.toLocaleString()}원
-                                  </span>
-                                )}
-                                {(entry.expense > 0) && (
-                                  <span className="px-1.5 py-0.5 bg-red-50 dark:bg-red-900/30 text-red-600 dark:text-red-400 rounded">
-                                    -{entry.expense.toLocaleString()}원
-                                  </span>
-                                )}
                               </div>
                             </div>
                           );
@@ -3358,59 +3331,6 @@ export default function MyWorldDashboard() {
                             />
                           </div>
                         ))}
-                      </div>
-                    )}
-                  </div>
-
-                  {/* 소득 섹션 */}
-                  <div className="border border-gray-200 dark:border-gray-600 rounded-lg overflow-hidden">
-                    <button
-                      onClick={() => setDailyFormExpanded(dailyFormExpanded === 'finance' ? null : 'finance')}
-                      className="w-full px-3 py-2 flex items-center justify-between bg-gray-50 dark:bg-gray-700/50 text-sm font-medium text-gray-700 dark:text-gray-300"
-                    >
-                      <span>재정</span>
-                      <svg className={`w-4 h-4 transition-transform ${dailyFormExpanded === 'finance' ? 'rotate-180' : ''}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
-                      </svg>
-                    </button>
-                    {dailyFormExpanded === 'finance' && (
-                      <div className="p-3 space-y-2">
-                        <div className="flex items-center gap-2">
-                          <span className="text-xs text-gray-500 w-12">💰 소득</span>
-                          <div className="flex items-center gap-1 flex-1">
-                            <span className="text-xs text-gray-500 dark:text-gray-400">₩</span>
-                            <input
-                              type="number"
-                              min="0"
-                              value={dailyForm.income || ''}
-                              onChange={(e) => setDailyForm({ ...dailyForm, income: parseInt(e.target.value) || 0 })}
-                              className="flex-1 px-2 py-1 text-xs rounded border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white text-right"
-                            />
-                          </div>
-                        </div>
-                        <div className="flex items-center gap-2">
-                          <span className="text-xs text-gray-500 w-12">💸 지출</span>
-                          <div className="flex items-center gap-1 flex-1">
-                            <span className="text-xs text-gray-500 dark:text-gray-400">₩</span>
-                            <input
-                              type="number"
-                              min="0"
-                              value={dailyForm.expense || ''}
-                              onChange={(e) => setDailyForm({ ...dailyForm, expense: parseInt(e.target.value) || 0 })}
-                              className="flex-1 px-2 py-1 text-xs rounded border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white text-right"
-                            />
-                          </div>
-                        </div>
-                        <div className="flex items-center gap-2">
-                          <span className="text-xs text-gray-500 w-12">📝 내역</span>
-                          <input
-                            type="text"
-                            value={dailyForm.expenseNote || ''}
-                            onChange={(e) => setDailyForm({ ...dailyForm, expenseNote: e.target.value || null })}
-                            placeholder="지출 내역"
-                            className="flex-1 px-2 py-1 text-xs rounded border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
-                          />
-                        </div>
                       </div>
                     )}
                   </div>
