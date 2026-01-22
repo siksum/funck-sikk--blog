@@ -2,12 +2,23 @@
 
 import { useState, useRef, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
+import dynamic from 'next/dynamic';
 import MDXContent from '@/components/mdx/MDXContent';
 import TableEditor from './TableEditor';
 import CodeBlockEditor from './CodeBlockEditor';
 import ColumnEditor from './ColumnEditor';
 import MathEditor from './MathEditor';
 import ButtonEditor from './ButtonEditor';
+
+// Lazy load TipTap editor
+const TipTapEditor = dynamic(() => import('@/components/editor/TipTapEditor'), {
+  loading: () => (
+    <div className="flex items-center justify-center h-64">
+      <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-pink-500"></div>
+    </div>
+  ),
+  ssr: false,
+});
 
 interface DBSection {
   id: string;
@@ -1156,105 +1167,21 @@ export default function SikkPostEditor({ initialData = {}, isEdit = false }: Sik
           activeTab === 'split' ? 'grid grid-cols-1 lg:grid-cols-2 gap-4' : ''
         }`}
       >
-        {/* Editor */}
+        {/* Editor - Using TipTap for rich text editing */}
         {(activeTab === 'edit' || activeTab === 'split') && (
           <div className="relative">
             <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-              내용 (Markdown)
+              내용 (Rich Text Editor)
             </label>
-
-            {/* Toolbar */}
-            <div className="bg-gray-100 dark:bg-gray-700 border border-b-0 border-gray-300 dark:border-gray-600 rounded-t-lg">
-              {/* Basic formatting buttons */}
-              <div className="flex flex-wrap gap-1 p-2 border-b border-gray-200 dark:border-gray-600">
-                {toolbarButtons.map((button, index) => (
-                  <button
-                    key={index}
-                    type="button"
-                    onClick={() => button.action(textareaRef.current!, formData.content, (c) => setFormData({ ...formData, content: c }))}
-                    className="p-2 text-gray-600 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600 rounded transition-colors"
-                    title={button.label}
-                  >
-                    {button.icon}
-                  </button>
-                ))}
-              </div>
-              {/* Special block buttons with labels */}
-              <div className="flex flex-wrap gap-1 p-2 relative">
-                {specialButtons.map((button, index) => (
-                  <button
-                    key={`special-${index}`}
-                    type="button"
-                    onClick={button.action}
-                    className="px-2 py-1.5 text-gray-600 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600 rounded transition-colors flex items-center gap-1 text-xs border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800"
-                    title={button.label}
-                  >
-                    {button.icon}
-                    <span>{button.label}</span>
-                  </button>
-                ))}
-
-                {/* Code Language Dropdown */}
-                {showCodeLanguageDropdown && (
-                  <div className="absolute z-20 mt-1 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded-lg shadow-lg p-2 grid grid-cols-4 gap-1 w-80">
-                    {codeLanguages.map((lang) => (
-                      <button
-                        key={lang}
-                        type="button"
-                        onClick={() => {
-                          insertMarkdown(`\n\`\`\`${lang}\n\n\`\`\`\n`);
-                          setShowCodeLanguageDropdown(false);
-                        }}
-                        className="px-2 py-1 text-xs text-gray-700 dark:text-gray-300 hover:bg-violet-100 dark:hover:bg-violet-900/30 rounded transition-colors text-left"
-                      >
-                        {lang}
-                      </button>
-                    ))}
-                  </div>
-                )}
-              </div>
-            </div>
-
-            {/* Hidden file input for image upload */}
-            <input
-              ref={fileInputRef}
-              type="file"
-              accept="image/*"
-              onChange={handleFileChange}
-              className="hidden"
-            />
-
-            {/* Hidden file input for PDF upload */}
-            <input
-              ref={pdfInputRef}
-              type="file"
-              accept="application/pdf"
-              onChange={handlePdfChange}
-              className="hidden"
-            />
-
-            {/* Upload indicator */}
-            {uploading && (
-              <div className="absolute inset-0 bg-white/80 dark:bg-gray-700/80 flex items-center justify-center z-10 rounded-b-lg">
-                <div className="flex items-center gap-2 text-pink-600 dark:text-pink-400">
-                  <svg className="animate-spin w-5 h-5" fill="none" viewBox="0 0 24 24">
-                    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
-                    <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
-                  </svg>
-                  <span className="text-sm font-medium">업로드 중...</span>
-                </div>
-              </div>
-            )}
-
-            <textarea
-              ref={textareaRef}
-              value={formData.content}
-              onChange={(e) => setFormData({ ...formData, content: e.target.value })}
-              onPaste={handlePaste}
-              onDragOver={handleDragOver}
-              onDrop={handleDrop}
-              className="w-full h-[600px] px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-b-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-pink-500 font-mono text-sm resize-none"
-              placeholder="# 포스트 내용을 작성하세요... (이미지를 붙여넣거나 드래그앤드롭하세요)"
+            <TipTapEditor
+              content={formData.content}
+              onSave={async (html) => {
+                setFormData({ ...formData, content: html });
+              }}
+              onCancel={() => {
+                // Do nothing - cancel is handled by the main form
+              }}
+              placeholder="포스트 내용을 작성하세요..."
             />
           </div>
         )}
