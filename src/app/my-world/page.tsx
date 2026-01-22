@@ -379,20 +379,21 @@ export default function MyWorldDashboard() {
   }, []);
 
   useEffect(() => {
-    fetchMonthData();
-  }, [currentMonth]);
-
-  // Sync currentMonth with weekStartDate when in weekly view
-  useEffect(() => {
-    console.log('[Sync] viewType:', viewType, 'weekStartDate:', weekStartDate.toISOString(), 'currentMonth:', currentMonth.toISOString());
+    // In weekly view, use weekStartDate's month for fetching
     if (viewType === 'week') {
       const weekMonth = new Date(weekStartDate.getFullYear(), weekStartDate.getMonth(), 1);
+      console.log('[Fetch Effect] Weekly mode - fetching for weekStartDate month:', weekMonth.toISOString());
+      // Update currentMonth if needed (for UI display)
       if (currentMonth.getFullYear() !== weekMonth.getFullYear() || currentMonth.getMonth() !== weekMonth.getMonth()) {
-        console.log('[Sync] Updating currentMonth to:', weekMonth.toISOString());
         setCurrentMonth(weekMonth);
       }
+      // Always fetch based on weekStartDate's month in weekly view
+      fetchMonthDataForDate(weekStartDate);
+    } else {
+      console.log('[Fetch Effect] Monthly mode - fetching for currentMonth:', currentMonth.toISOString());
+      fetchMonthDataForDate(currentMonth);
     }
-  }, [weekStartDate, viewType]);
+  }, [currentMonth, weekStartDate, viewType]);
 
   // Load daily entry when selected date changes
   useEffect(() => {
@@ -773,9 +774,9 @@ export default function MyWorldDashboard() {
     }
   };
 
-  const fetchMonthData = async () => {
-    const year = currentMonth.getFullYear();
-    const month = currentMonth.getMonth() + 1;
+  const fetchMonthDataForDate = async (date: Date) => {
+    const year = date.getFullYear();
+    const month = date.getMonth() + 1;
 
     try {
       // Fetch daily entries for the month
@@ -804,6 +805,9 @@ export default function MyWorldDashboard() {
       console.error('Failed to fetch month data:', error);
     }
   };
+
+  // Keep the old function for backward compatibility
+  const fetchMonthData = () => fetchMonthDataForDate(currentMonth);
 
   const formatDate = (date: Date) => {
     return date.toLocaleDateString('ko-KR', {
