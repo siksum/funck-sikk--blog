@@ -115,63 +115,34 @@ export async function POST(request: NextRequest) {
       },
     });
 
-    // Get all admin users' push subscriptions
-    const getAdminSubscriptions = async () => {
+    // Always send immediate notification when creating a new event
+    if (shouldRemind) {
       const adminUsers = await prisma.user.findMany({
         where: { isAdmin: true },
         include: { pushSubscriptions: true },
       });
-      return adminUsers.flatMap((u) => u.pushSubscriptions);
-    };
+      const subscriptions = adminUsers.flatMap((u) => u.pushSubscriptions);
 
-    // If reminder is enabled and event is within 30 minutes, send notification immediately
-    if (shouldRemind && !isAllDay) {
-      const minutesUntil = Math.round((eventDate.getTime() - now.getTime()) / 60000);
-
-      if (minutesUntil <= 30 && minutesUntil > -5) {
+      if (subscriptions.length > 0) {
         const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:3000';
-        const timeText = minutesUntil <= 0 ? '곧 시작됩니다' : `${minutesUntil}분 후 시작`;
-        const subscriptions = await getAdminSubscriptions();
+
+        // Format the event time/date for the notification
+        let timeInfo = '';
+        if (isAllDay) {
+          const eventDateStr = typeof date === 'string' ? date.split('T')[0] : eventDate.toISOString().split('T')[0];
+          timeInfo = eventDateStr;
+        } else {
+          const timeStr = typeof date === 'string' && date.includes('T')
+            ? date.split('T')[1]?.substring(0, 5)
+            : eventDate.toTimeString().substring(0, 5);
+          timeInfo = timeStr || '';
+        }
 
         await sendPushToSubscriptions(subscriptions, {
-          title: `⏰ ${title}`,
-          body: `${timeText}${location ? ` - ${location}` : ''}`,
+          title: `📅 새 일정: ${title}`,
+          body: `${timeInfo}${location ? ` - ${location}` : ''}`,
           icon: '/icons/icon-192x192.png',
           url: `${baseUrl}/my-world`,
-        });
-
-        // Mark reminder as sent
-        await prisma.calendarEvent.update({
-          where: { id: event.id },
-          data: { reminderSentAt: now },
-        });
-      }
-    }
-
-    // For all-day events created today, also send immediate notification
-    if (shouldRemind && isAllDay) {
-      // Compare dates using date strings to avoid timezone issues
-      const eventDateStr = eventDate.toISOString().split('T')[0];
-      const todayStr = now.toISOString().split('T')[0];
-
-      // Also check if eventDate is for "today" in local context (the date string passed from frontend)
-      const inputDateStr = typeof date === 'string' ? date.split('T')[0] : eventDateStr;
-
-      if (eventDateStr === todayStr || inputDateStr === todayStr) {
-        const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:3000';
-        const subscriptions = await getAdminSubscriptions();
-
-        await sendPushToSubscriptions(subscriptions, {
-          title: `📅 오늘 일정: ${title}`,
-          body: location ? `장소: ${location}` : '오늘 예정된 일정입니다',
-          icon: '/icons/icon-192x192.png',
-          url: `${baseUrl}/my-world`,
-        });
-
-        // Mark reminder as sent
-        await prisma.calendarEvent.update({
-          where: { id: event.id },
-          data: { reminderSentAt: now },
         });
       }
     }
