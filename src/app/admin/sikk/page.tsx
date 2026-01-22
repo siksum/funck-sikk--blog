@@ -99,6 +99,34 @@ interface Post {
   isPublic?: boolean;
 }
 
+interface DatabaseItem {
+  id: string;
+  data: Record<string, unknown>;
+  content: string;
+  order: number;
+}
+
+interface Column {
+  id: string;
+  name: string;
+  type: string;
+  options?: string[];
+}
+
+interface Database {
+  id: string;
+  title: string;
+  description: string | null;
+  slug: string;
+  category: string | null;
+  isPublic: boolean;
+  columns: Column[];
+  items: DatabaseItem[];
+  _count?: {
+    items: number;
+  };
+}
+
 interface DBSection {
   id: string;
   title: string;
@@ -126,6 +154,11 @@ export default function SikkPostsManagementPage() {
   const [selectedSection, setSelectedSection] = useState<string | null>(null);
   const [searchTerm, setSearchTerm] = useState('');
   const [expandedCategories, setExpandedCategories] = useState<Set<string>>(new Set());
+
+  // Database state
+  const [databases, setDatabases] = useState<Database[]>([]);
+  const [selectedDatabase, setSelectedDatabase] = useState<Database | null>(null);
+  const [loadingDatabase, setLoadingDatabase] = useState(false);
 
   // Multi-select state
   const [selectedPosts, setSelectedPosts] = useState<Set<string>>(new Set());
@@ -235,6 +268,19 @@ export default function SikkPostsManagementPage() {
     return grouped;
   }, [sidebarCategories, dbSections]);
 
+  // Group databases by category for sidebar display
+  const databasesByCategory = useMemo(() => {
+    const grouped: Record<string, Database[]> = {};
+    databases.forEach((db) => {
+      const cat = db.category || '미분류';
+      if (!grouped[cat]) {
+        grouped[cat] = [];
+      }
+      grouped[cat].push(db);
+    });
+    return grouped;
+  }, [databases]);
+
   const toggleCategory = (category: string) => {
     setExpandedCategories((prev) => {
       const next = new Set(prev);
@@ -326,8 +372,38 @@ export default function SikkPostsManagementPage() {
     }
   };
 
+  // Fetch all databases
+  const fetchDatabases = async () => {
+    try {
+      const res = await fetch('/api/sikk/databases');
+      const data = await res.json();
+      if (Array.isArray(data)) {
+        setDatabases(data);
+      }
+    } catch (error) {
+      console.error('Failed to fetch databases:', error);
+    }
+  };
+
+  // Fetch a single database with items
+  const fetchDatabaseWithItems = async (id: string) => {
+    setLoadingDatabase(true);
+    try {
+      const res = await fetch(`/api/sikk/databases/${id}`);
+      const data = await res.json();
+      if (data && data.id) {
+        setSelectedDatabase(data);
+      }
+    } catch (error) {
+      console.error('Failed to fetch database:', error);
+    } finally {
+      setLoadingDatabase(false);
+    }
+  };
+
   useEffect(() => {
     fetchPosts();
+    fetchDatabases();
   }, []);
 
   // Fetch categories from database
@@ -895,9 +971,10 @@ export default function SikkPostsManagementPage() {
                   setSelectedCategory('all');
                   setSelectedSubcategory(null);
                   setSelectedSection(null);
+                  setSelectedDatabase(null);
                 }}
                 className={`w-full flex items-center justify-between py-2 text-sm transition-colors ${
-                  selectedCategory === 'all' && !selectedSection
+                  selectedCategory === 'all' && !selectedSection && !selectedDatabase
                     ? 'text-pink-600 dark:text-pink-400 font-medium'
                     : 'text-gray-900 dark:text-white hover:text-pink-600 dark:hover:text-pink-400'
                 }`}
@@ -918,6 +995,7 @@ export default function SikkPostsManagementPage() {
                         setSelectedSection(selectedSection === section.id ? null : section.id);
                         setSelectedCategory('all');
                         setSelectedSubcategory(null);
+                        setSelectedDatabase(null);
                       }
                     }}
                     className={`w-full text-left text-xs font-semibold uppercase tracking-wider mb-2 pb-1 border-b transition-colors ${
@@ -938,9 +1016,10 @@ export default function SikkPostsManagementPage() {
                           setSelectedCategory(category.name);
                           setSelectedSubcategory(null);
                           setSelectedSection(null);
+                          setSelectedDatabase(null);
                         }}
                         className={`w-full flex items-center justify-between py-2 text-sm transition-colors ${
-                          selectedCategory === category.name && !selectedSubcategory
+                          selectedCategory === category.name && !selectedSubcategory && !selectedDatabase
                             ? 'text-pink-600 dark:text-pink-400 font-medium'
                             : 'text-gray-900 dark:text-white hover:text-pink-600 dark:hover:text-pink-400'
                         }`}
@@ -967,9 +1046,10 @@ export default function SikkPostsManagementPage() {
                               onClick={() => {
                                 setSelectedCategory(category.name);
                                 setSelectedSubcategory(sub.name);
+                                setSelectedDatabase(null);
                               }}
                               className={`w-full flex items-center justify-between py-1.5 text-sm transition-colors ${
-                                selectedCategory === category.name && selectedSubcategory === sub.name
+                                selectedCategory === category.name && selectedSubcategory === sub.name && !selectedDatabase
                                   ? 'text-pink-600 dark:text-pink-400 font-medium'
                                   : 'text-gray-500 dark:text-gray-400 hover:text-pink-600 dark:hover:text-pink-400'
                               }`}
@@ -980,12 +1060,90 @@ export default function SikkPostsManagementPage() {
                               </span>
                             </button>
                           ))}
+                          {/* Databases under this subcategory */}
+                          {databasesByCategory[`${category.name}/${sub.name}`]?.map((db) => (
+                            <button
+                              key={db.id}
+                              onClick={() => {
+                                fetchDatabaseWithItems(db.id);
+                                setSelectedCategory(category.name);
+                                setSelectedSubcategory(sub.name);
+                              }}
+                              className={`w-full flex items-center justify-between py-1.5 text-sm transition-colors pl-4 ${
+                                selectedDatabase?.id === db.id
+                                  ? 'text-purple-600 dark:text-purple-400 font-medium'
+                                  : 'text-gray-500 dark:text-gray-400 hover:text-purple-600 dark:hover:text-purple-400'
+                              }`}
+                            >
+                              <span className="flex items-center gap-1">
+                                <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 7v10c0 2.21 3.582 4 8 4s8-1.79 8-4V7M4 7c0 2.21 3.582 4 8 4s8-1.79 8-4M4 7c0-2.21 3.582-4 8-4s8 1.79 8 4" />
+                                </svg>
+                                {db.title}
+                              </span>
+                              <span className="text-xs text-gray-400 dark:text-gray-500">
+                                {db._count?.items || 0}
+                              </span>
+                            </button>
+                          ))}
                         </div>
                       )}
+                      {/* Databases directly under this category (not subcategory) */}
+                      {expandedCategories.has(category.name) && databasesByCategory[category.name]?.map((db) => (
+                        <button
+                          key={db.id}
+                          onClick={() => {
+                            fetchDatabaseWithItems(db.id);
+                            setSelectedCategory(category.name);
+                            setSelectedSubcategory(null);
+                          }}
+                          className={`w-full flex items-center justify-between py-1.5 text-sm transition-colors ml-6 ${
+                            selectedDatabase?.id === db.id
+                              ? 'text-purple-600 dark:text-purple-400 font-medium'
+                              : 'text-gray-500 dark:text-gray-400 hover:text-purple-600 dark:hover:text-purple-400'
+                          }`}
+                        >
+                          <span className="flex items-center gap-1">
+                            <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 7v10c0 2.21 3.582 4 8 4s8-1.79 8-4V7M4 7c0 2.21 3.582 4 8 4s8-1.79 8-4M4 7c0-2.21 3.582-4 8-4s8 1.79 8 4" />
+                            </svg>
+                            {db.title}
+                          </span>
+                          <span className="text-xs text-gray-400 dark:text-gray-500">
+                            {db._count?.items || 0}
+                          </span>
+                        </button>
+                      ))}
                     </div>
                   )) : (
                     <p className="text-xs text-gray-400 dark:text-gray-500 py-1">카테고리 없음</p>
                   )}
+                  {/* Databases without category in this section */}
+                  {!section && databasesByCategory['미분류']?.map((db) => (
+                    <button
+                      key={db.id}
+                      onClick={() => {
+                        fetchDatabaseWithItems(db.id);
+                        setSelectedCategory('all');
+                        setSelectedSubcategory(null);
+                      }}
+                      className={`w-full flex items-center justify-between py-1.5 text-sm transition-colors ${
+                        selectedDatabase?.id === db.id
+                          ? 'text-purple-600 dark:text-purple-400 font-medium'
+                          : 'text-gray-500 dark:text-gray-400 hover:text-purple-600 dark:hover:text-purple-400'
+                      }`}
+                    >
+                      <span className="flex items-center gap-1">
+                        <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 7v10c0 2.21 3.582 4 8 4s8-1.79 8-4V7M4 7c0 2.21 3.582 4 8 4s8-1.79 8-4M4 7c0-2.21 3.582-4 8-4s8 1.79 8 4" />
+                        </svg>
+                        {db.title}
+                      </span>
+                      <span className="text-xs text-gray-400 dark:text-gray-500">
+                        {db._count?.items || 0}
+                      </span>
+                    </button>
+                  ))}
                 </div>
               ))}
             </div>
@@ -994,7 +1152,138 @@ export default function SikkPostsManagementPage() {
 
         {/* Main Content */}
         <div className="flex-1 min-w-0">
-          {/* Posts Table */}
+          {/* Database Items Table - shown when a database is selected */}
+          {selectedDatabase ? (
+            <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-purple-200 dark:border-purple-800/50 overflow-hidden">
+              {/* Database Header */}
+              <div className="p-4 border-b border-gray-200 dark:border-gray-700 bg-purple-50 dark:bg-purple-900/20">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-3">
+                    <button
+                      onClick={() => setSelectedDatabase(null)}
+                      className="p-1 hover:bg-purple-100 dark:hover:bg-purple-800/50 rounded transition-colors"
+                    >
+                      <svg className="w-5 h-5 text-purple-600 dark:text-purple-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+                      </svg>
+                    </button>
+                    <div>
+                      <h2 className="text-lg font-semibold text-gray-900 dark:text-white flex items-center gap-2">
+                        <svg className="w-5 h-5 text-purple-600 dark:text-purple-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 7v10c0 2.21 3.582 4 8 4s8-1.79 8-4V7M4 7c0 2.21 3.582 4 8 4s8-1.79 8-4M4 7c0-2.21 3.582-4 8-4s8 1.79 8 4" />
+                        </svg>
+                        {selectedDatabase.title}
+                      </h2>
+                      {selectedDatabase.description && (
+                        <p className="text-sm text-gray-500 dark:text-gray-400">{selectedDatabase.description}</p>
+                      )}
+                    </div>
+                  </div>
+                  <Link
+                    href={`/admin/sikk/databases/${selectedDatabase.id}`}
+                    className="px-3 py-1.5 text-xs bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors"
+                  >
+                    데이터베이스 관리
+                  </Link>
+                </div>
+              </div>
+
+              {loadingDatabase ? (
+                <div className="p-8 text-center text-gray-500">로딩 중...</div>
+              ) : selectedDatabase.items.length === 0 ? (
+                <div className="p-8 text-center text-gray-500">
+                  <p className="mb-4">항목이 없습니다.</p>
+                  <Link
+                    href={`/admin/sikk/databases/${selectedDatabase.id}`}
+                    className="px-4 py-2 text-sm bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors"
+                  >
+                    항목 추가하기
+                  </Link>
+                </div>
+              ) : (
+                <div className="overflow-x-auto">
+                  <table className="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
+                    <thead className="bg-gray-50 dark:bg-gray-700">
+                      <tr>
+                        {selectedDatabase.columns.map((col) => (
+                          <th
+                            key={col.id}
+                            className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider"
+                          >
+                            {col.name}
+                          </th>
+                        ))}
+                        <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
+                          작업
+                        </th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-gray-200 dark:divide-gray-700">
+                      {selectedDatabase.items.map((item) => {
+                        const titleColumn = selectedDatabase.columns.find((c) => c.type === 'title');
+                        const itemTitle = titleColumn ? String(item.data[titleColumn.id] || '제목 없음') : '제목 없음';
+
+                        return (
+                          <tr key={item.id} className="hover:bg-gray-50 dark:hover:bg-gray-700/50">
+                            {selectedDatabase.columns.map((col) => (
+                              <td key={col.id} className="px-6 py-4 text-sm text-gray-900 dark:text-white">
+                                {col.type === 'title' ? (
+                                  <Link
+                                    href={`/admin/sikk/databases/${selectedDatabase.id}/items/${item.id}`}
+                                    className="font-medium text-purple-600 dark:text-purple-400 hover:text-purple-800 dark:hover:text-purple-300 hover:underline"
+                                  >
+                                    {String(item.data[col.id] || '제목 없음')}
+                                  </Link>
+                                ) : col.type === 'date' ? (
+                                  <span>{String(item.data[col.id] || '-')}</span>
+                                ) : col.type === 'select' ? (
+                                  <span className="px-2 py-0.5 text-xs bg-pink-100 dark:bg-pink-900/30 text-pink-700 dark:text-pink-400 rounded">
+                                    {String(item.data[col.id] || '-')}
+                                  </span>
+                                ) : col.type === 'url' && item.data[col.id] ? (
+                                  <a
+                                    href={String(item.data[col.id])}
+                                    target="_blank"
+                                    rel="noopener noreferrer"
+                                    className="text-blue-600 dark:text-blue-400 hover:underline truncate max-w-[200px] block"
+                                  >
+                                    {String(item.data[col.id])}
+                                  </a>
+                                ) : col.type === 'files' ? (
+                                  <span className="text-xs text-gray-500">
+                                    {Array.isArray(item.data[col.id]) ? `${(item.data[col.id] as string[]).length}개 파일` : '-'}
+                                  </span>
+                                ) : (
+                                  <span>{String(item.data[col.id] || '-')}</span>
+                                )}
+                              </td>
+                            ))}
+                            <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+                              <div className="flex justify-end gap-2">
+                                <Link
+                                  href={`/sikk/db/${selectedDatabase.slug}/${item.id}`}
+                                  className="px-2 py-1 text-gray-600 hover:text-gray-900 dark:text-gray-400 dark:hover:text-white rounded hover:bg-gray-100 dark:hover:bg-gray-700"
+                                >
+                                  보기
+                                </Link>
+                                <Link
+                                  href={`/admin/sikk/databases/${selectedDatabase.id}/items/${item.id}`}
+                                  className="px-2 py-1 text-purple-600 hover:text-purple-900 dark:text-purple-400 dark:hover:text-purple-300 rounded hover:bg-purple-50 dark:hover:bg-purple-900/20"
+                                >
+                                  수정
+                                </Link>
+                              </div>
+                            </td>
+                          </tr>
+                        );
+                      })}
+                    </tbody>
+                  </table>
+                </div>
+              )}
+            </div>
+          ) : (
+          /* Posts Table */
           <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 overflow-hidden">
             {loading ? (
               <div className="p-8 text-center text-gray-500">로딩 중...</div>
@@ -1291,6 +1580,7 @@ export default function SikkPostsManagementPage() {
               </>
             )}
           </div>
+          )}
         </div>
       </div>
 
