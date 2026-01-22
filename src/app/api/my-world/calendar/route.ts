@@ -20,8 +20,6 @@ export async function GET(request: NextRequest) {
     const userId = session?.user?.id || 'dev-user';
     let where: any = { userId };
 
-    console.log('[API Calendar] Fetching for userId:', userId, 'year:', year, 'month:', month);
-
     if (year && month) {
       // Use UTC dates to avoid timezone issues
       const y = parseInt(year);
@@ -30,12 +28,10 @@ export async function GET(request: NextRequest) {
       // Get last day of month by going to day 0 of next month
       const lastDay = new Date(Date.UTC(y, m, 0)).getUTCDate();
       const monthEnd = new Date(Date.UTC(y, m - 1, lastDay, 23, 59, 59, 999));
-      console.log('[API Calendar] Date range:', monthStart.toISOString(), 'to', monthEnd.toISOString());
       // Fetch events that:
       // 1. Start within the month, OR
       // 2. End within the month (for multi-day events), OR
-      // 3. Span the entire month (start before, end after), OR
-      // 4. Single-day events (endDate is null) that match the date
+      // 3. Span the entire month (start before, end after)
       where = {
         AND: [
           { userId },
@@ -68,18 +64,10 @@ export async function GET(request: NextRequest) {
       };
     }
 
-    // First, let's see ALL events for this user (no date filter)
-    const allEvents = await prisma.calendarEvent.findMany({
-      where: { userId },
-      orderBy: { date: 'asc' },
-    });
-    console.log('[API Calendar] All events for user:', allEvents.length, allEvents.map(e => ({ title: e.title, date: e.date, endDate: e.endDate })));
-
     const events = await prisma.calendarEvent.findMany({
       where,
       orderBy: { date: 'asc' },
     });
-    console.log('[API Calendar] Filtered events:', events.length);
 
     return NextResponse.json(events);
   } catch (error) {

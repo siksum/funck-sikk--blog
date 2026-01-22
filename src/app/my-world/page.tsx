@@ -382,7 +382,6 @@ export default function MyWorldDashboard() {
     // In weekly view, use weekStartDate's month for fetching
     if (viewType === 'week') {
       const weekMonth = new Date(weekStartDate.getFullYear(), weekStartDate.getMonth(), 1);
-      console.log('[Fetch Effect] Weekly mode - fetching for weekStartDate month:', weekMonth.toISOString());
       // Update currentMonth if needed (for UI display)
       if (currentMonth.getFullYear() !== weekMonth.getFullYear() || currentMonth.getMonth() !== weekMonth.getMonth()) {
         setCurrentMonth(weekMonth);
@@ -390,7 +389,6 @@ export default function MyWorldDashboard() {
       // Always fetch based on weekStartDate's month in weekly view
       fetchMonthDataForDate(weekStartDate);
     } else {
-      console.log('[Fetch Effect] Monthly mode - fetching for currentMonth:', currentMonth.toISOString());
       fetchMonthDataForDate(currentMonth);
     }
   }, [currentMonth, weekStartDate, viewType]);
@@ -787,11 +785,9 @@ export default function MyWorldDashboard() {
       }
 
       // Fetch calendar events for the month
-      console.log('[Fetch] Fetching events for year:', year, 'month:', month);
       const eventsRes = await fetch(`/api/my-world/calendar?year=${year}&month=${month}`);
       if (eventsRes.ok) {
         const events = await eventsRes.json();
-        console.log('[Fetch] Got events:', events.length, events.map((e: CalendarEvent) => ({ title: e.title, date: e.date, endDate: e.endDate })));
         setMonthEvents(events);
       }
 
@@ -1543,19 +1539,12 @@ export default function MyWorldDashboard() {
 
     const bars: WeeklyEventBar[] = [];
 
-    console.log('[Weekly] All monthEvents:', monthEvents.map(e => ({ title: e.title, date: e.date, endDate: e.endDate })));
-
     // Get events that span multiple days (shown as bars regardless of isAllDay flag)
     const multiDayEvents = monthEvents.filter(e => {
       const startDate = e.date.split('T')[0];
       const endDate = e.endDate ? e.endDate.split('T')[0] : startDate;
-      const isMultiDay = startDate !== endDate;
-      console.log('[Weekly] Event:', e.title, 'start:', startDate, 'end:', endDate, 'isMultiDay:', isMultiDay);
-      return isMultiDay;
+      return startDate !== endDate;
     });
-
-    console.log('[Weekly] MultiDay events found:', multiDayEvents.length);
-    console.log('[Weekly] weekStartDate:', weekStartDate.toISOString());
 
     multiDayEvents.forEach(event => {
       // Parse event dates as simple date strings for comparison (YYYY-MM-DD)
@@ -1570,16 +1559,12 @@ export default function MyWorldDashboard() {
 
       // Compare as strings (YYYY-MM-DD format allows string comparison)
       const overlaps = eventEndStr >= weekStartStr && eventStartStr <= weekEndStr;
-      console.log('[Weekly] Overlap check for', event.title, ':', overlaps,
-        'event:', eventStartStr, '-', eventEndStr,
-        'week:', weekStartStr, '-', weekEndStr);
 
       if (overlaps) {
         // Calculate column positions using date parsing
         const eventStart = new Date(eventStartStr + 'T00:00:00');
         const eventEnd = new Date(eventEndStr + 'T00:00:00');
         const weekStart = new Date(weekStartStr + 'T00:00:00');
-        const weekEnd = new Date(weekEndStr + 'T00:00:00');
 
         // Calculate start column (0-6)
         let startCol = 0;
@@ -1597,8 +1582,6 @@ export default function MyWorldDashboard() {
         startCol = Math.max(0, Math.min(6, startCol));
         endCol = Math.max(0, Math.min(6, endCol));
 
-        console.log('[Weekly] Bar calculation:', event.title, 'startCol:', startCol, 'endCol:', endCol);
-
         if (startCol <= endCol) {
           bars.push({
             event,
@@ -1607,12 +1590,10 @@ export default function MyWorldDashboard() {
             isStart: eventStartStr >= weekStartStr && eventStartStr <= weekEndStr,
             isEnd: eventEndStr >= weekStartStr && eventEndStr <= weekEndStr,
           });
-          console.log('[Weekly] Bar pushed:', event.title);
         }
       }
     });
 
-    console.log('[Weekly] Total bars:', bars.length);
     return bars;
   }, [monthEvents, weekStartDate]);
 
