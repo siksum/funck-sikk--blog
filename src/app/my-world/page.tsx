@@ -2158,6 +2158,25 @@ export default function MyWorldDashboard() {
               <div className="flex bg-gray-100 dark:bg-gray-700 rounded-lg p-0.5">
                 <button
                   onClick={() => {
+                    // When switching to week view, sync weekStartDate with currentMonth
+                    if (viewType === 'month') {
+                      // Check if today is in the current month
+                      const now = new Date();
+                      let targetDate: Date;
+                      if (now.getFullYear() === currentMonth.getFullYear() && now.getMonth() === currentMonth.getMonth()) {
+                        // Today is in the current month - use today's week
+                        targetDate = now;
+                      } else {
+                        // Use the first day of the current month
+                        targetDate = new Date(currentMonth.getFullYear(), currentMonth.getMonth(), 1);
+                      }
+                      // Find the Sunday of that week
+                      const dayOfWeek = targetDate.getDay();
+                      const newStart = new Date(targetDate);
+                      newStart.setDate(targetDate.getDate() - dayOfWeek);
+                      newStart.setHours(0, 0, 0, 0);
+                      setWeekStartDate(newStart);
+                    }
                     setViewType('week');
                     setShowWeekPicker(false);
                     setShowMonthPicker(false);
