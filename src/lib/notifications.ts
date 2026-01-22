@@ -116,10 +116,29 @@ export async function sendCommentNotification(
 
   if (userIdsToNotify.length === 0) return { sent: 0, failed: 0 };
 
+  // Get post title from database
+  let postTitle = postSlug;
+  const blogPost = await prisma.post.findFirst({
+    where: { slug: postSlug },
+    select: { title: true },
+  });
+  if (blogPost) {
+    postTitle = blogPost.title;
+  } else {
+    const sikkPost = await prisma.sikkPost.findFirst({
+      where: { slug: postSlug },
+      select: { title: true },
+    });
+    if (sikkPost) {
+      postTitle = sikkPost.title;
+    }
+  }
+
   const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:3000';
+  const authorName = comment.author.name || '누군가';
   const payload: PushPayload = {
-    title: `${comment.author.name || '누군가'}님이 댓글을 남겼습니다`,
-    body: comment.content.slice(0, 100),
+    title: `💬 [${postTitle}] 새 댓글`,
+    body: `${authorName}: ${comment.content.slice(0, 80)}`,
     url: `${baseUrl}/blog/${postSlug}#comment-${comment.id}`,
   };
 
