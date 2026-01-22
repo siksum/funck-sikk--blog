@@ -26,10 +26,10 @@ export default function EmojiReactions({ postSlug }: EmojiReactionsProps) {
     if (savedReactions) {
       setReactions(JSON.parse(savedReactions));
     } else {
-      // Initialize with random counts for demo
+      // Initialize with 0 counts
       const initial: Record<string, number> = {};
       REACTIONS.forEach((r) => {
-        initial[r.name] = Math.floor(Math.random() * 10);
+        initial[r.name] = 0;
       });
       setReactions(initial);
     }
