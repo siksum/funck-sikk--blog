@@ -46,12 +46,8 @@ export default function SikkDatabasesPage() {
     return options;
   }, [categories]);
 
-  // Generate database URL based on category
+  // Generate database URL - simple /sikk/db/[slug] format
   const getDatabaseUrl = (db: Database) => {
-    if (db.category) {
-      const categoryPath = db.category.split('/').map(s => encodeURIComponent(s)).join('/');
-      return `/sikk/category/${categoryPath}/${db.slug}`;
-    }
     return `/sikk/db/${db.slug}`;
   };
 

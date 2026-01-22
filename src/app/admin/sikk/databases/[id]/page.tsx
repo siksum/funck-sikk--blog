@@ -94,6 +94,12 @@ export default function DatabaseDetailPage({ params }: DatabasePageProps) {
     return options;
   }, [categories]);
 
+  // Generate database URL - simple /sikk/db/[slug] format
+  const getDatabaseViewUrl = () => {
+    if (!database) return '/sikk';
+    return `/sikk/db/${database.slug}`;
+  };
+
   const fetchDatabase = useCallback(async () => {
     try {
       const res = await fetch(`/api/sikk/databases/${id}`);
@@ -890,10 +896,7 @@ export default function DatabaseDetailPage({ params }: DatabasePageProps) {
             + 열 추가
           </button>
           <Link
-            href={database.category
-              ? `/sikk/category/${database.category.split('/').map((s: string) => encodeURIComponent(s)).join('/')}/${database.slug}`
-              : `/sikk/db/${database.slug}`
-            }
+            href={getDatabaseViewUrl()}
             className="px-3 py-1.5 text-sm text-pink-600 dark:text-pink-400 border border-pink-200 dark:border-pink-800 rounded-lg hover:bg-pink-50 dark:hover:bg-pink-900/20 transition-colors"
           >
             페이지 보기

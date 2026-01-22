@@ -5,6 +5,7 @@ import DatabaseTableView from '@/components/sikk/DatabaseTableView';
 import DatabaseItemContent from '@/components/sikk/DatabaseItemContent';
 import {
   getSikkCategoryBySlugPathAsync,
+  getSikkCategoryBySlugPathFromDbAsync,
   getSikkPostsByCategoryPathAsync,
   getSikkChildCategoriesWithTagsAsync,
   getAllSikkCategoriesHierarchicalAsync,
@@ -63,8 +64,9 @@ async function parseSlugPath(slugPath: string[]) {
     const possibleDbSlug = slugPath[slugPath.length - 1];
     const possibleCategorySlugPath = slugPath.slice(0, -1);
 
-    // First, get the actual category to convert slugPath to category names (path)
-    const category = await getSikkCategoryBySlugPathAsync(possibleCategorySlugPath);
+    // First, get the actual category from SikkCategory table (not from posts)
+    // This ensures we can find categories even if they have no posts
+    const category = await getSikkCategoryBySlugPathFromDbAsync(possibleCategorySlugPath);
     if (category) {
       // Use the category's path (names) instead of slugs for database lookup
       const categoryPathString = category.path.join('/');
@@ -89,7 +91,7 @@ async function parseSlugPath(slugPath: string[]) {
       const possibleDbSlug2 = slugPath[slugPath.length - 2];
       const possibleCategorySlugPath2 = slugPath.slice(0, -2);
 
-      const category2 = await getSikkCategoryBySlugPathAsync(possibleCategorySlugPath2);
+      const category2 = await getSikkCategoryBySlugPathFromDbAsync(possibleCategorySlugPath2);
       if (category2) {
         const categoryPathString2 = category2.path.join('/');
 
@@ -170,7 +172,22 @@ export async function generateMetadata({ params }: CategoryPageProps) {
     return { title: 'Not Found' };
   }
 
-  const category = await getSikkCategoryBySlugPathAsync(parsed.categorySlugPath);
+  // Try post-based category lookup first, then DB-based fallback
+  let category = await getSikkCategoryBySlugPathAsync(parsed.categorySlugPath);
+  if (!category) {
+    const dbCategory = await getSikkCategoryBySlugPathFromDbAsync(parsed.categorySlugPath);
+    if (dbCategory) {
+      category = {
+        name: dbCategory.name,
+        slug: dbCategory.slug,
+        path: dbCategory.path,
+        slugPath: dbCategory.slugPath,
+        count: 0,
+        directCount: 0,
+        children: {},
+      };
+    }
+  }
   if (!category) {
     return { title: 'Category Not Found' };
   }
@@ -243,7 +260,25 @@ export default async function SikkCategoryPage({ params }: CategoryPageProps) {
     notFound();
   }
 
-  const category = await getSikkCategoryBySlugPathAsync(parsed.categorySlugPath);
+  // For database pages, use DB-based category lookup (works even with no posts in category)
+  // For normal category pages, use post-based lookup with DB fallback
+  let category = await getSikkCategoryBySlugPathAsync(parsed.categorySlugPath);
+  if (!category) {
+    // Fallback to DB-based lookup for categories without posts (e.g., database-only categories)
+    const dbCategory = await getSikkCategoryBySlugPathFromDbAsync(parsed.categorySlugPath);
+    if (dbCategory) {
+      // Create a minimal category object compatible with the expected interface
+      category = {
+        name: dbCategory.name,
+        slug: dbCategory.slug,
+        path: dbCategory.path,
+        slugPath: dbCategory.slugPath,
+        count: 0,
+        directCount: 0,
+        children: {},
+      };
+    }
+  }
   if (!category) {
     notFound();
   }
