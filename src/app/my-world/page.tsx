@@ -384,9 +384,11 @@ export default function MyWorldDashboard() {
 
   // Sync currentMonth with weekStartDate when in weekly view
   useEffect(() => {
+    console.log('[Sync] viewType:', viewType, 'weekStartDate:', weekStartDate.toISOString(), 'currentMonth:', currentMonth.toISOString());
     if (viewType === 'week') {
       const weekMonth = new Date(weekStartDate.getFullYear(), weekStartDate.getMonth(), 1);
       if (currentMonth.getFullYear() !== weekMonth.getFullYear() || currentMonth.getMonth() !== weekMonth.getMonth()) {
+        console.log('[Sync] Updating currentMonth to:', weekMonth.toISOString());
         setCurrentMonth(weekMonth);
       }
     }
@@ -784,9 +786,11 @@ export default function MyWorldDashboard() {
       }
 
       // Fetch calendar events for the month
+      console.log('[Fetch] Fetching events for year:', year, 'month:', month);
       const eventsRes = await fetch(`/api/my-world/calendar?year=${year}&month=${month}`);
       if (eventsRes.ok) {
         const events = await eventsRes.json();
+        console.log('[Fetch] Got events:', events.length, events.map((e: CalendarEvent) => ({ title: e.title, date: e.date, endDate: e.endDate })));
         setMonthEvents(events);
       }
 
@@ -1535,12 +1539,19 @@ export default function MyWorldDashboard() {
 
     const bars: WeeklyEventBar[] = [];
 
+    console.log('[Weekly] All monthEvents:', monthEvents.map(e => ({ title: e.title, date: e.date, endDate: e.endDate })));
+
     // Get events that span multiple days (shown as bars regardless of isAllDay flag)
     const multiDayEvents = monthEvents.filter(e => {
       const startDate = e.date.split('T')[0];
       const endDate = e.endDate ? e.endDate.split('T')[0] : startDate;
-      return startDate !== endDate;
+      const isMultiDay = startDate !== endDate;
+      console.log('[Weekly] Event:', e.title, 'start:', startDate, 'end:', endDate, 'isMultiDay:', isMultiDay);
+      return isMultiDay;
     });
+
+    console.log('[Weekly] MultiDay events found:', multiDayEvents.length);
+    console.log('[Weekly] weekStartDate:', weekStartDate.toISOString());
 
     multiDayEvents.forEach(event => {
       const eventStart = new Date(event.date.split('T')[0] + 'T00:00:00');
@@ -1550,7 +1561,10 @@ export default function MyWorldDashboard() {
       const weekEnd = new Date(weekStartDate);
       weekEnd.setDate(weekStartDate.getDate() + 6);
 
-      if (eventEnd >= weekStartDate && eventStart <= weekEnd) {
+      const overlaps = eventEnd >= weekStartDate && eventStart <= weekEnd;
+      console.log('[Weekly] Overlap check for', event.title, ':', overlaps, 'eventEnd:', eventEnd.toISOString(), 'weekStart:', weekStartDate.toISOString());
+
+      if (overlaps) {
         // Calculate start column (0-6) using UTC comparison
         let startCol = 0;
         if (eventStart > weekStartDate) {
@@ -1567,6 +1581,8 @@ export default function MyWorldDashboard() {
         startCol = Math.max(0, Math.min(6, startCol));
         endCol = Math.max(0, Math.min(6, endCol));
 
+        console.log('[Weekly] Bar calculation:', event.title, 'startCol:', startCol, 'endCol:', endCol);
+
         if (startCol <= endCol) {
           bars.push({
             event,
@@ -1575,10 +1591,12 @@ export default function MyWorldDashboard() {
             isStart: eventStart >= weekStartDate && eventStart <= weekEnd,
             isEnd: eventEnd >= weekStartDate && eventEnd <= weekEnd,
           });
+          console.log('[Weekly] Bar pushed:', event.title);
         }
       }
     });
 
+    console.log('[Weekly] Total bars:', bars.length);
     return bars;
   }, [monthEvents, weekStartDate]);
 
