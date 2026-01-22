@@ -470,3 +470,60 @@ export async function getSikkSectionsAsync() {
     return [];
   }
 }
+
+// Get SikkCategory from database by slug path
+// This uses the actual SikkCategory table instead of building from posts
+export async function getSikkCategoryBySlugPathFromDbAsync(slugPath: string[]): Promise<{
+  name: string;
+  slug: string;
+  path: string[];
+  slugPath: string[];
+} | null> {
+  if (slugPath.length === 0) return null;
+
+  try {
+    // Start by finding categories matching the first slug (no parent)
+    const firstCategory = await prisma.sikkCategory.findFirst({
+      where: {
+        slug: slugPath[0],
+        parentId: null,
+      },
+    });
+
+    if (!firstCategory) return null;
+
+    const pathNames: string[] = [firstCategory.name];
+    const pathSlugs: string[] = [firstCategory.slug];
+    let currentCategoryId = firstCategory.id;
+    let lastName = firstCategory.name;
+    let lastSlug = firstCategory.slug;
+
+    // Traverse down the path
+    for (let i = 1; i < slugPath.length; i++) {
+      const childCategory = await prisma.sikkCategory.findFirst({
+        where: {
+          slug: slugPath[i],
+          parentId: currentCategoryId,
+        },
+      });
+
+      if (!childCategory) return null;
+
+      pathNames.push(childCategory.name);
+      pathSlugs.push(childCategory.slug);
+      currentCategoryId = childCategory.id;
+      lastName = childCategory.name;
+      lastSlug = childCategory.slug;
+    }
+
+    return {
+      name: lastName,
+      slug: lastSlug,
+      path: pathNames,
+      slugPath: pathSlugs,
+    };
+  } catch (error) {
+    console.error('Failed to get SikkCategory by slug path:', error);
+    return null;
+  }
+}
