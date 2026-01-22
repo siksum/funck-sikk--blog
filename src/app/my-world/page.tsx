@@ -1535,24 +1535,12 @@ export default function MyWorldDashboard() {
 
     const bars: WeeklyEventBar[] = [];
 
-    // Get all-day events that span multiple days
+    // Get events that span multiple days (shown as bars regardless of isAllDay flag)
     const multiDayEvents = monthEvents.filter(e => {
-      if (!e.isAllDay) {
-        console.log('Event filtered out - not all day:', e.title, 'isAllDay:', e.isAllDay);
-        return false;
-      }
       const startDate = e.date.split('T')[0];
       const endDate = e.endDate ? e.endDate.split('T')[0] : startDate;
-      const isMultiDay = startDate !== endDate;
-      if (!isMultiDay) {
-        console.log('Event filtered out - single day:', e.title, 'start:', startDate, 'end:', endDate);
-      }
-      return isMultiDay;
+      return startDate !== endDate;
     });
-
-    console.log('Multi-day events found:', multiDayEvents.length, multiDayEvents.map(e => ({ title: e.title, date: e.date, endDate: e.endDate, isAllDay: e.isAllDay })));
-
-    console.log('Week range:', weekStartDate.toISOString(), 'to', new Date(weekStartDate.getTime() + 6 * 24 * 60 * 60 * 1000).toISOString());
 
     multiDayEvents.forEach(event => {
       const eventStart = new Date(event.date.split('T')[0] + 'T00:00:00');
@@ -1561,9 +1549,6 @@ export default function MyWorldDashboard() {
       // Check overlap with current week
       const weekEnd = new Date(weekStartDate);
       weekEnd.setDate(weekStartDate.getDate() + 6);
-
-      console.log('Checking event:', event.title, 'eventStart:', eventStart.toISOString(), 'eventEnd:', eventEnd.toISOString(), 'weekStart:', weekStartDate.toISOString(), 'weekEnd:', weekEnd.toISOString());
-      console.log('Overlap check:', 'eventEnd >= weekStartDate:', eventEnd >= weekStartDate, 'eventStart <= weekEnd:', eventStart <= weekEnd);
 
       if (eventEnd >= weekStartDate && eventStart <= weekEnd) {
         // Calculate start column (0-6) using UTC comparison
