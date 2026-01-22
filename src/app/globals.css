@@ -484,3 +484,60 @@ code, pre, .font-mono {
 .animate-fade-in {
   animation: fade-in 0.3s ease-out;
 }
+
+/* MDX HTML content styling - preserve inline styles */
+.mdx-html-content {
+  line-height: 1.75;
+}
+
+.mdx-html-content p {
+  margin-bottom: 1rem;
+}
+
+.mdx-html-content h1, .mdx-html-content h2, .mdx-html-content h3 {
+  font-weight: 700;
+  margin-top: 2rem;
+  margin-bottom: 1rem;
+}
+
+.mdx-html-content ul, .mdx-html-content ol {
+  margin-bottom: 1rem;
+  padding-left: 1.5rem;
+}
+
+.mdx-html-content li {
+  margin-bottom: 0.5rem;
+}
+
+.mdx-html-content code {
+  background-color: rgba(139, 92, 246, 0.1);
+  padding: 0.125rem 0.375rem;
+  border-radius: 0.25rem;
+  font-size: 0.875em;
+}
+
+.mdx-html-content pre {
+  background-color: #1f2937;
+  padding: 1rem;
+  border-radius: 0.5rem;
+  overflow-x: auto;
+  margin-bottom: 1rem;
+}
+
+.mdx-html-content blockquote {
+  border-left: 4px solid #8b5cf6;
+  padding-left: 1rem;
+  margin: 1rem 0;
+  font-style: italic;
+}
+
+.mdx-html-content a {
+  color: #8b5cf6;
+  text-decoration: underline;
+}
+
+.mdx-html-content mark {
+  padding: 0.125rem 0.25rem;
+  border-radius: 0.125rem;
+}
+
