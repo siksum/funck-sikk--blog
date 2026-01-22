@@ -65,6 +65,19 @@ export default function DatabaseDetailPage({ params }: DatabasePageProps) {
   // File upload state
   const [uploadingCell, setUploadingCell] = useState<{ itemId: string; columnId: string } | null>(null);
 
+  // Column width resizing state
+  const [columnWidths, setColumnWidths] = useState<Record<string, number>>({});
+  const [resizingColumn, setResizingColumn] = useState<string | null>(null);
+  const [resizeStartX, setResizeStartX] = useState(0);
+  const [resizeStartWidth, setResizeStartWidth] = useState(0);
+
+  // Sort/Filter/Group state
+  const [sortColumn, setSortColumn] = useState<string | null>(null);
+  const [sortDirection, setSortDirection] = useState<'asc' | 'desc'>('asc');
+  const [groupByColumn, setGroupByColumn] = useState<string | null>(null);
+  const [filterColumn, setFilterColumn] = useState<string | null>(null);
+  const [filterValue, setFilterValue] = useState<string>('');
+
   // Generate flat list of all category options for dropdowns
   const categoryOptions = useMemo(() => {
     const options: { value: string; label: string }[] = [];
@@ -451,6 +464,102 @@ export default function DatabaseDetailPage({ params }: DatabasePageProps) {
     }
   };
 
+  // Column resize handlers
+  const handleResizeStart = (e: React.MouseEvent, columnId: string) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setResizingColumn(columnId);
+    setResizeStartX(e.clientX);
+    setResizeStartWidth(columnWidths[columnId] || 150);
+  };
+
+  useEffect(() => {
+    if (!resizingColumn) return;
+
+    const handleMouseMove = (e: MouseEvent) => {
+      const diff = e.clientX - resizeStartX;
+      const newWidth = Math.max(80, resizeStartWidth + diff);
+      setColumnWidths((prev) => ({ ...prev, [resizingColumn]: newWidth }));
+    };
+
+    const handleMouseUp = () => {
+      setResizingColumn(null);
+    };
+
+    document.addEventListener('mousemove', handleMouseMove);
+    document.addEventListener('mouseup', handleMouseUp);
+
+    return () => {
+      document.removeEventListener('mousemove', handleMouseMove);
+      document.removeEventListener('mouseup', handleMouseUp);
+    };
+  }, [resizingColumn, resizeStartX, resizeStartWidth]);
+
+  // Processed items with sort/filter/group
+  const processedItems = useMemo(() => {
+    if (!database) return { items: [], groups: null };
+
+    let items = [...database.items];
+
+    // Filter
+    if (filterColumn && filterValue) {
+      items = items.filter((item) => {
+        const value = item.data[filterColumn];
+        if (value === null || value === undefined) return false;
+        return String(value).toLowerCase().includes(filterValue.toLowerCase());
+      });
+    }
+
+    // Sort
+    if (sortColumn) {
+      items.sort((a, b) => {
+        const aVal = a.data[sortColumn];
+        const bVal = b.data[sortColumn];
+
+        if (aVal === bVal) return 0;
+        if (aVal === null || aVal === undefined) return 1;
+        if (bVal === null || bVal === undefined) return -1;
+
+        const comparison = String(aVal).localeCompare(String(bVal));
+        return sortDirection === 'asc' ? comparison : -comparison;
+      });
+    }
+
+    // Group
+    if (groupByColumn) {
+      const groups: Record<string, Item[]> = {};
+      items.forEach((item) => {
+        let groupKey = item.data[groupByColumn];
+
+        // For date columns, extract year
+        const column = database.columns.find((c) => c.id === groupByColumn);
+        if (column?.type === 'date' && groupKey) {
+          groupKey = String(groupKey).substring(0, 4); // Extract year
+        }
+
+        const key = groupKey ? String(groupKey) : '(없음)';
+        if (!groups[key]) groups[key] = [];
+        groups[key].push(item);
+      });
+      return { items, groups };
+    }
+
+    return { items, groups: null };
+  }, [database, sortColumn, sortDirection, filterColumn, filterValue, groupByColumn]);
+
+  // Get unique values for filter dropdown
+  const getUniqueValues = (columnId: string) => {
+    if (!database) return [];
+    const values = new Set<string>();
+    database.items.forEach((item) => {
+      const val = item.data[columnId];
+      if (val !== null && val !== undefined && val !== '') {
+        values.add(String(val));
+      }
+    });
+    return Array.from(values).sort();
+  };
+
   const startEditing = (itemId: string, columnId: string, currentValue: unknown) => {
     setEditingCell({ itemId, columnId });
     setEditValue(String(currentValue || ''));
@@ -761,10 +870,98 @@ export default function DatabaseDetailPage({ params }: DatabasePageProps) {
         </div>
       </div>
 
+      {/* View Options Toolbar */}
+      <div className="flex flex-wrap gap-2 mb-4 p-3 bg-gray-50 dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700">
+        {/* Sort */}
+        <div className="flex items-center gap-1">
+          <span className="text-xs text-gray-500 dark:text-gray-400">정렬:</span>
+          <select
+            value={sortColumn || ''}
+            onChange={(e) => setSortColumn(e.target.value || null)}
+            className="px-2 py-1 text-xs border border-gray-200 dark:border-gray-700 rounded bg-white dark:bg-gray-900 text-gray-900 dark:text-white"
+          >
+            <option value="">없음</option>
+            {database.columns.map((col) => (
+              <option key={col.id} value={col.id}>{col.name}</option>
+            ))}
+          </select>
+          {sortColumn && (
+            <button
+              onClick={() => setSortDirection((d) => d === 'asc' ? 'desc' : 'asc')}
+              className="px-2 py-1 text-xs bg-gray-200 dark:bg-gray-700 rounded hover:bg-gray-300 dark:hover:bg-gray-600"
+            >
+              {sortDirection === 'asc' ? '↑ 오름차순' : '↓ 내림차순'}
+            </button>
+          )}
+        </div>
+
+        {/* Group */}
+        <div className="flex items-center gap-1">
+          <span className="text-xs text-gray-500 dark:text-gray-400">그룹:</span>
+          <select
+            value={groupByColumn || ''}
+            onChange={(e) => setGroupByColumn(e.target.value || null)}
+            className="px-2 py-1 text-xs border border-gray-200 dark:border-gray-700 rounded bg-white dark:bg-gray-900 text-gray-900 dark:text-white"
+          >
+            <option value="">없음</option>
+            {database.columns.filter((col) => col.type === 'select' || col.type === 'date').map((col) => (
+              <option key={col.id} value={col.id}>
+                {col.name}{col.type === 'date' ? ' (연도별)' : ''}
+              </option>
+            ))}
+          </select>
+        </div>
+
+        {/* Filter */}
+        <div className="flex items-center gap-1">
+          <span className="text-xs text-gray-500 dark:text-gray-400">필터:</span>
+          <select
+            value={filterColumn || ''}
+            onChange={(e) => {
+              setFilterColumn(e.target.value || null);
+              setFilterValue('');
+            }}
+            className="px-2 py-1 text-xs border border-gray-200 dark:border-gray-700 rounded bg-white dark:bg-gray-900 text-gray-900 dark:text-white"
+          >
+            <option value="">없음</option>
+            {database.columns.map((col) => (
+              <option key={col.id} value={col.id}>{col.name}</option>
+            ))}
+          </select>
+          {filterColumn && (
+            <select
+              value={filterValue}
+              onChange={(e) => setFilterValue(e.target.value)}
+              className="px-2 py-1 text-xs border border-gray-200 dark:border-gray-700 rounded bg-white dark:bg-gray-900 text-gray-900 dark:text-white"
+            >
+              <option value="">전체</option>
+              {getUniqueValues(filterColumn).map((val) => (
+                <option key={val} value={val}>{val}</option>
+              ))}
+            </select>
+          )}
+        </div>
+
+        {/* Reset */}
+        {(sortColumn || groupByColumn || filterColumn) && (
+          <button
+            onClick={() => {
+              setSortColumn(null);
+              setGroupByColumn(null);
+              setFilterColumn(null);
+              setFilterValue('');
+            }}
+            className="px-2 py-1 text-xs text-red-500 hover:text-red-700"
+          >
+            초기화
+          </button>
+        )}
+      </div>
+
       {/* Table View */}
       <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 overflow-hidden">
         <div className="overflow-x-auto">
-          <table className="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
+          <table className="min-w-full divide-y divide-gray-200 dark:divide-gray-700" style={{ tableLayout: 'fixed' }}>
             <thead className="bg-gray-50 dark:bg-gray-700">
               <tr>
                 {database.columns.map((column) => (
@@ -776,7 +973,8 @@ export default function DatabaseDetailPage({ params }: DatabasePageProps) {
                     onDragLeave={handleColumnDragLeave}
                     onDrop={() => handleColumnDrop(column.id)}
                     onDragEnd={handleColumnDragEnd}
-                    className={`group px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider cursor-grab active:cursor-grabbing transition-all ${
+                    style={{ width: columnWidths[column.id] || 150 }}
+                    className={`group relative px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider cursor-grab active:cursor-grabbing transition-all ${
                       draggedColumnId === column.id ? 'opacity-50' : ''
                     } ${
                       dragOverColumnId === column.id
@@ -792,10 +990,10 @@ export default function DatabaseDetailPage({ params }: DatabasePageProps) {
                       >
                         <path d="M7 2a2 2 0 1 0 .001 4.001A2 2 0 0 0 7 2zm0 6a2 2 0 1 0 .001 4.001A2 2 0 0 0 7 8zm0 6a2 2 0 1 0 .001 4.001A2 2 0 0 0 7 14zm6-8a2 2 0 1 0-.001-4.001A2 2 0 0 0 13 6zm0 2a2 2 0 1 0 .001 4.001A2 2 0 0 0 13 8zm0 6a2 2 0 1 0 .001 4.001A2 2 0 0 0 13 14z" />
                       </svg>
-                      <span>{column.name}</span>
+                      <span className="truncate">{column.name}</span>
                       <button
                         onClick={() => handleDeleteColumn(column.id)}
-                        className="opacity-0 group-hover:opacity-100 p-0.5 text-red-500 hover:text-red-700 transition-opacity"
+                        className="opacity-0 group-hover:opacity-100 p-0.5 text-red-500 hover:text-red-700 transition-opacity flex-shrink-0"
                         title="열 삭제"
                       >
                         <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -803,6 +1001,12 @@ export default function DatabaseDetailPage({ params }: DatabasePageProps) {
                         </svg>
                       </button>
                     </div>
+                    {/* Resize handle */}
+                    <div
+                      onMouseDown={(e) => handleResizeStart(e, column.id)}
+                      className="absolute right-0 top-0 h-full w-1 cursor-col-resize hover:bg-pink-500 transition-colors"
+                      style={{ transform: 'translateX(50%)' }}
+                    />
                   </th>
                 ))}
                 <th className="px-4 py-3 text-right text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider w-20">
@@ -811,22 +1015,62 @@ export default function DatabaseDetailPage({ params }: DatabasePageProps) {
               </tr>
             </thead>
             <tbody className="divide-y divide-gray-200 dark:divide-gray-700">
-              {database.items.length === 0 ? (
+              {processedItems.items.length === 0 ? (
                 <tr>
                   <td
                     colSpan={database.columns.length + 1}
                     className="px-4 py-8 text-center text-gray-500"
                   >
-                    항목이 없습니다.
+                    {filterValue ? '필터 조건에 맞는 항목이 없습니다.' : '항목이 없습니다.'}
                   </td>
                 </tr>
+              ) : processedItems.groups ? (
+                // Grouped view
+                Object.entries(processedItems.groups).map(([groupName, groupItems]) => (
+                  <>
+                    <tr key={`group-${groupName}`} className="bg-purple-50 dark:bg-purple-900/20">
+                      <td
+                        colSpan={database.columns.length + 1}
+                        className="px-4 py-2 text-sm font-semibold text-purple-700 dark:text-purple-400"
+                      >
+                        {groupName} ({groupItems.length})
+                      </td>
+                    </tr>
+                    {groupItems.map((item) => (
+                      <tr key={item.id} className="hover:bg-gray-50 dark:hover:bg-gray-700/50">
+                        {database.columns.map((column) => (
+                          <td
+                            key={column.id}
+                            style={{ width: columnWidths[column.id] || 150 }}
+                            className="px-4 py-3 cursor-pointer hover:bg-pink-50 dark:hover:bg-pink-900/10 overflow-hidden"
+                            onClick={() => startEditing(item.id, column.id, item.data[column.id])}
+                          >
+                            {renderCell(item, column)}
+                          </td>
+                        ))}
+                        <td className="px-4 py-3 text-right">
+                          <button
+                            onClick={() => handleDeleteItem(item.id)}
+                            className="p-1 text-red-500 hover:text-red-700 rounded hover:bg-red-50 dark:hover:bg-red-900/20"
+                          >
+                            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                            </svg>
+                          </button>
+                        </td>
+                      </tr>
+                    ))}
+                  </>
+                ))
               ) : (
-                database.items.map((item) => (
+                // Regular view
+                processedItems.items.map((item) => (
                   <tr key={item.id} className="hover:bg-gray-50 dark:hover:bg-gray-700/50">
                     {database.columns.map((column) => (
                       <td
                         key={column.id}
-                        className="px-4 py-3 cursor-pointer hover:bg-pink-50 dark:hover:bg-pink-900/10"
+                        style={{ width: columnWidths[column.id] || 150 }}
+                        className="px-4 py-3 cursor-pointer hover:bg-pink-50 dark:hover:bg-pink-900/10 overflow-hidden"
                         onClick={() => startEditing(item.id, column.id, item.data[column.id])}
                       >
                         {renderCell(item, column)}
