@@ -102,6 +102,23 @@ export default function DatabaseDetailPage({ params }: DatabasePageProps) {
     router.replace(newUrl, { scroll: false });
   }, [searchParams, router]);
 
+  // Sync state with URL params on navigation (searchParams changes after hydration)
+  useEffect(() => {
+    const sort = searchParams.get('sort');
+    const dir = searchParams.get('dir') as 'asc' | 'desc' | null;
+    const group = searchParams.get('group');
+    const filterCol = searchParams.get('filterCol');
+    const filterVal = searchParams.get('filterVal');
+    const hidden = searchParams.get('hidden');
+
+    setSortColumn(sort || null);
+    setSortDirection(dir || 'asc');
+    setGroupByColumn(group || null);
+    setFilterColumn(filterCol || null);
+    setFilterValue(filterVal || '');
+    setHiddenColumns(hidden ? new Set(hidden.split(',')) : new Set());
+  }, [searchParams]);
+
   // Bulk selection state
   const [selectedItems, setSelectedItems] = useState<Set<string>>(new Set());
   const [showBulkCategoryMenu, setShowBulkCategoryMenu] = useState(false);

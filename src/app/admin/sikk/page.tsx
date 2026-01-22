@@ -219,6 +219,29 @@ export default function SikkPostsManagementPage() {
     router.replace(newUrl, { scroll: false });
   }, [searchParams, router]);
 
+  // Sync state with URL params on navigation (searchParams changes after hydration)
+  useEffect(() => {
+    const cat = searchParams.get('cat');
+    const subcat = searchParams.get('subcat');
+    const section = searchParams.get('section');
+    const q = searchParams.get('q');
+    const expanded = searchParams.get('expanded');
+    const sortByParam = searchParams.get('sortBy') as 'date' | 'title' | 'category' | null;
+    const sortOrderParam = searchParams.get('sortOrder') as 'asc' | 'desc' | null;
+    const startDateParam = searchParams.get('startDate');
+    const endDateParam = searchParams.get('endDate');
+
+    setSelectedCategory(cat || 'all');
+    setSelectedSubcategory(subcat || null);
+    setSelectedSection(section || null);
+    setSearchTerm(q || '');
+    setExpandedCategories(expanded ? new Set(expanded.split(',')) : new Set());
+    setSortBy(sortByParam || 'date');
+    setSortOrder(sortOrderParam || 'desc');
+    setStartDate(startDateParam || '');
+    setEndDate(endDateParam || '');
+  }, [searchParams]);
+
   // Build post count map from posts
   const postCountMap = useMemo(() => {
     const countMap = new Map<string, { total: number; subs: Map<string, number> }>();
