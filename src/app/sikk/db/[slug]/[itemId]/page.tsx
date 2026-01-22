@@ -37,9 +37,21 @@ export async function generateMetadata({ params }: DatabaseItemPageProps) {
     return { title: 'Not Found' };
   }
 
-  const columns = database.columns as unknown as Column[];
+  // Safely parse columns
+  let columns: Column[] = [];
+  try {
+    const rawColumns = database.columns;
+    if (Array.isArray(rawColumns)) {
+      columns = rawColumns as Column[];
+    } else if (typeof rawColumns === 'string') {
+      columns = JSON.parse(rawColumns) as Column[];
+    }
+  } catch (e) {
+    console.error('Failed to parse columns in metadata:', e);
+  }
+
   const titleColumn = columns.find((c) => c.type === 'title');
-  const data = item.data as Record<string, unknown>;
+  const data = (item.data || {}) as Record<string, unknown>;
   const title = titleColumn ? String(data[titleColumn.id] || '제목 없음') : '제목 없음';
 
   return {
@@ -75,8 +87,20 @@ export default async function DatabaseItemPage({ params }: DatabaseItemPageProps
     notFound();
   }
 
-  const columns = database.columns as unknown as Column[];
-  const data = item.data as Record<string, unknown>;
+  // Safely parse columns
+  let columns: Column[] = [];
+  try {
+    const rawColumns = database.columns;
+    if (Array.isArray(rawColumns)) {
+      columns = rawColumns as Column[];
+    } else if (typeof rawColumns === 'string') {
+      columns = JSON.parse(rawColumns) as Column[];
+    }
+  } catch (e) {
+    console.error('Failed to parse columns:', e);
+  }
+
+  const data = (item.data || {}) as Record<string, unknown>;
 
   return (
     <DatabaseItemView

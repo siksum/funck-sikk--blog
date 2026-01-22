@@ -67,8 +67,20 @@ export default async function DatabasePage({ params }: DatabasePageProps) {
     notFound();
   }
 
-  const columns = database.columns as unknown as Column[];
-  const items = database.items as unknown as Item[];
+  // Safely parse columns - handle null/undefined/invalid JSON
+  let columns: Column[] = [];
+  try {
+    const rawColumns = database.columns;
+    if (Array.isArray(rawColumns)) {
+      columns = rawColumns as Column[];
+    } else if (typeof rawColumns === 'string') {
+      columns = JSON.parse(rawColumns) as Column[];
+    }
+  } catch (e) {
+    console.error('Failed to parse columns:', e);
+  }
+
+  const items = (database.items || []) as unknown as Item[];
 
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
