@@ -35,7 +35,7 @@ export async function GET() {
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
-    const { title, description, slug, columns, isPublic } = body;
+    const { title, description, slug, columns, isPublic, category } = body;
 
     if (!title) {
       return NextResponse.json({ error: 'Title is required' }, { status: 400 });
@@ -63,6 +63,7 @@ export async function POST(request: NextRequest) {
         title,
         description: description || null,
         slug: dbSlug,
+        category: category || null,
         columns: columns || defaultColumns,
         isPublic: isPublic !== false,
       },

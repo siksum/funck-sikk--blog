@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useCallback, use } from 'react';
+import { useState, useEffect, useCallback, useMemo, use } from 'react';
 import Link from 'next/link';
 
 interface Column {
@@ -23,9 +23,18 @@ interface Database {
   title: string;
   description: string | null;
   slug: string;
+  category: string | null;
   columns: Column[];
   items: Item[];
   isPublic: boolean;
+}
+
+interface DBCategory {
+  id: string;
+  name: string;
+  slug: string;
+  parentId: string | null;
+  children: DBCategory[];
 }
 
 interface DatabasePageProps {
@@ -35,12 +44,25 @@ interface DatabasePageProps {
 export default function DatabaseDetailPage({ params }: DatabasePageProps) {
   const { id } = use(params);
   const [database, setDatabase] = useState<Database | null>(null);
+  const [categories, setCategories] = useState<DBCategory[]>([]);
   const [loading, setLoading] = useState(true);
   const [editingCell, setEditingCell] = useState<{ itemId: string; columnId: string } | null>(null);
   const [editValue, setEditValue] = useState<string>('');
   const [showColumnModal, setShowColumnModal] = useState(false);
   const [newColumnName, setNewColumnName] = useState('');
   const [newColumnType, setNewColumnType] = useState<Column['type']>('text');
+
+  // Generate flat list of all category options for dropdowns
+  const categoryOptions = useMemo(() => {
+    const options: { value: string; label: string }[] = [];
+    categories.forEach((cat) => {
+      options.push({ value: cat.name, label: cat.name });
+      cat.children.forEach((sub) => {
+        options.push({ value: `${cat.name}/${sub.name}`, label: `${cat.name} / ${sub.name}` });
+      });
+    });
+    return options;
+  }, [categories]);
 
   const fetchDatabase = useCallback(async () => {
     try {
@@ -56,9 +78,40 @@ export default function DatabaseDetailPage({ params }: DatabasePageProps) {
     }
   }, [id]);
 
+  const fetchCategories = useCallback(async () => {
+    try {
+      const res = await fetch('/api/admin/sikk-categories');
+      const data = await res.json();
+      if (Array.isArray(data)) {
+        setCategories(data);
+      }
+    } catch (error) {
+      console.error('Failed to fetch categories:', error);
+    }
+  }, []);
+
   useEffect(() => {
     fetchDatabase();
-  }, [fetchDatabase]);
+    fetchCategories();
+  }, [fetchDatabase, fetchCategories]);
+
+  const handleCategoryChange = async (newCategory: string) => {
+    if (!database) return;
+
+    try {
+      const res = await fetch(`/api/sikk/databases/${id}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ category: newCategory || null }),
+      });
+
+      if (res.ok) {
+        setDatabase((prev) => prev ? { ...prev, category: newCategory || null } : null);
+      }
+    } catch (error) {
+      console.error('Failed to update category:', error);
+    }
+  };
 
   const handleAddItem = async () => {
     if (!database) return;
@@ -361,6 +414,22 @@ export default function DatabaseDetailPage({ params }: DatabasePageProps) {
           {database.description && (
             <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">{database.description}</p>
           )}
+          {/* Category selector */}
+          <div className="flex items-center gap-2 mt-2">
+            <span className="text-xs text-gray-500 dark:text-gray-400">카테고리:</span>
+            <select
+              value={database.category || ''}
+              onChange={(e) => handleCategoryChange(e.target.value)}
+              className="px-2 py-1 text-xs border border-gray-200 dark:border-gray-700 rounded bg-white dark:bg-gray-900 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-pink-500"
+            >
+              <option value="">없음</option>
+              {categoryOptions.map((opt) => (
+                <option key={opt.value} value={opt.value}>
+                  {opt.label}
+                </option>
+              ))}
+            </select>
+          </div>
         </div>
         <div className="flex gap-2">
           <button
