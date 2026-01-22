@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/db';
 import { auth } from '@/lib/auth';
 import { sendCommentNotification } from '@/lib/notifications';
+import { waitUntil } from '@vercel/functions';
 
 export async function GET(request: NextRequest) {
   const { searchParams } = new URL(request.url);
@@ -53,8 +54,9 @@ export async function POST(request: NextRequest) {
     },
   });
 
-  // Send push notifications to other commenters (async, don't block response)
-  sendCommentNotification(comment, postSlug, session.user.id).catch(console.error);
+  // Send push notifications to other commenters
+  // Use waitUntil to ensure the function stays alive until notification is sent
+  waitUntil(sendCommentNotification(comment, postSlug, session.user.id).catch(console.error));
 
   return NextResponse.json(comment, { status: 201 });
 }
