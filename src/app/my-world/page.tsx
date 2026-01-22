@@ -726,6 +726,64 @@ export default function MyWorldDashboard() {
     setDraggingTodoId(null);
   };
 
+  // Archive todo reordering
+  const handleArchiveTodoDrop = async (e: React.DragEvent, targetTodoId: string, dateKey: string, category: 'personal' | 'research') => {
+    e.preventDefault();
+    if (!draggingTodoId || draggingTodoId === targetTodoId) {
+      setDraggingTodoId(null);
+      return;
+    }
+
+    // Find todos in the same date+category group
+    const sameDateCategoryTodos = archiveTodos.filter(
+      t => t.date.split('T')[0] === dateKey && t.category === category
+    );
+
+    const fromIndex = sameDateCategoryTodos.findIndex(t => t.id === draggingTodoId);
+    const toIndex = sameDateCategoryTodos.findIndex(t => t.id === targetTodoId);
+
+    if (fromIndex === -1 || toIndex === -1) {
+      setDraggingTodoId(null);
+      return;
+    }
+
+    // Reorder the todos
+    const [movedItem] = sameDateCategoryTodos.splice(fromIndex, 1);
+    sameDateCategoryTodos.splice(toIndex, 0, movedItem);
+
+    // Update orders
+    const updatedTodos = sameDateCategoryTodos.map((todo, index) => ({ ...todo, order: index }));
+
+    // Update local state
+    setArchiveTodos(prev => {
+      const otherTodos = prev.filter(
+        t => !(t.date.split('T')[0] === dateKey && t.category === category)
+      );
+      return [...otherTodos, ...updatedTodos].sort((a, b) => {
+        const dateCompare = b.date.localeCompare(a.date);
+        if (dateCompare !== 0) return dateCompare;
+        return (a.order || 0) - (b.order || 0);
+      });
+    });
+
+    // Update in database
+    try {
+      await Promise.all(
+        updatedTodos.map((todo, index) =>
+          fetch(`/api/my-world/todos/${todo.id}`, {
+            method: 'PATCH',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ order: index }),
+          })
+        )
+      );
+    } catch (error) {
+      console.error('Failed to reorder archive todos:', error);
+    }
+
+    setDraggingTodoId(null);
+  };
+
   const handleSaveDaily = async () => {
     if (!selectedDate) return;
 
@@ -1776,18 +1834,34 @@ export default function MyWorldDashboard() {
                           <div>
                             <div className="text-xs font-medium text-violet-500 mb-1">👤 개인</div>
                             <div className="space-y-1 pl-2">
-                              {personal.map((todo) => {
+                              {personal.sort((a, b) => (a.order || 0) - (b.order || 0)).map((todo) => {
                                 const status = todo.status || 'not_started';
                                 const statusConfig = todoStatusConfig[status];
+                                const isDragging = draggingTodoId === todo.id;
                                 return (
                                   <div
                                     key={todo.id}
-                                    className="flex items-center gap-2 text-sm text-gray-600 dark:text-gray-400"
+                                    draggable
+                                    onDragStart={(e) => handleTodoDragStart(e, todo.id)}
+                                    onDragOver={handleTodoDragOver}
+                                    onDrop={(e) => handleArchiveTodoDrop(e, todo.id, dateKey, 'personal')}
+                                    onDragEnd={() => setDraggingTodoId(null)}
+                                    className={`flex items-center gap-2 text-sm text-gray-600 dark:text-gray-400 cursor-grab active:cursor-grabbing rounded px-1 py-0.5 hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-all ${
+                                      isDragging ? 'opacity-50 bg-violet-100 dark:bg-violet-900/30' : ''
+                                    }`}
                                   >
-                                    <span className={`${status === 'completed' ? 'line-through' : ''}`}>• {todo.content}</span>
+                                    <svg className="w-3 h-3 text-gray-300 dark:text-gray-600 flex-shrink-0" fill="currentColor" viewBox="0 0 24 24">
+                                      <circle cx="5" cy="6" r="2" />
+                                      <circle cx="12" cy="6" r="2" />
+                                      <circle cx="5" cy="12" r="2" />
+                                      <circle cx="12" cy="12" r="2" />
+                                      <circle cx="5" cy="18" r="2" />
+                                      <circle cx="12" cy="18" r="2" />
+                                    </svg>
+                                    <span className={`flex-1 ${status === 'completed' ? 'line-through' : ''}`}>{todo.content}</span>
                                     <button
                                       onClick={() => cycleStatus(todo.id, status, 'personal', true)}
-                                      className={`text-xs px-1.5 py-0.5 rounded-full ml-auto hover:opacity-80 transition-opacity cursor-pointer ${statusConfig.color}`}
+                                      className={`text-xs px-1.5 py-0.5 rounded-full hover:opacity-80 transition-opacity cursor-pointer ${statusConfig.color}`}
                                       title="클릭하여 상태 변경"
                                     >
                                       {statusConfig.label}
@@ -1803,18 +1877,34 @@ export default function MyWorldDashboard() {
                           <div>
                             <div className="text-xs font-medium text-pink-500 mb-1">🔬 연구</div>
                             <div className="space-y-1 pl-2">
-                              {research.map((todo) => {
+                              {research.sort((a, b) => (a.order || 0) - (b.order || 0)).map((todo) => {
                                 const status = todo.status || 'not_started';
                                 const statusConfig = todoStatusConfig[status];
+                                const isDragging = draggingTodoId === todo.id;
                                 return (
                                   <div
                                     key={todo.id}
-                                    className="flex items-center gap-2 text-sm text-gray-600 dark:text-gray-400"
+                                    draggable
+                                    onDragStart={(e) => handleTodoDragStart(e, todo.id)}
+                                    onDragOver={handleTodoDragOver}
+                                    onDrop={(e) => handleArchiveTodoDrop(e, todo.id, dateKey, 'research')}
+                                    onDragEnd={() => setDraggingTodoId(null)}
+                                    className={`flex items-center gap-2 text-sm text-gray-600 dark:text-gray-400 cursor-grab active:cursor-grabbing rounded px-1 py-0.5 hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-all ${
+                                      isDragging ? 'opacity-50 bg-pink-100 dark:bg-pink-900/30' : ''
+                                    }`}
                                   >
-                                    <span className={`${status === 'completed' ? 'line-through' : ''}`}>• {todo.content}</span>
+                                    <svg className="w-3 h-3 text-gray-300 dark:text-gray-600 flex-shrink-0" fill="currentColor" viewBox="0 0 24 24">
+                                      <circle cx="5" cy="6" r="2" />
+                                      <circle cx="12" cy="6" r="2" />
+                                      <circle cx="5" cy="12" r="2" />
+                                      <circle cx="12" cy="12" r="2" />
+                                      <circle cx="5" cy="18" r="2" />
+                                      <circle cx="12" cy="18" r="2" />
+                                    </svg>
+                                    <span className={`flex-1 ${status === 'completed' ? 'line-through' : ''}`}>{todo.content}</span>
                                     <button
                                       onClick={() => cycleStatus(todo.id, status, 'research', true)}
-                                      className={`text-xs px-1.5 py-0.5 rounded-full ml-auto hover:opacity-80 transition-opacity cursor-pointer ${statusConfig.color}`}
+                                      className={`text-xs px-1.5 py-0.5 rounded-full hover:opacity-80 transition-opacity cursor-pointer ${statusConfig.color}`}
                                       title="클릭하여 상태 변경"
                                     >
                                       {statusConfig.label}
