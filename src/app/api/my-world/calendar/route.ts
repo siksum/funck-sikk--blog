@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { auth } from '@/lib/auth';
 import { prisma } from '@/lib/db';
 import { getAdminUserId } from '@/lib/get-admin-user-id';
-import { sendPushToUsers } from '@/lib/notifications';
+import { sendPushToSubscriptions } from '@/lib/notifications';
 
 const isProduction = process.env.NODE_ENV === 'production';
 
@@ -115,13 +115,25 @@ export async function POST(request: NextRequest) {
       },
     });
 
-    // Get all admin user IDs for notifications (handles multiple OAuth accounts)
-    const getAdminUserIds = async () => {
+    // Get all push subscriptions for notifications (admin users + null userId)
+    const getAllSubscriptions = async () => {
       const adminUsers = await prisma.user.findMany({
         where: { isAdmin: true },
-        select: { id: true },
+        include: { pushSubscriptions: true },
       });
-      return adminUsers.map((u) => u.id);
+      const adminSubscriptions = adminUsers.flatMap((u) => u.pushSubscriptions);
+
+      // Also get subscriptions with null userId (fallback)
+      const nullUserSubscriptions = await prisma.pushSubscription.findMany({
+        where: { userId: null },
+      });
+
+      // Combine and deduplicate by endpoint
+      const subscriptionsMap = new Map<string, typeof adminSubscriptions[0]>();
+      [...adminSubscriptions, ...nullUserSubscriptions].forEach((sub) => {
+        subscriptionsMap.set(sub.endpoint, sub);
+      });
+      return Array.from(subscriptionsMap.values());
     };
 
     // If reminder is enabled and event is within 30 minutes, send notification immediately
@@ -131,9 +143,9 @@ export async function POST(request: NextRequest) {
       if (minutesUntil <= 30 && minutesUntil > -5) {
         const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:3000';
         const timeText = minutesUntil <= 0 ? '곧 시작됩니다' : `${minutesUntil}분 후 시작`;
-        const adminUserIds = await getAdminUserIds();
+        const subscriptions = await getAllSubscriptions();
 
-        await sendPushToUsers(adminUserIds, {
+        await sendPushToSubscriptions(subscriptions, {
           title: `⏰ ${title}`,
           body: `${timeText}${location ? ` - ${location}` : ''}`,
           icon: '/icons/icon-192x192.png',
@@ -159,9 +171,9 @@ export async function POST(request: NextRequest) {
 
       if (eventDateStr === todayStr || inputDateStr === todayStr) {
         const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:3000';
-        const adminUserIds = await getAdminUserIds();
+        const subscriptions = await getAllSubscriptions();
 
-        await sendPushToUsers(adminUserIds, {
+        await sendPushToSubscriptions(subscriptions, {
           title: `📅 오늘 일정: ${title}`,
           body: location ? `장소: ${location}` : '오늘 예정된 일정입니다',
           icon: '/icons/icon-192x192.png',
