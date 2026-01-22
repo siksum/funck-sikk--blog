@@ -147,19 +147,70 @@ interface DBCategory {
   children: DBCategory[];
 }
 
+// localStorage key for admin sikk page view state
+const STORAGE_KEY = 'admin-sikk-view';
+
+// Helper to get initial state from URL or localStorage
+function getInitialState<T>(urlValue: string | null, storageKey: string, paramKey: string, defaultValue: T, parser?: (val: string) => T): T {
+  // URL params take priority
+  if (urlValue !== null && urlValue !== '') {
+    return parser ? parser(urlValue) : (urlValue as unknown as T);
+  }
+  // Check localStorage
+  if (typeof window !== 'undefined') {
+    try {
+      const stored = localStorage.getItem(storageKey);
+      if (stored) {
+        const parsed = JSON.parse(stored);
+        if (parsed[paramKey] !== undefined && parsed[paramKey] !== null) {
+          return parser ? parser(parsed[paramKey]) : parsed[paramKey];
+        }
+      }
+    } catch {
+      // Ignore localStorage errors
+    }
+  }
+  return defaultValue;
+}
+
 export default function SikkPostsManagementPage() {
   const router = useRouter();
   const searchParams = useSearchParams();
 
   const [posts, setPosts] = useState<Post[]>([]);
   const [loading, setLoading] = useState(true);
-  const [selectedCategory, setSelectedCategory] = useState<string>(() => searchParams.get('cat') || 'all');
-  const [selectedSubcategory, setSelectedSubcategory] = useState<string | null>(() => searchParams.get('subcat') || null);
-  const [selectedSection, setSelectedSection] = useState<string | null>(() => searchParams.get('section') || null);
-  const [searchTerm, setSearchTerm] = useState(() => searchParams.get('q') || '');
+  const [selectedCategory, setSelectedCategory] = useState<string>(() =>
+    getInitialState(searchParams.get('cat'), STORAGE_KEY, 'cat', 'all')
+  );
+  const [selectedSubcategory, setSelectedSubcategory] = useState<string | null>(() =>
+    getInitialState(searchParams.get('subcat'), STORAGE_KEY, 'subcat', null)
+  );
+  const [selectedSection, setSelectedSection] = useState<string | null>(() =>
+    getInitialState(searchParams.get('section'), STORAGE_KEY, 'section', null)
+  );
+  const [searchTerm, setSearchTerm] = useState(() =>
+    getInitialState(searchParams.get('q'), STORAGE_KEY, 'q', '')
+  );
   const [expandedCategories, setExpandedCategories] = useState<Set<string>>(() => {
-    const expanded = searchParams.get('expanded');
-    return expanded ? new Set(expanded.split(',')) : new Set();
+    const urlExpanded = searchParams.get('expanded');
+    if (urlExpanded) {
+      return new Set(urlExpanded.split(','));
+    }
+    // Check localStorage
+    if (typeof window !== 'undefined') {
+      try {
+        const stored = localStorage.getItem(STORAGE_KEY);
+        if (stored) {
+          const parsed = JSON.parse(stored);
+          if (parsed.expanded) {
+            return new Set(parsed.expanded.split(','));
+          }
+        }
+      } catch {
+        // Ignore localStorage errors
+      }
+    }
+    return new Set();
   });
 
   // Database state
@@ -178,12 +229,20 @@ export default function SikkPostsManagementPage() {
   const bulkCategoryDropdownRef = useRef<HTMLDivElement>(null);
 
   // Sorting state
-  const [sortBy, setSortBy] = useState<'date' | 'title' | 'category'>(() => (searchParams.get('sortBy') as 'date' | 'title' | 'category') || 'date');
-  const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>(() => (searchParams.get('sortOrder') as 'asc' | 'desc') || 'desc');
+  const [sortBy, setSortBy] = useState<'date' | 'title' | 'category'>(() =>
+    getInitialState(searchParams.get('sortBy'), STORAGE_KEY, 'sortBy', 'date') as 'date' | 'title' | 'category'
+  );
+  const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>(() =>
+    getInitialState(searchParams.get('sortOrder'), STORAGE_KEY, 'sortOrder', 'desc') as 'asc' | 'desc'
+  );
 
   // Date filter state
-  const [startDate, setStartDate] = useState<string>(() => searchParams.get('startDate') || '');
-  const [endDate, setEndDate] = useState<string>(() => searchParams.get('endDate') || '');
+  const [startDate, setStartDate] = useState<string>(() =>
+    getInitialState(searchParams.get('startDate'), STORAGE_KEY, 'startDate', '')
+  );
+  const [endDate, setEndDate] = useState<string>(() =>
+    getInitialState(searchParams.get('endDate'), STORAGE_KEY, 'endDate', '')
+  );
 
   // Category management state
   const [showCategoryModal, setShowCategoryModal] = useState(false);
@@ -251,6 +310,34 @@ export default function SikkPostsManagementPage() {
     if (startDateParam !== null) setStartDate(startDateParam);
     if (endDateParam !== null) setEndDate(endDateParam);
   }, [searchParams]);
+
+  // Save view state to localStorage whenever it changes
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+
+    const stateToSave: Record<string, string | null> = {
+      cat: selectedCategory !== 'all' ? selectedCategory : null,
+      subcat: selectedSubcategory,
+      section: selectedSection,
+      q: searchTerm || null,
+      expanded: expandedCategories.size > 0 ? Array.from(expandedCategories).join(',') : null,
+      sortBy: sortBy !== 'date' ? sortBy : null,
+      sortOrder: sortOrder !== 'desc' ? sortOrder : null,
+      startDate: startDate || null,
+      endDate: endDate || null,
+    };
+
+    // Remove null values before saving
+    const cleanState = Object.fromEntries(
+      Object.entries(stateToSave).filter(([, v]) => v !== null)
+    );
+
+    try {
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(cleanState));
+    } catch {
+      // Ignore localStorage errors (quota exceeded, etc.)
+    }
+  }, [selectedCategory, selectedSubcategory, selectedSection, searchTerm, expandedCategories, sortBy, sortOrder, startDate, endDate]);
 
   // Build post count map from posts
   const postCountMap = useMemo(() => {

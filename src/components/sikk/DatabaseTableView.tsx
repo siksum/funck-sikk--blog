@@ -60,21 +60,99 @@ export default function DatabaseTableView({
   const [resizeStartX, setResizeStartX] = useState(0);
   const [resizeStartWidth, setResizeStartWidth] = useState(0);
 
-  // Sort/Filter/Group state - initialize from URL params
-  const [sortColumn, setSortColumn] = useState<string | null>(() => searchParams.get('sort') || null);
-  const [sortDirection, setSortDirection] = useState<'asc' | 'desc'>(() => (searchParams.get('dir') as 'asc' | 'desc') || 'asc');
-  const [groupByColumn, setGroupByColumn] = useState<string | null>(() => searchParams.get('group') || null);
-  const [filterColumn, setFilterColumn] = useState<string | null>(() => searchParams.get('filterCol') || null);
-  const [filterValue, setFilterValue] = useState<string>(() => searchParams.get('filterVal') || '');
+  // localStorage key for this database's view state
+  const storageKey = `db-view-${databaseId}`;
 
-  // Hidden columns state - initialize from URL params
+  // Helper to get initial state from URL or localStorage
+  const getInitialState = useCallback(<T,>(urlParam: string, urlValue: string | null, defaultValue: T, parser?: (val: string) => T): T => {
+    // URL params take priority
+    if (urlValue !== null && urlValue !== '') {
+      return parser ? parser(urlValue) : (urlValue as unknown as T);
+    }
+    // Check localStorage
+    if (typeof window !== 'undefined') {
+      try {
+        const stored = localStorage.getItem(storageKey);
+        if (stored) {
+          const parsed = JSON.parse(stored);
+          if (parsed[urlParam] !== undefined) {
+            return parser ? parser(parsed[urlParam]) : parsed[urlParam];
+          }
+        }
+      } catch {
+        // Ignore localStorage errors
+      }
+    }
+    return defaultValue;
+  }, [storageKey]);
+
+  // Sort/Filter/Group state - initialize from URL params or localStorage
+  const [sortColumn, setSortColumn] = useState<string | null>(() =>
+    getInitialState('sort', searchParams.get('sort'), null)
+  );
+  const [sortDirection, setSortDirection] = useState<'asc' | 'desc'>(() =>
+    getInitialState('dir', searchParams.get('dir'), 'asc') as 'asc' | 'desc'
+  );
+  const [groupByColumn, setGroupByColumn] = useState<string | null>(() =>
+    getInitialState('group', searchParams.get('group'), null)
+  );
+  const [filterColumn, setFilterColumn] = useState<string | null>(() =>
+    getInitialState('filterCol', searchParams.get('filterCol'), null)
+  );
+  const [filterValue, setFilterValue] = useState<string>(() =>
+    getInitialState('filterVal', searchParams.get('filterVal'), '')
+  );
+
+  // Hidden columns state - initialize from URL params or localStorage
   const [hiddenColumns, setHiddenColumns] = useState<Set<string>>(() => {
-    const hidden = searchParams.get('hidden');
-    return hidden ? new Set(hidden.split(',')) : new Set();
+    const urlHidden = searchParams.get('hidden');
+    if (urlHidden) {
+      return new Set(urlHidden.split(','));
+    }
+    // Check localStorage
+    if (typeof window !== 'undefined') {
+      try {
+        const stored = localStorage.getItem(storageKey);
+        if (stored) {
+          const parsed = JSON.parse(stored);
+          if (parsed.hidden) {
+            return new Set(parsed.hidden.split(','));
+          }
+        }
+      } catch {
+        // Ignore localStorage errors
+      }
+    }
+    return new Set();
   });
 
   // Track previous URL to detect actual navigation
   const prevUrlRef = useRef<string>('');
+
+  // Save view state to localStorage whenever it changes
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+
+    const stateToSave: Record<string, string | null> = {
+      sort: sortColumn,
+      dir: sortDirection,
+      group: groupByColumn,
+      filterCol: filterColumn,
+      filterVal: filterValue || null,
+      hidden: hiddenColumns.size > 0 ? Array.from(hiddenColumns).join(',') : null,
+    };
+
+    // Remove null values before saving
+    const cleanState = Object.fromEntries(
+      Object.entries(stateToSave).filter(([, v]) => v !== null)
+    );
+
+    try {
+      localStorage.setItem(storageKey, JSON.stringify(cleanState));
+    } catch {
+      // Ignore localStorage errors (quota exceeded, etc.)
+    }
+  }, [sortColumn, sortDirection, groupByColumn, filterColumn, filterValue, hiddenColumns, storageKey]);
 
   // Sync state with URL params on navigation (only when URL actually changes from external navigation)
   useEffect(() => {
