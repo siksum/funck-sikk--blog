@@ -16,24 +16,12 @@ export async function GET(request: NextRequest) {
   const results = { sent: 0, errors: [] as string[] };
   const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:3000';
 
-  // Get all admin users' push subscriptions (handles multiple OAuth accounts)
+  // Get all admin users' push subscriptions
   const adminUsers = await prisma.user.findMany({
     where: { isAdmin: true },
     include: { pushSubscriptions: true },
   });
-  const adminSubscriptions = adminUsers.flatMap((u) => u.pushSubscriptions);
-
-  // Also get subscriptions with null userId (fallback for unlinked subscriptions)
-  const nullUserSubscriptions = await prisma.pushSubscription.findMany({
-    where: { userId: null },
-  });
-
-  // Combine and deduplicate by endpoint
-  const allSubscriptionsMap = new Map<string, typeof adminSubscriptions[0]>();
-  [...adminSubscriptions, ...nullUserSubscriptions].forEach((sub) => {
-    allSubscriptionsMap.set(sub.endpoint, sub);
-  });
-  const allAdminSubscriptions = Array.from(allSubscriptionsMap.values());
+  const allAdminSubscriptions = adminUsers.flatMap((u) => u.pushSubscriptions);
 
   if (allAdminSubscriptions.length === 0) {
     return NextResponse.json({

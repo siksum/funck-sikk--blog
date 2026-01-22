@@ -115,25 +115,13 @@ export async function POST(request: NextRequest) {
       },
     });
 
-    // Get all push subscriptions for notifications (admin users + null userId)
-    const getAllSubscriptions = async () => {
+    // Get all admin users' push subscriptions
+    const getAdminSubscriptions = async () => {
       const adminUsers = await prisma.user.findMany({
         where: { isAdmin: true },
         include: { pushSubscriptions: true },
       });
-      const adminSubscriptions = adminUsers.flatMap((u) => u.pushSubscriptions);
-
-      // Also get subscriptions with null userId (fallback)
-      const nullUserSubscriptions = await prisma.pushSubscription.findMany({
-        where: { userId: null },
-      });
-
-      // Combine and deduplicate by endpoint
-      const subscriptionsMap = new Map<string, typeof adminSubscriptions[0]>();
-      [...adminSubscriptions, ...nullUserSubscriptions].forEach((sub) => {
-        subscriptionsMap.set(sub.endpoint, sub);
-      });
-      return Array.from(subscriptionsMap.values());
+      return adminUsers.flatMap((u) => u.pushSubscriptions);
     };
 
     // If reminder is enabled and event is within 30 minutes, send notification immediately
@@ -143,7 +131,7 @@ export async function POST(request: NextRequest) {
       if (minutesUntil <= 30 && minutesUntil > -5) {
         const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:3000';
         const timeText = minutesUntil <= 0 ? '곧 시작됩니다' : `${minutesUntil}분 후 시작`;
-        const subscriptions = await getAllSubscriptions();
+        const subscriptions = await getAdminSubscriptions();
 
         await sendPushToSubscriptions(subscriptions, {
           title: `⏰ ${title}`,
@@ -171,7 +159,7 @@ export async function POST(request: NextRequest) {
 
       if (eventDateStr === todayStr || inputDateStr === todayStr) {
         const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:3000';
-        const subscriptions = await getAllSubscriptions();
+        const subscriptions = await getAdminSubscriptions();
 
         await sendPushToSubscriptions(subscriptions, {
           title: `📅 오늘 일정: ${title}`,

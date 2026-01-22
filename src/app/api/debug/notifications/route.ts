@@ -86,36 +86,21 @@ export async function POST() {
     privateKey
   );
 
-  // Get ALL subscriptions (admin users + null userId)
+  // Get admin users' subscriptions only
   const adminUsers = await prisma.user.findMany({
     where: { isAdmin: true },
     include: { pushSubscriptions: true },
   });
   const adminSubscriptions = adminUsers.flatMap((u) => u.pushSubscriptions);
 
-  const nullUserSubscriptions = await prisma.pushSubscription.findMany({
-    where: { userId: null },
-  });
-
-  // Combine and deduplicate
-  const subscriptionsMap = new Map<
-    string,
-    (typeof adminSubscriptions)[0]
-  >();
-  [...adminSubscriptions, ...nullUserSubscriptions].forEach((sub) => {
-    subscriptionsMap.set(sub.endpoint, sub);
-  });
-  const allSubscriptions = Array.from(subscriptionsMap.values());
-
-  if (allSubscriptions.length === 0) {
+  if (adminSubscriptions.length === 0) {
     return NextResponse.json({
-      error: 'No push subscriptions found',
-      adminSubscriptions: adminSubscriptions.length,
-      nullSubscriptions: nullUserSubscriptions.length,
+      error: 'No admin push subscriptions found',
+      adminSubscriptions: 0,
     });
   }
 
-  const result = await sendPushToSubscriptions(allSubscriptions, {
+  const result = await sendPushToSubscriptions(adminSubscriptions, {
     title: '🔔 일정 알림 테스트',
     body: '알림 시스템이 정상 작동합니다!',
     icon: '/icons/icon-192x192.png',
@@ -123,10 +108,8 @@ export async function POST() {
   });
 
   return NextResponse.json({
-    message: 'Test notification sent',
-    totalSubscriptions: allSubscriptions.length,
+    message: 'Test notification sent to admin users only',
     adminSubscriptions: adminSubscriptions.length,
-    nullSubscriptions: nullUserSubscriptions.length,
     result,
   });
 }
