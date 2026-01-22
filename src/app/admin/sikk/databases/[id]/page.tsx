@@ -1127,16 +1127,21 @@ export default function DatabaseDetailPage({ params }: DatabasePageProps) {
                     </tr>
                     {groupItems.map((item) => (
                       <tr key={item.id} className="hover:bg-gray-50 dark:hover:bg-gray-700/50">
-                        {visibleColumns.map((column) => (
-                          <td
-                            key={column.id}
-                            style={{ width: columnWidths[column.id] || 150 }}
-                            className="px-4 py-3 cursor-pointer hover:bg-pink-50 dark:hover:bg-pink-900/10 overflow-hidden"
-                            onClick={() => startEditing(item.id, column.id, item.data[column.id])}
-                          >
-                            {renderCell(item, column)}
-                          </td>
-                        ))}
+                        {visibleColumns.map((column) => {
+                          const isEditing = editingCell?.itemId === item.id && editingCell?.columnId === column.id;
+                          return (
+                            <td
+                              key={column.id}
+                              style={{ width: columnWidths[column.id] || 150 }}
+                              className={`px-4 py-3 cursor-pointer hover:bg-pink-50 dark:hover:bg-pink-900/10 ${
+                                isEditing ? 'overflow-visible z-10 relative' : 'overflow-hidden'
+                              }`}
+                              onClick={() => startEditing(item.id, column.id, item.data[column.id])}
+                            >
+                              {renderCell(item, column)}
+                            </td>
+                          );
+                        })}
                         <td className="px-4 py-3 text-right">
                           <button
                             onClick={() => handleDeleteItem(item.id)}
@@ -1155,16 +1160,21 @@ export default function DatabaseDetailPage({ params }: DatabasePageProps) {
                 // Regular view
                 processedItems.items.map((item) => (
                   <tr key={item.id} className="hover:bg-gray-50 dark:hover:bg-gray-700/50">
-                    {visibleColumns.map((column) => (
-                      <td
-                        key={column.id}
-                        style={{ width: columnWidths[column.id] || 150 }}
-                        className="px-4 py-3 cursor-pointer hover:bg-pink-50 dark:hover:bg-pink-900/10 overflow-hidden"
-                        onClick={() => startEditing(item.id, column.id, item.data[column.id])}
-                      >
-                        {renderCell(item, column)}
-                      </td>
-                    ))}
+                    {visibleColumns.map((column) => {
+                      const isEditing = editingCell?.itemId === item.id && editingCell?.columnId === column.id;
+                      return (
+                        <td
+                          key={column.id}
+                          style={{ width: columnWidths[column.id] || 150 }}
+                          className={`px-4 py-3 cursor-pointer hover:bg-pink-50 dark:hover:bg-pink-900/10 ${
+                            isEditing ? 'overflow-visible z-10 relative' : 'overflow-hidden'
+                          }`}
+                          onClick={() => startEditing(item.id, column.id, item.data[column.id])}
+                        >
+                          {renderCell(item, column)}
+                        </td>
+                      );
+                    })}
                     <td className="px-4 py-3 text-right">
                       <button
                         onClick={() => handleDeleteItem(item.id)}
