@@ -336,6 +336,18 @@ export default function MDXContent({ content }: MDXContentProps) {
             hr: () => (
               <hr className="my-8 border-t border-violet-200 dark:border-violet-500/30" />
             ),
+            // Preserve span styles (for text color)
+            span: ({ style, children, ...props }) => (
+              <span style={style} {...props}>
+                {children}
+              </span>
+            ),
+            // Preserve mark styles (for highlights)
+            mark: ({ style, children, ...props }) => (
+              <mark style={style} {...props}>
+                {children}
+              </mark>
+            ),
             img: ({ src, alt }) => {
               const imgSrc = typeof src === 'string' ? src : '';
               return (
