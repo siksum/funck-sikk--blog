@@ -491,11 +491,12 @@ export default function DatabaseTableView({
         );
       }
 
-      if (column.type === 'select' && column.options) {
+      if (column.type === 'select') {
+        const options = column.options || [];
         return (
           <>
             {/* Current value display */}
-            <div className="px-2 py-1 text-sm border border-pink-400 rounded bg-white dark:bg-gray-900 text-gray-900 dark:text-white">
+            <div className="px-2 py-1 text-sm border-2 border-pink-400 rounded bg-white dark:bg-gray-900 text-gray-900 dark:text-white">
               {editValue || '선택...'}
             </div>
             {/* Portal: Render dropdown outside of table to avoid overflow clipping */}
@@ -512,7 +513,7 @@ export default function DatabaseTableView({
                 />
                 {/* Dropdown menu */}
                 <div
-                  className="fixed min-w-[200px] max-h-48 overflow-y-auto bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg shadow-xl"
+                  className="fixed min-w-[200px] max-h-48 overflow-y-auto bg-white dark:bg-gray-800 border-2 border-pink-300 dark:border-pink-700 rounded-lg shadow-2xl"
                   style={{
                     zIndex: 99999,
                     top: dropdownPosition.top,
@@ -528,7 +529,7 @@ export default function DatabaseTableView({
                   >
                     선택...
                   </div>
-                  {column.options.map((opt) => (
+                  {options.map((opt) => (
                     <div
                       key={opt}
                       className={`px-3 py-2 hover:bg-gray-100 dark:hover:bg-gray-700 cursor-pointer text-sm ${
