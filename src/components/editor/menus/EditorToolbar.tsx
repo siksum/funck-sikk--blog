@@ -18,9 +18,16 @@ interface ToolbarButtonProps {
 }
 
 function ToolbarButton({ onClick, isActive, disabled, title, children }: ToolbarButtonProps) {
+  const handleClick = (e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    onClick();
+  };
+
   return (
     <button
-      onClick={onClick}
+      type="button"
+      onClick={handleClick}
       disabled={disabled}
       title={title}
       className={`p-2 rounded hover:bg-pink-100 dark:hover:bg-pink-500/20 transition-colors ${
@@ -253,8 +260,11 @@ export default function EditorToolbar({ editor, onSave, onCancel }: EditorToolba
                 <div className="flex flex-wrap gap-1">
                   {category.emojis.map((emoji) => (
                     <button
+                      type="button"
                       key={emoji}
-                      onClick={() => {
+                      onClick={(e) => {
+                        e.preventDefault();
+                        e.stopPropagation();
                         editor.chain().focus().insertContent(emoji).run();
                         setShowEmojiPicker(false);
                       }}
@@ -295,8 +305,11 @@ export default function EditorToolbar({ editor, onSave, onCancel }: EditorToolba
             <div className="grid grid-cols-3 gap-1">
               {TEXT_COLORS.map((color) => (
                 <button
+                  type="button"
                   key={color.value || 'default'}
-                  onClick={() => {
+                  onClick={(e) => {
+                    e.preventDefault();
+                    e.stopPropagation();
                     if (color.value) {
                       editor.chain().focus().setColor(color.value).run();
                     } else {
@@ -343,8 +356,11 @@ export default function EditorToolbar({ editor, onSave, onCancel }: EditorToolba
             <div className="grid grid-cols-3 gap-1">
               {HIGHLIGHT_COLORS.map((color) => (
                 <button
+                  type="button"
                   key={color.value || 'none'}
-                  onClick={() => {
+                  onClick={(e) => {
+                    e.preventDefault();
+                    e.stopPropagation();
                     if (color.value) {
                       editor.chain().focus().toggleHighlight({ color: color.value }).run();
                     } else {
@@ -459,8 +475,11 @@ export default function EditorToolbar({ editor, onSave, onCancel }: EditorToolba
           <div className="absolute top-full left-0 mt-2 p-2 bg-white dark:bg-gray-800 rounded-lg shadow-lg border border-pink-200 dark:border-pink-500/40 z-20 w-40 max-h-64 overflow-y-auto">
             {CODE_LANGUAGES.map((lang) => (
               <button
+                type="button"
                 key={lang.value}
-                onClick={() => {
+                onClick={(e) => {
+                  e.preventDefault();
+                  e.stopPropagation();
                   editor.chain().focus().toggleCodeBlock({ language: lang.value }).run();
                   setShowCodeLanguages(false);
                 }}
@@ -506,7 +525,12 @@ export default function EditorToolbar({ editor, onSave, onCancel }: EditorToolba
               onKeyDown={(e) => e.key === 'Enter' && setLink()}
             />
             <button
-              onClick={setLink}
+              type="button"
+              onClick={(e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                setLink();
+              }}
               className="ml-2 px-2 py-1 bg-pink-500 text-white rounded text-sm hover:bg-pink-600"
             >
               확인
@@ -538,7 +562,12 @@ export default function EditorToolbar({ editor, onSave, onCancel }: EditorToolba
                 id="image-upload"
               />
               <button
-                onClick={() => fileInputRef.current?.click()}
+                type="button"
+                onClick={(e) => {
+                  e.preventDefault();
+                  e.stopPropagation();
+                  fileInputRef.current?.click();
+                }}
                 disabled={isUploading}
                 className="w-full px-3 py-2 border-2 border-dashed border-gray-300 dark:border-gray-600 rounded-lg text-sm hover:border-pink-400 dark:hover:border-pink-500 transition-colors flex items-center justify-center gap-2 disabled:opacity-50"
               >
@@ -574,7 +603,12 @@ export default function EditorToolbar({ editor, onSave, onCancel }: EditorToolba
                   onKeyDown={(e) => e.key === 'Enter' && addImage()}
                 />
                 <button
-                  onClick={addImage}
+                  type="button"
+                  onClick={(e) => {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    addImage();
+                  }}
                   className="px-2 py-1 bg-pink-500 text-white rounded text-sm hover:bg-pink-600"
                 >
                   확인
@@ -602,7 +636,12 @@ export default function EditorToolbar({ editor, onSave, onCancel }: EditorToolba
               onKeyDown={(e) => e.key === 'Enter' && addYoutube()}
             />
             <button
-              onClick={addYoutube}
+              type="button"
+              onClick={(e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                addYoutube();
+              }}
               className="ml-2 px-2 py-1 bg-pink-500 text-white rounded text-sm hover:bg-pink-600"
             >
               확인
@@ -673,7 +712,10 @@ export default function EditorToolbar({ editor, onSave, onCancel }: EditorToolba
         {showCalloutMenu && (
           <div className="absolute top-full left-0 mt-2 p-2 bg-white dark:bg-gray-800 rounded-lg shadow-lg border border-pink-200 dark:border-pink-500/40 z-20 w-40">
             <button
-              onClick={() => {
+              type="button"
+              onClick={(e) => {
+                e.preventDefault();
+                e.stopPropagation();
                 editor.chain().focus().setCallout({ type: 'info' }).run();
                 setShowCalloutMenu(false);
               }}
@@ -682,7 +724,10 @@ export default function EditorToolbar({ editor, onSave, onCancel }: EditorToolba
               <span className="w-3 h-3 rounded-full bg-blue-500"></span> 정보
             </button>
             <button
-              onClick={() => {
+              type="button"
+              onClick={(e) => {
+                e.preventDefault();
+                e.stopPropagation();
                 editor.chain().focus().setCallout({ type: 'warning' }).run();
                 setShowCalloutMenu(false);
               }}
@@ -691,7 +736,10 @@ export default function EditorToolbar({ editor, onSave, onCancel }: EditorToolba
               <span className="w-3 h-3 rounded-full bg-amber-500"></span> 경고
             </button>
             <button
-              onClick={() => {
+              type="button"
+              onClick={(e) => {
+                e.preventDefault();
+                e.stopPropagation();
                 editor.chain().focus().setCallout({ type: 'tip' }).run();
                 setShowCalloutMenu(false);
               }}
@@ -700,7 +748,10 @@ export default function EditorToolbar({ editor, onSave, onCancel }: EditorToolba
               <span className="w-3 h-3 rounded-full bg-green-500"></span> 팁
             </button>
             <button
-              onClick={() => {
+              type="button"
+              onClick={(e) => {
+                e.preventDefault();
+                e.stopPropagation();
                 editor.chain().focus().setCallout({ type: 'danger' }).run();
                 setShowCalloutMenu(false);
               }}
@@ -709,7 +760,10 @@ export default function EditorToolbar({ editor, onSave, onCancel }: EditorToolba
               <span className="w-3 h-3 rounded-full bg-red-500"></span> 위험
             </button>
             <button
-              onClick={() => {
+              type="button"
+              onClick={(e) => {
+                e.preventDefault();
+                e.stopPropagation();
                 editor.chain().focus().setCallout({ type: 'note' }).run();
                 setShowCalloutMenu(false);
               }}
@@ -745,13 +799,23 @@ export default function EditorToolbar({ editor, onSave, onCancel }: EditorToolba
 
       {/* Actions */}
       <button
-        onClick={onCancel}
+        type="button"
+        onClick={(e) => {
+          e.preventDefault();
+          e.stopPropagation();
+          onCancel();
+        }}
         className="px-3 py-1.5 text-sm rounded-lg border-2 border-gray-300 dark:border-gray-600 hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
       >
         취소
       </button>
       <button
-        onClick={onSave}
+        type="button"
+        onClick={(e) => {
+          e.preventDefault();
+          e.stopPropagation();
+          onSave();
+        }}
         className="px-3 py-1.5 text-sm rounded-lg bg-pink-500 text-white hover:bg-pink-600 transition-colors"
       >
         저장
