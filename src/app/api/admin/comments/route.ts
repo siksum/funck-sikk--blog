@@ -1,7 +1,6 @@
 import { NextResponse } from 'next/server';
 import { prisma } from '@/lib/db';
 import { auth } from '@/lib/auth';
-import { getAllPostsAsync } from '@/lib/mdx';
 
 const isDev = process.env.NODE_ENV === 'development';
 
@@ -27,22 +26,18 @@ export async function GET() {
     orderBy: { createdAt: 'desc' },
   });
 
-  // Get all posts to map slugs to titles and categories
-  // 1. MDX posts
-  const mdxPosts = await getAllPostsAsync(true);
-  const postMap = new Map(mdxPosts.map(p => [p.slug, { title: p.title, category: p.category }]));
+  // Get all posts from database to map slugs to titles and categories
+  const postMap = new Map<string, { title: string; category: string }>();
 
-  // 2. Database posts (Post model)
+  // 1. Blog posts (Post model)
   const dbPosts = await prisma.post.findMany({
     select: { slug: true, title: true, category: true },
   });
   dbPosts.forEach(p => {
-    if (!postMap.has(p.slug)) {
-      postMap.set(p.slug, { title: p.title, category: p.category });
-    }
+    postMap.set(p.slug, { title: p.title, category: p.category });
   });
 
-  // 3. Sikk posts (SikkPost model)
+  // 2. Sikk posts (SikkPost model)
   const sikkPosts = await prisma.sikkPost.findMany({
     select: { slug: true, title: true, category: true },
   });
