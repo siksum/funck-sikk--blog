@@ -3777,7 +3777,6 @@ export default function MyWorldDashboard() {
                   style={{ backgroundColor: eventForm.color }}
                   title="유형 관리에서 색상을 변경할 수 있습니다"
                 />
-                </div>
               </div>
             </div>
             <div className="p-6 border-t border-gray-200 dark:border-gray-700 flex gap-3 justify-end">
