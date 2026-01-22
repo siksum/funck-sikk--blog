@@ -213,6 +213,10 @@ export default async function SikkPostPage({ params }: SikkPostPageProps) {
             tags: post.tags,
             status: (post.status as 'not_started' | 'in_progress' | 'completed') || 'not_started',
             isPublic: post.isPublic,
+            category: post.category || '',
+            thumbnail: post.thumbnail,
+            thumbnailPosition: post.thumbnailPosition,
+            thumbnailScale: post.thumbnailScale,
           }}
         />
 
