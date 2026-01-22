@@ -116,7 +116,19 @@ const getLocalDateStr = (date: Date): string => {
   return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`;
 };
 
-const DEFAULT_EVENT_TYPES = ['일정', '기념일', '생일', '약속', '회의', '기타'];
+interface EventType {
+  name: string;
+  color: string;
+}
+
+const DEFAULT_EVENT_TYPES: EventType[] = [
+  { name: '일정', color: '#c4b5fd' },
+  { name: '기념일', color: '#fda4af' },
+  { name: '생일', color: '#f9a8d4' },
+  { name: '약속', color: '#93c5fd' },
+  { name: '회의', color: '#86efac' },
+  { name: '기타', color: '#cbd5e1' },
+];
 
 export default function MyWorldDashboard() {
   const [todayEntry, setTodayEntry] = useState<DailyEntry | null>(null);
@@ -129,9 +141,10 @@ export default function MyWorldDashboard() {
   const [selectedDate, setSelectedDate] = useState<string | null>(() => getLocalDateStr(new Date()));
 
   // Event types management
-  const [eventTypes, setEventTypes] = useState<string[]>(DEFAULT_EVENT_TYPES);
+  const [eventTypes, setEventTypes] = useState<EventType[]>(DEFAULT_EVENT_TYPES);
   const [showTypeManager, setShowTypeManager] = useState(false);
   const [newTypeName, setNewTypeName] = useState('');
+  const [newTypeColor, setNewTypeColor] = useState('#c4b5fd');
 
   // Event Modal State
   const [showEventModal, setShowEventModal] = useState(false);
@@ -333,7 +346,21 @@ export default function MyWorldDashboard() {
     if (savedTypes) {
       try {
         const parsed = JSON.parse(savedTypes);
-        setEventTypes(parsed);
+        // Migration: if old format (string array), convert to new format
+        if (Array.isArray(parsed) && parsed.length > 0) {
+          if (typeof parsed[0] === 'string') {
+            // Old format - convert to new format with default colors
+            const migrated: EventType[] = parsed.map((name: string, index: number) => ({
+              name,
+              color: eventColors[index % eventColors.length].value,
+            }));
+            setEventTypes(migrated);
+            localStorage.setItem('myworld-event-types', JSON.stringify(migrated));
+          } else {
+            // New format
+            setEventTypes(parsed);
+          }
+        }
       } catch {
         setEventTypes(DEFAULT_EVENT_TYPES);
       }
@@ -341,9 +368,15 @@ export default function MyWorldDashboard() {
   }, []);
 
   // Save event types to localStorage
-  const saveEventTypes = (types: string[]) => {
+  const saveEventTypes = (types: EventType[]) => {
     setEventTypes(types);
     localStorage.setItem('myworld-event-types', JSON.stringify(types));
+  };
+
+  // Get color for a type
+  const getTypeColor = (typeName: string): string => {
+    const type = eventTypes.find(t => t.name === typeName);
+    return type?.color || '#c4b5fd';
   };
 
   useEffect(() => {
@@ -982,11 +1015,13 @@ export default function MyWorldDashboard() {
     } else {
       // Create mode
       setEditingEvent(null);
+      const defaultType = eventTypes[0]?.name || '일정';
+      const defaultColor = eventTypes[0]?.color || '#c4b5fd';
       setEventForm({
         title: '',
         description: '',
-        type: '일정',
-        color: '#c4b5fd',
+        type: defaultType,
+        color: defaultColor,
         isAllDay: true,
         reminder: false,
         startDate: selectedDate || todayStr,
@@ -1180,25 +1215,33 @@ export default function MyWorldDashboard() {
   // Category management
   const addEventType = () => {
     if (!newTypeName.trim()) return;
-    if (eventTypes.includes(newTypeName.trim())) {
+    if (eventTypes.some(t => t.name === newTypeName.trim())) {
       alert('이미 존재하는 유형입니다');
       return;
     }
-    saveEventTypes([...eventTypes, newTypeName.trim()]);
+    saveEventTypes([...eventTypes, { name: newTypeName.trim(), color: newTypeColor }]);
     setNewTypeName('');
+    setNewTypeColor('#c4b5fd');
   };
 
-  const removeEventType = (type: string) => {
+  const removeEventType = (typeName: string) => {
     if (eventTypes.length <= 1) {
       alert('최소 1개의 유형이 필요합니다');
       return;
     }
-    const newTypes = eventTypes.filter(t => t !== type);
+    const newTypes = eventTypes.filter(t => t.name !== typeName);
     saveEventTypes(newTypes);
     // If the deleted type was selected, reset to the first available type
-    if (eventForm.type === type && newTypes.length > 0) {
-      setEventForm({ ...eventForm, type: newTypes[0] });
+    if (eventForm.type === typeName && newTypes.length > 0) {
+      setEventForm({ ...eventForm, type: newTypes[0].name, color: newTypes[0].color });
     }
+  };
+
+  const updateTypeColor = (typeName: string, newColor: string) => {
+    const newTypes = eventTypes.map(t =>
+      t.name === typeName ? { ...t, color: newColor } : t
+    );
+    saveEventTypes(newTypes);
   };
 
   const formatEventTime = (event: CalendarEvent) => {
@@ -2437,15 +2480,15 @@ export default function MyWorldDashboard() {
                   </div>
                 </div>
 
-                {/* Legend - show unique type-color combinations from current month events */}
+                {/* Legend - show event types with their assigned colors */}
                 <div className="mt-3 flex items-center gap-4 text-xs text-gray-500 dark:text-gray-400 flex-shrink-0 flex-wrap">
-                  {Array.from(new Map(monthEvents.map(e => [`${e.type}-${e.color}`, { type: e.type, color: e.color }])).values()).slice(0, 10).map((item, index) => (
-                    <div key={`${item.type}-${item.color}-${index}`} className="flex items-center gap-1">
+                  {eventTypes.slice(0, 8).map((type) => (
+                    <div key={type.name} className="flex items-center gap-1">
                       <div
                         className="w-2 h-2 rounded-full"
-                        style={{ backgroundColor: getPastelColor(item.color) }}
+                        style={{ backgroundColor: type.color }}
                       />
-                      <span>{item.type}</span>
+                      <span>{type.name}</span>
                     </div>
                   ))}
                 </div>
@@ -3625,7 +3668,7 @@ export default function MyWorldDashboard() {
 
                 {showTypeManager && (
                   <div className="mb-3 p-3 bg-gray-50 dark:bg-gray-700/50 rounded-lg">
-                    <div className="flex gap-2 mb-2">
+                    <div className="flex gap-2 mb-3">
                       <input
                         type="text"
                         value={newTypeName}
@@ -3641,20 +3684,59 @@ export default function MyWorldDashboard() {
                         추가
                       </button>
                     </div>
-                    <div className="flex flex-wrap gap-1">
-                      {eventTypes.map((type) => (
-                        <span
-                          key={type}
-                          className="inline-flex items-center gap-1 px-2 py-0.5 bg-gray-200 dark:bg-gray-600 rounded-full text-xs"
-                        >
-                          {type}
+                    {/* New type color selection */}
+                    <div className="mb-3">
+                      <label className="block text-xs text-gray-500 dark:text-gray-400 mb-1">새 유형 색상</label>
+                      <div className="flex flex-wrap gap-1.5">
+                        {eventColors.map((color) => (
                           <button
-                            onClick={() => removeEventType(type)}
-                            className="text-red-500 hover:text-red-700"
+                            key={color.value}
+                            onClick={() => setNewTypeColor(color.value)}
+                            className={`w-6 h-6 rounded-full transition-transform ${
+                              newTypeColor === color.value ? 'ring-2 ring-offset-1 ring-violet-500 scale-110' : ''
+                            }`}
+                            style={{ backgroundColor: color.value }}
+                            title={color.name}
+                          />
+                        ))}
+                      </div>
+                    </div>
+                    {/* Existing types with color */}
+                    <div className="space-y-2">
+                      {eventTypes.map((type) => (
+                        <div
+                          key={type.name}
+                          className="flex items-center gap-2 p-2 bg-white dark:bg-gray-700 rounded-lg"
+                        >
+                          <div className="relative group">
+                            <button
+                              className="w-6 h-6 rounded-full border-2 border-gray-200 dark:border-gray-600"
+                              style={{ backgroundColor: type.color }}
+                              title="클릭하여 색상 변경"
+                            />
+                            {/* Color picker dropdown */}
+                            <div className="absolute left-0 top-8 z-10 hidden group-hover:flex flex-wrap gap-1 p-2 bg-white dark:bg-gray-800 rounded-lg shadow-lg border border-gray-200 dark:border-gray-600 w-[180px]">
+                              {eventColors.map((color) => (
+                                <button
+                                  key={color.value}
+                                  onClick={() => updateTypeColor(type.name, color.value)}
+                                  className={`w-5 h-5 rounded-full transition-transform hover:scale-110 ${
+                                    type.color === color.value ? 'ring-2 ring-offset-1 ring-violet-500' : ''
+                                  }`}
+                                  style={{ backgroundColor: color.value }}
+                                  title={color.name}
+                                />
+                              ))}
+                            </div>
+                          </div>
+                          <span className="flex-1 text-sm text-gray-700 dark:text-gray-300">{type.name}</span>
+                          <button
+                            onClick={() => removeEventType(type.name)}
+                            className="text-red-500 hover:text-red-700 text-sm"
                           >
                             ×
                           </button>
-                        </span>
+                        </div>
                       ))}
                     </div>
                   </div>
@@ -3663,37 +3745,34 @@ export default function MyWorldDashboard() {
                 <div className="flex flex-wrap gap-2">
                   {eventTypes.map((type) => (
                     <button
-                      key={type}
-                      onClick={() => setEventForm({ ...eventForm, type })}
-                      className={`px-3 py-1.5 rounded-full text-sm transition-colors ${
-                        eventForm.type === type
+                      key={type.name}
+                      onClick={() => setEventForm({ ...eventForm, type: type.name, color: type.color })}
+                      className={`px-3 py-1.5 rounded-full text-sm transition-colors flex items-center gap-1.5 ${
+                        eventForm.type === type.name
                           ? 'bg-violet-600 text-white'
                           : 'bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600'
                       }`}
                     >
-                      {type}
+                      <span
+                        className="w-3 h-3 rounded-full"
+                        style={{ backgroundColor: type.color }}
+                      />
+                      {type.name}
                     </button>
                   ))}
                 </div>
               </div>
 
-              {/* Color Selection */}
+              {/* Color Selection - Now shows the type's assigned color */}
               <div>
                 <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                  색상
+                  색상 (유형에 따라 자동 지정)
                 </label>
-                <div className="flex gap-2">
-                  {eventColors.map((color) => (
-                    <button
-                      key={color.value}
-                      onClick={() => setEventForm({ ...eventForm, color: color.value })}
-                      className={`w-8 h-8 rounded-full transition-transform ${
-                        eventForm.color === color.value ? 'ring-2 ring-offset-2 ring-gray-400 scale-110' : ''
-                      }`}
-                      style={{ backgroundColor: color.value }}
-                      title={color.name}
-                    />
-                  ))}
+                <div
+                  className="w-10 h-10 rounded-full border-2 border-gray-200 dark:border-gray-600"
+                  style={{ backgroundColor: eventForm.color }}
+                  title="유형 관리에서 색상을 변경할 수 있습니다"
+                />
                 </div>
               </div>
             </div>
@@ -3753,13 +3832,15 @@ export default function MyWorldDashboard() {
                 onClick={() => {
                   const hour = contextMenu.hour?.toString().padStart(2, '0') || '09';
                   const nextHour = ((contextMenu.hour || 9) + 1).toString().padStart(2, '0');
+                  const defaultType = eventTypes[0]?.name || '일정';
+                  const defaultColor = eventTypes[0]?.color || '#c4b5fd';
                   setSelectedDate(contextMenu.date || '');
                   setEditingEvent(null);
                   setEventForm({
                     title: '',
                     description: '',
-                    type: '일정',
-                    color: '#c4b5fd',
+                    type: defaultType,
+                    color: defaultColor,
                     isAllDay: contextMenu.isAllDay ?? false,
                     reminder: false,
                     startDate: contextMenu.date || '',
