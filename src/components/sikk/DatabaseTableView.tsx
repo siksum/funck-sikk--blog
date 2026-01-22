@@ -681,7 +681,7 @@ export default function DatabaseTableView({
     if (column.type === 'title') {
       // Generate item URL based on whether we have a category path
       const itemHref = categorySlugPath
-        ? `/sikk/category/${categorySlugPath.map(s => encodeURIComponent(s)).join('/')}/db/${databaseSlug}/${item.id}`
+        ? `/sikk/category/${categorySlugPath.map(s => encodeURIComponent(s)).join('/')}/${databaseSlug}/${item.id}`
         : `/sikk/db/${databaseSlug}/${item.id}`;
 
       return (
