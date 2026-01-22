@@ -1558,27 +1558,39 @@ export default function MyWorldDashboard() {
     console.log('[Weekly] weekStartDate:', weekStartDate.toISOString());
 
     multiDayEvents.forEach(event => {
-      const eventStart = new Date(event.date.split('T')[0] + 'T00:00:00');
-      const eventEnd = new Date((event.endDate || event.date).split('T')[0] + 'T00:00:00');
+      // Parse event dates as simple date strings for comparison (YYYY-MM-DD)
+      const eventStartStr = event.date.split('T')[0];
+      const eventEndStr = (event.endDate || event.date).split('T')[0];
 
-      // Check overlap with current week
-      const weekEnd = new Date(weekStartDate);
-      weekEnd.setDate(weekStartDate.getDate() + 6);
+      // Get week start/end as YYYY-MM-DD strings for consistent comparison
+      const weekStartStr = getLocalDateStr(weekStartDate);
+      const weekEndDate = new Date(weekStartDate);
+      weekEndDate.setDate(weekStartDate.getDate() + 6);
+      const weekEndStr = getLocalDateStr(weekEndDate);
 
-      const overlaps = eventEnd >= weekStartDate && eventStart <= weekEnd;
-      console.log('[Weekly] Overlap check for', event.title, ':', overlaps, 'eventEnd:', eventEnd.toISOString(), 'weekStart:', weekStartDate.toISOString());
+      // Compare as strings (YYYY-MM-DD format allows string comparison)
+      const overlaps = eventEndStr >= weekStartStr && eventStartStr <= weekEndStr;
+      console.log('[Weekly] Overlap check for', event.title, ':', overlaps,
+        'event:', eventStartStr, '-', eventEndStr,
+        'week:', weekStartStr, '-', weekEndStr);
 
       if (overlaps) {
-        // Calculate start column (0-6) using UTC comparison
+        // Calculate column positions using date parsing
+        const eventStart = new Date(eventStartStr + 'T00:00:00');
+        const eventEnd = new Date(eventEndStr + 'T00:00:00');
+        const weekStart = new Date(weekStartStr + 'T00:00:00');
+        const weekEnd = new Date(weekEndStr + 'T00:00:00');
+
+        // Calculate start column (0-6)
         let startCol = 0;
-        if (eventStart > weekStartDate) {
-          startCol = getDaysDiff(eventStart, weekStartDate);
+        if (eventStartStr > weekStartStr) {
+          startCol = getDaysDiff(eventStart, weekStart);
         }
 
-        // Calculate end column (0-6) using UTC comparison
+        // Calculate end column (0-6)
         let endCol = 6;
-        if (eventEnd < weekEnd) {
-          endCol = getDaysDiff(eventEnd, weekStartDate);
+        if (eventEndStr < weekEndStr) {
+          endCol = getDaysDiff(eventEnd, weekStart);
         }
 
         // Clamp values to valid range
@@ -1592,8 +1604,8 @@ export default function MyWorldDashboard() {
             event,
             startCol,
             span: endCol - startCol + 1,
-            isStart: eventStart >= weekStartDate && eventStart <= weekEnd,
-            isEnd: eventEnd >= weekStartDate && eventEnd <= weekEnd,
+            isStart: eventStartStr >= weekStartStr && eventStartStr <= weekEndStr,
+            isEnd: eventEndStr >= weekStartStr && eventEndStr <= weekEndStr,
           });
           console.log('[Weekly] Bar pushed:', event.title);
         }
