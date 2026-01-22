@@ -1,7 +1,7 @@
 'use client';
 
 import { Editor } from '@tiptap/react';
-import { useCallback, useState } from 'react';
+import { useCallback, useState, useRef } from 'react';
 
 interface EditorToolbarProps {
   editor: Editor;
@@ -58,7 +58,34 @@ const CODE_LANGUAGES = [
   { value: 'yaml', label: 'YAML' },
   { value: 'markdown', label: 'Markdown' },
   { value: 'bash', label: 'Bash' },
+  { value: 'solidity', label: 'Solidity' },
   { value: 'plaintext', label: 'Plain Text' },
+];
+
+// Text colors
+const TEXT_COLORS = [
+  { value: '', label: '기본', color: 'currentColor' },
+  { value: '#ef4444', label: '빨강', color: '#ef4444' },
+  { value: '#f97316', label: '주황', color: '#f97316' },
+  { value: '#eab308', label: '노랑', color: '#eab308' },
+  { value: '#22c55e', label: '초록', color: '#22c55e' },
+  { value: '#3b82f6', label: '파랑', color: '#3b82f6' },
+  { value: '#8b5cf6', label: '보라', color: '#8b5cf6' },
+  { value: '#ec4899', label: '분홍', color: '#ec4899' },
+  { value: '#6b7280', label: '회색', color: '#6b7280' },
+];
+
+// Highlight (background) colors
+const HIGHLIGHT_COLORS = [
+  { value: '', label: '없음', color: 'transparent' },
+  { value: '#fef2f2', label: '빨강', color: '#fef2f2', border: '#fecaca' },
+  { value: '#fff7ed', label: '주황', color: '#fff7ed', border: '#fed7aa' },
+  { value: '#fefce8', label: '노랑', color: '#fefce8', border: '#fef08a' },
+  { value: '#f0fdf4', label: '초록', color: '#f0fdf4', border: '#bbf7d0' },
+  { value: '#eff6ff', label: '파랑', color: '#eff6ff', border: '#bfdbfe' },
+  { value: '#f5f3ff', label: '보라', color: '#f5f3ff', border: '#ddd6fe' },
+  { value: '#fdf2f8', label: '분홍', color: '#fdf2f8', border: '#fbcfe8' },
+  { value: '#f3f4f6', label: '회색', color: '#f3f4f6', border: '#d1d5db' },
 ];
 
 // Emoji categories
@@ -99,6 +126,10 @@ export default function EditorToolbar({ editor, onSave, onCancel }: EditorToolba
   const [showCalloutMenu, setShowCalloutMenu] = useState(false);
   const [showEmojiPicker, setShowEmojiPicker] = useState(false);
   const [showCodeLanguages, setShowCodeLanguages] = useState(false);
+  const [showTextColorPicker, setShowTextColorPicker] = useState(false);
+  const [showHighlightPicker, setShowHighlightPicker] = useState(false);
+  const [isUploading, setIsUploading] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   const setLink = useCallback(() => {
     if (linkUrl) {
@@ -125,6 +156,40 @@ export default function EditorToolbar({ editor, onSave, onCancel }: EditorToolba
     setShowYoutubeInput(false);
     setYoutubeUrl('');
   }, [editor, youtubeUrl]);
+
+  const handleFileUpload = useCallback(async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    setIsUploading(true);
+    try {
+      const formData = new FormData();
+      formData.append('file', file);
+
+      const response = await fetch('/api/upload', {
+        method: 'POST',
+        body: formData,
+      });
+
+      if (!response.ok) {
+        const error = await response.json();
+        alert(error.error || '업로드에 실패했습니다.');
+        return;
+      }
+
+      const data = await response.json();
+      editor.chain().focus().setImage({ src: data.url }).run();
+      setShowImageInput(false);
+    } catch (error) {
+      console.error('Upload error:', error);
+      alert('업로드 중 오류가 발생했습니다.');
+    } finally {
+      setIsUploading(false);
+      if (fileInputRef.current) {
+        fileInputRef.current.value = '';
+      }
+    }
+  }, [editor]);
 
   return (
     <div className="sticky top-0 z-10 bg-white/95 dark:bg-gray-900/95 backdrop-blur border-2 border-pink-200 dark:border-pink-500/40 rounded-lg p-2 mb-4 flex flex-wrap items-center gap-1">
@@ -201,6 +266,107 @@ export default function EditorToolbar({ editor, onSave, onCancel }: EditorToolba
                 </div>
               </div>
             ))}
+          </div>
+        )}
+      </div>
+
+      <ToolbarDivider />
+
+      {/* Text Color */}
+      <div className="relative">
+        <ToolbarButton
+          onClick={() => {
+            setShowTextColorPicker(!showTextColorPicker);
+            setShowHighlightPicker(false);
+          }}
+          isActive={editor.isActive('textStyle')}
+          title="글자 색상"
+        >
+          <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 21h10M12 3v14M8 7l4-4 4 4" />
+            <rect x="6" y="19" width="12" height="2" fill={editor.getAttributes('textStyle').color || 'currentColor'} rx="1" />
+          </svg>
+        </ToolbarButton>
+        {showTextColorPicker && (
+          <div className="absolute top-full left-0 mt-2 p-2 bg-white dark:bg-gray-800 rounded-lg shadow-lg border border-pink-200 dark:border-pink-500/40 z-20 w-36">
+            <div className="text-xs font-semibold text-gray-500 dark:text-gray-400 mb-2 px-1">
+              글자 색상
+            </div>
+            <div className="grid grid-cols-3 gap-1">
+              {TEXT_COLORS.map((color) => (
+                <button
+                  key={color.value || 'default'}
+                  onClick={() => {
+                    if (color.value) {
+                      editor.chain().focus().setColor(color.value).run();
+                    } else {
+                      editor.chain().focus().unsetColor().run();
+                    }
+                    setShowTextColorPicker(false);
+                  }}
+                  className="w-8 h-8 rounded border-2 border-gray-200 dark:border-gray-600 hover:scale-110 transition-transform flex items-center justify-center"
+                  style={{ backgroundColor: color.value || 'transparent' }}
+                  title={color.label}
+                >
+                  {!color.value && (
+                    <svg className="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                    </svg>
+                  )}
+                </button>
+              ))}
+            </div>
+          </div>
+        )}
+      </div>
+
+      {/* Highlight (Background Color) */}
+      <div className="relative">
+        <ToolbarButton
+          onClick={() => {
+            setShowHighlightPicker(!showHighlightPicker);
+            setShowTextColorPicker(false);
+          }}
+          isActive={editor.isActive('highlight')}
+          title="배경 색상 (하이라이트)"
+        >
+          <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" />
+            <rect x="6" y="19" width="12" height="2" fill={editor.getAttributes('highlight').color || '#fef08a'} rx="1" />
+          </svg>
+        </ToolbarButton>
+        {showHighlightPicker && (
+          <div className="absolute top-full left-0 mt-2 p-2 bg-white dark:bg-gray-800 rounded-lg shadow-lg border border-pink-200 dark:border-pink-500/40 z-20 w-36">
+            <div className="text-xs font-semibold text-gray-500 dark:text-gray-400 mb-2 px-1">
+              배경 색상
+            </div>
+            <div className="grid grid-cols-3 gap-1">
+              {HIGHLIGHT_COLORS.map((color) => (
+                <button
+                  key={color.value || 'none'}
+                  onClick={() => {
+                    if (color.value) {
+                      editor.chain().focus().toggleHighlight({ color: color.value }).run();
+                    } else {
+                      editor.chain().focus().unsetHighlight().run();
+                    }
+                    setShowHighlightPicker(false);
+                  }}
+                  className="w-8 h-8 rounded border-2 hover:scale-110 transition-transform flex items-center justify-center"
+                  style={{
+                    backgroundColor: color.color,
+                    borderColor: color.border || '#e5e7eb'
+                  }}
+                  title={color.label}
+                >
+                  {!color.value && (
+                    <svg className="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                    </svg>
+                  )}
+                </button>
+              ))}
+            </div>
           </div>
         )}
       </div>
@@ -356,21 +522,65 @@ export default function EditorToolbar({ editor, onSave, onCancel }: EditorToolba
           </svg>
         </ToolbarButton>
         {showImageInput && (
-          <div className="absolute top-full left-0 mt-2 p-2 bg-white dark:bg-gray-800 rounded-lg shadow-lg border border-pink-200 dark:border-pink-500/40 z-20">
-            <input
-              type="url"
-              value={imageUrl}
-              onChange={(e) => setImageUrl(e.target.value)}
-              placeholder="이미지 URL 입력..."
-              className="px-2 py-1 border border-gray-300 dark:border-gray-600 rounded text-sm w-48"
-              onKeyDown={(e) => e.key === 'Enter' && addImage()}
-            />
-            <button
-              onClick={addImage}
-              className="ml-2 px-2 py-1 bg-pink-500 text-white rounded text-sm hover:bg-pink-600"
-            >
-              확인
-            </button>
+          <div className="absolute top-full left-0 mt-2 p-3 bg-white dark:bg-gray-800 rounded-lg shadow-lg border border-pink-200 dark:border-pink-500/40 z-20 w-64">
+            {/* File Upload */}
+            <div className="mb-3">
+              <label className="block text-xs font-semibold text-gray-500 dark:text-gray-400 mb-1">
+                파일 업로드
+              </label>
+              <input
+                ref={fileInputRef}
+                type="file"
+                accept="image/*"
+                onChange={handleFileUpload}
+                disabled={isUploading}
+                className="hidden"
+                id="image-upload"
+              />
+              <button
+                onClick={() => fileInputRef.current?.click()}
+                disabled={isUploading}
+                className="w-full px-3 py-2 border-2 border-dashed border-gray-300 dark:border-gray-600 rounded-lg text-sm hover:border-pink-400 dark:hover:border-pink-500 transition-colors flex items-center justify-center gap-2 disabled:opacity-50"
+              >
+                {isUploading ? (
+                  <>
+                    <span className="animate-spin w-4 h-4 border-2 border-pink-500 border-t-transparent rounded-full"></span>
+                    업로드 중...
+                  </>
+                ) : (
+                  <>
+                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" />
+                    </svg>
+                    이미지 선택
+                  </>
+                )}
+              </button>
+              <p className="text-xs text-gray-400 mt-1">최대 10MB (JPEG, PNG, GIF, WebP)</p>
+            </div>
+
+            {/* URL Input */}
+            <div>
+              <label className="block text-xs font-semibold text-gray-500 dark:text-gray-400 mb-1">
+                또는 URL 입력
+              </label>
+              <div className="flex gap-1">
+                <input
+                  type="url"
+                  value={imageUrl}
+                  onChange={(e) => setImageUrl(e.target.value)}
+                  placeholder="이미지 URL..."
+                  className="flex-1 px-2 py-1 border border-gray-300 dark:border-gray-600 rounded text-sm"
+                  onKeyDown={(e) => e.key === 'Enter' && addImage()}
+                />
+                <button
+                  onClick={addImage}
+                  className="px-2 py-1 bg-pink-500 text-white rounded text-sm hover:bg-pink-600"
+                >
+                  확인
+                </button>
+              </div>
+            </div>
           </div>
         )}
       </div>

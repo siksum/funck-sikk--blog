@@ -13,7 +13,11 @@ import { TaskItem } from '@tiptap/extension-task-item';
 import { Placeholder } from '@tiptap/extension-placeholder';
 import { CodeBlockLowlight } from '@tiptap/extension-code-block-lowlight';
 import { Youtube } from '@tiptap/extension-youtube';
+import { TextStyle } from '@tiptap/extension-text-style';
+import { Color } from '@tiptap/extension-color';
+import { Highlight } from '@tiptap/extension-highlight';
 import { common, createLowlight } from 'lowlight';
+import solidity from 'highlight.js/lib/languages/solidity';
 import { Markdown } from 'tiptap-markdown';
 import { useCallback, useEffect, useState } from 'react';
 import EditorToolbar from './menus/EditorToolbar';
@@ -22,6 +26,7 @@ import { Callout, MermaidBlock, PrivateBlock, SelectBlock } from './extensions';
 import './styles/editor.css';
 
 const lowlight = createLowlight(common);
+lowlight.register('solidity', solidity);
 
 interface TipTapEditorProps {
   content: string;
@@ -79,6 +84,11 @@ export default function TipTapEditor({
         HTMLAttributes: {
           class: 'youtube-wrapper',
         },
+      }),
+      TextStyle,
+      Color,
+      Highlight.configure({
+        multicolor: true,
       }),
       Callout,
       MermaidBlock,
