@@ -1499,6 +1499,13 @@ export default function MyWorldDashboard() {
     const headacheCount = filteredEntries.filter(e => e.headache).length;
     const periodCount = filteredEntries.filter(e => e.period).length;
 
+    // Condition stats
+    const conditionStats = {
+      good: filteredEntries.filter(e => e.condition === '좋음').length,
+      normal: filteredEntries.filter(e => e.condition === '보통').length,
+      bad: filteredEntries.filter(e => e.condition === '나쁨').length,
+    };
+
     // Emotion averages
     const emotions = {
       joy: 0,
@@ -1529,6 +1536,7 @@ export default function MyWorldDashboard() {
       medicineCount,
       headacheCount,
       periodCount,
+      conditionStats,
       emotions,
     };
   }, [allDailyEntries, statsPeriod]);
@@ -3466,6 +3474,28 @@ export default function MyWorldDashboard() {
                   <p className="text-xs text-indigo-600 dark:text-indigo-400">😴 수면</p>
                   <p className="text-lg font-bold text-indigo-700 dark:text-indigo-300">
                     {detailedStats.avgSleep.toFixed(1)}h
+                  </p>
+                </div>
+              </div>
+
+              {/* Condition Stats */}
+              <div className="grid grid-cols-3 gap-3">
+                <div className="bg-emerald-50 dark:bg-emerald-900/20 p-3 rounded-xl text-center">
+                  <p className="text-xs text-emerald-600 dark:text-emerald-400">💪 좋음</p>
+                  <p className="text-lg font-bold text-emerald-700 dark:text-emerald-300">
+                    {detailedStats.conditionStats.good}일
+                  </p>
+                </div>
+                <div className="bg-amber-50 dark:bg-amber-900/20 p-3 rounded-xl text-center">
+                  <p className="text-xs text-amber-600 dark:text-amber-400">😐 보통</p>
+                  <p className="text-lg font-bold text-amber-700 dark:text-amber-300">
+                    {detailedStats.conditionStats.normal}일
+                  </p>
+                </div>
+                <div className="bg-rose-50 dark:bg-rose-900/20 p-3 rounded-xl text-center">
+                  <p className="text-xs text-rose-600 dark:text-rose-400">😞 나쁨</p>
+                  <p className="text-lg font-bold text-rose-700 dark:text-rose-300">
+                    {detailedStats.conditionStats.bad}일
                   </p>
                 </div>
               </div>
