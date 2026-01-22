@@ -2680,9 +2680,9 @@ export default function MyWorldDashboard() {
                   })}
                 </div>
                 {/* Multi-day event bars overlay - hidden on mobile */}
-                <div className="absolute top-0 left-0 right-0 pointer-events-none grid-cols-8 hidden sm:grid" style={{ overflow: 'clip' }}>
-                  <div className="w-14"></div>
-                  <div className="col-span-7 relative" style={{ overflow: 'clip' }}>
+                <div className="absolute inset-0 pointer-events-none hidden sm:flex" style={{ overflow: 'clip' }}>
+                  <div className="w-14 flex-shrink-0"></div>
+                  <div className="flex-1 relative" style={{ overflow: 'clip' }}>
                     {getWeeklyMultiDayEventBars.map((bar, barIndex) => {
                       const colWidth = 100 / 7;
                       const maxSpan = 7 - bar.startCol;
