@@ -3455,7 +3455,7 @@ export default function MyWorldDashboard() {
           ) : detailedStats ? (
             <div className="space-y-4">
               {/* Basic Stats */}
-              <div className="grid grid-cols-4 gap-3">
+              <div className="grid grid-cols-2 gap-3">
                 <div className="bg-gray-50 dark:bg-gray-700/50 p-3 rounded-xl text-center">
                   <p className="text-xs text-gray-500 dark:text-gray-400">기록</p>
                   <p className="text-lg font-bold text-gray-900 dark:text-white">
@@ -3466,18 +3466,6 @@ export default function MyWorldDashboard() {
                   <p className="text-xs text-indigo-600 dark:text-indigo-400">😴 수면</p>
                   <p className="text-lg font-bold text-indigo-700 dark:text-indigo-300">
                     {detailedStats.avgSleep.toFixed(1)}h
-                  </p>
-                </div>
-                <div className="bg-green-50 dark:bg-green-900/20 p-3 rounded-xl text-center">
-                  <p className="text-xs text-green-600 dark:text-green-400">💰 소득</p>
-                  <p className="text-lg font-bold text-green-700 dark:text-green-300">
-                    {formatCurrency(detailedStats.totalIncome)}
-                  </p>
-                </div>
-                <div className="bg-orange-50 dark:bg-orange-900/20 p-3 rounded-xl text-center">
-                  <p className="text-xs text-orange-600 dark:text-orange-400">💸 지출</p>
-                  <p className="text-lg font-bold text-orange-700 dark:text-orange-300">
-                    {formatCurrency(detailedStats.totalExpense)}
                   </p>
                 </div>
               </div>
