@@ -270,6 +270,9 @@ export default function SikkDatabasesPage() {
                     </option>
                   ))}
                 </select>
+                <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
+                  하위 카테고리를 선택하면 전체 경로가 저장됩니다
+                </p>
               </div>
             </div>
             <div className="flex justify-end gap-2 mt-6">

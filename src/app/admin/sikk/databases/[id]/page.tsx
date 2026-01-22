@@ -1133,15 +1133,30 @@ export default function DatabaseDetailPage({ params }: DatabasePageProps) {
             <select
               value={database.category || ''}
               onChange={(e) => handleCategoryChange(e.target.value)}
-              className="px-2 py-1 text-xs border border-gray-200 dark:border-gray-700 rounded bg-white dark:bg-gray-900 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-pink-500"
+              className={`px-2 py-1 text-xs border rounded bg-white dark:bg-gray-900 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-pink-500 ${
+                database.category && !categoryOptions.some(opt => opt.value === database.category)
+                  ? 'border-yellow-500 dark:border-yellow-500'
+                  : 'border-gray-200 dark:border-gray-700'
+              }`}
             >
               <option value="">없음</option>
+              {/* Show current value if it doesn't match any option */}
+              {database.category && !categoryOptions.some(opt => opt.value === database.category) && (
+                <option value={database.category} disabled className="text-yellow-600">
+                  ⚠️ {database.category} (잘못된 경로)
+                </option>
+              )}
               {categoryOptions.map((opt) => (
                 <option key={opt.value} value={opt.value}>
                   {opt.label}
                 </option>
               ))}
             </select>
+            {database.category && !categoryOptions.some(opt => opt.value === database.category) && (
+              <span className="text-xs text-yellow-600 dark:text-yellow-500">
+                올바른 카테고리를 선택해 주세요
+              </span>
+            )}
           </div>
         </div>
         <div className="flex gap-2">
