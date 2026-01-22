@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server';
 import { prisma } from '@/lib/db';
 import { auth } from '@/lib/auth';
-import { getAllPosts } from '@/lib/mdx';
+import { getAllPostsAsync } from '@/lib/mdx';
 
 const isDev = process.env.NODE_ENV === 'development';
 
@@ -28,7 +28,7 @@ export async function GET() {
   });
 
   // Get all posts to map slugs to titles and categories
-  const posts = getAllPosts(true);
+  const posts = await getAllPostsAsync(true);
   const postMap = new Map(posts.map(p => [p.slug, { title: p.title, category: p.category }]));
 
   // Group comments by post
