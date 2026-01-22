@@ -23,8 +23,13 @@ export async function GET(request: NextRequest) {
     console.log('[API Calendar] Fetching for userId:', userId, 'year:', year, 'month:', month);
 
     if (year && month) {
-      const monthStart = new Date(parseInt(year), parseInt(month) - 1, 1);
-      const monthEnd = new Date(parseInt(year), parseInt(month), 0, 23, 59, 59);
+      // Use UTC dates to avoid timezone issues
+      const y = parseInt(year);
+      const m = parseInt(month);
+      const monthStart = new Date(Date.UTC(y, m - 1, 1, 0, 0, 0, 0));
+      // Get last day of month by going to day 0 of next month
+      const lastDay = new Date(Date.UTC(y, m, 0)).getUTCDate();
+      const monthEnd = new Date(Date.UTC(y, m - 1, lastDay, 23, 59, 59, 999));
       console.log('[API Calendar] Date range:', monthStart.toISOString(), 'to', monthEnd.toISOString());
       // Fetch events that:
       // 1. Start within the month, OR
