@@ -143,8 +143,20 @@ export default async function SikkPostPage({ params }: SikkPostPageProps) {
             )}
           </div>
 
-          <div className="flex items-center gap-3 mb-4">
+          <div className="flex items-center gap-3 mb-4 flex-wrap">
             <DifficultyBadge level={difficulty} />
+            {/* Status Badge */}
+            {post.status && (
+              <span className={`px-3 py-1 text-xs font-semibold rounded-full border ${
+                post.status === 'completed'
+                  ? 'bg-green-100 dark:bg-green-900/30 text-green-800 dark:text-green-300 border-green-300 dark:border-green-700'
+                  : post.status === 'in_progress'
+                  ? 'bg-blue-100 dark:bg-blue-900/30 text-blue-800 dark:text-blue-300 border-blue-300 dark:border-blue-700'
+                  : 'bg-gray-100 dark:bg-gray-900/30 text-gray-800 dark:text-gray-300 border-gray-300 dark:border-gray-700'
+              }`}>
+                {post.status === 'completed' ? '완료' : post.status === 'in_progress' ? '진행중' : '시작전'}
+              </span>
+            )}
             {isPrivate ? (
               <span className="px-3 py-1 text-xs font-semibold bg-yellow-100 dark:bg-yellow-900/30 text-yellow-800 dark:text-yellow-300 rounded-full border border-yellow-300 dark:border-yellow-700">
                 비공개
@@ -170,17 +182,19 @@ export default async function SikkPostPage({ params }: SikkPostPageProps) {
               </svg>
               {readingTime}분 읽기
             </span>
-            <div className="flex flex-wrap gap-2 lg:hidden">
-              {post.tags.map((tag) => (
-                <span
-                  key={tag}
-                  className="px-2 py-1 rounded"
-                  style={{ backgroundColor: 'var(--tag-bg)', color: 'var(--tag-text)' }}
-                >
-                  #{tag}
-                </span>
-              ))}
-            </div>
+            {post.tags.length > 0 && (
+              <div className="flex flex-wrap gap-2">
+                {post.tags.map((tag) => (
+                  <span
+                    key={tag}
+                    className="px-2 py-1 rounded text-xs"
+                    style={{ backgroundColor: 'var(--tag-bg)', color: 'var(--tag-text)' }}
+                  >
+                    #{tag}
+                  </span>
+                ))}
+              </div>
+            )}
           </div>
         </header>
 
@@ -188,7 +202,19 @@ export default async function SikkPostPage({ params }: SikkPostPageProps) {
         <hr className="mb-8 border-t-2 border-pink-400 dark:border-pink-500" />
 
         {/* Content */}
-        <SikkPostContent content={post.content} slug={post.slug} isAdmin={true} />
+        <SikkPostContent
+          content={post.content}
+          slug={post.slug}
+          isAdmin={true}
+          initialMetadata={{
+            title: post.title,
+            description: post.description || '',
+            date: post.date.split('T')[0],
+            tags: post.tags,
+            status: (post.status as 'not_started' | 'in_progress' | 'completed') || 'not_started',
+            isPublic: post.isPublic,
+          }}
+        />
 
         {/* Post Navigation */}
         <PostNavigation prevPost={prevPost} nextPost={nextPost} basePath="/sikk" variant="pink" />
