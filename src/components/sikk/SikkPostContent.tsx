@@ -22,6 +22,10 @@ interface PostMetadata {
   tags: string[];
   status: 'not_started' | 'in_progress' | 'completed';
   isPublic: boolean;
+  category?: string;
+  thumbnail?: string;
+  thumbnailPosition?: number;
+  thumbnailScale?: number;
 }
 
 interface SikkPostContentProps {
@@ -42,6 +46,10 @@ export default function SikkPostContent({ content, slug, isAdmin, initialMetadat
     tags: [],
     status: 'not_started',
     isPublic: true,
+    category: '',
+    thumbnail: undefined,
+    thumbnailPosition: 50,
+    thumbnailScale: 100,
   });
   const [tagsInput, setTagsInput] = useState(initialMetadata?.tags.join(', ') || '');
 
@@ -65,6 +73,10 @@ export default function SikkPostContent({ content, slug, isAdmin, initialMetadat
           tags: parsedTags,
           status: metadata.status,
           isPublic: metadata.isPublic,
+          category: metadata.category,
+          thumbnail: metadata.thumbnail,
+          thumbnailPosition: metadata.thumbnailPosition,
+          thumbnailScale: metadata.thumbnailScale,
           content: markdown,
         }),
       });
@@ -92,6 +104,10 @@ export default function SikkPostContent({ content, slug, isAdmin, initialMetadat
       tags: [],
       status: 'not_started',
       isPublic: true,
+      category: '',
+      thumbnail: undefined,
+      thumbnailPosition: 50,
+      thumbnailScale: 100,
     });
     setTagsInput(initialMetadata?.tags.join(', ') || '');
     setCurrentContent(content);
