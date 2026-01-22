@@ -18,38 +18,46 @@ export async function GET(request: NextRequest) {
 
   try {
     const userId = session?.user?.id || 'dev-user';
-    const where: any = { userId };
+    let where: any = { userId };
 
     if (year && month) {
       const monthStart = new Date(parseInt(year), parseInt(month) - 1, 1);
       const monthEnd = new Date(parseInt(year), parseInt(month), 0, 23, 59, 59);
       // Fetch events that:
       // 1. Start within the month, OR
-      // 2. End within the month, OR
-      // 3. Span the entire month (start before, end after)
-      where.OR = [
-        // Event starts within the month
-        {
-          date: {
-            gte: monthStart,
-            lte: monthEnd,
+      // 2. End within the month (for multi-day events), OR
+      // 3. Span the entire month (start before, end after), OR
+      // 4. Single-day events (endDate is null) that match the date
+      where = {
+        AND: [
+          { userId },
+          {
+            OR: [
+              // Event starts within the month
+              {
+                date: {
+                  gte: monthStart,
+                  lte: monthEnd,
+                },
+              },
+              // Event ends within the month (multi-day events starting before)
+              {
+                endDate: {
+                  gte: monthStart,
+                  lte: monthEnd,
+                },
+              },
+              // Event spans the entire month
+              {
+                AND: [
+                  { date: { lt: monthStart } },
+                  { endDate: { gt: monthEnd } },
+                ],
+              },
+            ],
           },
-        },
-        // Event ends within the month (multi-day events starting before)
-        {
-          endDate: {
-            gte: monthStart,
-            lte: monthEnd,
-          },
-        },
-        // Event spans the entire month
-        {
-          AND: [
-            { date: { lt: monthStart } },
-            { endDate: { gt: monthEnd } },
-          ],
-        },
-      ];
+        ],
+      };
     }
 
     const events = await prisma.calendarEvent.findMany({
