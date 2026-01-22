@@ -1,12 +1,12 @@
 import { notFound, redirect } from 'next/navigation';
 import Link from 'next/link';
 import { getSikkPostBySlugAsync, getAllSikkPostsAsync, getRelatedSikkPostsAsync, getAdjacentSikkPostsAsync, getSikkRootCategoriesAsync, getSikkSectionsAsync } from '@/lib/sikk';
-import MDXContent from '@/components/mdx/MDXContent';
 import ReadingProgressBar from '@/components/blog/ReadingProgressBar';
 import PostNavigation from '@/components/blog/PostNavigation';
 import FloatingActions from '@/components/blog/FloatingActions';
 import DifficultyBadge from '@/components/blog/DifficultyBadge';
 import SikkPostLayout from '@/components/sikk/SikkPostLayout';
+import SikkPostContent from '@/components/sikk/SikkPostContent';
 import ShareButton from '@/components/sikk/ShareButton';
 import { auth } from '@/lib/auth';
 
@@ -188,7 +188,7 @@ export default async function SikkPostPage({ params }: SikkPostPageProps) {
         <hr className="mb-8 border-t-2 border-pink-400 dark:border-pink-500" />
 
         {/* Content */}
-        <MDXContent content={post.content} />
+        <SikkPostContent content={post.content} slug={post.slug} isAdmin={true} />
 
         {/* Post Navigation */}
         <PostNavigation prevPost={prevPost} nextPost={nextPost} basePath="/sikk" variant="pink" />
