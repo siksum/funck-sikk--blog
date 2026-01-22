@@ -255,6 +255,7 @@ export default function MyWorldDashboard() {
   const [newPersonalTodo, setNewPersonalTodo] = useState('');
   const [newResearchTodo, setNewResearchTodo] = useState('');
   const [editingTodo, setEditingTodo] = useState<{ id: string; content: string; category: 'personal' | 'research' } | null>(null);
+  const [draggingTodoId, setDraggingTodoId] = useState<string | null>(null);
 
   // Daily list view state
   const [showDailyList, setShowDailyList] = useState(false);
@@ -615,6 +616,64 @@ export default function MyWorldDashboard() {
     } catch (error) {
       console.error('Failed to update todo:', error);
     }
+  };
+
+  const reorderTodos = async (category: 'personal' | 'research', fromIndex: number, toIndex: number) => {
+    const todos = category === 'personal' ? [...personalTodos] : [...researchTodos];
+    const setTodos = category === 'personal' ? setPersonalTodos : setResearchTodos;
+
+    // Move the item in the array
+    const [movedItem] = todos.splice(fromIndex, 1);
+    todos.splice(toIndex, 0, movedItem);
+
+    // Update the order field for all items
+    const updatedTodos = todos.map((todo, index) => ({ ...todo, order: index }));
+    setTodos(updatedTodos);
+
+    // Update the order in the database for affected items
+    try {
+      await Promise.all(
+        updatedTodos.map((todo, index) =>
+          fetch(`/api/my-world/todos/${todo.id}`, {
+            method: 'PATCH',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ order: index }),
+          })
+        )
+      );
+    } catch (error) {
+      console.error('Failed to reorder todos:', error);
+      // Refetch to restore correct order
+      fetchTodos(todoDate);
+    }
+  };
+
+  const handleTodoDragStart = (e: React.DragEvent, todoId: string) => {
+    setDraggingTodoId(todoId);
+    e.dataTransfer.effectAllowed = 'move';
+  };
+
+  const handleTodoDragOver = (e: React.DragEvent) => {
+    e.preventDefault();
+    e.dataTransfer.dropEffect = 'move';
+  };
+
+  const handleTodoDrop = (e: React.DragEvent, targetTodoId: string, category: 'personal' | 'research') => {
+    e.preventDefault();
+    if (!draggingTodoId || draggingTodoId === targetTodoId) {
+      setDraggingTodoId(null);
+      return;
+    }
+
+    const todos = category === 'personal' ? personalTodos : researchTodos;
+    const fromIndex = todos.findIndex(t => t.id === draggingTodoId);
+    const toIndex = todos.findIndex(t => t.id === targetTodoId);
+
+    if (fromIndex !== -1 && toIndex !== -1) {
+      reorderTodos(category, fromIndex, toIndex);
+    }
+
+    setDraggingTodoId(null);
   };
 
   const handleSaveDaily = async () => {
@@ -1730,16 +1789,34 @@ export default function MyWorldDashboard() {
               추가
             </button>
           </form>
-          <div className="space-y-2 max-h-[200px] overflow-y-auto">
+          <div className="space-y-1 max-h-[200px] overflow-y-auto">
             {personalTodos.map((todo) => {
               const status = todo.status || 'not_started';
               const statusConfig = todoStatusConfig[status];
               const isEditing = editingTodo?.id === todo.id;
+              const isDragging = draggingTodoId === todo.id;
               return (
                 <div
                   key={todo.id}
-                  className={`flex items-center gap-2 group ${status === 'completed' ? 'opacity-60' : ''}`}
+                  draggable={!isEditing}
+                  onDragStart={(e) => handleTodoDragStart(e, todo.id)}
+                  onDragOver={handleTodoDragOver}
+                  onDrop={(e) => handleTodoDrop(e, todo.id, 'personal')}
+                  onDragEnd={() => setDraggingTodoId(null)}
+                  className={`flex items-center gap-2 group rounded-lg px-1 py-0.5 transition-all ${
+                    status === 'completed' ? 'opacity-60' : ''
+                  } ${isDragging ? 'opacity-50 bg-violet-100 dark:bg-violet-900/30' : ''} ${
+                    !isEditing ? 'cursor-grab active:cursor-grabbing hover:bg-gray-50 dark:hover:bg-gray-700/50' : ''
+                  }`}
                 >
+                  <svg className="w-3 h-3 text-gray-300 dark:text-gray-600 flex-shrink-0" fill="currentColor" viewBox="0 0 24 24">
+                    <circle cx="5" cy="6" r="2" />
+                    <circle cx="12" cy="6" r="2" />
+                    <circle cx="5" cy="12" r="2" />
+                    <circle cx="12" cy="12" r="2" />
+                    <circle cx="5" cy="18" r="2" />
+                    <circle cx="12" cy="18" r="2" />
+                  </svg>
                   <button
                     onClick={() => cycleStatus(todo.id, status, 'personal')}
                     className={`px-2 py-0.5 text-xs rounded-full flex-shrink-0 transition-colors ${statusConfig.color}`}
@@ -1771,10 +1848,10 @@ export default function MyWorldDashboard() {
                   ) : (
                     <span
                       onClick={() => setEditingTodo({ id: todo.id, content: todo.content, category: 'personal' })}
-                      className={`flex-1 text-sm cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-700 px-1 rounded ${status === 'completed' ? 'line-through text-gray-400' : 'text-gray-700 dark:text-gray-300'}`}
+                      className={`flex-1 text-sm cursor-pointer px-1 rounded ${status === 'completed' ? 'line-through text-gray-400' : 'text-gray-700 dark:text-gray-300'}`}
                       title="클릭하여 수정"
                     >
-                      • {todo.content}
+                      {todo.content}
                     </span>
                   )}
                   {!isEditing && (
@@ -1824,16 +1901,34 @@ export default function MyWorldDashboard() {
               추가
             </button>
           </form>
-          <div className="space-y-2 max-h-[200px] overflow-y-auto">
+          <div className="space-y-1 max-h-[200px] overflow-y-auto">
             {researchTodos.map((todo) => {
               const status = todo.status || 'not_started';
               const statusConfig = todoStatusConfig[status];
               const isEditing = editingTodo?.id === todo.id;
+              const isDragging = draggingTodoId === todo.id;
               return (
                 <div
                   key={todo.id}
-                  className={`flex items-center gap-2 group ${status === 'completed' ? 'opacity-60' : ''}`}
+                  draggable={!isEditing}
+                  onDragStart={(e) => handleTodoDragStart(e, todo.id)}
+                  onDragOver={handleTodoDragOver}
+                  onDrop={(e) => handleTodoDrop(e, todo.id, 'research')}
+                  onDragEnd={() => setDraggingTodoId(null)}
+                  className={`flex items-center gap-2 group rounded-lg px-1 py-0.5 transition-all ${
+                    status === 'completed' ? 'opacity-60' : ''
+                  } ${isDragging ? 'opacity-50 bg-pink-100 dark:bg-pink-900/30' : ''} ${
+                    !isEditing ? 'cursor-grab active:cursor-grabbing hover:bg-gray-50 dark:hover:bg-gray-700/50' : ''
+                  }`}
                 >
+                  <svg className="w-3 h-3 text-gray-300 dark:text-gray-600 flex-shrink-0" fill="currentColor" viewBox="0 0 24 24">
+                    <circle cx="5" cy="6" r="2" />
+                    <circle cx="12" cy="6" r="2" />
+                    <circle cx="5" cy="12" r="2" />
+                    <circle cx="12" cy="12" r="2" />
+                    <circle cx="5" cy="18" r="2" />
+                    <circle cx="12" cy="18" r="2" />
+                  </svg>
                   <button
                     onClick={() => cycleStatus(todo.id, status, 'research')}
                     className={`px-2 py-0.5 text-xs rounded-full flex-shrink-0 transition-colors ${statusConfig.color}`}
@@ -1865,10 +1960,10 @@ export default function MyWorldDashboard() {
                   ) : (
                     <span
                       onClick={() => setEditingTodo({ id: todo.id, content: todo.content, category: 'research' })}
-                      className={`flex-1 text-sm cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-700 px-1 rounded ${status === 'completed' ? 'line-through text-gray-400' : 'text-gray-700 dark:text-gray-300'}`}
+                      className={`flex-1 text-sm cursor-pointer px-1 rounded ${status === 'completed' ? 'line-through text-gray-400' : 'text-gray-700 dark:text-gray-300'}`}
                       title="클릭하여 수정"
                     >
-                      • {todo.content}
+                      {todo.content}
                     </span>
                   )}
                   {!isEditing && (
