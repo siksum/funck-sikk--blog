@@ -25,6 +25,7 @@ interface DatabaseTableViewProps {
   columns: Column[];
   items: Item[];
   isAdmin: boolean;
+  categorySlugPath?: string[];
 }
 
 export default function DatabaseTableView({
@@ -33,6 +34,7 @@ export default function DatabaseTableView({
   columns,
   items: initialItems,
   isAdmin,
+  categorySlugPath,
 }: DatabaseTableViewProps) {
   const router = useRouter();
   const [items, setItems] = useState(initialItems);
@@ -233,9 +235,14 @@ export default function DatabaseTableView({
     }
 
     if (column.type === 'title') {
+      // Generate item URL based on whether we have a category path
+      const itemHref = categorySlugPath
+        ? `/sikk/category/${categorySlugPath.map(s => encodeURIComponent(s)).join('/')}/db/${databaseSlug}/${item.id}`
+        : `/sikk/db/${databaseSlug}/${item.id}`;
+
       return (
         <Link
-          href={`/sikk/db/${databaseSlug}/${item.id}`}
+          href={itemHref}
           className="text-gray-900 dark:text-white hover:text-pink-600 dark:hover:text-pink-400 font-medium flex items-center gap-2"
         >
           <svg className="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">

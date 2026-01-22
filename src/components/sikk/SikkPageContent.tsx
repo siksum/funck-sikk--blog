@@ -3,7 +3,6 @@
 import { useState, useMemo } from 'react';
 import { Post, Category } from '@/types';
 import SikkCategoryCard from '@/components/sikk/SikkCategoryCard';
-import SikkDatabaseCard from '@/components/sikk/SikkDatabaseCard';
 import SikkSidebar from '@/components/sikk/SikkSidebar';
 
 interface CategoryWithTags {
@@ -27,34 +26,13 @@ interface DBSikkSection {
   categories: DBSikkCategory[];
 }
 
-interface SikkDatabase {
-  id: string;
-  title: string;
-  description: string | null;
-  slug: string;
-  category: string | null;
-  _count: {
-    items: number;
-  };
-}
-
 interface SikkPageContentProps {
   rootCategoriesWithTags: CategoryWithTags[];
   recentPosts: Post[];
   categories: Category[];
   tags: { name: string; count: number }[];
   sections: DBSikkSection[];
-  databases: SikkDatabase[];
 }
-
-// Fallback config for when no sections are configured in DB
-const FALLBACK_SECTION_CONFIG = [
-  {
-    title: '학습 자료',
-    description: '개인 학습 및 공부 자료',
-    categoryNames: [] as string[],
-  },
-];
 
 export default function SikkPageContent({
   rootCategoriesWithTags,
@@ -62,30 +40,8 @@ export default function SikkPageContent({
   categories,
   tags,
   sections,
-  databases,
 }: SikkPageContentProps) {
   const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
-
-  // Group databases by their root category
-  const databasesByCategory = useMemo(() => {
-    const map: Record<string, SikkDatabase[]> = {};
-    databases.forEach((db) => {
-      if (db.category) {
-        // Get the root category (first part of the path)
-        const rootCategory = db.category.split('/')[0];
-        if (!map[rootCategory]) {
-          map[rootCategory] = [];
-        }
-        map[rootCategory].push(db);
-      }
-    });
-    return map;
-  }, [databases]);
-
-  // Databases without category
-  const uncategorizedDatabases = useMemo(() => {
-    return databases.filter((db) => !db.category);
-  }, [databases]);
 
   const groupedCategories = useMemo(() => {
     // If we have DB sections with categories assigned, use them
@@ -129,7 +85,7 @@ export default function SikkPageContent({
     }];
   }, [rootCategoriesWithTags, sections]);
 
-  const renderCategoryCards = (sectionCategories: CategoryWithTags[], sectionDatabases: SikkDatabase[]) => {
+  const renderCategoryCards = (sectionCategories: CategoryWithTags[]) => {
     if (viewMode === 'list') {
       return (
         <div className="space-y-3">
@@ -140,17 +96,6 @@ export default function SikkPageContent({
               count={category.count}
               tags={category.tags}
               slugPath={category.slugPath}
-              variant="list"
-            />
-          ))}
-          {sectionDatabases.map((db) => (
-            <SikkDatabaseCard
-              key={db.id}
-              id={db.id}
-              title={db.title}
-              description={db.description}
-              slug={db.slug}
-              itemCount={db._count.items}
               variant="list"
             />
           ))}
@@ -167,16 +112,6 @@ export default function SikkPageContent({
             count={category.count}
             tags={category.tags}
             slugPath={category.slugPath}
-          />
-        ))}
-        {sectionDatabases.map((db) => (
-          <SikkDatabaseCard
-            key={db.id}
-            id={db.id}
-            title={db.title}
-            description={db.description}
-            slug={db.slug}
-            itemCount={db._count.items}
           />
         ))}
       </div>
@@ -262,51 +197,27 @@ export default function SikkPageContent({
 
           {/* Main Content - Category Sections */}
           <div className="lg:col-span-3 lg:order-last space-y-16">
-            {groupedCategories.map(({ section, categories: sectionCategories }) => {
-              // Get databases for this section's categories
-              const sectionDatabases = section.categoryNames.flatMap(
-                (catName) => databasesByCategory[catName] || []
-              );
-              const hasContent = sectionCategories.length > 0 || sectionDatabases.length > 0;
-
-              return (
-                <section key={section.title}>
-                  <div className="mb-8">
-                    <h2 className="text-3xl md:text-4xl font-extrabold mb-2 text-transparent bg-clip-text bg-gradient-to-r from-pink-600 to-rose-500 dark:from-pink-300 dark:to-rose-400">
-                      {section.title}
-                    </h2>
-                    {section.description && (
-                      <p className="text-sm mb-2" style={{ color: 'var(--foreground-muted)' }}>
-                        {section.description}
-                      </p>
-                    )}
-                    {!hasContent && (
-                      <p className="text-sm mb-4" style={{ color: 'var(--foreground-muted)' }}>
-                        아직 등록된 카테고리가 없습니다.
-                      </p>
-                    )}
-                    <div className="border-b-2 border-pink-300 dark:border-pink-500" />
-                  </div>
-                  {hasContent && renderCategoryCards(sectionCategories, sectionDatabases)}
-                </section>
-              );
-            })}
-
-            {/* Uncategorized Databases Section */}
-            {uncategorizedDatabases.length > 0 && (
-              <section>
+            {groupedCategories.map(({ section, categories: sectionCategories }) => (
+              <section key={section.title}>
                 <div className="mb-8">
-                  <h2 className="text-3xl md:text-4xl font-extrabold mb-2 text-transparent bg-clip-text bg-gradient-to-r from-purple-600 to-violet-500 dark:from-purple-300 dark:to-violet-400">
-                    데이터베이스
+                  <h2 className="text-3xl md:text-4xl font-extrabold mb-2 text-transparent bg-clip-text bg-gradient-to-r from-pink-600 to-rose-500 dark:from-pink-300 dark:to-rose-400">
+                    {section.title}
                   </h2>
-                  <p className="text-sm mb-2" style={{ color: 'var(--foreground-muted)' }}>
-                    카테고리가 지정되지 않은 데이터베이스
-                  </p>
-                  <div className="border-b-2 border-purple-300 dark:border-purple-500" />
+                  {section.description && (
+                    <p className="text-sm mb-2" style={{ color: 'var(--foreground-muted)' }}>
+                      {section.description}
+                    </p>
+                  )}
+                  {sectionCategories.length === 0 && (
+                    <p className="text-sm mb-4" style={{ color: 'var(--foreground-muted)' }}>
+                      아직 등록된 카테고리가 없습니다.
+                    </p>
+                  )}
+                  <div className="border-b-2 border-pink-300 dark:border-pink-500" />
                 </div>
-                {renderCategoryCards([], uncategorizedDatabases)}
+                {sectionCategories.length > 0 && renderCategoryCards(sectionCategories)}
               </section>
-            )}
+            ))}
           </div>
         </div>
       </div>

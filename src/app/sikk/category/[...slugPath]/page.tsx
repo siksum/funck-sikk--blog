@@ -36,6 +36,27 @@ async function getSikkSections() {
   }
 }
 
+async function getDatabasesByCategory(categoryPath: string) {
+  try {
+    const databases = await prisma.sikkDatabase.findMany({
+      where: {
+        category: categoryPath,
+        isPublic: true,
+      },
+      orderBy: { createdAt: 'desc' },
+      include: {
+        _count: {
+          select: { items: true },
+        },
+      },
+    });
+    return databases;
+  } catch (error) {
+    console.error('Failed to fetch databases:', error);
+    return [];
+  }
+}
+
 export async function generateMetadata({ params }: CategoryPageProps) {
   const { slugPath } = await params;
   const category = await getSikkCategoryBySlugPathAsync(slugPath);
@@ -73,13 +94,17 @@ export default async function SikkCategoryPage({ params }: CategoryPageProps) {
     notFound();
   }
 
-  const [childCategories, directPosts, allPosts, categories, tags, sections] = await Promise.all([
+  // Build the category path string (e.g., "성신여자대학교/1번")
+  const categoryPathString = category.path.join('/');
+
+  const [childCategories, directPosts, allPosts, categories, tags, sections, databases] = await Promise.all([
     getSikkChildCategoriesWithTagsAsync(slugPath),
     getSikkPostsByCategoryPathAsync(slugPath, false),
     getSikkPostsByCategoryPathAsync(slugPath, true),
     getSikkRootCategoriesAsync(),
     getAllSikkTagsAsync(),
     getSikkSections(),
+    getDatabasesByCategory(categoryPathString),
   ]);
 
   return (
@@ -95,6 +120,7 @@ export default async function SikkCategoryPage({ params }: CategoryPageProps) {
       categories={categories}
       tags={tags}
       sections={sections}
+      databases={databases}
     />
   );
 }

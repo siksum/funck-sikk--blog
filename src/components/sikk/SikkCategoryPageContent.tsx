@@ -4,6 +4,7 @@ import { useState, useMemo } from 'react';
 import Link from 'next/link';
 import { Post, Category } from '@/types';
 import SikkCategoryCard from '@/components/sikk/SikkCategoryCard';
+import SikkDatabaseCard from '@/components/sikk/SikkDatabaseCard';
 import SikkSidebar from '@/components/sikk/SikkSidebar';
 import SikkPostCard from '@/components/sikk/SikkPostCard';
 
@@ -22,6 +23,17 @@ interface DBSikkSection {
   categories: { id: string; name: string; slug: string }[];
 }
 
+interface SikkDatabase {
+  id: string;
+  title: string;
+  description: string | null;
+  slug: string;
+  category: string | null;
+  _count: {
+    items: number;
+  };
+}
+
 interface SikkCategoryPageContentProps {
   category: {
     name: string;
@@ -34,6 +46,7 @@ interface SikkCategoryPageContentProps {
   categories: Category[];
   tags: { name: string; count: number }[];
   sections?: DBSikkSection[];
+  databases?: SikkDatabase[];
 }
 
 export default function SikkCategoryPageContent({
@@ -44,6 +57,7 @@ export default function SikkCategoryPageContent({
   categories,
   tags,
   sections,
+  databases = [],
 }: SikkCategoryPageContentProps) {
   const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
   const [searchTerm, setSearchTerm] = useState('');
@@ -233,6 +247,52 @@ export default function SikkCategoryPageContent({
               </section>
             )}
 
+            {/* Databases in this category */}
+            {databases.length > 0 && (
+              <section className="mb-12">
+                <div className="flex items-center justify-between mb-6 pb-4 border-b-2 border-purple-300 dark:border-purple-500">
+                  <div>
+                    <h2 className="text-3xl md:text-4xl font-extrabold mb-2 text-transparent bg-clip-text bg-gradient-to-r from-purple-600 to-violet-500 dark:from-purple-300 dark:to-violet-400">
+                      데이터베이스
+                    </h2>
+                    <p className="text-sm" style={{ color: 'var(--foreground-muted)' }}>
+                      {databases.length}개의 데이터베이스
+                    </p>
+                  </div>
+                </div>
+                {viewMode === 'list' ? (
+                  <div className="space-y-3">
+                    {databases.map((db) => (
+                      <SikkDatabaseCard
+                        key={db.id}
+                        id={db.id}
+                        title={db.title}
+                        description={db.description}
+                        slug={db.slug}
+                        itemCount={db._count.items}
+                        categorySlugPath={category.slugPath}
+                        variant="list"
+                      />
+                    ))}
+                  </div>
+                ) : (
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    {databases.map((db) => (
+                      <SikkDatabaseCard
+                        key={db.id}
+                        id={db.id}
+                        title={db.title}
+                        description={db.description}
+                        slug={db.slug}
+                        itemCount={db._count.items}
+                        categorySlugPath={category.slugPath}
+                      />
+                    ))}
+                  </div>
+                )}
+              </section>
+            )}
+
             {/* Posts in this category */}
             {directPosts.length > 0 && (
               <section>
@@ -383,12 +443,12 @@ export default function SikkCategoryPageContent({
               </section>
             )}
 
-            {directPosts.length === 0 && childCategories.length === 0 && (
+            {directPosts.length === 0 && childCategories.length === 0 && databases.length === 0 && (
               <p
                 className="text-center py-12"
                 style={{ color: 'var(--foreground-muted)' }}
               >
-                이 카테고리에 포스트가 없습니다.
+                이 카테고리에 콘텐츠가 없습니다.
               </p>
             )}
           </div>
