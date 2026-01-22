@@ -1061,12 +1061,24 @@ export default function DatabaseDetailPage({ params }: DatabasePageProps) {
 
     if (column.type === 'title') {
       return (
-        <Link
-          href={`/admin/sikk/databases/${id}/items/${item.id}`}
-          className="text-gray-900 dark:text-white hover:text-pink-600 dark:hover:text-pink-400 font-medium"
-        >
-          {String(value || '제목 없음')}
-        </Link>
+        <div className="relative group">
+          <div className="flex items-center gap-2 text-gray-900 dark:text-white font-medium pr-6">
+            <svg className="w-4 h-4 text-gray-400 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+            </svg>
+            <span>{String(value || '제목 없음')}</span>
+          </div>
+          <Link
+            href={`/admin/sikk/databases/${id}/items/${item.id}`}
+            onClick={(e) => e.stopPropagation()}
+            className="absolute right-0 bottom-0 p-1 text-gray-400 hover:text-pink-500 transition-colors"
+            title="상세 페이지로 이동"
+          >
+            <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
+            </svg>
+          </Link>
+        </div>
       );
     }
 
