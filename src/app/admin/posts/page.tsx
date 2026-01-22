@@ -321,25 +321,29 @@ export default function PostsManagementPage() {
       const mainCategory = parts[0] || '';
       const subCategory = parts[1] || null;
 
-      const matchesCategoryDirect = selectedCategory === 'all' || mainCategory === selectedCategory;
-      const matchesSubcategoryDirect = !selectedSubcategory || subCategory === selectedSubcategory || mainCategory === selectedSubcategory;
-
       const matchesSearch =
         searchTerm === '' ||
         db.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
         db.slug.toLowerCase().includes(searchTerm.toLowerCase());
 
-      // Section filter (same as posts)
-      let matchesSection = true;
+      // Section filter - if section is selected, only show databases in that section's categories
       if (selectedSection) {
         const section = dbSections.find(s => s.id === selectedSection);
         if (section) {
           const sectionCategoryNames = section.categories?.map(c => c.name) || [];
-          matchesSection = sectionCategoryNames.includes(mainCategory);
+          const matchesSection = sectionCategoryNames.includes(mainCategory);
+          if (!matchesSection) return false;
         }
       }
 
-      return (matchesCategoryDirect || matchesSubcategoryDirect) && matchesSearch && matchesSection;
+      // Category filter - only apply if not viewing all and no section is selected
+      if (selectedCategory !== 'all' || selectedSubcategory) {
+        const matchesCategoryDirect = mainCategory === selectedCategory;
+        const matchesSubcategoryDirect = !selectedSubcategory || subCategory === selectedSubcategory || mainCategory === selectedSubcategory;
+        if (!matchesCategoryDirect && !matchesSubcategoryDirect) return false;
+      }
+
+      return matchesSearch;
     });
   }, [databases, selectedCategory, selectedSubcategory, searchTerm, selectedSection, dbSections]);
 
