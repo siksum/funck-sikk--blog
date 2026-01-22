@@ -102,8 +102,8 @@ export const mdxComponents = {
 // Check if content is pure HTML (from TipTap editor)
 function isHtmlContent(content: string): boolean {
   const trimmed = content.trim();
-  // Check if content starts with HTML tags commonly output by TipTap
-  return trimmed.startsWith('<p>') || trimmed.startsWith('<h') || trimmed.startsWith('<div') || trimmed.startsWith('<ul') || trimmed.startsWith('<ol');
+  // Check if content starts with any HTML tag
+  return trimmed.startsWith('<');
 }
 
 export default function MDXContent({ content }: MDXContentProps) {
