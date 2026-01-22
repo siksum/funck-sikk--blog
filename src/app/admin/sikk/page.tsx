@@ -990,7 +990,7 @@ export default function SikkPostsManagementPage() {
         <div className="flex flex-wrap gap-2 w-full sm:w-auto">
           <Link
             href="/admin/sikk/databases"
-            className="flex-1 sm:flex-none px-3 sm:px-4 py-2 text-sm text-center bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors"
+            className="flex-1 sm:flex-none px-3 sm:px-4 py-2 text-sm text-center bg-pink-600 text-white rounded-lg hover:bg-pink-700 transition-colors"
           >
             데이터베이스
           </Link>
@@ -1563,20 +1563,20 @@ export default function SikkPostsManagementPage() {
                       ))}
                         {/* Database rows */}
                         {filteredDatabases.map((db) => (
-                          <tr key={`db-${db.id}`} className="hover:bg-purple-50 dark:hover:bg-purple-900/10 bg-purple-50/30 dark:bg-purple-900/5">
+                          <tr key={`db-${db.id}`} className="hover:bg-pink-50 dark:hover:bg-pink-900/10 bg-pink-50/30 dark:bg-pink-900/5">
                             <td className="px-4 py-4 text-center">
                               {/* No checkbox for databases */}
                             </td>
                             <td className="px-6 py-4">
                               <Link
                                 href={`/admin/sikk/databases/${db.id}`}
-                                className="flex items-center gap-2 hover:text-purple-600 dark:hover:text-purple-400 transition-colors"
+                                className="flex items-center gap-2 hover:text-pink-600 dark:hover:text-pink-400 transition-colors"
                               >
-                                <svg className="w-4 h-4 text-purple-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <svg className="w-4 h-4 text-pink-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 7v10c0 2.21 3.582 4 8 4s8-1.79 8-4V7M4 7c0 2.21 3.582 4 8 4s8-1.79 8-4M4 7c0-2.21 3.582-4 8-4s8 1.79 8 4" />
                                 </svg>
                                 <div>
-                                  <div className="text-sm font-medium text-gray-900 dark:text-white hover:text-purple-600 dark:hover:text-purple-400">
+                                  <div className="text-sm font-medium text-gray-900 dark:text-white hover:text-pink-600 dark:hover:text-pink-400">
                                     {db.title}
                                   </div>
                                   <div className="text-xs text-gray-500 dark:text-gray-400 mt-1">
@@ -1593,7 +1593,7 @@ export default function SikkPostsManagementPage() {
                                     onChange={(e) => handleChangeDatabaseCategory(db, e.target.value)}
                                     onBlur={() => setEditingDbCategoryId(null)}
                                     autoFocus
-                                    className="px-2 py-1 text-xs bg-white dark:bg-gray-800 border border-purple-400 rounded focus:outline-none focus:ring-2 focus:ring-purple-500 text-gray-900 dark:text-white"
+                                    className="px-2 py-1 text-xs bg-white dark:bg-gray-800 border border-pink-400 rounded focus:outline-none focus:ring-2 focus:ring-pink-500 text-gray-900 dark:text-white"
                                   >
                                     <option value="">미분류</option>
                                     {categoryOptions.map((opt) => (
@@ -1606,7 +1606,7 @@ export default function SikkPostsManagementPage() {
                               ) : (
                                 <button
                                   onClick={() => setEditingDbCategoryId(db.id)}
-                                  className="px-2 py-1 text-xs bg-purple-100 dark:bg-purple-900/30 text-purple-800 dark:text-purple-300 rounded border border-purple-200 dark:border-purple-800 hover:bg-purple-200 dark:hover:bg-purple-900/50 hover:border-purple-400 transition-colors cursor-pointer"
+                                  className="px-2 py-1 text-xs bg-pink-100 dark:bg-pink-900/30 text-pink-800 dark:text-pink-300 rounded border border-pink-200 dark:border-pink-800 hover:bg-pink-200 dark:hover:bg-pink-900/50 hover:border-pink-400 transition-colors cursor-pointer"
                                   title="클릭하여 카테고리 변경"
                                 >
                                   {db.category || '미분류'}
@@ -1614,7 +1614,7 @@ export default function SikkPostsManagementPage() {
                               )}
                             </td>
                             <td className="px-6 py-4">
-                              <span className="px-2 py-0.5 text-xs bg-purple-100 dark:bg-purple-900/30 text-purple-600 dark:text-purple-400 rounded">
+                              <span className="px-2 py-0.5 text-xs bg-pink-100 dark:bg-pink-900/30 text-pink-600 dark:text-pink-400 rounded">
                                 데이터베이스
                               </span>
                             </td>
@@ -1640,7 +1640,7 @@ export default function SikkPostsManagementPage() {
                                 </Link>
                                 <Link
                                   href={`/admin/sikk/databases/${db.id}`}
-                                  className="px-2 py-1 text-purple-600 hover:text-purple-900 dark:text-purple-400 dark:hover:text-purple-300 rounded hover:bg-purple-50 dark:hover:bg-purple-900/20"
+                                  className="px-2 py-1 text-pink-600 hover:text-pink-900 dark:text-pink-400 dark:hover:text-pink-300 rounded hover:bg-pink-50 dark:hover:bg-pink-900/20"
                                 >
                                   편집
                                 </Link>
