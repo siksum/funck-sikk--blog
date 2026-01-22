@@ -356,7 +356,22 @@ export async function getSikkChildCategoriesWithTagsAsync(slugPath: string[]): P
   tags: string[];
   slugPath: string[];
 }[]> {
-  const childCategories = await getSikkChildCategoriesAsync(slugPath);
+  // First try to get categories from posts
+  let childCategories = await getSikkChildCategoriesAsync(slugPath);
+
+  // If no categories found from posts, fall back to database
+  if (childCategories.length === 0) {
+    const dbCategories = await getSikkChildCategoriesFromDbAsync(slugPath);
+    childCategories = dbCategories.map((cat) => ({
+      name: cat.name,
+      slug: cat.slug,
+      count: cat.count,
+      path: cat.path,
+      slugPath: cat.slugPath,
+      depth: slugPath.length,
+    }));
+  }
+
   const posts = await getAllSikkPostsAsync();
 
   return childCategories
@@ -371,7 +386,7 @@ export async function getSikkChildCategoriesWithTagsAsync(slugPath: string[]): P
 
       return {
         name: cat.name,
-        count: cat.count,
+        count: categoryPosts.length, // Use actual count from posts
         tags: Array.from(tagSet),
         slugPath: cat.slugPath,
       };
@@ -525,5 +540,74 @@ export async function getSikkCategoryBySlugPathFromDbAsync(slugPath: string[]): 
   } catch (error) {
     console.error('Failed to get SikkCategory by slug path:', error);
     return null;
+  }
+}
+
+// Get child categories from database by parent's slug path
+// This is used when there are no posts in the categories
+export async function getSikkChildCategoriesFromDbAsync(parentSlugPath: string[]): Promise<{
+  name: string;
+  slug: string;
+  path: string[];
+  slugPath: string[];
+  count: number;
+}[]> {
+  if (parentSlugPath.length === 0) {
+    // Return root categories (no parent)
+    try {
+      const rootCategories = await prisma.sikkCategory.findMany({
+        where: { parentId: null },
+        orderBy: { order: 'asc' },
+      });
+      return rootCategories.map((cat) => ({
+        name: cat.name,
+        slug: cat.slug,
+        path: [cat.name],
+        slugPath: [cat.slug],
+        count: 0,
+      }));
+    } catch (error) {
+      console.error('Failed to get root categories:', error);
+      return [];
+    }
+  }
+
+  try {
+    // Find the parent category first
+    let parentId: string | null = null;
+    const pathNames: string[] = [];
+    const pathSlugs: string[] = [];
+
+    for (const slug of parentSlugPath) {
+      const category = await prisma.sikkCategory.findFirst({
+        where: {
+          slug,
+          parentId,
+        },
+      });
+
+      if (!category) return [];
+
+      parentId = category.id;
+      pathNames.push(category.name);
+      pathSlugs.push(category.slug);
+    }
+
+    // Now get all children of this parent
+    const children = await prisma.sikkCategory.findMany({
+      where: { parentId },
+      orderBy: { order: 'asc' },
+    });
+
+    return children.map((child) => ({
+      name: child.name,
+      slug: child.slug,
+      path: [...pathNames, child.name],
+      slugPath: [...pathSlugs, child.slug],
+      count: 0, // No post count from DB
+    }));
+  } catch (error) {
+    console.error('Failed to get child categories from DB:', error);
+    return [];
   }
 }
