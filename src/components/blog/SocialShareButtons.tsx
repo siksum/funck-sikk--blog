@@ -1,17 +1,103 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 
 interface SocialShareButtonsProps {
   title: string;
   url?: string;
+  description?: string;
+  imageUrl?: string;
 }
 
-export default function SocialShareButtons({ title, url }: SocialShareButtonsProps) {
+declare global {
+  interface Window {
+    Kakao: {
+      init: (key: string) => void;
+      isInitialized: () => boolean;
+      Share: {
+        sendDefault: (options: {
+          objectType: string;
+          content: {
+            title: string;
+            description: string;
+            imageUrl: string;
+            link: {
+              mobileWebUrl: string;
+              webUrl: string;
+            };
+          };
+          buttons?: {
+            title: string;
+            link: {
+              mobileWebUrl: string;
+              webUrl: string;
+            };
+          }[];
+        }) => void;
+      };
+    };
+  }
+}
+
+export default function SocialShareButtons({ title, url, description, imageUrl }: SocialShareButtonsProps) {
   const [copied, setCopied] = useState(false);
+  const [kakaoReady, setKakaoReady] = useState(false);
   const shareUrl = url || (typeof window !== 'undefined' ? window.location.href : '');
   const encodedUrl = encodeURIComponent(shareUrl);
   const encodedTitle = encodeURIComponent(title);
+
+  useEffect(() => {
+    // Load Kakao SDK
+    const script = document.createElement('script');
+    script.src = 'https://t1.kakaocdn.net/kakao_js_sdk/2.7.2/kakao.min.js';
+    script.integrity = 'sha384-TiCUE00h649CAMonG018J2ujOgDKW/kVWlChEuu4jK2vxfAAD0eZxzCKakxg55G4';
+    script.crossOrigin = 'anonymous';
+    script.async = true;
+    script.onload = () => {
+      if (window.Kakao && !window.Kakao.isInitialized()) {
+        // Use your Kakao JavaScript Key
+        window.Kakao.init(process.env.NEXT_PUBLIC_KAKAO_JS_KEY || '');
+      }
+      setKakaoReady(true);
+    };
+    document.head.appendChild(script);
+
+    return () => {
+      // Cleanup if needed
+    };
+  }, []);
+
+  const handleKakaoShare = () => {
+    if (!window.Kakao || !window.Kakao.isInitialized()) {
+      // Fallback to clipboard copy
+      navigator.clipboard.writeText(shareUrl).then(() => {
+        alert('카카오톡 SDK가 로드되지 않았습니다. 링크가 복사되었습니다.');
+      });
+      return;
+    }
+
+    window.Kakao.Share.sendDefault({
+      objectType: 'feed',
+      content: {
+        title: title,
+        description: description || '보안을 공부하는 개발자 sikk의 블로그입니다.',
+        imageUrl: imageUrl || `${shareUrl.split('/blog')[0]}/og-image.png`,
+        link: {
+          mobileWebUrl: shareUrl,
+          webUrl: shareUrl,
+        },
+      },
+      buttons: [
+        {
+          title: '글 읽기',
+          link: {
+            mobileWebUrl: shareUrl,
+            webUrl: shareUrl,
+          },
+        },
+      ],
+    });
+  };
 
   const shareLinks = [
     {
@@ -53,19 +139,6 @@ export default function SocialShareButtons({ title, url }: SocialShareButtonsPro
       textColor: 'text-white',
       hoverBg: 'hover:bg-[#004182]',
     },
-    {
-      name: 'KakaoTalk',
-      label: '카카오톡',
-      url: `https://sharer.kakao.com/talk/friends/picker/link?url=${encodedUrl}&text=${encodedTitle}`,
-      icon: (
-        <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
-          <path d="M12 3c5.799 0 10.5 3.664 10.5 8.185 0 4.52-4.701 8.184-10.5 8.184a13.5 13.5 0 0 1-1.727-.11l-4.408 2.883c-.501.265-.678.236-.472-.413l.892-3.678c-2.88-1.46-4.785-3.99-4.785-6.866C1.5 6.665 6.201 3 12 3zm5.907 8.06l1.47-1.424a.472.472 0 0 0-.656-.678l-1.928 1.866V9.282a.472.472 0 0 0-.944 0v2.557a.471.471 0 0 0 0 .222v2.218a.472.472 0 0 0 .944 0v-1.617l.195-.19 1.79 2.065a.472.472 0 0 0 .715-.618l-1.586-1.86zm-8.75 3.439a.472.472 0 0 0 .472-.471V9.753l1.072.002a.472.472 0 1 0 0-.944H6.685a.472.472 0 1 0 0 .944l1.072-.002v4.275a.472.472 0 0 0 .472.471h-.072zm3.763-.09a.473.473 0 0 1-.662.132.473.473 0 0 1-.133-.662l1.298-1.892H11.3a.472.472 0 1 1 0-.943h3.15a.472.472 0 0 1 .393.737l-1.923 2.628z" />
-        </svg>
-      ),
-      bgColor: 'bg-[#FEE500]',
-      textColor: 'text-[#3C1E1E]',
-      hoverBg: 'hover:bg-[#F5DC00]',
-    },
   ];
 
   const handleCopyLink = async () => {
@@ -98,6 +171,17 @@ export default function SocialShareButtons({ title, url }: SocialShareButtonsPro
           <span className="hidden sm:inline">{link.label}</span>
         </a>
       ))}
+      {/* KakaoTalk Button */}
+      <button
+        onClick={handleKakaoShare}
+        className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-[#FEE500] text-[#3C1E1E] hover:bg-[#F5DC00] transition-all duration-200 transform hover:scale-105 hover:shadow-lg font-medium text-sm"
+        aria-label="카카오톡에 공유"
+      >
+        <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
+          <path d="M12 3c5.799 0 10.5 3.664 10.5 8.185 0 4.52-4.701 8.184-10.5 8.184a13.5 13.5 0 0 1-1.727-.11l-4.408 2.883c-.501.265-.678.236-.472-.413l.892-3.678c-2.88-1.46-4.785-3.99-4.785-6.866C1.5 6.665 6.201 3 12 3zm5.907 8.06l1.47-1.424a.472.472 0 0 0-.656-.678l-1.928 1.866V9.282a.472.472 0 0 0-.944 0v2.557a.471.471 0 0 0 0 .222v2.218a.472.472 0 0 0 .944 0v-1.617l.195-.19 1.79 2.065a.472.472 0 0 0 .715-.618l-1.586-1.86zm-8.75 3.439a.472.472 0 0 0 .472-.471V9.753l1.072.002a.472.472 0 1 0 0-.944H6.685a.472.472 0 1 0 0 .944l1.072-.002v4.275a.472.472 0 0 0 .472.471h-.072zm3.763-.09a.473.473 0 0 1-.662.132.473.473 0 0 1-.133-.662l1.298-1.892H11.3a.472.472 0 1 1 0-.943h3.15a.472.472 0 0 1 .393.737l-1.923 2.628z" />
+        </svg>
+        <span className="hidden sm:inline">카카오톡</span>
+      </button>
       <button
         onClick={handleCopyLink}
         className={`

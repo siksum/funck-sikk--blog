@@ -11,7 +11,7 @@ interface AuthorCardProps {
 export default function AuthorCard({
   name = 'sikk',
   bio = '보안을 공부하는 개발자입니다. Web2/Web3 보안과 시스템 해킹에 관심이 많습니다.',
-  avatar = '/avatar.png',
+  avatar = '/profile.jpg',
   github = 'https://github.com/siksum',
   twitter,
 }: AuthorCardProps) {
