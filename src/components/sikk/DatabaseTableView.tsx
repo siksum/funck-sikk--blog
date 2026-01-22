@@ -638,7 +638,7 @@ export default function DatabaseTableView({
     e.stopPropagation();
     setResizingColumn(columnId);
     setResizeStartX(e.clientX);
-    setResizeStartWidth(columnWidths[columnId] || 150);
+    setResizeStartWidth(columnWidths[columnId] || 200);
   };
 
   useEffect(() => {
@@ -1339,7 +1339,7 @@ export default function DatabaseTableView({
                     onDragLeave={handleColumnDragLeave}
                     onDrop={() => handleColumnDrop(column.id)}
                     onDragEnd={handleColumnDragEnd}
-                    style={{ width: columnWidths[column.id] || 150 }}
+                    style={{ width: columnWidths[column.id] || 200 }}
                     className={`group relative px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider transition-all ${
                       isAdmin ? 'cursor-grab active:cursor-grabbing' : ''
                     } ${draggedColumnId === column.id ? 'opacity-50' : ''} ${
@@ -1430,7 +1430,7 @@ export default function DatabaseTableView({
                         {visibleColumns.map((column) => (
                           <td
                             key={column.id}
-                            style={{ width: columnWidths[column.id] || 150 }}
+                            style={{ width: columnWidths[column.id] || 200 }}
                             className={`px-4 py-3 ${isAdmin ? 'cursor-pointer hover:bg-pink-50 dark:hover:bg-pink-900/10' : ''}`}
                             onClick={() => startEditing(item.id, column.id, item.data[column.id])}
                           >
@@ -1472,7 +1472,7 @@ export default function DatabaseTableView({
                     {visibleColumns.map((column) => (
                       <td
                         key={column.id}
-                        style={{ width: columnWidths[column.id] || 150 }}
+                        style={{ width: columnWidths[column.id] || 200 }}
                         className={`px-4 py-3 ${isAdmin ? 'cursor-pointer hover:bg-pink-50 dark:hover:bg-pink-900/10' : ''}`}
                         onClick={() => startEditing(item.id, column.id, item.data[column.id])}
                       >
