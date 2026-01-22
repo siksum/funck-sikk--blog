@@ -76,6 +76,7 @@ const todoStatusConfig = {
 };
 
 const eventColors = [
+  // 기본 파스텔
   { name: '보라', value: '#c4b5fd' },
   { name: '파랑', value: '#93c5fd' },
   { name: '초록', value: '#86efac' },
@@ -83,6 +84,15 @@ const eventColors = [
   { name: '주황', value: '#fdba74' },
   { name: '빨강', value: '#fca5a5' },
   { name: '핑크', value: '#f9a8d4' },
+  // 추가 파스텔
+  { name: '인디고', value: '#a5b4fc' },
+  { name: '시안', value: '#67e8f9' },
+  { name: '청록', value: '#5eead4' },
+  { name: '라임', value: '#bef264' },
+  { name: '앰버', value: '#fcd34d' },
+  { name: '로즈', value: '#fda4af' },
+  { name: '퓨시아', value: '#f0abfc' },
+  { name: '슬레이트', value: '#cbd5e1' },
 ];
 
 // Convert old saturated colors to pastel equivalents
@@ -2427,15 +2437,15 @@ export default function MyWorldDashboard() {
                   </div>
                 </div>
 
-                {/* Legend */}
+                {/* Legend - show unique type-color combinations from current month events */}
                 <div className="mt-3 flex items-center gap-4 text-xs text-gray-500 dark:text-gray-400 flex-shrink-0 flex-wrap">
-                  {eventTypes.slice(0, 7).map((type, index) => (
-                    <div key={type} className="flex items-center gap-1">
+                  {Array.from(new Map(monthEvents.map(e => [`${e.type}-${e.color}`, { type: e.type, color: e.color }])).values()).slice(0, 10).map((item, index) => (
+                    <div key={`${item.type}-${item.color}-${index}`} className="flex items-center gap-1">
                       <div
                         className="w-2 h-2 rounded-full"
-                        style={{ backgroundColor: eventColors[index % eventColors.length].value }}
+                        style={{ backgroundColor: getPastelColor(item.color) }}
                       />
-                      <span>{type}</span>
+                      <span>{item.type}</span>
                     </div>
                   ))}
                 </div>
