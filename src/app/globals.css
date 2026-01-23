@@ -581,3 +581,54 @@ code, pre, .font-mono {
   border-radius: 0.125rem;
 }
 
+/* PDF Attachment Box - Global styles for viewing */
+.pdf-attachment {
+  display: flex !important;
+  align-items: center;
+  gap: 12px;
+  padding: 16px;
+  margin: 16px 0;
+  border: 1px solid #e5e7eb;
+  border-radius: 12px;
+  background: linear-gradient(135deg, #fdf2f8 0%, #fce7f3 100%);
+  max-width: 400px;
+  transition: box-shadow 0.2s ease, transform 0.2s ease;
+}
+
+.pdf-attachment:hover {
+  box-shadow: 0 4px 12px rgba(236, 72, 153, 0.15);
+  transform: translateY(-1px);
+}
+
+.dark .pdf-attachment {
+  background: linear-gradient(135deg, rgba(236, 72, 153, 0.15) 0%, rgba(236, 72, 153, 0.08) 100%);
+  border-color: rgba(236, 72, 153, 0.3);
+}
+
+.dark .pdf-attachment:hover {
+  box-shadow: 0 4px 12px rgba(236, 72, 153, 0.25);
+}
+
+.pdf-attachment a {
+  text-decoration: none !important;
+}
+
+.mdx-html-content .pdf-attachment,
+.prose .pdf-attachment {
+  display: flex !important;
+  align-items: center;
+  gap: 12px;
+  padding: 16px;
+  margin: 16px 0;
+  border: 1px solid #e5e7eb;
+  border-radius: 12px;
+  background: linear-gradient(135deg, #fdf2f8 0%, #fce7f3 100%);
+  max-width: 400px;
+}
+
+.dark .mdx-html-content .pdf-attachment,
+.dark .prose .pdf-attachment {
+  background: linear-gradient(135deg, rgba(236, 72, 153, 0.15) 0%, rgba(236, 72, 153, 0.08) 100%);
+  border-color: rgba(236, 72, 153, 0.3);
+}
+

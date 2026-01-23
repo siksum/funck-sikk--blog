@@ -8,6 +8,8 @@ interface EditorToolbarProps {
   editor: Editor;
   onSave: () => void;
   onCancel: () => void;
+  driveType?: 'blog' | 'sikk';
+  category?: string;
 }
 
 interface ToolbarButtonProps {
@@ -124,7 +126,7 @@ const EMOJI_CATEGORIES = [
   },
 ];
 
-export default function EditorToolbar({ editor, onSave, onCancel }: EditorToolbarProps) {
+export default function EditorToolbar({ editor, onSave, onCancel, driveType = 'blog', category = '' }: EditorToolbarProps) {
   const [showLinkInput, setShowLinkInput] = useState(false);
   const [linkUrl, setLinkUrl] = useState('');
   const [showImageInput, setShowImageInput] = useState(false);
@@ -212,7 +214,7 @@ export default function EditorToolbar({ editor, onSave, onCancel }: EditorToolba
 
       if (pdfUploadDestination === 'google-drive') {
         // Use direct upload to Google Drive (bypasses server size limit)
-        const result = await uploadToGoogleDriveDirect(file);
+        const result = await uploadToGoogleDriveDirect(file, { driveType, category });
         url = result.url;
       } else {
         // Upload via server to Cloudinary
@@ -238,9 +240,32 @@ export default function EditorToolbar({ editor, onSave, onCancel }: EditorToolba
         url = data.url;
       }
 
-      // Insert PDF as a link
-      const linkText = `📄 ${file.name}`;
-      editor.chain().focus().insertContent(`<a href="${url}" target="_blank">${linkText}</a>`).run();
+      // Insert PDF as a styled box
+      const pdfBox = `
+<div class="pdf-attachment" style="display: flex; align-items: center; gap: 12px; padding: 16px; margin: 16px 0; border: 1px solid #e5e7eb; border-radius: 12px; background: linear-gradient(135deg, #fdf2f8 0%, #fce7f3 100%); max-width: 400px;">
+  <div style="flex-shrink: 0; width: 48px; height: 48px; display: flex; align-items: center; justify-content: center; background: #ec4899; border-radius: 8px;">
+    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+      <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+      <polyline points="14 2 14 8 20 8"></polyline>
+      <line x1="16" y1="13" x2="8" y2="13"></line>
+      <line x1="16" y1="17" x2="8" y2="17"></line>
+      <polyline points="10 9 9 9 8 9"></polyline>
+    </svg>
+  </div>
+  <div style="flex: 1; min-width: 0;">
+    <div style="font-weight: 600; color: #1f2937; font-size: 14px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">${file.name}</div>
+    <div style="font-size: 12px; color: #6b7280; margin-top: 2px;">PDF 문서</div>
+  </div>
+  <a href="${url}" target="_blank" rel="noopener noreferrer" style="flex-shrink: 0; display: flex; align-items: center; justify-content: center; width: 36px; height: 36px; background: white; border-radius: 8px; border: 1px solid #e5e7eb; color: #ec4899; text-decoration: none;">
+    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+      <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+      <polyline points="7 10 12 15 17 10"></polyline>
+      <line x1="12" y1="15" x2="12" y2="3"></line>
+    </svg>
+  </a>
+</div>
+<p></p>`;
+      editor.chain().focus().insertContent(pdfBox).run();
       setShowImageInput(false);
     } catch (error) {
       console.error('Upload error:', error);

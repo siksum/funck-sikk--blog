@@ -563,6 +563,7 @@ export default async function SikkCategoryPage({ params }: CategoryPageProps) {
               thumbnailPosition: post.thumbnailPosition,
               thumbnailScale: post.thumbnailScale,
             }}
+            categorySlugPath={post.categorySlugPath}
           />
 
           {/* Post Navigation - only for admin users */}
@@ -715,6 +716,7 @@ export default async function SikkCategoryPage({ params }: CategoryPageProps) {
           itemId={item.id}
           content={item.content}
           isAdmin={isAdmin}
+          categorySlugPath={parsed.categorySlugPath}
         />
 
         <footer className="mt-12 pt-8 border-t" style={{ borderColor: 'var(--card-border)' }}>

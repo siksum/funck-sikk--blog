@@ -111,7 +111,7 @@ export default function BlogDatabaseItemView({
         if (isPdf) {
           // Use direct upload to Google Drive (bypasses server size limit)
           try {
-            const result = await uploadToGoogleDriveDirect(file);
+            const result = await uploadToGoogleDriveDirect(file, { driveType: 'blog' });
             uploadedUrls.push(result.url);
           } catch (driveError) {
             console.warn('Google Drive upload failed, falling back to Cloudinary:', driveError);
