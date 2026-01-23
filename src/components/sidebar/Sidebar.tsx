@@ -123,13 +123,32 @@ export default function Sidebar({
     ? (() => {
         const grouped: { section: DBSection | null; categories: Category[] }[] = [];
 
+        // Helper function to find a category by name in the entire tree (including children)
+        const findCategoryByName = (name: string): Category | null => {
+          // First check root categories
+          const rootMatch = categories.find((cat) => cat.name === name);
+          if (rootMatch) {
+            return rootMatch;
+          }
+          // Then check children of root categories
+          for (const rootCat of categories) {
+            if (rootCat.children) {
+              const childMatch = rootCat.children.find((child) => child.name === name);
+              if (childMatch) {
+                return childMatch;
+              }
+            }
+          }
+          return null;
+        };
+
         // Group categories by section (always show sections, even without categories)
         sections.forEach((section) => {
           const sectionCategoryNames = section.categories.map((c) => c.name);
           // Find matching categories from posts OR create placeholder for section categories
           const sectionCategories: Category[] = section.categories.map((dbCat) => {
-            // Try to find existing category with posts
-            const existingCat = categories.find((cat) => cat.name === dbCat.name);
+            // Try to find existing category with posts (including children)
+            const existingCat = findCategoryByName(dbCat.name);
             if (existingCat) {
               return existingCat;
             }
