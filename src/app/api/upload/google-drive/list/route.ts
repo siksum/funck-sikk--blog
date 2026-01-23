@@ -33,11 +33,17 @@ export async function GET(request: NextRequest) {
 
     const blogDriveId = process.env.GOOGLE_DRIVE_BLOG_ID;
     const sikkDriveId = process.env.GOOGLE_DRIVE_SIKK_ID;
+    const homeDriveId = process.env.GOOGLE_DRIVE_HOME_ID;
     const legacyFolderId = process.env.GOOGLE_DRIVE_FOLDER_ID;
 
-    const driveId = driveType === 'sikk'
-      ? (sikkDriveId || legacyFolderId)
-      : (blogDriveId || legacyFolderId);
+    let driveId: string | undefined;
+    if (driveType === 'sikk') {
+      driveId = sikkDriveId || legacyFolderId;
+    } else if (driveType === 'home') {
+      driveId = homeDriveId || legacyFolderId;
+    } else {
+      driveId = blogDriveId || legacyFolderId;
+    }
 
     if (!clientEmail || !privateKey || !driveId) {
       return NextResponse.json(
@@ -83,28 +89,36 @@ export async function GET(request: NextRequest) {
       corpora: 'allDrives',
     });
 
-    const files: DriveFile[] = [];
-    const folders: DriveFolder[] = [];
+    const filesMap = new Map<string, DriveFile>();
+    const foldersMap = new Map<string, DriveFolder>();
 
     for (const file of response.data.files || []) {
+      // Skip if already processed (deduplicate by ID)
       if (file.mimeType === 'application/vnd.google-apps.folder') {
-        folders.push({
-          id: file.id!,
-          name: file.name!,
-        });
+        if (!foldersMap.has(file.id!)) {
+          foldersMap.set(file.id!, {
+            id: file.id!,
+            name: file.name!,
+          });
+        }
       } else {
-        files.push({
-          id: file.id!,
-          name: file.name!,
-          mimeType: file.mimeType!,
-          webViewLink: file.webViewLink || `https://drive.google.com/file/d/${file.id}/view`,
-          downloadUrl: `https://drive.google.com/uc?id=${file.id}&export=download&name=${encodeURIComponent(file.name!)}`,
-          thumbnailLink: file.thumbnailLink || undefined,
-          createdTime: file.createdTime!,
-          size: file.size || undefined,
-        });
+        if (!filesMap.has(file.id!)) {
+          filesMap.set(file.id!, {
+            id: file.id!,
+            name: file.name!,
+            mimeType: file.mimeType!,
+            webViewLink: file.webViewLink || `https://drive.google.com/file/d/${file.id}/view`,
+            downloadUrl: `https://drive.google.com/uc?id=${file.id}&export=download&name=${encodeURIComponent(file.name!)}`,
+            thumbnailLink: file.thumbnailLink || undefined,
+            createdTime: file.createdTime!,
+            size: file.size || undefined,
+          });
+        }
       }
     }
+
+    const files = Array.from(filesMap.values());
+    const folders = Array.from(foldersMap.values());
 
     return NextResponse.json({
       files,

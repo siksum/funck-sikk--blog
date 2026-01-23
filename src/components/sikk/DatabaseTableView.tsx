@@ -4,22 +4,21 @@ import { useState, useCallback, useMemo, useEffect, useRef } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 import { uploadToGoogleDriveDirect } from '@/lib/google-drive-client';
+import GoogleDriveFileBrowser from '@/components/common/GoogleDriveFileBrowser';
 
 // Helper function to extract proper filename from various URL types
 function getFileDisplayName(url: string): string {
   try {
-    // Google Drive URL: https://drive.google.com/uc?id=xxx&export=download
-    if (url.includes('drive.google.com/uc?id=')) {
-      const match = url.match(/id=([^&]+)/);
-      if (match) {
-        return `📄 Drive (${match[1].substring(0, 8)}...)`;
+    // Google Drive URL with name parameter
+    if (url.includes('drive.google.com')) {
+      const nameMatch = url.match(/[?&]name=([^&]+)/);
+      if (nameMatch) {
+        return `📄 ${decodeURIComponent(nameMatch[1])}`;
       }
-    }
-    // Google Drive view URL: https://drive.google.com/file/d/xxx/view
-    if (url.includes('drive.google.com/file/d/')) {
-      const match = url.match(/\/d\/([^/]+)/);
-      if (match) {
-        return `📄 Drive (${match[1].substring(0, 8)}...)`;
+      // Fallback to Drive ID display for old URLs
+      const idMatch = url.match(/id=([^&]+)/) || url.match(/\/d\/([^/]+)/);
+      if (idMatch) {
+        return `📄 Drive (${idMatch[1].substring(0, 8)}...)`;
       }
     }
     // Cloudinary URL: https://res.cloudinary.com/.../filename.ext
@@ -90,6 +89,10 @@ export default function DatabaseTableView({
 
   // File upload state
   const [uploadingCell, setUploadingCell] = useState<{ itemId: string; columnId: string } | null>(null);
+
+  // Drive browser state
+  const [showDriveBrowser, setShowDriveBrowser] = useState(false);
+  const [driveBrowserCell, setDriveBrowserCell] = useState<{ itemId: string; columnId: string } | null>(null);
 
   // Column width resizing state
   const [columnWidths, setColumnWidths] = useState<Record<string, number>>({});
@@ -683,6 +686,42 @@ export default function DatabaseTableView({
     }
   };
 
+  // Drive file selection handler
+  const handleDriveFileSelect = async (files: { id: string; name: string; downloadUrl: string }[]) => {
+    if (!driveBrowserCell) return;
+
+    const { itemId, columnId } = driveBrowserCell;
+    const item = items.find((i) => i.id === itemId);
+    if (!item) return;
+
+    const existingFiles = Array.isArray(item.data[columnId]) ? item.data[columnId] as string[] : [];
+    const newUrls = files.map(f => f.downloadUrl);
+    const newFiles = [...existingFiles, ...newUrls];
+
+    try {
+      const res = await fetch(`/api/sikk/databases/${databaseId}/items/${itemId}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          data: { ...item.data, [columnId]: newFiles },
+        }),
+      });
+
+      if (res.ok) {
+        setItems((prev) =>
+          prev.map((i) =>
+            i.id === itemId ? { ...i, data: { ...i.data, [columnId]: newFiles } } : i
+          )
+        );
+      }
+    } catch (error) {
+      console.error('Failed to add Drive files:', error);
+    }
+
+    setShowDriveBrowser(false);
+    setDriveBrowserCell(null);
+  };
+
   // Column resize handlers
   const handleResizeStart = (e: React.MouseEvent, columnId: string) => {
     e.preventDefault();
@@ -957,27 +996,39 @@ export default function DatabaseTableView({
             </div>
           ))}
           {isAdmin && (
-            <label className="px-2 py-0.5 text-xs bg-pink-100 dark:bg-pink-900/30 text-pink-700 dark:text-pink-400 rounded cursor-pointer hover:bg-pink-200 dark:hover:bg-pink-900/50 transition-colors">
-              {isUploading ? (
-                <span className="animate-pulse">업로드 중...</span>
-              ) : (
-                <>
-                  <span>+ 파일</span>
-                  <input
-                    type="file"
-                    multiple
-                    className="hidden"
-                    accept="image/*,.pdf"
-                    onChange={(e) => {
-                      if (e.target.files && e.target.files.length > 0) {
-                        handleFileUpload(item.id, column.id, e.target.files);
-                        e.target.value = '';
-                      }
-                    }}
-                  />
-                </>
-              )}
-            </label>
+            <>
+              <label className="px-2 py-0.5 text-xs bg-pink-100 dark:bg-pink-900/30 text-pink-700 dark:text-pink-400 rounded cursor-pointer hover:bg-pink-200 dark:hover:bg-pink-900/50 transition-colors">
+                {isUploading ? (
+                  <span className="animate-pulse">업로드 중...</span>
+                ) : (
+                  <>
+                    <span>+ 파일</span>
+                    <input
+                      type="file"
+                      multiple
+                      className="hidden"
+                      accept="image/*,.pdf"
+                      onChange={(e) => {
+                        if (e.target.files && e.target.files.length > 0) {
+                          handleFileUpload(item.id, column.id, e.target.files);
+                          e.target.value = '';
+                        }
+                      }}
+                    />
+                  </>
+                )}
+              </label>
+              <button
+                onClick={(e) => {
+                  e.stopPropagation();
+                  setDriveBrowserCell({ itemId: item.id, columnId: column.id });
+                  setShowDriveBrowser(true);
+                }}
+                className="px-2 py-0.5 text-xs bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-400 rounded hover:bg-blue-200 dark:hover:bg-blue-900/50 transition-colors"
+              >
+                Drive
+              </button>
+            </>
           )}
           {files.length === 0 && !isAdmin && (
             <span className="text-gray-400 dark:text-gray-500 text-sm">-</span>
@@ -1686,6 +1737,18 @@ export default function DatabaseTableView({
           </div>
         </div>
       )}
+
+      {/* Google Drive File Browser */}
+      <GoogleDriveFileBrowser
+        isOpen={showDriveBrowser}
+        onClose={() => {
+          setShowDriveBrowser(false);
+          setDriveBrowserCell(null);
+        }}
+        onSelect={handleDriveFileSelect}
+        driveType="sikk"
+        multiple={true}
+      />
     </div>
   );
 }

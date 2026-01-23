@@ -155,11 +155,11 @@ export default function EditorToolbar({ editor, onSave, onCancel, driveType = 'b
       const hasSelection = from !== to;
 
       if (linkLabel && !hasSelection) {
-        // Insert new link with custom label
+        // Insert new link with custom label as a styled box
         editor
           .chain()
           .focus()
-          .insertContent(`<a href="${linkUrl}" target="_blank" rel="noopener noreferrer">${linkLabel}</a>`)
+          .insertContent(`<p><a href="${linkUrl}" target="_blank" rel="noopener noreferrer" class="url-link-box">🔗 ${linkLabel}</a></p>`)
           .run();
       } else {
         // Apply link to selection or current position
