@@ -314,7 +314,13 @@ export default function MDXContent({ content }: MDXContentProps) {
             },
             table: ({ children }) => (
               <div className="overflow-x-auto my-4 -mx-4 px-4 sm:-mx-0 sm:px-0">
-                <table className="w-max min-w-full border-collapse border border-violet-200 dark:border-violet-500/30">
+                <table
+                  className="w-max min-w-full"
+                  style={{
+                    borderCollapse: 'collapse',
+                    border: '1px solid rgb(221 214 254)', // violet-200
+                  }}
+                >
                   {children}
                 </table>
               </div>
@@ -324,19 +330,41 @@ export default function MDXContent({ content }: MDXContentProps) {
             ),
             tbody: ({ children }) => <tbody>{children}</tbody>,
             tr: ({ children }) => (
-              <tr className="border-b border-violet-200 dark:border-violet-500/30">{children}</tr>
+              <tr
+                style={{
+                  borderBottom: '1px solid rgb(221 214 254)', // violet-200
+                }}
+              >
+                {children}
+              </tr>
             ),
             th: ({ children, style, rowSpan, colSpan, node }) => {
-              // Get data-highlight attribute from the node
+              // Check for custom highlight: data-highlight attribute or inline style backgroundColor
               const dataHighlight = node?.properties?.dataHighlight as string | undefined;
-              // Only use inline style if user explicitly set a highlight color
-              // Otherwise, use Tailwind classes for proper light/dark mode support
-              const bgStyle = dataHighlight ? { backgroundColor: dataHighlight } : {};
-              const bgClass = dataHighlight ? '' : 'bg-violet-50 dark:bg-violet-500/10';
+              const inlineStyleBg = typeof style === 'object' && style?.backgroundColor;
+              const hasCustomHighlight = dataHighlight || inlineStyleBg;
+
+              // Build the final style - custom highlight takes priority
+              const finalStyle: React.CSSProperties = {
+                color: 'var(--foreground)',
+                minWidth: '80px',
+                padding: '0.5rem 1rem',
+                textAlign: 'left',
+                fontWeight: 600,
+                border: '1px solid rgb(221 214 254)', // violet-200
+                whiteSpace: 'nowrap',
+                backgroundColor: hasCustomHighlight
+                  ? (dataHighlight || (typeof style === 'object' ? style?.backgroundColor : undefined))
+                  : 'rgb(245 243 255)', // violet-50
+                ...(typeof style === 'object' ? style : {}),
+              };
+              if (dataHighlight) {
+                finalStyle.backgroundColor = dataHighlight;
+              }
+
               return (
                 <th
-                  className={`px-4 py-2 text-left font-semibold border border-violet-200 dark:border-violet-500/30 whitespace-nowrap ${bgClass}`}
-                  style={{ color: 'var(--foreground)', minWidth: '80px', ...bgStyle, ...style }}
+                  style={finalStyle}
                   rowSpan={rowSpan}
                   colSpan={colSpan}
                 >
@@ -345,13 +373,24 @@ export default function MDXContent({ content }: MDXContentProps) {
               );
             },
             td: ({ children, style, rowSpan, colSpan, node }) => {
-              // Get data-highlight attribute from the node
+              // Check for custom highlight: data-highlight attribute or inline style backgroundColor
               const dataHighlight = node?.properties?.dataHighlight as string | undefined;
-              const bgStyle = dataHighlight ? { backgroundColor: dataHighlight } : {};
+
+              // Build the final style
+              const finalStyle: React.CSSProperties = {
+                color: 'var(--foreground)',
+                minWidth: '80px',
+                padding: '0.5rem 1rem',
+                border: '1px solid rgb(221 214 254)', // violet-200
+                ...(typeof style === 'object' ? style : {}),
+              };
+              if (dataHighlight) {
+                finalStyle.backgroundColor = dataHighlight;
+              }
+
               return (
                 <td
-                  className="px-4 py-2 border border-violet-200 dark:border-violet-500/30"
-                  style={{ color: 'var(--foreground)', minWidth: '80px', ...bgStyle, ...style }}
+                  style={finalStyle}
                   rowSpan={rowSpan}
                   colSpan={colSpan}
                 >
