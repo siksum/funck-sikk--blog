@@ -2,6 +2,11 @@
   "framework": "nextjs",
   "buildCommand": "npm run build",
   "outputDirectory": ".next",
+  "functions": {
+    "src/app/api/upload/**/*.ts": {
+      "maxDuration": 60
+    }
+  },
   "crons": [
     {
       "path": "/api/cron/calendar-reminders",

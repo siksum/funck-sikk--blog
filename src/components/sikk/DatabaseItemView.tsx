@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import dynamic from 'next/dynamic';
 import MDXContent from '@/components/mdx/MDXContent';
+import { uploadToGoogleDriveDirect } from '@/lib/google-drive-client';
 
 const TipTapEditor = dynamic(() => import('@/components/editor/TipTapEditor'), {
   loading: () => (
@@ -111,24 +112,18 @@ export default function DatabaseItemView({
 
     try {
       for (const file of Array.from(files)) {
-        const formData = new FormData();
-        formData.append('file', file);
-
-        // PDF files are automatically uploaded to Google Drive
         const isPdf = file.type === 'application/pdf' || file.name.toLowerCase().endsWith('.pdf');
-        const endpoint = isPdf ? '/api/upload/google-drive' : '/api/upload';
 
-        const res = await fetch(endpoint, {
-          method: 'POST',
-          body: formData,
-        });
-
-        if (res.ok) {
-          const result = await res.json();
-          uploadedUrls.push(result.url);
-        } else {
-          // If Google Drive upload fails, fallback to Cloudinary for PDF
-          if (isPdf) {
+        if (isPdf) {
+          // Use direct upload to Google Drive (bypasses server size limit)
+          try {
+            const result = await uploadToGoogleDriveDirect(file);
+            uploadedUrls.push(result.url);
+          } catch (driveError) {
+            console.warn('Google Drive upload failed, falling back to Cloudinary:', driveError);
+            // Fallback to Cloudinary
+            const formData = new FormData();
+            formData.append('file', file);
             const fallbackRes = await fetch('/api/upload', {
               method: 'POST',
               body: formData,
@@ -137,6 +132,18 @@ export default function DatabaseItemView({
               const result = await fallbackRes.json();
               uploadedUrls.push(result.url);
             }
+          }
+        } else {
+          // Non-PDF files go to Cloudinary
+          const formData = new FormData();
+          formData.append('file', file);
+          const res = await fetch('/api/upload', {
+            method: 'POST',
+            body: formData,
+          });
+          if (res.ok) {
+            const result = await res.json();
+            uploadedUrls.push(result.url);
           }
         }
       }

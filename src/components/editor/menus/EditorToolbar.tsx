@@ -2,6 +2,7 @@
 
 import { Editor } from '@tiptap/react';
 import { useCallback, useState, useRef } from 'react';
+import { uploadToGoogleDriveDirect } from '@/lib/google-drive-client';
 
 interface EditorToolbarProps {
   editor: Editor;
@@ -207,32 +208,39 @@ export default function EditorToolbar({ editor, onSave, onCancel }: EditorToolba
 
     setIsPdfUploading(true);
     try {
-      const formData = new FormData();
-      formData.append('file', file);
+      let url: string;
 
-      const endpoint = pdfUploadDestination === 'google-drive'
-        ? '/api/upload/google-drive'
-        : '/api/upload';
+      if (pdfUploadDestination === 'google-drive') {
+        // Use direct upload to Google Drive (bypasses server size limit)
+        const result = await uploadToGoogleDriveDirect(file);
+        url = result.url;
+      } else {
+        // Upload via server to Cloudinary
+        const formData = new FormData();
+        formData.append('file', file);
 
-      const response = await fetch(endpoint, {
-        method: 'POST',
-        body: formData,
-      });
+        const response = await fetch('/api/upload', {
+          method: 'POST',
+          body: formData,
+        });
 
-      if (!response.ok) {
-        try {
-          const error = await response.json();
-          alert(error.error || '업로드에 실패했습니다.');
-        } catch {
-          alert(`업로드 실패: ${response.status} ${response.statusText}`);
+        if (!response.ok) {
+          try {
+            const error = await response.json();
+            alert(error.error || '업로드에 실패했습니다.');
+          } catch {
+            alert(`업로드 실패: ${response.status} ${response.statusText}`);
+          }
+          return;
         }
-        return;
+
+        const data = await response.json();
+        url = data.url;
       }
 
-      const data = await response.json();
       // Insert PDF as a link
       const linkText = `📄 ${file.name}`;
-      editor.chain().focus().insertContent(`<a href="${data.url}" target="_blank">${linkText}</a>`).run();
+      editor.chain().focus().insertContent(`<a href="${url}" target="_blank">${linkText}</a>`).run();
       setShowImageInput(false);
     } catch (error) {
       console.error('Upload error:', error);
