@@ -629,38 +629,28 @@ export async function getSikkCategoryBySlugPathFromDbAsync(slugPath: string[]): 
   if (slugPath.length === 0) return null;
 
   try {
-    // Start by finding categories matching the first slug (no parent)
-    const firstCategory = await prisma.sikkCategory.findFirst({
-      where: {
-        slug: slugPath[0],
-        parentId: null,
-      },
-    });
+    // Use the same pattern as getSikkChildCategoriesFromDbAsync for consistency
+    let currentParentId: string | null = null;
+    const pathNames: string[] = [];
+    const pathSlugs: string[] = [];
+    let lastName = '';
+    let lastSlug = '';
 
-    if (!firstCategory) return null;
-
-    const pathNames: string[] = [firstCategory.name];
-    const pathSlugs: string[] = [firstCategory.slug];
-    let currentCategoryId = firstCategory.id;
-    let lastName = firstCategory.name;
-    let lastSlug = firstCategory.slug;
-
-    // Traverse down the path
-    for (let i = 1; i < slugPath.length; i++) {
-      const childCategory = await prisma.sikkCategory.findFirst({
-        where: {
-          slug: slugPath[i],
-          parentId: currentCategoryId,
-        },
+    for (let i = 0; i < slugPath.length; i++) {
+      const slug = slugPath[i];
+      // Find all categories with this slug, then filter by parentId
+      const allCategories = await prisma.sikkCategory.findMany({
+        where: { slug },
       });
+      const foundCat = allCategories.find((c) => c.parentId === currentParentId);
 
-      if (!childCategory) return null;
+      if (!foundCat) return null;
 
-      pathNames.push(childCategory.name);
-      pathSlugs.push(childCategory.slug);
-      currentCategoryId = childCategory.id;
-      lastName = childCategory.name;
-      lastSlug = childCategory.slug;
+      pathNames.push(foundCat.name);
+      pathSlugs.push(foundCat.slug);
+      currentParentId = foundCat.id;
+      lastName = foundCat.name;
+      lastSlug = foundCat.slug;
     }
 
     return {
