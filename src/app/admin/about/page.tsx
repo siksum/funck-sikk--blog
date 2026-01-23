@@ -132,6 +132,32 @@ export default function AdminAboutPage() {
     }
   };
 
+  const handleReloadFromFile = async () => {
+    if (!confirm('JSON 파일에서 데이터를 다시 불러옵니다. 저장되지 않은 변경사항은 사라집니다. 계속하시겠습니까?')) {
+      return;
+    }
+
+    setLoading(true);
+    setMessage(null);
+
+    try {
+      const res = await fetch('/api/admin/about?reload=true');
+      if (res.ok) {
+        const json = await res.json();
+        setData(json);
+        setMessage({ type: 'success', text: 'JSON 파일에서 데이터를 다시 불러왔습니다!' });
+        setTimeout(() => setMessage(null), 3000);
+      } else {
+        throw new Error('Failed to reload');
+      }
+    } catch (error) {
+      console.error('Failed to reload:', error);
+      setMessage({ type: 'error', text: '데이터 리로드에 실패했습니다.' });
+    } finally {
+      setLoading(false);
+    }
+  };
+
   if (loading) {
     return (
       <div className="flex items-center justify-center h-64">
@@ -166,6 +192,14 @@ export default function AdminAboutPage() {
               {message.text}
             </span>
           )}
+          <button
+            onClick={handleReloadFromFile}
+            disabled={loading}
+            className="px-4 py-2 bg-gray-500 text-white rounded-lg hover:bg-gray-600 disabled:opacity-50 transition-colors text-sm"
+            title="JSON 파일에서 데이터 다시 불러오기"
+          >
+            리로드
+          </button>
           <button
             onClick={handleSave}
             disabled={saving}

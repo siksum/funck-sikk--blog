@@ -8,8 +8,29 @@ const DATA_FILE_PATH = path.join(process.cwd(), 'src/data/about.json');
 const ABOUT_DATA_ID = 'about-data';
 
 // GET - Read about data
-export async function GET() {
+export async function GET(request: Request) {
   try {
+    const { searchParams } = new URL(request.url);
+    const forceReload = searchParams.get('reload') === 'true';
+
+    // If force reload, sync from JSON file to database
+    if (forceReload) {
+      try {
+        const fileData = await fs.readFile(DATA_FILE_PATH, 'utf-8');
+        const data = JSON.parse(fileData);
+
+        await prisma.aboutData.upsert({
+          where: { id: ABOUT_DATA_ID },
+          create: { id: ABOUT_DATA_ID, data },
+          update: { data },
+        });
+
+        return NextResponse.json(data);
+      } catch {
+        return NextResponse.json({ error: 'Failed to reload from file' }, { status: 500 });
+      }
+    }
+
     // First try to get from database
     const dbData = await prisma.aboutData.findUnique({
       where: { id: ABOUT_DATA_ID },
