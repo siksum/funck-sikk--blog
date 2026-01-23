@@ -26,27 +26,52 @@ export async function uploadToGoogleDriveDirect(
   // Step 2: Create the file metadata
   const metadata = {
     name: file.name,
-    mimeType: file.type,
+    mimeType: file.type || 'application/pdf',
     parents: [folderId],
   };
 
-  // Step 3: Create multipart form data for Google Drive API
-  const form = new FormData();
-  form.append(
-    'metadata',
-    new Blob([JSON.stringify(metadata)], { type: 'application/json' })
-  );
-  form.append('file', file);
+  // Step 3: Create multipart/related body for Google Drive API
+  const boundary = '-------314159265358979323846';
+  const delimiter = '\r\n--' + boundary + '\r\n';
+  const closeDelimiter = '\r\n--' + boundary + '--';
 
-  // Step 4: Upload directly to Google Drive
+  // Read file as ArrayBuffer
+  const fileArrayBuffer = await file.arrayBuffer();
+  const fileBytes = new Uint8Array(fileArrayBuffer);
+
+  // Build multipart body
+  const metadataPart =
+    delimiter +
+    'Content-Type: application/json; charset=UTF-8\r\n\r\n' +
+    JSON.stringify(metadata);
+
+  const filePart = delimiter + 'Content-Type: ' + (file.type || 'application/pdf') + '\r\n\r\n';
+
+  // Combine parts
+  const encoder = new TextEncoder();
+  const metadataBytes = encoder.encode(metadataPart);
+  const filePartBytes = encoder.encode(filePart);
+  const closeBytes = encoder.encode(closeDelimiter);
+
+  // Create combined buffer
+  const bodyBuffer = new Uint8Array(
+    metadataBytes.length + filePartBytes.length + fileBytes.length + closeBytes.length
+  );
+  bodyBuffer.set(metadataBytes, 0);
+  bodyBuffer.set(filePartBytes, metadataBytes.length);
+  bodyBuffer.set(fileBytes, metadataBytes.length + filePartBytes.length);
+  bodyBuffer.set(closeBytes, metadataBytes.length + filePartBytes.length + fileBytes.length);
+
+  // Step 4: Upload directly to Google Drive using multipart/related
   const uploadResponse = await fetch(
     'https://www.googleapis.com/upload/drive/v3/files?uploadType=multipart&fields=id,name,webViewLink,webContentLink,mimeType',
     {
       method: 'POST',
       headers: {
         Authorization: `Bearer ${accessToken}`,
+        'Content-Type': 'multipart/related; boundary=' + boundary,
       },
-      body: form,
+      body: bodyBuffer,
     }
   );
 
