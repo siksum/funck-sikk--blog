@@ -1,16 +1,30 @@
-import { NextResponse } from 'next/server';
+import { NextRequest, NextResponse } from 'next/server';
 import { google } from 'googleapis';
 
 export const dynamic = 'force-dynamic';
 
-// Returns access token and folder ID for direct client-side upload
-export async function GET() {
+// Returns access token and drive ID for direct client-side upload
+// Supports blog and sikk drives with category folders
+export async function GET(request: NextRequest) {
   try {
+    const searchParams = request.nextUrl.searchParams;
+    const driveType = searchParams.get('drive') || 'blog'; // 'blog' or 'sikk'
+    const category = searchParams.get('category') || '';
+
     const clientEmail = process.env.GOOGLE_DRIVE_CLIENT_EMAIL;
     let privateKey = process.env.GOOGLE_DRIVE_PRIVATE_KEY;
-    const folderId = process.env.GOOGLE_DRIVE_FOLDER_ID;
 
-    if (!clientEmail || !privateKey || !folderId) {
+    // Get the appropriate drive ID based on type
+    const blogDriveId = process.env.GOOGLE_DRIVE_BLOG_ID;
+    const sikkDriveId = process.env.GOOGLE_DRIVE_SIKK_ID;
+    // Fallback to single folder ID for backward compatibility
+    const legacyFolderId = process.env.GOOGLE_DRIVE_FOLDER_ID;
+
+    const driveId = driveType === 'sikk'
+      ? (sikkDriveId || legacyFolderId)
+      : (blogDriveId || legacyFolderId);
+
+    if (!clientEmail || !privateKey || !driveId) {
       return NextResponse.json(
         { error: 'Google Drive is not configured' },
         { status: 500 }
@@ -34,7 +48,7 @@ export async function GET() {
         client_email: clientEmail,
         private_key: privateKey,
       },
-      scopes: ['https://www.googleapis.com/auth/drive.file'],
+      scopes: ['https://www.googleapis.com/auth/drive'],
     });
 
     const accessToken = await auth.getAccessToken();
@@ -48,7 +62,8 @@ export async function GET() {
 
     return NextResponse.json({
       accessToken,
-      folderId,
+      driveId,
+      category,
     });
   } catch (error) {
     console.error('Token generation error:', error);

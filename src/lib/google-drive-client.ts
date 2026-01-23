@@ -1,5 +1,6 @@
 // Client-side direct upload to Google Drive
 // This bypasses server body size limits by uploading directly from browser
+// Supports blog/sikk drives with category folders
 
 export interface GoogleDriveDirectUploadResult {
   url: string;
@@ -10,27 +11,99 @@ export interface GoogleDriveDirectUploadResult {
   provider: 'google-drive';
 }
 
+export interface GoogleDriveUploadOptions {
+  driveType?: 'blog' | 'sikk';
+  category?: string;
+}
+
+// Find or create a category folder in the shared drive
+async function findOrCreateCategoryFolder(
+  accessToken: string,
+  driveId: string,
+  categoryName: string
+): Promise<string> {
+  // Search for existing folder
+  const searchQuery = encodeURIComponent(
+    `name='${categoryName}' and mimeType='application/vnd.google-apps.folder' and '${driveId}' in parents and trashed=false`
+  );
+
+  const searchResponse = await fetch(
+    `https://www.googleapis.com/drive/v3/files?q=${searchQuery}&supportsAllDrives=true&includeItemsFromAllDrives=true&corpora=drive&driveId=${driveId}&fields=files(id,name)`,
+    {
+      headers: {
+        Authorization: `Bearer ${accessToken}`,
+      },
+    }
+  );
+
+  if (searchResponse.ok) {
+    const searchResult = await searchResponse.json();
+    if (searchResult.files && searchResult.files.length > 0) {
+      return searchResult.files[0].id;
+    }
+  }
+
+  // Create new folder if not found
+  const folderMetadata = {
+    name: categoryName,
+    mimeType: 'application/vnd.google-apps.folder',
+    parents: [driveId],
+  };
+
+  const createResponse = await fetch(
+    'https://www.googleapis.com/drive/v3/files?supportsAllDrives=true',
+    {
+      method: 'POST',
+      headers: {
+        Authorization: `Bearer ${accessToken}`,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(folderMetadata),
+    }
+  );
+
+  if (!createResponse.ok) {
+    const errorText = await createResponse.text();
+    console.error('Failed to create folder:', errorText);
+    throw new Error(`Failed to create category folder: ${categoryName}`);
+  }
+
+  const createResult = await createResponse.json();
+  return createResult.id;
+}
+
 export async function uploadToGoogleDriveDirect(
   file: File,
+  options: GoogleDriveUploadOptions = {},
   onProgress?: (progress: number) => void
 ): Promise<GoogleDriveDirectUploadResult> {
+  const { driveType = 'blog', category = '' } = options;
+
   // Step 1: Get access token from our server
-  const tokenResponse = await fetch('/api/upload/google-drive/token');
+  const tokenUrl = `/api/upload/google-drive/token?drive=${driveType}&category=${encodeURIComponent(category)}`;
+  const tokenResponse = await fetch(tokenUrl);
   if (!tokenResponse.ok) {
     const error = await tokenResponse.json();
     throw new Error(error.error || 'Failed to get upload token');
   }
 
-  const { accessToken, folderId } = await tokenResponse.json();
+  const { accessToken, driveId } = await tokenResponse.json();
 
-  // Step 2: Create the file metadata
+  // Step 2: Determine parent folder (drive root or category folder)
+  let parentFolderId = driveId;
+
+  if (category) {
+    parentFolderId = await findOrCreateCategoryFolder(accessToken, driveId, category);
+  }
+
+  // Step 3: Create the file metadata
   const metadata = {
     name: file.name,
     mimeType: file.type || 'application/pdf',
-    parents: [folderId],
+    parents: [parentFolderId],
   };
 
-  // Step 3: Create multipart/related body for Google Drive API
+  // Step 4: Create multipart/related body for Google Drive API
   const boundary = '-------314159265358979323846';
 
   // Read file as ArrayBuffer
@@ -62,7 +135,7 @@ export async function uploadToGoogleDriveDirect(
   bodyBuffer.set(fileBytes, metadataBytes.length + filePartBytes.length);
   bodyBuffer.set(closeBytes, metadataBytes.length + filePartBytes.length + fileBytes.length);
 
-  // Step 4: Upload directly to Google Drive using multipart/related
+  // Step 5: Upload directly to Google Drive using multipart/related
   // supportsAllDrives=true is required for Shared Drives
   const uploadResponse = await fetch(
     'https://www.googleapis.com/upload/drive/v3/files?uploadType=multipart&supportsAllDrives=true&fields=id,name,webViewLink,webContentLink,mimeType',
@@ -92,7 +165,7 @@ export async function uploadToGoogleDriveDirect(
   const uploadResult = await uploadResponse.json();
   const fileId = uploadResult.id;
 
-  // Step 5: Make the file publicly accessible
+  // Step 6: Make the file publicly accessible
   // supportsAllDrives=true is required for Shared Drives
   const permissionResponse = await fetch(
     `https://www.googleapis.com/drive/v3/files/${fileId}/permissions?supportsAllDrives=true`,
@@ -118,93 +191,6 @@ export async function uploadToGoogleDriveDirect(
     fileId: fileId,
     fileName: uploadResult.name || file.name,
     webViewLink: uploadResult.webViewLink || `https://drive.google.com/file/d/${fileId}/view`,
-    mimeType: uploadResult.mimeType || file.type,
-    provider: 'google-drive',
-  };
-}
-
-// For large files, use resumable upload
-export async function uploadToGoogleDriveResumable(
-  file: File,
-  onProgress?: (progress: number) => void
-): Promise<GoogleDriveDirectUploadResult> {
-  // Step 1: Get access token from our server
-  const tokenResponse = await fetch('/api/upload/google-drive/token');
-  if (!tokenResponse.ok) {
-    const error = await tokenResponse.json();
-    throw new Error(error.error || 'Failed to get upload token');
-  }
-
-  const { accessToken, folderId } = await tokenResponse.json();
-
-  // Step 2: Initiate resumable upload
-  const metadata = {
-    name: file.name,
-    mimeType: file.type,
-    parents: [folderId],
-  };
-
-  const initResponse = await fetch(
-    'https://www.googleapis.com/upload/drive/v3/files?uploadType=resumable',
-    {
-      method: 'POST',
-      headers: {
-        Authorization: `Bearer ${accessToken}`,
-        'Content-Type': 'application/json',
-        'X-Upload-Content-Type': file.type,
-        'X-Upload-Content-Length': file.size.toString(),
-      },
-      body: JSON.stringify(metadata),
-    }
-  );
-
-  if (!initResponse.ok) {
-    throw new Error(`Failed to initiate upload: ${initResponse.status}`);
-  }
-
-  const uploadUrl = initResponse.headers.get('Location');
-  if (!uploadUrl) {
-    throw new Error('No upload URL returned');
-  }
-
-  // Step 3: Upload file content
-  const uploadResponse = await fetch(uploadUrl, {
-    method: 'PUT',
-    headers: {
-      'Content-Type': file.type,
-      'Content-Length': file.size.toString(),
-    },
-    body: file,
-  });
-
-  if (!uploadResponse.ok) {
-    throw new Error(`Upload failed: ${uploadResponse.status}`);
-  }
-
-  const uploadResult = await uploadResponse.json();
-  const fileId = uploadResult.id;
-
-  // Step 4: Make the file publicly accessible
-  await fetch(
-    `https://www.googleapis.com/drive/v3/files/${fileId}/permissions`,
-    {
-      method: 'POST',
-      headers: {
-        Authorization: `Bearer ${accessToken}`,
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({
-        role: 'reader',
-        type: 'anyone',
-      }),
-    }
-  );
-
-  return {
-    url: `https://drive.google.com/uc?id=${fileId}&export=download`,
-    fileId: fileId,
-    fileName: uploadResult.name || file.name,
-    webViewLink: `https://drive.google.com/file/d/${fileId}/view`,
     mimeType: uploadResult.mimeType || file.type,
     provider: 'google-drive',
   };

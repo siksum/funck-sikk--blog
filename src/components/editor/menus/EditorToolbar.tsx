@@ -212,7 +212,7 @@ export default function EditorToolbar({ editor, onSave, onCancel }: EditorToolba
 
       if (pdfUploadDestination === 'google-drive') {
         // Use direct upload to Google Drive (bypasses server size limit)
-        const result = await uploadToGoogleDriveDirect(file);
+        const result = await uploadToGoogleDriveDirect(file, { driveType: 'blog' });
         url = result.url;
       } else {
         // Upload via server to Cloudinary

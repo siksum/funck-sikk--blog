@@ -571,7 +571,8 @@ export default function DatabaseTableView({
         if (isPdf) {
           // Use direct upload to Google Drive (bypasses server size limit)
           try {
-            const result = await uploadToGoogleDriveDirect(file);
+            const category = categorySlugPath?.length ? categorySlugPath[categorySlugPath.length - 1] : '';
+            const result = await uploadToGoogleDriveDirect(file, { driveType: 'sikk', category });
             uploadedUrls.push(result.url);
           } catch (driveError) {
             console.warn('Google Drive upload failed, falling back to Cloudinary:', driveError);
