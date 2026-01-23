@@ -92,7 +92,7 @@ export default function AboutPage() {
   const [activeEducationTab, setActiveEducationTab] = useState<'education' | 'scholarship' | 'project'>('education');
   const [activeExperienceTab, setActiveExperienceTab] = useState<'research' | 'work' | 'activities' | 'club'>('research');
   const [activePubTab, setActivePubTab] = useState<'journals' | 'international' | 'domestic'>('journals');
-  const [activeAwardsTab, setActiveAwardsTab] = useState<'all' | 'research' | 'competition' | 'activity'>('all');
+  const [activeAwardsTab, setActiveAwardsTab] = useState<'all' | 'conference' | 'competition' | 'activity'>('all');
   const [data, setData] = useState<AboutData | null>(null);
   const [loading, setLoading] = useState(true);
 
@@ -1005,7 +1005,7 @@ export default function AboutPage() {
           <div className="flex gap-2 mb-6 p-1 about-tab-bar rounded-xl border border-gray-200 dark:border-gray-600">
             {[
               { id: 'all' as const, label: 'All', icon: '🏆', count: data.awards.length },
-              { id: 'research' as const, label: 'Research', icon: '📄', count: data.awards.filter(a => a.linkedSection === 'research' || a.linkedSection === 'publications').length },
+              { id: 'conference' as const, label: 'Conference', icon: '📄', count: data.awards.filter(a => a.linkedSection === 'conference').length },
               { id: 'competition' as const, label: 'Competition', icon: '🥇', count: data.awards.filter(a => a.linkedSection === 'competition').length },
               { id: 'activity' as const, label: 'Activity', icon: '🎯', count: data.awards.filter(a => a.linkedSection === 'activity').length },
             ].map((tab) => (
@@ -1042,8 +1042,8 @@ export default function AboutPage() {
                 {(() => {
                   const filteredAwards = activeAwardsTab === 'all'
                     ? data.awards
-                    : activeAwardsTab === 'research'
-                    ? data.awards.filter(a => a.linkedSection === 'research' || a.linkedSection === 'publications')
+                    : activeAwardsTab === 'conference'
+                    ? data.awards.filter(a => a.linkedSection === 'conference')
                     : activeAwardsTab === 'competition'
                     ? data.awards.filter(a => a.linkedSection === 'competition')
                     : data.awards.filter(a => a.linkedSection === 'activity');
@@ -1096,8 +1096,7 @@ export default function AboutPage() {
                           ))}
                           {award.linkedSection && (
                             <span className="px-2 py-0.5 rounded text-xs bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300">
-                              {award.linkedSection === 'publications' ? '📄 Research' :
-                               award.linkedSection === 'research' ? '📄 Research' :
+                              {award.linkedSection === 'conference' ? '📄 Conference' :
                                award.linkedSection === 'competition' ? '🥇 Competition' :
                                '🎯 Activity'}
                             </span>

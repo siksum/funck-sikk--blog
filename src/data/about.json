@@ -71,15 +71,15 @@
   },
   "awards": [
     { "title": "ICT Convergence Security Crew Best Crew Award", "org": "KISIA", "year": "2025", "highlight": true, "korean": "ICT 융합보안크루 최우수 크루상", "linkedSection": "activity" },
-    { "title": "National Security Technology Research Institute Director Award", "org": "ACK 2025", "year": "2025", "highlight": true, "korean": "국가보안기술연구소 소장상", "linkedSection": "publications" },
-    { "title": "Korea Information Technology Association President's Award", "org": "ACK 2025", "year": "2025", "highlight": true, "korean": "한국정보기술학술단체총연합회 회장상", "linkedSection": "publications" },
-    { "title": "The Third Prize", "org": "ACK 2025", "year": "2025", "korean": "동상", "linkedSection": "publications" },
-    { "title": "Best Paper Award", "org": "KCSA 2024 Autumn Conference", "year": "2024", "korean": "최우수논문상", "linkedSection": "publications" },
+    { "title": "National Security Technology Research Institute Director Award", "org": "ACK 2025", "year": "2025", "highlight": true, "korean": "국가보안기술연구소 소장상", "linkedSection": "conference" },
+    { "title": "Korea Information Technology Association President's Award", "org": "ACK 2025", "year": "2025", "highlight": true, "korean": "한국정보기술학술단체총연합회 회장상", "linkedSection": "conference" },
+    { "title": "The Third Prize", "org": "ACK 2025", "year": "2025", "korean": "동상", "linkedSection": "conference" },
+    { "title": "Best Paper Award", "org": "KCSA 2024 Autumn Conference", "year": "2024", "korean": "최우수논문상", "linkedSection": "conference" },
     { "title": "First Prize, Convergence Security Software Competition", "org": "Sungshin Women's University", "year": "2024", "korean": "융합보안소프트웨어경진대회 대상", "linkedSection": "competition" },
     { "title": "First Prize, Protocol Camp 5th", "org": "Dreamplus X HASHED", "year": "2024", "korean": "프로토콜캠프 5기 대상", "linkedSection": "competition" },
     { "title": "First Prize, Sungshin CSE x I.Sly() CTF", "org": "", "year": "2023", "korean": "성신여대 융합보안공학과 x I.Sly() CTF 1위", "linkedSection": "competition" },
-    { "title": "The Third Prize", "org": "KCSA 2022 Summer Conference", "year": "2022", "korean": "장려상", "linkedSection": "publications" },
-    { "title": "Excellent Paper Award", "org": "KIICE 50th Conference", "year": "2021", "korean": "우수논문상", "linkedSection": "publications" }
+    { "title": "The Third Prize", "org": "KCSA 2022 Summer Conference", "year": "2022", "korean": "장려상", "linkedSection": "conference" },
+    { "title": "Excellent Paper Award", "org": "KIICE 50th Conference", "year": "2021", "korean": "우수논문상", "linkedSection": "conference" }
   ],
   "certificates": [
     { "title": "Engineer Information Processing (정보처리기사)", "org": "Human Resources Development Service of Korea", "date": "2024.09" }

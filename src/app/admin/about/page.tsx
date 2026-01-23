@@ -1732,55 +1732,6 @@ function AwardsEditor({ data, setData }: { data: AboutData; setData: (d: AboutDa
     });
   };
 
-  // Helper function to get items for linked section dropdown
-  const getLinkedItemOptions = (section: string) => {
-    const options: Array<{ value: string; label: string }> = [{ value: '', label: '선택 안함' }];
-
-    if (section === 'publications') {
-      // Add journals
-      data.publications.journals.forEach((pub, i) => {
-        const label = pub.korean || pub.title;
-        options.push({ value: `journals-${i}`, label: `[Journal] ${label.substring(0, 50)}${label.length > 50 ? '...' : ''}` });
-      });
-      // Add international
-      data.publications.international.forEach((pub, i) => {
-        options.push({ value: `international-${i}`, label: `[International] ${pub.title.substring(0, 50)}${pub.title.length > 50 ? '...' : ''}` });
-      });
-      // Add domestic
-      data.publications.domestic.forEach((pub, i) => {
-        const label = pub.korean || pub.title;
-        options.push({ value: `domestic-${i}`, label: `[Domestic] ${label.substring(0, 50)}${label.length > 50 ? '...' : ''}` });
-      });
-    } else if (section === 'competition') {
-      // Add competitions from awards (self-referencing)
-      data.awards.forEach((award, i) => {
-        if (award.linkedSection === 'competition' && award.title) {
-          const label = award.korean || award.title;
-          options.push({ value: `award-${i}`, label: `[Award] ${label.substring(0, 50)}${label.length > 50 ? '...' : ''}` });
-        }
-      });
-      // Add CTF competitions
-      data.activities.ctf.forEach((ctf, i) => {
-        options.push({ value: `ctf-${i}`, label: `[CTF] ${ctf.event} (${ctf.year})` });
-      });
-    } else if (section === 'activity') {
-      // Add timeline activities
-      data.timeline.activities.forEach((act, i) => {
-        options.push({ value: `timeline-${i}`, label: `[Timeline] ${act.title}` });
-      });
-      // Add external activities
-      data.activities.external.forEach((ext, i) => {
-        options.push({ value: `external-${i}`, label: `[External] ${ext.title}` });
-      });
-      // Add club
-      if (data.activities.club.name) {
-        options.push({ value: 'club-0', label: `[Club] ${data.activities.club.name}` });
-      }
-    }
-
-    return options;
-  };
-
   const updateAward = (index: number, field: string, value: string | boolean) => {
     const newAwards = [...data.awards];
     newAwards[index] = { ...newAwards[index], [field]: value };
@@ -1826,7 +1777,7 @@ function AwardsEditor({ data, setData }: { data: AboutData; setData: (d: AboutDa
 
   const sectionOptions = [
     { value: '', label: '선택 안함' },
-    { value: 'publications', label: '📄 Research (논문)' },
+    { value: 'conference', label: '📄 Conference (학회)' },
     { value: 'competition', label: '🥇 Competition (대회)' },
     { value: 'activity', label: '🎯 Activity (활동)' },
   ];
@@ -1841,9 +1792,9 @@ function AwardsEditor({ data, setData }: { data: AboutData; setData: (d: AboutDa
         </div>
         <div className="p-4 bg-violet-50 dark:bg-violet-900/20 rounded-lg">
           <p className="text-2xl font-bold text-violet-600 dark:text-violet-400">
-            {data.awards.filter(a => a.linkedSection === 'publications' || a.linkedSection === 'research').length}
+            {data.awards.filter(a => a.linkedSection === 'conference').length}
           </p>
-          <p className="text-sm text-gray-600 dark:text-gray-400">Research</p>
+          <p className="text-sm text-gray-600 dark:text-gray-400">Conference</p>
         </div>
         <div className="p-4 bg-blue-50 dark:bg-blue-900/20 rounded-lg">
           <p className="text-2xl font-bold text-blue-600 dark:text-blue-400">
@@ -1939,13 +1890,10 @@ function AwardsEditor({ data, setData }: { data: AboutData; setData: (d: AboutDa
           </div>
           <div className="grid grid-cols-2 gap-3">
             <div>
-              <label className="block text-xs font-medium text-gray-500 dark:text-gray-400 mb-1">연결된 섹션</label>
+              <label className="block text-xs font-medium text-gray-500 dark:text-gray-400 mb-1">카테고리</label>
               <select
                 value={award.linkedSection || ''}
-                onChange={(e) => {
-                  updateAward(index, 'linkedSection', e.target.value);
-                  updateAward(index, 'linkedItem', ''); // Reset linked item when section changes
-                }}
+                onChange={(e) => updateAward(index, 'linkedSection', e.target.value)}
                 className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
               >
                 {sectionOptions.map((option) => (
@@ -1956,22 +1904,17 @@ function AwardsEditor({ data, setData }: { data: AboutData; setData: (d: AboutDa
               </select>
             </div>
             <div>
-              <label className="block text-xs font-medium text-gray-500 dark:text-gray-400 mb-1">연결된 항목 (선택)</label>
-              <select
+              <label className="block text-xs font-medium text-gray-500 dark:text-gray-400 mb-1">관련 논문/항목 제목 (선택)</label>
+              <input
+                type="text"
+                placeholder="예: rPBFT: Reliable Practical Byzantine..."
                 value={award.linkedItem || ''}
                 onChange={(e) => updateAward(index, 'linkedItem', e.target.value)}
-                disabled={!award.linkedSection}
-                className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white disabled:opacity-50 disabled:cursor-not-allowed"
-              >
-                {getLinkedItemOptions(award.linkedSection || '').map((option) => (
-                  <option key={option.value} value={option.value}>
-                    {option.label}
-                  </option>
-                ))}
-              </select>
+                className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
+              />
             </div>
           </div>
-          <p className="text-xs text-gray-500 dark:text-gray-400">연결된 섹션은 카테고리 필터링에, 연결된 항목은 특정 항목 하이라이트에 사용됩니다</p>
+          <p className="text-xs text-gray-500 dark:text-gray-400">카테고리는 필터링에, 관련 논문/항목 제목은 About 페이지에서 연결 표시에 사용됩니다</p>
           <div className="flex items-center">
             <label className="flex items-center gap-2 text-sm text-gray-600 dark:text-gray-400">
               <input
