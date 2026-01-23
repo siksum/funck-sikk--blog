@@ -63,10 +63,10 @@ interface AboutData {
   };
   publications: {
     journals: Array<{ authors: string; title: string; venue: string; badge: string; featured?: boolean; korean?: string }>;
-    international: Array<{ authors: string; title: string; venue: string }>;
-    domestic: Array<{ authors: string; title: string; venue: string; korean?: string; award?: string }>;
+    international: Array<{ authors: string; title: string; venue: string; badge?: string }>;
+    domestic: Array<{ authors: string; title: string; venue: string; korean?: string; award?: string; badge?: string }>;
   };
-  awards: Array<{ title: string; org: string; year: string; highlight?: boolean; korean?: string; linkedSection?: string; linkedItem?: string }>;
+  awards: Array<{ title: string; org: string; year: string; highlight?: boolean; korean?: string; linkedSection?: string; linkedItem?: string; badge?: string }>;
   certificates: Array<{ title: string; org: string; date: string }>;
   patents: Array<{ title: string; code: string; date: string; korean: string }>;
   activities: {
@@ -846,6 +846,11 @@ export default function AboutPage() {
                         style={{ background: 'var(--card-bg)' }}
                         whileHover={{ x: 4 }}
                       >
+                        {pub.badge && (
+                          <div className="flex flex-wrap gap-2 mb-2">
+                            <span className="px-2 py-0.5 rounded text-xs font-medium bg-blue-100 dark:bg-blue-500/20 text-blue-700 dark:text-blue-300">{pub.badge}</span>
+                          </div>
+                        )}
                         <p className="text-sm text-accent-violet mb-1">{highlightAuthorName(pub.authors)}</p>
                         <h4 className="font-medium pub-card-title text-sm">&ldquo;{pub.title}&rdquo;</h4>
                         <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">{pub.venue}</p>
@@ -871,7 +876,10 @@ export default function AboutPage() {
                       style={{ background: pub.award ? undefined : 'var(--card-bg)' }}
                       whileHover={{ x: 4 }}
                     >
-                      {pub.award && <span className="inline-block px-2 py-0.5 bg-amber-100 dark:bg-amber-500/20 text-amber-700 dark:text-amber-300 rounded text-xs font-medium mb-2">{pub.award}</span>}
+                      <div className="flex flex-wrap gap-2 mb-2">
+                        {pub.badge && <span className="px-2 py-0.5 rounded text-xs font-medium bg-gray-100 dark:bg-gray-700/50 text-gray-600 dark:text-gray-300">{pub.badge}</span>}
+                        {pub.award && <span className="px-2 py-0.5 bg-amber-100 dark:bg-amber-500/20 text-amber-700 dark:text-amber-300 rounded text-xs font-medium">{pub.award}</span>}
+                      </div>
                       <p className="text-sm text-accent-violet mb-1">{highlightAuthorName(pub.authors)}</p>
                       <h4 className={`font-medium text-sm ${pub.award ? 'text-gray-900' : 'pub-card-title'}`}>&ldquo;{pub.title}&rdquo;</h4>
                       <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">{pub.venue}</p>
@@ -996,6 +1004,11 @@ export default function AboutPage() {
                           }`}>
                             {award.year}
                           </span>
+                          {award.badge && (
+                            <span className="px-2 py-0.5 rounded text-xs bg-violet-100 dark:bg-violet-500/20 text-violet-700 dark:text-violet-300">
+                              {award.badge}
+                            </span>
+                          )}
                           {award.linkedSection && (
                             <span className="px-2 py-0.5 rounded text-xs bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300">
                               {award.linkedSection === 'publications' ? '📄 Research' :

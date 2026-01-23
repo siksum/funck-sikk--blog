@@ -61,10 +61,10 @@ interface AboutData {
   };
   publications: {
     journals: Array<{ authors: string; title: string; venue: string; badge: string; featured?: boolean; korean?: string }>;
-    international: Array<{ authors: string; title: string; venue: string }>;
-    domestic: Array<{ authors: string; title: string; venue: string; korean?: string; award?: string }>;
+    international: Array<{ authors: string; title: string; venue: string; badge?: string }>;
+    domestic: Array<{ authors: string; title: string; venue: string; korean?: string; award?: string; badge?: string }>;
   };
-  awards: Array<{ title: string; org: string; year: string; highlight?: boolean; korean?: string; linkedSection?: string; linkedItem?: string }>;
+  awards: Array<{ title: string; org: string; year: string; highlight?: boolean; korean?: string; linkedSection?: string; linkedItem?: string; badge?: string }>;
   certificates: Array<{ title: string; org: string; date: string }>;
   patents: Array<{ title: string; code: string; date: string; korean: string }>;
   activities: {
@@ -1033,7 +1033,7 @@ function PublicationsEditor({ data, setData }: { data: AboutData; setData: (d: A
       ...data,
       publications: {
         ...data.publications,
-        international: [...data.publications.international, { authors: '', title: '', venue: '' }],
+        international: [...data.publications.international, { authors: '', title: '', venue: '', badge: '' }],
       },
     });
   };
@@ -1064,7 +1064,7 @@ function PublicationsEditor({ data, setData }: { data: AboutData; setData: (d: A
       ...data,
       publications: {
         ...data.publications,
-        domestic: [...data.publications.domestic, { authors: '', title: '', venue: '', korean: '', award: '' }],
+        domestic: [...data.publications.domestic, { authors: '', title: '', venue: '', korean: '', award: '', badge: '' }],
       },
     });
   };
@@ -1300,15 +1300,27 @@ function PublicationsEditor({ data, setData }: { data: AboutData; setData: (d: A
                   className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
                 />
               </div>
-              <div>
-                <label className="block text-xs font-medium text-gray-500 dark:text-gray-400 mb-1">학회/장소</label>
-                <input
-                  type="text"
-                  placeholder="예: WISA 2025, Jeju, Aug. 21, 2025"
-                  value={item.venue}
-                  onChange={(e) => updateInternational(index, 'venue', e.target.value)}
-                  className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
-                />
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className="block text-xs font-medium text-gray-500 dark:text-gray-400 mb-1">학회/장소</label>
+                  <input
+                    type="text"
+                    placeholder="예: WISA 2025, Jeju, Aug. 21, 2025"
+                    value={item.venue}
+                    onChange={(e) => updateInternational(index, 'venue', e.target.value)}
+                    className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
+                  />
+                </div>
+                <div>
+                  <label className="block text-xs font-medium text-gray-500 dark:text-gray-400 mb-1">배지 (선택)</label>
+                  <input
+                    type="text"
+                    placeholder="예: Poster, Oral, Best Paper"
+                    value={item.badge || ''}
+                    onChange={(e) => updateInternational(index, 'badge', e.target.value)}
+                    className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
+                  />
+                </div>
               </div>
             </div>
           ))}
@@ -1377,7 +1389,7 @@ function PublicationsEditor({ data, setData }: { data: AboutData; setData: (d: A
                   className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
                 />
               </div>
-              <div className="grid grid-cols-2 gap-3">
+              <div className="grid grid-cols-3 gap-3">
                 <div>
                   <label className="block text-xs font-medium text-gray-500 dark:text-gray-400 mb-1">학회</label>
                   <input
@@ -1385,6 +1397,16 @@ function PublicationsEditor({ data, setData }: { data: AboutData; setData: (d: A
                     placeholder="예: ACK 2025, Nov. 7, 2025"
                     value={item.venue}
                     onChange={(e) => updateDomestic(index, 'venue', e.target.value)}
+                    className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
+                  />
+                </div>
+                <div>
+                  <label className="block text-xs font-medium text-gray-500 dark:text-gray-400 mb-1">배지 (선택)</label>
+                  <input
+                    type="text"
+                    placeholder="예: KCI, Poster"
+                    value={item.badge || ''}
+                    onChange={(e) => updateDomestic(index, 'badge', e.target.value)}
                     className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
                   />
                 </div>
@@ -1421,7 +1443,7 @@ function AwardsEditor({ data, setData }: { data: AboutData; setData: (d: AboutDa
   const addAward = () => {
     setData({
       ...data,
-      awards: [...data.awards, { title: '', org: '', year: '', korean: '', linkedSection: '', linkedItem: '' }],
+      awards: [...data.awards, { title: '', org: '', year: '', korean: '', linkedSection: '', linkedItem: '', badge: '' }],
     });
   };
 
@@ -1619,6 +1641,16 @@ function AwardsEditor({ data, setData }: { data: AboutData; setData: (d: AboutDa
                 className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
               />
             </div>
+          </div>
+          <div>
+            <label className="block text-xs font-medium text-gray-500 dark:text-gray-400 mb-1">배지/태그 (선택)</label>
+            <input
+              type="text"
+              placeholder="예: KCI, SCIE, Best Paper"
+              value={award.badge || ''}
+              onChange={(e) => updateAward(index, 'badge', e.target.value)}
+              className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
+            />
           </div>
           <div className="grid grid-cols-2 gap-3">
             <div>
@@ -1850,14 +1882,39 @@ function ActivitiesEditor({ data, setData }: { data: AboutData; setData: (d: Abo
             />
           </div>
           <div>
-            <label className="block text-xs font-medium text-gray-500 dark:text-gray-400 mb-1">역할 (한 줄에 하나씩)</label>
-            <textarea
-              placeholder="예: 회장 (2023)&#10;부회장 (2022)"
-              value={data.activities.club.roles.join('\n')}
-              onChange={(e) => updateClub('roles', e.target.value.split('\n').filter(r => r.trim()))}
-              rows={3}
-              className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
-            />
+            <label className="block text-xs font-medium text-gray-500 dark:text-gray-400 mb-2">역할</label>
+            <div className="space-y-2">
+              {data.activities.club.roles.map((role, i) => (
+                <div key={i} className="flex gap-2">
+                  <input
+                    type="text"
+                    placeholder="예: 회장 (2023)"
+                    value={role}
+                    onChange={(e) => {
+                      const newRoles = [...data.activities.club.roles];
+                      newRoles[i] = e.target.value;
+                      updateClub('roles', newRoles);
+                    }}
+                    className="flex-1 px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
+                  />
+                  <button
+                    onClick={() => {
+                      const newRoles = data.activities.club.roles.filter((_, idx) => idx !== i);
+                      updateClub('roles', newRoles);
+                    }}
+                    className="px-3 py-2 text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg"
+                  >
+                    삭제
+                  </button>
+                </div>
+              ))}
+              <button
+                onClick={() => updateClub('roles', [...data.activities.club.roles, ''])}
+                className="w-full px-4 py-2 text-purple-600 dark:text-purple-400 border border-dashed border-purple-300 dark:border-purple-700 rounded-lg hover:bg-purple-50 dark:hover:bg-purple-900/20"
+              >
+                + 역할 추가
+              </button>
+            </div>
           </div>
         </div>
       )}
