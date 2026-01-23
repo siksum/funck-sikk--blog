@@ -67,10 +67,20 @@ export default function GoogleDriveFileBrowser({
       const data = await response.json();
 
       if (append) {
-        setFiles(prev => [...prev, ...data.files]);
+        // Deduplicate when appending
+        setFiles(prev => {
+          const existingIds = new Set(prev.map(f => f.id));
+          const newFiles = data.files.filter((f: DriveFile) => !existingIds.has(f.id));
+          return [...prev, ...newFiles];
+        });
       } else {
+        // Deduplicate folders by ID
+        const uniqueFolders = data.folders.filter(
+          (folder: DriveFolder, index: number, self: DriveFolder[]) =>
+            self.findIndex(f => f.id === folder.id) === index
+        );
         setFiles(data.files);
-        setFolders(data.folders);
+        setFolders(uniqueFolders);
         setCurrentFolderId(data.currentFolderId);
         setRootFolderId(data.rootFolderId);
       }
