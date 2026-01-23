@@ -1128,9 +1128,12 @@ export default function PostsManagementPage() {
                             className="mt-1 w-4 h-4 rounded border-gray-300 text-violet-600 focus:ring-violet-500"
                           />
                           <div className="flex-1 min-w-0">
-                            <h3 className="text-sm font-medium text-gray-900 dark:text-white truncate">
+                            <Link
+                              href={`/admin/edit/${post.slug}`}
+                              className="block text-sm font-medium text-gray-900 dark:text-white truncate hover:text-violet-600 dark:hover:text-violet-400 transition-colors"
+                            >
                               {post.title}
-                            </h3>
+                            </Link>
                             <p className="text-xs text-gray-500 dark:text-gray-400 mt-0.5 truncate">
                               {post.slug}
                             </p>
@@ -1295,9 +1298,12 @@ export default function PostsManagementPage() {
                             />
                           </td>
                           <td className="px-6 py-4">
-                            <div className="text-sm font-medium text-gray-900 dark:text-white">
+                            <Link
+                              href={`/admin/edit/${post.slug}`}
+                              className="block text-sm font-medium text-gray-900 dark:text-white hover:text-violet-600 dark:hover:text-violet-400 transition-colors"
+                            >
                               {post.title}
-                            </div>
+                            </Link>
                             <div className="text-xs text-gray-500 dark:text-gray-400 mt-1">
                               {post.slug}
                             </div>
