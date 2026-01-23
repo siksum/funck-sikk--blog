@@ -724,3 +724,53 @@ iframe[src*="drive.google.com"],
   background-color: rgba(139, 92, 246, 0.05);
 }
 
+/* MDX HTML Content (TipTap) Table Styles */
+.mdx-html-content table {
+  width: 100%;
+  border-collapse: collapse;
+  margin: 1rem 0;
+  border: 1px solid rgb(221 214 254);
+}
+
+.mdx-html-content th,
+.mdx-html-content td {
+  border: 1px solid rgb(221 214 254);
+  padding: 0.5rem 1rem;
+  text-align: left;
+}
+
+.mdx-html-content th {
+  background-color: rgb(245 243 255);
+  font-weight: 600;
+}
+
+.mdx-html-content tr:hover {
+  background-color: rgba(139, 92, 246, 0.03);
+}
+
+/* MDX HTML Content Table - Dark Mode */
+.dark .mdx-html-content table {
+  border-color: rgba(139, 92, 246, 0.3);
+}
+
+.dark .mdx-html-content th,
+.dark .mdx-html-content td {
+  border-color: rgba(139, 92, 246, 0.3);
+}
+
+.dark .mdx-html-content th {
+  background-color: rgba(139, 92, 246, 0.1);
+}
+
+.dark .mdx-html-content tr:hover {
+  background-color: rgba(139, 92, 246, 0.05);
+}
+
+/* Support data-highlight attribute for custom cell colors */
+.mdx-html-content th[data-highlight],
+.mdx-html-content td[data-highlight],
+.mdx-content th[data-highlight],
+.mdx-content td[data-highlight] {
+  background-color: attr(data-highlight);
+}
+
