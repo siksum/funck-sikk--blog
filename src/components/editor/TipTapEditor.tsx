@@ -8,6 +8,50 @@ import { Table } from '@tiptap/extension-table';
 import { TableRow } from '@tiptap/extension-table-row';
 import { TableCell } from '@tiptap/extension-table-cell';
 import { TableHeader } from '@tiptap/extension-table-header';
+
+// Custom TableCell with backgroundColor support
+const CustomTableCell = TableCell.extend({
+  addAttributes() {
+    return {
+      ...this.parent?.(),
+      backgroundColor: {
+        default: null,
+        parseHTML: element => element.getAttribute('data-background-color') || element.style.backgroundColor || null,
+        renderHTML: attributes => {
+          if (!attributes.backgroundColor) {
+            return {};
+          }
+          return {
+            'data-background-color': attributes.backgroundColor,
+            style: `background-color: ${attributes.backgroundColor}`,
+          };
+        },
+      },
+    };
+  },
+});
+
+// Custom TableHeader with backgroundColor support
+const CustomTableHeader = TableHeader.extend({
+  addAttributes() {
+    return {
+      ...this.parent?.(),
+      backgroundColor: {
+        default: null,
+        parseHTML: element => element.getAttribute('data-background-color') || element.style.backgroundColor || null,
+        renderHTML: attributes => {
+          if (!attributes.backgroundColor) {
+            return {};
+          }
+          return {
+            'data-background-color': attributes.backgroundColor,
+            style: `background-color: ${attributes.backgroundColor}`,
+          };
+        },
+      },
+    };
+  },
+});
 import { TaskList } from '@tiptap/extension-task-list';
 import { TaskItem } from '@tiptap/extension-task-item';
 import { Placeholder } from '@tiptap/extension-placeholder';
@@ -124,8 +168,8 @@ export default function TipTapEditor({
         resizable: true,
       }),
       TableRow,
-      TableCell,
-      TableHeader,
+      CustomTableCell,
+      CustomTableHeader,
       TaskList,
       TaskItem.configure({
         nested: true,

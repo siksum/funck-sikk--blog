@@ -99,6 +99,18 @@ const HIGHLIGHT_COLORS = [
   { value: '#f3f4f6', label: '회색', color: '#f3f4f6', border: '#d1d5db' },
 ];
 
+// Table cell background colors
+const TABLE_CELL_COLORS = [
+  { value: '', label: '없음', color: 'transparent' },
+  { value: '#fef9c3', label: '노랑', color: '#fef9c3', border: '#fef08a' },
+  { value: '#dcfce7', label: '초록', color: '#dcfce7', border: '#bbf7d0' },
+  { value: '#dbeafe', label: '파랑', color: '#dbeafe', border: '#bfdbfe' },
+  { value: '#fce7f3', label: '분홍', color: '#fce7f3', border: '#fbcfe8' },
+  { value: '#ffedd5', label: '주황', color: '#ffedd5', border: '#fed7aa' },
+  { value: '#f3e8ff', label: '보라', color: '#f3e8ff', border: '#e9d5ff' },
+  { value: '#f3f4f6', label: '회색', color: '#f3f4f6', border: '#d1d5db' },
+];
+
 // Emoji categories
 const EMOJI_CATEGORIES = [
   {
@@ -146,6 +158,7 @@ export default function EditorToolbar({ editor, onSave, onCancel, driveType = 'b
   const [pdfDisplayMode, setPdfDisplayMode] = useState<'box' | 'embed'>('box');
   const [showDriveBrowser, setShowDriveBrowser] = useState(false);
   const [driveBrowserMode, setDriveBrowserMode] = useState<'image' | 'pdf'>('pdf');
+  const [showTableCellColorPicker, setShowTableCellColorPicker] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const pdfInputRef = useRef<HTMLInputElement>(null);
 
@@ -1007,6 +1020,54 @@ export default function EditorToolbar({ editor, onSave, onCancel, driveType = 'b
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
             </svg>
           </ToolbarButton>
+          {/* Table Cell Color */}
+          <div className="relative">
+            <ToolbarButton
+              onClick={() => setShowTableCellColorPicker(!showTableCellColorPicker)}
+              title="셀 배경색"
+            >
+              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 21a4 4 0 01-4-4V5a2 2 0 012-2h4a2 2 0 012 2v12a4 4 0 01-4 4zm0 0h12a2 2 0 002-2v-4a2 2 0 00-2-2h-2.343M11 7.343l1.657-1.657a2 2 0 012.828 0l2.829 2.829a2 2 0 010 2.828l-8.486 8.485M7 17h.01" />
+              </svg>
+            </ToolbarButton>
+            {showTableCellColorPicker && (
+              <div className="absolute top-full left-0 mt-2 p-2 bg-white dark:bg-gray-800 rounded-lg shadow-lg border border-pink-200 dark:border-pink-500/40 z-20 w-40">
+                <div className="text-xs font-semibold text-gray-500 dark:text-gray-400 mb-2 px-1">
+                  셀 배경색
+                </div>
+                <div className="grid grid-cols-4 gap-1">
+                  {TABLE_CELL_COLORS.map((color) => (
+                    <button
+                      type="button"
+                      key={color.value || 'none'}
+                      onClick={(e) => {
+                        e.preventDefault();
+                        e.stopPropagation();
+                        if (color.value) {
+                          editor.chain().focus().setCellAttribute('backgroundColor', color.value).run();
+                        } else {
+                          editor.chain().focus().setCellAttribute('backgroundColor', null).run();
+                        }
+                        setShowTableCellColorPicker(false);
+                      }}
+                      className="w-8 h-8 rounded border-2 hover:scale-110 transition-transform flex items-center justify-center"
+                      style={{
+                        backgroundColor: color.color,
+                        borderColor: color.border || '#e5e7eb'
+                      }}
+                      title={color.label}
+                    >
+                      {!color.value && (
+                        <svg className="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                        </svg>
+                      )}
+                    </button>
+                  ))}
+                </div>
+              </div>
+            )}
+          </div>
         </>
       )}
 
