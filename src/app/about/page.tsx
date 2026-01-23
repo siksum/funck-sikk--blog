@@ -14,6 +14,7 @@ interface TimelineItem {
 
 interface ScholarshipItem {
   name: string;
+  korean?: string;
   org: string;
   date: string;
 }
@@ -21,6 +22,7 @@ interface ScholarshipItem {
 interface ProjectItem {
   category: string;
   name: string;
+  korean?: string;
   description: string;
   link?: string;
   org: string;
@@ -479,6 +481,7 @@ export default function AboutPage() {
                             </span>
                           </div>
                           <h3 className="text-lg font-semibold card-title">{item.name}</h3>
+                          {item.korean && <p className="text-gray-500 dark:text-gray-400 text-sm"># {item.korean}</p>}
                           {item.org && <p className="text-accent-violet font-medium text-sm">{item.org}</p>}
                         </motion.div>
                       </motion.div>
@@ -521,6 +524,7 @@ export default function AboutPage() {
                           )}
                         </div>
                         <h3 className="text-lg font-semibold card-title">{item.name}</h3>
+                        {item.korean && <p className="text-gray-500 dark:text-gray-400 text-sm"># {item.korean}</p>}
                         {item.description && (
                           <p className="text-gray-600 dark:text-gray-400 text-sm mt-2 whitespace-pre-line">{item.description}</p>
                         )}
