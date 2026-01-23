@@ -161,63 +161,74 @@ export default function SikkCategoryPageContent({
 
           {/* Main Content */}
           <div className="lg:col-span-3 lg:order-last">
+            {/* Category Header - Always show */}
+            <div className="flex items-center justify-between mb-6 pb-4 border-b-2 border-pink-300 dark:border-pink-500">
+              <div>
+                <h2 className="text-3xl md:text-4xl font-extrabold mb-2 text-transparent bg-clip-text bg-gradient-to-r from-pink-600 to-rose-500 dark:from-pink-300 dark:to-rose-400">
+                  {category.name}
+                </h2>
+                <p className="text-sm" style={{ color: 'var(--foreground-muted)' }}>
+                  {childCategories.length > 0
+                    ? `${allPostsCount}개의 포스트 (하위 카테고리 ${childCategories.length}개)`
+                    : databases.length > 0
+                    ? `${databases.length}개의 데이터베이스`
+                    : directPosts.length > 0
+                    ? `${directPosts.length}개의 포스트`
+                    : '콘텐츠 없음'}
+                </p>
+              </div>
+              {/* View Toggle */}
+              <div
+                className="inline-flex rounded-lg p-1 border border-pink-200 dark:border-pink-500/40"
+                style={{ background: 'var(--card-bg)' }}
+              >
+                <button
+                  onClick={() => setViewMode('grid')}
+                  className={`p-2 rounded-md transition-colors ${
+                    viewMode === 'grid'
+                      ? 'bg-pink-100 dark:bg-pink-500/20 text-pink-600 dark:text-pink-400'
+                      : 'hover:bg-gray-100 dark:hover:bg-pink-500/10'
+                  }`}
+                  style={{ color: viewMode === 'grid' ? undefined : 'var(--foreground-muted)' }}
+                  aria-label="카드 보기"
+                >
+                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={2}
+                      d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zM14 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z"
+                    />
+                  </svg>
+                </button>
+                <button
+                  onClick={() => setViewMode('list')}
+                  className={`p-2 rounded-md transition-colors ${
+                    viewMode === 'list'
+                      ? 'bg-pink-100 dark:bg-pink-500/20 text-pink-600 dark:text-pink-400'
+                      : 'hover:bg-gray-100 dark:hover:bg-pink-500/10'
+                  }`}
+                  style={{ color: viewMode === 'list' ? undefined : 'var(--foreground-muted)' }}
+                  aria-label="리스트 보기"
+                >
+                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={2}
+                      d="M4 6h16M4 12h16M4 18h16"
+                    />
+                  </svg>
+                </button>
+              </div>
+            </div>
+
             {/* Child Categories */}
             {childCategories.length > 0 && (
               <section className="mb-12">
-                <div className="flex items-center justify-between mb-6 pb-4 border-b-2 border-pink-300 dark:border-pink-500">
-                  <div>
-                    <h2 className="text-3xl md:text-4xl font-extrabold mb-2 text-transparent bg-clip-text bg-gradient-to-r from-pink-600 to-rose-500 dark:from-pink-300 dark:to-rose-400">
-                      {category.name}
-                    </h2>
-                    <p className="text-sm" style={{ color: 'var(--foreground-muted)' }}>
-                      {allPostsCount}개의 포스트 (하위 카테고리 {childCategories.length}개)
-                    </p>
-                  </div>
-                  {/* View Toggle */}
-                  <div
-                    className="inline-flex rounded-lg p-1 border border-pink-200 dark:border-pink-500/40"
-                    style={{ background: 'var(--card-bg)' }}
-                  >
-                    <button
-                      onClick={() => setViewMode('grid')}
-                      className={`p-2 rounded-md transition-colors ${
-                        viewMode === 'grid'
-                          ? 'bg-pink-100 dark:bg-pink-500/20 text-pink-600 dark:text-pink-400'
-                          : 'hover:bg-gray-100 dark:hover:bg-pink-500/10'
-                      }`}
-                      style={{ color: viewMode === 'grid' ? undefined : 'var(--foreground-muted)' }}
-                      aria-label="카드 보기"
-                    >
-                      <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path
-                          strokeLinecap="round"
-                          strokeLinejoin="round"
-                          strokeWidth={2}
-                          d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zM14 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z"
-                        />
-                      </svg>
-                    </button>
-                    <button
-                      onClick={() => setViewMode('list')}
-                      className={`p-2 rounded-md transition-colors ${
-                        viewMode === 'list'
-                          ? 'bg-pink-100 dark:bg-pink-500/20 text-pink-600 dark:text-pink-400'
-                          : 'hover:bg-gray-100 dark:hover:bg-pink-500/10'
-                      }`}
-                      style={{ color: viewMode === 'list' ? undefined : 'var(--foreground-muted)' }}
-                      aria-label="리스트 보기"
-                    >
-                      <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path
-                          strokeLinecap="round"
-                          strokeLinejoin="round"
-                          strokeWidth={2}
-                          d="M4 6h16M4 12h16M4 18h16"
-                        />
-                      </svg>
-                    </button>
-                  </div>
-                </div>
+                <h3 className="text-xl font-semibold mb-4" style={{ color: 'var(--foreground)' }}>
+                  하위 카테고리
+                </h3>
                 {viewMode === 'list' ? (
                   <div className="space-y-3">
                     {childCategories.map((child) => (
@@ -250,60 +261,9 @@ export default function SikkCategoryPageContent({
             {/* Databases in this category */}
             {databases.length > 0 && (
               <section className="mb-12">
-                <div className="flex items-center justify-between mb-6 pb-4 border-b-2 border-pink-300 dark:border-pink-500">
-                  <div>
-                    <h2 className="text-3xl md:text-4xl font-extrabold mb-2 text-transparent bg-clip-text bg-gradient-to-r from-pink-600 to-rose-500 dark:from-pink-300 dark:to-rose-400">
-                      데이터베이스
-                    </h2>
-                    <p className="text-sm" style={{ color: 'var(--foreground-muted)' }}>
-                      {databases.length}개의 데이터베이스
-                    </p>
-                  </div>
-                  {/* View Toggle */}
-                  <div
-                    className="inline-flex rounded-lg p-1 border border-pink-200 dark:border-pink-500/40"
-                    style={{ background: 'var(--card-bg)' }}
-                  >
-                    <button
-                      onClick={() => setViewMode('grid')}
-                      className={`p-2 rounded-md transition-colors ${
-                        viewMode === 'grid'
-                          ? 'bg-pink-100 dark:bg-pink-500/20 text-pink-600 dark:text-pink-400'
-                          : 'hover:bg-gray-100 dark:hover:bg-pink-500/10'
-                      }`}
-                      style={{ color: viewMode === 'grid' ? undefined : 'var(--foreground-muted)' }}
-                      aria-label="카드 보기"
-                    >
-                      <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path
-                          strokeLinecap="round"
-                          strokeLinejoin="round"
-                          strokeWidth={2}
-                          d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zM14 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z"
-                        />
-                      </svg>
-                    </button>
-                    <button
-                      onClick={() => setViewMode('list')}
-                      className={`p-2 rounded-md transition-colors ${
-                        viewMode === 'list'
-                          ? 'bg-pink-100 dark:bg-pink-500/20 text-pink-600 dark:text-pink-400'
-                          : 'hover:bg-gray-100 dark:hover:bg-pink-500/10'
-                      }`}
-                      style={{ color: viewMode === 'list' ? undefined : 'var(--foreground-muted)' }}
-                      aria-label="리스트 보기"
-                    >
-                      <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path
-                          strokeLinecap="round"
-                          strokeLinejoin="round"
-                          strokeWidth={2}
-                          d="M4 6h16M4 12h16M4 18h16"
-                        />
-                      </svg>
-                    </button>
-                  </div>
-                </div>
+                <h3 className="text-xl font-semibold mb-4" style={{ color: 'var(--foreground)' }}>
+                  데이터베이스
+                </h3>
                 {viewMode === 'list' ? (
                   <div className="space-y-3">
                     {databases.map((db) => (
@@ -340,62 +300,9 @@ export default function SikkCategoryPageContent({
             {/* Posts in this category */}
             {directPosts.length > 0 && (
               <section>
-                <div className="flex items-center justify-between mb-6 pb-4 border-b-2 border-pink-300 dark:border-pink-500">
-                  <div>
-                    <h2 className="text-3xl md:text-4xl font-extrabold mb-2 text-transparent bg-clip-text bg-gradient-to-r from-pink-600 to-rose-500 dark:from-pink-300 dark:to-rose-400">
-                      {category.name} 포스트
-                    </h2>
-                    <p className="text-sm" style={{ color: 'var(--foreground-muted)' }}>
-                      {searchTerm
-                        ? `${filteredAndSortedPosts.length}개 검색됨 (전체 ${directPosts.length}개)`
-                        : `${directPosts.length}개의 포스트`}
-                    </p>
-                  </div>
-                  {/* View Toggle */}
-                  <div
-                    className="inline-flex rounded-lg p-1 border border-pink-200 dark:border-pink-500/40"
-                    style={{ background: 'var(--card-bg)' }}
-                  >
-                    <button
-                      onClick={() => setViewMode('grid')}
-                      className={`p-2 rounded-md transition-colors ${
-                        viewMode === 'grid'
-                          ? 'bg-pink-100 dark:bg-pink-500/20 text-pink-600 dark:text-pink-400'
-                          : 'hover:bg-gray-100 dark:hover:bg-pink-500/10'
-                      }`}
-                      style={{ color: viewMode === 'grid' ? undefined : 'var(--foreground-muted)' }}
-                      aria-label="카드 보기"
-                    >
-                      <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path
-                          strokeLinecap="round"
-                          strokeLinejoin="round"
-                          strokeWidth={2}
-                          d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zM14 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z"
-                        />
-                      </svg>
-                    </button>
-                    <button
-                      onClick={() => setViewMode('list')}
-                      className={`p-2 rounded-md transition-colors ${
-                        viewMode === 'list'
-                          ? 'bg-pink-100 dark:bg-pink-500/20 text-pink-600 dark:text-pink-400'
-                          : 'hover:bg-gray-100 dark:hover:bg-pink-500/10'
-                      }`}
-                      style={{ color: viewMode === 'list' ? undefined : 'var(--foreground-muted)' }}
-                      aria-label="리스트 보기"
-                    >
-                      <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path
-                          strokeLinecap="round"
-                          strokeLinejoin="round"
-                          strokeWidth={2}
-                          d="M4 6h16M4 12h16M4 18h16"
-                        />
-                      </svg>
-                    </button>
-                  </div>
-                </div>
+                <h3 className="text-xl font-semibold mb-4" style={{ color: 'var(--foreground)' }}>
+                  포스트 ({searchTerm ? `${filteredAndSortedPosts.length}/${directPosts.length}` : directPosts.length})
+                </h3>
 
                 {/* Search and Sort Controls */}
                 <div className="flex flex-col sm:flex-row gap-3 mb-6">
