@@ -37,10 +37,10 @@
       { "year": "2021.03 - 12", "title": "Undergraduate Internship", "subtitle": "CSE Lab", "org": "Sungshin Women's University", "detail": "Advisor: Ilgu Lee" }
     ],
     "activities": [
-      { "year": "2025.05 - 2025.12", "title": "Convergence Security Crew", "subtitle": "AI Security Team Leader (크루장)", "org": "KISIA", "detail": "DeFi vulnerability detection with LLM & prompt injection prevention" },
-      { "year": "2023.09 - 2023.12", "title": "Protocol Camp 5th", "subtitle": "Team Leader (AntiBug)", "org": "Dreamplus X Hashed", "detail": "VSCode security assistant for smart contract development" },
-      { "year": "2023.03 - 2023.06", "title": "DreamPlus Academy 2nd", "subtitle": "Bootcamper", "org": "Dreamplus X Theori", "detail": "Blockchain security training & static analysis detector development" },
-      { "year": "2021.01 - 2022.12", "title": "HASH (Hacking Club)", "subtitle": "Founding Member / Vice President / President", "org": "Sungshin Women's University", "detail": "성신여대 융합보안공학과 해킹동아리" }
+      { "period": "2025.05 - 2025.12", "title": "Convergence Security Crew", "org": "KISIA", "role": "AI Security Team Leader (크루장)", "desc": "DeFi vulnerability detection with LLM & prompt injection prevention" },
+      { "period": "2023.09 - 2023.12", "title": "Protocol Camp 5th", "org": "Dreamplus X Hashed", "role": "Team Leader (AntiBug)", "desc": "VSCode security assistant for smart contract development" },
+      { "period": "2023.03 - 2023.06", "title": "DreamPlus Academy 2nd", "org": "Dreamplus X Theori", "role": "Bootcamper", "desc": "Blockchain security training & static analysis detector development" },
+      { "period": "2021.01 - 2022.12", "title": "HASH (Hacking Club)", "org": "Sungshin Women's University", "role": "Founding Member / Vice President / President", "desc": "성신여대 융합보안공학과 해킹동아리" }
     ]
   },
   "publications": {

@@ -10,6 +10,14 @@ interface TimelineItem {
   detail: string;
 }
 
+interface ActivityTimelineItem {
+  period: string;
+  title: string;
+  org: string;
+  role?: string;
+  desc: string;
+}
+
 interface ScholarshipItem {
   name: string;
   korean?: string;
@@ -49,7 +57,7 @@ interface AboutData {
     project: ProjectItem[];
     work: TimelineItem[];
     research: TimelineItem[];
-    activities: TimelineItem[];
+    activities: ActivityTimelineItem[];
   };
   publications: {
     journals: Array<{ authors: string; title: string; venue: string; badge: string; featured?: boolean; korean?: string }>;
@@ -412,13 +420,24 @@ function TimelineEditor({ data, setData }: { data: AboutData; setData: (d: About
   }
 
   // Add functions for each type
-  const addTimelineItem = (type: 'education' | 'work' | 'research' | 'activities') => {
+  const addTimelineItem = (type: 'education' | 'work' | 'research') => {
     const newItem: TimelineItem = { year: '', title: '', subtitle: '', org: '', detail: '' };
     setData({
       ...data,
       timeline: {
         ...data.timeline,
         [type]: [...(data.timeline[type] || []), newItem],
+      },
+    });
+  };
+
+  const addActivityTimelineItem = () => {
+    const newItem: ActivityTimelineItem = { period: '', title: '', org: '', role: '', desc: '' };
+    setData({
+      ...data,
+      timeline: {
+        ...data.timeline,
+        activities: [...(data.timeline.activities || []), newItem],
       },
     });
   };
@@ -445,12 +464,21 @@ function TimelineEditor({ data, setData }: { data: AboutData; setData: (d: About
     });
   };
 
-  const updateTimelineItem = (type: 'education' | 'work' | 'research' | 'activities', index: number, field: string, value: string) => {
+  const updateTimelineItem = (type: 'education' | 'work' | 'research', index: number, field: string, value: string) => {
     const currentItems = [...(data.timeline[type] || [])];
     currentItems[index] = { ...currentItems[index], [field]: value };
     setData({
       ...data,
       timeline: { ...data.timeline, [type]: currentItems },
+    });
+  };
+
+  const updateActivityTimelineItem = (index: number, field: string, value: string) => {
+    const currentItems = [...(data.timeline.activities || [])];
+    currentItems[index] = { ...currentItems[index], [field]: value };
+    setData({
+      ...data,
+      timeline: { ...data.timeline, activities: currentItems },
     });
   };
 
@@ -537,7 +565,7 @@ function TimelineEditor({ data, setData }: { data: AboutData; setData: (d: About
   };
 
   // Render functions for each type
-  const renderTimelineItems = (type: 'education' | 'work' | 'research' | 'activities') => {
+  const renderTimelineItems = (type: 'education' | 'work' | 'research') => {
     const items = data.timeline[type] || [];
     return (
       <div className="space-y-4">
@@ -626,6 +654,100 @@ function TimelineEditor({ data, setData }: { data: AboutData; setData: (d: About
           className="w-full px-4 py-2 text-blue-600 dark:text-blue-400 border border-dashed border-blue-300 dark:border-blue-700 rounded-lg hover:bg-blue-50 dark:hover:bg-blue-900/20"
         >
           + 항목 추가
+        </button>
+      </div>
+    );
+  };
+
+  const renderActivityTimelineItems = () => {
+    const items = data.timeline.activities || [];
+    return (
+      <div className="space-y-4">
+        {items.map((item, index) => (
+          <div
+            key={index}
+            draggable
+            onDragStart={(e) => handleDragStart(e, index)}
+            onDragOver={(e) => handleDragOver(e, index)}
+            onDragLeave={handleDragLeave}
+            onDrop={(e) => handleDrop(e, index)}
+            onDragEnd={handleDragEnd}
+            className={`p-4 border rounded-lg space-y-3 transition-all ${
+              dragIndex === index
+                ? 'opacity-50 border-purple-400 bg-purple-50 dark:bg-purple-900/20'
+                : dragOverIndex === index
+                ? 'border-purple-500 border-2 bg-purple-50 dark:bg-purple-900/10'
+                : 'border-gray-200 dark:border-gray-700'
+            }`}
+          >
+            <div className="flex items-center justify-between mb-2">
+              <div className="flex items-center gap-2 text-gray-400 dark:text-gray-500 cursor-move">
+                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 8h16M4 16h16" />
+                </svg>
+                <span className="text-xs font-medium">#{index + 1} 드래그하여 순서 변경</span>
+              </div>
+              <button onClick={() => removeItem('activities', index)} className="text-red-500 text-sm hover:underline">삭제</button>
+            </div>
+            <div className="grid grid-cols-2 gap-3">
+              <div>
+                <label className="block text-xs font-medium text-gray-500 dark:text-gray-400 mb-1">활동 기간</label>
+                <input
+                  type="text"
+                  placeholder="예: 2024.03 - 2024.11"
+                  value={item.period}
+                  onChange={(e) => updateActivityTimelineItem(index, 'period', e.target.value)}
+                  className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
+                />
+              </div>
+              <div>
+                <label className="block text-xs font-medium text-gray-500 dark:text-gray-400 mb-1">역할 (선택)</label>
+                <input
+                  type="text"
+                  placeholder="예: 팀장, 부트캠퍼"
+                  value={item.role || ''}
+                  onChange={(e) => updateActivityTimelineItem(index, 'role', e.target.value)}
+                  className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
+                />
+              </div>
+            </div>
+            <div>
+              <label className="block text-xs font-medium text-gray-500 dark:text-gray-400 mb-1">프로그램/활동명</label>
+              <input
+                type="text"
+                placeholder="예: Protocol Camp 5th"
+                value={item.title}
+                onChange={(e) => updateActivityTimelineItem(index, 'title', e.target.value)}
+                className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
+              />
+            </div>
+            <div>
+              <label className="block text-xs font-medium text-gray-500 dark:text-gray-400 mb-1">주최 기관</label>
+              <input
+                type="text"
+                placeholder="예: KISIA"
+                value={item.org}
+                onChange={(e) => updateActivityTimelineItem(index, 'org', e.target.value)}
+                className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
+              />
+            </div>
+            <div>
+              <label className="block text-xs font-medium text-gray-500 dark:text-gray-400 mb-1">설명</label>
+              <input
+                type="text"
+                placeholder="예: 블록체인 보안 교육 및 정적 분석 도구 개발"
+                value={item.desc}
+                onChange={(e) => updateActivityTimelineItem(index, 'desc', e.target.value)}
+                className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
+              />
+            </div>
+          </div>
+        ))}
+        <button
+          onClick={addActivityTimelineItem}
+          className="w-full px-4 py-2 text-purple-600 dark:text-purple-400 border border-dashed border-purple-300 dark:border-purple-700 rounded-lg hover:bg-purple-50 dark:hover:bg-purple-900/20"
+        >
+          + 활동 추가
         </button>
       </div>
     );
@@ -864,7 +986,7 @@ function TimelineEditor({ data, setData }: { data: AboutData; setData: (d: About
       {tab === 'project' && renderProjectItems()}
       {tab === 'work' && renderTimelineItems('work')}
       {tab === 'research' && renderTimelineItems('research')}
-      {tab === 'activities' && renderTimelineItems('activities')}
+      {tab === 'activities' && renderActivityTimelineItems()}
     </div>
   );
 }
