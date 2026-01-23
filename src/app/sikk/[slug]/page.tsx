@@ -93,6 +93,7 @@ export default async function SikkPostPage({ params }: SikkPostPageProps) {
   }
 
   const isAdmin = session?.user?.isAdmin ?? false;
+  const isFullAccess = accessResult.accessType === 'admin'; // Only admin has full navigation access
   const isPrivate = !post.isPublic;
 
   const formattedDate = new Date(post.date).toLocaleDateString('ko-KR', {
@@ -117,10 +118,11 @@ export default async function SikkPostPage({ params }: SikkPostPageProps) {
         content={post.content}
         tags={post.tags}
         category={post.category}
-        relatedPosts={relatedPosts}
-        categories={categories}
+        relatedPosts={isFullAccess ? relatedPosts : []}
+        categories={isFullAccess ? categories : []}
         currentCategorySlugPath={post.categorySlugPath}
-        sections={sections}
+        sections={isFullAccess ? sections : []}
+        hideNavigation={!isFullAccess}
       >
         {/* Banner Image */}
         {post.thumbnail && (
@@ -139,10 +141,15 @@ export default async function SikkPostPage({ params }: SikkPostPageProps) {
 
         {/* Header */}
         <header className="mb-8">
+          {/* Breadcrumb - only show links for admin users */}
           <div className="flex items-center text-sm mb-4" style={{ color: 'var(--foreground)', opacity: 0.7 }}>
-            <Link href="/sikk" className="hover:text-pink-600 dark:hover:text-pink-400 transition-colors">
-              Sikk
-            </Link>
+            {isFullAccess ? (
+              <Link href="/sikk" className="hover:text-pink-600 dark:hover:text-pink-400 transition-colors">
+                Sikk
+              </Link>
+            ) : (
+              <span>Sikk</span>
+            )}
             {post.category && (
               <>
                 <span className="mx-2">/</span>
@@ -228,31 +235,35 @@ export default async function SikkPostPage({ params }: SikkPostPageProps) {
           }}
         />
 
-        {/* Post Navigation */}
-        <PostNavigation prevPost={prevPost} nextPost={nextPost} basePath="/sikk" variant="pink" />
+        {/* Post Navigation - only for admin users */}
+        {isFullAccess && (
+          <PostNavigation prevPost={prevPost} nextPost={nextPost} basePath="/sikk" variant="pink" />
+        )}
 
-        {/* Footer */}
-        <footer className="mt-12 pt-8 border-t-2 border-pink-300 dark:border-pink-500">
-          <Link
-            href="/sikk"
-            className="inline-flex items-center text-pink-600 dark:text-pink-400 hover:underline"
-          >
-            <svg
-              className="w-4 h-4 mr-2"
-              fill="none"
-              stroke="currentColor"
-              viewBox="0 0 24 24"
+        {/* Footer - only show navigation back for admin users */}
+        {isFullAccess && (
+          <footer className="mt-12 pt-8 border-t-2 border-pink-300 dark:border-pink-500">
+            <Link
+              href="/sikk"
+              className="inline-flex items-center text-pink-600 dark:text-pink-400 hover:underline"
             >
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                strokeWidth={2}
-                d="M10 19l-7-7m0 0l7-7m-7 7h18"
-              />
-            </svg>
-            Sikk 목록으로 돌아가기
-          </Link>
-        </footer>
+              <svg
+                className="w-4 h-4 mr-2"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M10 19l-7-7m0 0l7-7m-7 7h18"
+                />
+              </svg>
+              Sikk 목록으로 돌아가기
+            </Link>
+          </footer>
+        )}
       </SikkPostLayout>
       <FloatingActions />
     </>

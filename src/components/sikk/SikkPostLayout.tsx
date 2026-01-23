@@ -21,6 +21,7 @@ interface SikkPostLayoutProps {
   categories: Category[];
   currentCategorySlugPath?: string[];
   sections?: DBSikkSection[];
+  hideNavigation?: boolean;
 }
 
 export default function SikkPostLayout({
@@ -32,6 +33,7 @@ export default function SikkPostLayout({
   categories,
   currentCategorySlugPath,
   sections,
+  hideNavigation = false,
 }: SikkPostLayoutProps) {
   const [isWide, setIsWide] = useState(false);
   const [mounted, setMounted] = useState(false);
@@ -56,20 +58,22 @@ export default function SikkPostLayout({
     <div className="min-h-screen py-12">
       <div className="w-full px-4 sm:px-6 lg:px-8 xl:px-12">
         <div className="lg:flex lg:gap-8 lg:items-start">
-          {/* Sidebar - Left (Fixed Width) */}
-          <div className="hidden lg:block lg:w-64 xl:w-72 lg:flex-shrink-0 self-stretch">
-            <div className="sticky top-20">
-              <SikkPostSidebar
-                content={content}
-                tags={tags}
-                category={category}
-                relatedPosts={relatedPosts}
-                categories={categories}
-                currentCategorySlugPath={currentCategorySlugPath}
-                sections={sections}
-              />
+          {/* Sidebar - Left (Fixed Width) - Hidden for invited users */}
+          {!hideNavigation && (
+            <div className="hidden lg:block lg:w-64 xl:w-72 lg:flex-shrink-0 self-stretch">
+              <div className="sticky top-20">
+                <SikkPostSidebar
+                  content={content}
+                  tags={tags}
+                  category={category}
+                  relatedPosts={relatedPosts}
+                  categories={categories}
+                  currentCategorySlugPath={currentCategorySlugPath}
+                  sections={sections}
+                />
+              </div>
             </div>
-          </div>
+          )}
 
           {/* Main Content (Flexible Width) */}
           <article className={`flex-1 transition-all duration-300 ${isWide ? 'max-w-none' : 'max-w-4xl mx-auto'}`}>
