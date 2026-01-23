@@ -64,7 +64,7 @@ interface AboutData {
     international: Array<{ authors: string; title: string; venue: string }>;
     domestic: Array<{ authors: string; title: string; venue: string; korean?: string; award?: string }>;
   };
-  awards: Array<{ title: string; org: string; year: string; highlight?: boolean; korean?: string; linkedSection?: string }>;
+  awards: Array<{ title: string; org: string; year: string; highlight?: boolean; korean?: string; linkedSection?: string; linkedItem?: string }>;
   certificates: Array<{ title: string; org: string; date: string }>;
   patents: Array<{ title: string; code: string; date: string; korean: string }>;
   activities: {
@@ -1421,8 +1421,57 @@ function AwardsEditor({ data, setData }: { data: AboutData; setData: (d: AboutDa
   const addAward = () => {
     setData({
       ...data,
-      awards: [...data.awards, { title: '', org: '', year: '', korean: '', linkedSection: '' }],
+      awards: [...data.awards, { title: '', org: '', year: '', korean: '', linkedSection: '', linkedItem: '' }],
     });
+  };
+
+  // Helper function to get items for linked section dropdown
+  const getLinkedItemOptions = (section: string) => {
+    const options: Array<{ value: string; label: string }> = [{ value: '', label: '선택 안함' }];
+
+    if (section === 'publications') {
+      // Add journals
+      data.publications.journals.forEach((pub, i) => {
+        const label = pub.korean || pub.title;
+        options.push({ value: `journals-${i}`, label: `[Journal] ${label.substring(0, 50)}${label.length > 50 ? '...' : ''}` });
+      });
+      // Add international
+      data.publications.international.forEach((pub, i) => {
+        options.push({ value: `international-${i}`, label: `[International] ${pub.title.substring(0, 50)}${pub.title.length > 50 ? '...' : ''}` });
+      });
+      // Add domestic
+      data.publications.domestic.forEach((pub, i) => {
+        const label = pub.korean || pub.title;
+        options.push({ value: `domestic-${i}`, label: `[Domestic] ${label.substring(0, 50)}${label.length > 50 ? '...' : ''}` });
+      });
+    } else if (section === 'competition') {
+      // Add competitions from awards (self-referencing)
+      data.awards.forEach((award, i) => {
+        if (award.linkedSection === 'competition' && award.title) {
+          const label = award.korean || award.title;
+          options.push({ value: `award-${i}`, label: `[Award] ${label.substring(0, 50)}${label.length > 50 ? '...' : ''}` });
+        }
+      });
+      // Add CTF competitions
+      data.activities.ctf.forEach((ctf, i) => {
+        options.push({ value: `ctf-${i}`, label: `[CTF] ${ctf.event} (${ctf.year})` });
+      });
+    } else if (section === 'activity') {
+      // Add timeline activities
+      data.timeline.activities.forEach((act, i) => {
+        options.push({ value: `timeline-${i}`, label: `[Timeline] ${act.title}` });
+      });
+      // Add external activities
+      data.activities.external.forEach((ext, i) => {
+        options.push({ value: `external-${i}`, label: `[External] ${ext.title}` });
+      });
+      // Add club
+      if (data.activities.club.name) {
+        options.push({ value: 'club-0', label: `[Club] ${data.activities.club.name}` });
+      }
+    }
+
+    return options;
   };
 
   const updateAward = (index: number, field: string, value: string | boolean) => {
@@ -1571,21 +1620,41 @@ function AwardsEditor({ data, setData }: { data: AboutData; setData: (d: AboutDa
               />
             </div>
           </div>
-          <div>
-            <label className="block text-xs font-medium text-gray-500 dark:text-gray-400 mb-1">연결된 섹션</label>
-            <select
-              value={award.linkedSection || ''}
-              onChange={(e) => updateAward(index, 'linkedSection', e.target.value)}
-              className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
-            >
-              {sectionOptions.map((option) => (
-                <option key={option.value} value={option.value}>
-                  {option.label}
-                </option>
-              ))}
-            </select>
-            <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">About 페이지에서 카테고리별로 필터링할 때 사용됩니다</p>
+          <div className="grid grid-cols-2 gap-3">
+            <div>
+              <label className="block text-xs font-medium text-gray-500 dark:text-gray-400 mb-1">연결된 섹션</label>
+              <select
+                value={award.linkedSection || ''}
+                onChange={(e) => {
+                  updateAward(index, 'linkedSection', e.target.value);
+                  updateAward(index, 'linkedItem', ''); // Reset linked item when section changes
+                }}
+                className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
+              >
+                {sectionOptions.map((option) => (
+                  <option key={option.value} value={option.value}>
+                    {option.label}
+                  </option>
+                ))}
+              </select>
+            </div>
+            <div>
+              <label className="block text-xs font-medium text-gray-500 dark:text-gray-400 mb-1">연결된 항목 (선택)</label>
+              <select
+                value={award.linkedItem || ''}
+                onChange={(e) => updateAward(index, 'linkedItem', e.target.value)}
+                disabled={!award.linkedSection}
+                className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                {getLinkedItemOptions(award.linkedSection || '').map((option) => (
+                  <option key={option.value} value={option.value}>
+                    {option.label}
+                  </option>
+                ))}
+              </select>
+            </div>
           </div>
+          <p className="text-xs text-gray-500 dark:text-gray-400">연결된 섹션은 카테고리 필터링에, 연결된 항목은 특정 항목 하이라이트에 사용됩니다</p>
           <div className="flex items-center">
             <label className="flex items-center gap-2 text-sm text-gray-600 dark:text-gray-400">
               <input

@@ -66,7 +66,7 @@ interface AboutData {
     international: Array<{ authors: string; title: string; venue: string }>;
     domestic: Array<{ authors: string; title: string; venue: string; korean?: string; award?: string }>;
   };
-  awards: Array<{ title: string; org: string; year: string; highlight?: boolean; korean?: string; linkedSection?: string }>;
+  awards: Array<{ title: string; org: string; year: string; highlight?: boolean; korean?: string; linkedSection?: string; linkedItem?: string }>;
   certificates: Array<{ title: string; org: string; date: string }>;
   patents: Array<{ title: string; code: string; date: string; korean: string }>;
   activities: {
