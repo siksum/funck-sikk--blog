@@ -347,3 +347,30 @@
     visibility: hidden;
   }
 }
+
+/* PDF Attachment Box */
+.tiptap-editor .pdf-attachment {
+  display: flex !important;
+  align-items: center;
+  gap: 12px;
+  padding: 16px;
+  margin: 16px 0;
+  border: 1px solid #e5e7eb;
+  border-radius: 12px;
+  background: linear-gradient(135deg, #fdf2f8 0%, #fce7f3 100%);
+  max-width: 400px;
+  transition: box-shadow 0.2s ease;
+}
+
+.tiptap-editor .pdf-attachment:hover {
+  box-shadow: 0 4px 12px rgba(236, 72, 153, 0.15);
+}
+
+.dark .tiptap-editor .pdf-attachment {
+  background: linear-gradient(135deg, rgba(236, 72, 153, 0.1) 0%, rgba(236, 72, 153, 0.05) 100%);
+  border-color: rgba(236, 72, 153, 0.3);
+}
+
+.tiptap-editor .pdf-attachment a {
+  text-decoration: none !important;
+}
