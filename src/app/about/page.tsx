@@ -1193,10 +1193,10 @@ export default function AboutPage() {
                               </div>
                               <h4 className={`font-medium text-sm ${award.highlight ? 'text-gray-900 dark:text-white' : 'card-title'}`}>
                                 {award.title}
+                                {award.korean && (
+                                  <span className="text-xs text-gray-500 dark:text-gray-400 font-normal ml-2"># {award.korean}</span>
+                                )}
                               </h4>
-                              {award.korean && (
-                                <p className="text-xs text-gray-500 dark:text-gray-400"># {award.korean}</p>
-                              )}
                               {award.org && (
                                 <p className="text-xs text-accent-violet mt-1">{award.org}</p>
                               )}
