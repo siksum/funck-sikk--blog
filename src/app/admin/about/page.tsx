@@ -1724,6 +1724,67 @@ function PublicationsEditor({ data, setData }: { data: AboutData; setData: (d: A
 function AwardsEditor({ data, setData }: { data: AboutData; setData: (d: AboutData) => void }) {
   const [dragIndex, setDragIndex] = useState<number | null>(null);
   const [dragOverIndex, setDragOverIndex] = useState<number | null>(null);
+  const [filterTab, setFilterTab] = useState<'all' | 'conference' | 'competition' | 'activity'>('all');
+
+  // Get linked item options based on selected section
+  const getLinkedItemOptions = (section: string): { value: string; label: string }[] => {
+    if (section === 'conference') {
+      // Return all publications (journals, international, domestic)
+      const options: { value: string; label: string }[] = [{ value: '', label: '선택 안함' }];
+
+      data.publications.journals.forEach((pub) => {
+        options.push({ value: pub.title, label: `[Journal] ${pub.title.substring(0, 60)}${pub.title.length > 60 ? '...' : ''}` });
+      });
+      data.publications.international.forEach((pub) => {
+        options.push({ value: pub.title, label: `[Intl] ${pub.title.substring(0, 60)}${pub.title.length > 60 ? '...' : ''}` });
+      });
+      data.publications.domestic.forEach((pub) => {
+        options.push({ value: pub.title, label: `[Domestic] ${pub.title.substring(0, 60)}${pub.title.length > 60 ? '...' : ''}` });
+      });
+
+      return options;
+    } else if (section === 'activity') {
+      // Return activities
+      const options: { value: string; label: string }[] = [{ value: '', label: '선택 안함' }];
+
+      data.activities.external.forEach((act) => {
+        options.push({ value: act.title, label: act.title });
+      });
+      data.timeline.activities.forEach((act) => {
+        if (!options.some(o => o.value === act.title)) {
+          options.push({ value: act.title, label: act.title });
+        }
+      });
+
+      return options;
+    } else if (section === 'competition') {
+      // Return competition-related activities and CTF events
+      const options: { value: string; label: string }[] = [{ value: '', label: '선택 안함' }];
+
+      data.activities.external.forEach((act) => {
+        options.push({ value: act.title, label: act.title });
+      });
+      data.activities.ctf.forEach((ctf) => {
+        options.push({ value: ctf.event, label: `[CTF] ${ctf.event}` });
+      });
+
+      return options;
+    }
+
+    return [{ value: '', label: '선택 안함' }];
+  };
+
+  // Filter awards based on selected tab
+  const filteredAwards = filterTab === 'all'
+    ? data.awards
+    : data.awards.filter(a => a.linkedSection === filterTab);
+
+  // Get original index from filtered index
+  const getOriginalIndex = (filteredIndex: number): number => {
+    if (filterTab === 'all') return filteredIndex;
+    const filteredItem = filteredAwards[filteredIndex];
+    return data.awards.findIndex(a => a === filteredItem);
+  };
 
   const addAward = () => {
     setData({
@@ -1810,7 +1871,53 @@ function AwardsEditor({ data, setData }: { data: AboutData; setData: (d: AboutDa
         </div>
       </div>
 
-      {data.awards.map((award, index) => (
+      {/* Filter Tabs */}
+      <div className="flex gap-2 mb-4 flex-wrap">
+        <button
+          onClick={() => setFilterTab('all')}
+          className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
+            filterTab === 'all'
+              ? 'bg-amber-100 dark:bg-amber-900/30 text-amber-700 dark:text-amber-300'
+              : 'text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-700'
+          }`}
+        >
+          전체 ({data.awards.length})
+        </button>
+        <button
+          onClick={() => setFilterTab('conference')}
+          className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
+            filterTab === 'conference'
+              ? 'bg-violet-100 dark:bg-violet-900/30 text-violet-700 dark:text-violet-300'
+              : 'text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-700'
+          }`}
+        >
+          📄 Conference ({data.awards.filter(a => a.linkedSection === 'conference').length})
+        </button>
+        <button
+          onClick={() => setFilterTab('competition')}
+          className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
+            filterTab === 'competition'
+              ? 'bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300'
+              : 'text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-700'
+          }`}
+        >
+          🥇 Competition ({data.awards.filter(a => a.linkedSection === 'competition').length})
+        </button>
+        <button
+          onClick={() => setFilterTab('activity')}
+          className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
+            filterTab === 'activity'
+              ? 'bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-300'
+              : 'text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-700'
+          }`}
+        >
+          🎯 Activity ({data.awards.filter(a => a.linkedSection === 'activity').length})
+        </button>
+      </div>
+
+      {filteredAwards.map((award, filteredIndex) => {
+        const index = getOriginalIndex(filteredIndex);
+        return (
         <div
           key={index}
           draggable
@@ -1888,33 +1995,45 @@ function AwardsEditor({ data, setData }: { data: AboutData; setData: (d: AboutDa
               className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
             />
           </div>
-          <div className="grid grid-cols-2 gap-3">
-            <div>
-              <label className="block text-xs font-medium text-gray-500 dark:text-gray-400 mb-1">카테고리</label>
+          <div>
+            <label className="block text-xs font-medium text-gray-500 dark:text-gray-400 mb-1">카테고리</label>
+            <select
+              value={award.linkedSection || ''}
+              onChange={(e) => updateAward(index, 'linkedSection', e.target.value)}
+              className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
+            >
+              {sectionOptions.map((option) => (
+                <option key={option.value} value={option.value}>
+                  {option.label}
+                </option>
+              ))}
+            </select>
+          </div>
+          {/* Linked Item - Both dropdown and text input */}
+          <div className="space-y-2">
+            <label className="block text-xs font-medium text-gray-500 dark:text-gray-400">관련 논문/항목 연결</label>
+            {award.linkedSection && (
               <select
-                value={award.linkedSection || ''}
-                onChange={(e) => updateAward(index, 'linkedSection', e.target.value)}
+                value={award.linkedItem || ''}
+                onChange={(e) => updateAward(index, 'linkedItem', e.target.value)}
                 className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
               >
-                {sectionOptions.map((option) => (
+                {getLinkedItemOptions(award.linkedSection).map((option) => (
                   <option key={option.value} value={option.value}>
                     {option.label}
                   </option>
                 ))}
               </select>
-            </div>
-            <div>
-              <label className="block text-xs font-medium text-gray-500 dark:text-gray-400 mb-1">관련 논문/항목 제목 (선택)</label>
-              <input
-                type="text"
-                placeholder="예: rPBFT: Reliable Practical Byzantine..."
-                value={award.linkedItem || ''}
-                onChange={(e) => updateAward(index, 'linkedItem', e.target.value)}
-                className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
-              />
-            </div>
+            )}
+            <input
+              type="text"
+              placeholder="직접 입력 (예: rPBFT: Reliable Practical Byzantine...)"
+              value={award.linkedItem || ''}
+              onChange={(e) => updateAward(index, 'linkedItem', e.target.value)}
+              className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
+            />
+            <p className="text-xs text-gray-400 dark:text-gray-500">드롭다운에서 선택하거나 직접 입력하세요</p>
           </div>
-          <p className="text-xs text-gray-500 dark:text-gray-400">카테고리는 필터링에, 관련 논문/항목 제목은 About 페이지에서 연결 표시에 사용됩니다</p>
           <div className="flex items-center">
             <label className="flex items-center gap-2 text-sm text-gray-600 dark:text-gray-400">
               <input
@@ -1927,7 +2046,8 @@ function AwardsEditor({ data, setData }: { data: AboutData; setData: (d: AboutDa
             </label>
           </div>
         </div>
-      ))}
+        );
+      })}
       <button
         onClick={addAward}
         className="w-full px-4 py-2 text-blue-600 dark:text-blue-400 border border-dashed border-blue-300 dark:border-blue-700 rounded-lg hover:bg-blue-50 dark:hover:bg-blue-900/20"
