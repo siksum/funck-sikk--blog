@@ -16,13 +16,47 @@ async function getSikkSections() {
     const sections = await prisma.sikkSection.findMany({
       include: {
         categories: {
-          where: { parentId: null },
+          include: {
+            parent: {
+              include: {
+                parent: true, // Support up to 3 levels of nesting
+              },
+            },
+          },
           orderBy: { order: 'asc' },
         },
       },
       orderBy: { order: 'asc' },
     });
-    return sections;
+
+    // Build full slugPath for each category based on its parent chain
+    return sections.map((section) => ({
+      ...section,
+      categories: section.categories.map((cat) => {
+        const slugPath: string[] = [];
+        const path: string[] = [];
+
+        // Build path from parent chain (root to current)
+        if (cat.parent?.parent) {
+          slugPath.push(cat.parent.parent.slug);
+          path.push(cat.parent.parent.name);
+        }
+        if (cat.parent) {
+          slugPath.push(cat.parent.slug);
+          path.push(cat.parent.name);
+        }
+        slugPath.push(cat.slug);
+        path.push(cat.name);
+
+        return {
+          id: cat.id,
+          name: cat.name,
+          slug: cat.slug,
+          slugPath,
+          path,
+        };
+      }),
+    }));
   } catch (error) {
     console.error('Failed to fetch sikk sections:', error);
     return [];
