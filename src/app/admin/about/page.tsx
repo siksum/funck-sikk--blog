@@ -12,6 +12,7 @@ interface TimelineItem {
 
 interface ScholarshipItem {
   name: string;
+  korean?: string;
   org: string;
   date: string;
 }
@@ -19,6 +20,7 @@ interface ScholarshipItem {
 interface ProjectItem {
   category: string;
   name: string;
+  korean?: string;
   description: string;
   link?: string;
   org: string;
@@ -422,7 +424,7 @@ function TimelineEditor({ data, setData }: { data: AboutData; setData: (d: About
   };
 
   const addScholarshipItem = () => {
-    const newItem: ScholarshipItem = { name: '', org: '', date: '' };
+    const newItem: ScholarshipItem = { name: '', korean: '', org: '', date: '' };
     setData({
       ...data,
       timeline: {
@@ -433,7 +435,7 @@ function TimelineEditor({ data, setData }: { data: AboutData; setData: (d: About
   };
 
   const addProjectItem = () => {
-    const newItem: ProjectItem = { category: '', name: '', description: '', link: '', org: '' };
+    const newItem: ProjectItem = { category: '', name: '', korean: '', description: '', link: '', org: '' };
     setData({
       ...data,
       timeline: {
@@ -659,14 +661,24 @@ function TimelineEditor({ data, setData }: { data: AboutData; setData: (d: About
               </div>
               <button onClick={() => removeItem('scholarship', index)} className="text-red-500 text-sm hover:underline">삭제</button>
             </div>
-            <div className="grid grid-cols-3 gap-3">
+            <div className="grid grid-cols-2 gap-3">
               <div>
-                <label className="block text-xs font-medium text-gray-500 dark:text-gray-400 mb-1">장학금명</label>
+                <label className="block text-xs font-medium text-gray-500 dark:text-gray-400 mb-1">장학금명 (영문)</label>
+                <input
+                  type="text"
+                  placeholder="예: Academic Excellence Scholarship"
+                  value={item.name}
+                  onChange={(e) => updateScholarshipItem(index, 'name', e.target.value)}
+                  className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
+                />
+              </div>
+              <div>
+                <label className="block text-xs font-medium text-gray-500 dark:text-gray-400 mb-1">장학금명 (한글)</label>
                 <input
                   type="text"
                   placeholder="예: 성적우수장학금"
-                  value={item.name}
-                  onChange={(e) => updateScholarshipItem(index, 'name', e.target.value)}
+                  value={item.korean || ''}
+                  onChange={(e) => updateScholarshipItem(index, 'korean', e.target.value)}
                   className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
                 />
               </div>
@@ -674,7 +686,7 @@ function TimelineEditor({ data, setData }: { data: AboutData; setData: (d: About
                 <label className="block text-xs font-medium text-gray-500 dark:text-gray-400 mb-1">수여 기관</label>
                 <input
                   type="text"
-                  placeholder="예: 성신여자대학교"
+                  placeholder="예: Sungshin Women's University"
                   value={item.org}
                   onChange={(e) => updateScholarshipItem(index, 'org', e.target.value)}
                   className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
@@ -735,22 +747,32 @@ function TimelineEditor({ data, setData }: { data: AboutData; setData: (d: About
             </div>
             <div className="grid grid-cols-2 gap-3">
               <div>
+                <label className="block text-xs font-medium text-gray-500 dark:text-gray-400 mb-1">프로젝트명 (영문)</label>
+                <input
+                  type="text"
+                  placeholder="예: Smart Contract Security Tool"
+                  value={item.name}
+                  onChange={(e) => updateProjectItem(index, 'name', e.target.value)}
+                  className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
+                />
+              </div>
+              <div>
+                <label className="block text-xs font-medium text-gray-500 dark:text-gray-400 mb-1">프로젝트명 (한글)</label>
+                <input
+                  type="text"
+                  placeholder="예: 스마트 컨트랙트 보안 도구"
+                  value={item.korean || ''}
+                  onChange={(e) => updateProjectItem(index, 'korean', e.target.value)}
+                  className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
+                />
+              </div>
+              <div>
                 <label className="block text-xs font-medium text-gray-500 dark:text-gray-400 mb-1">카테고리</label>
                 <input
                   type="text"
                   placeholder="예: 연구, 개인, 팀"
                   value={item.category}
                   onChange={(e) => updateProjectItem(index, 'category', e.target.value)}
-                  className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
-                />
-              </div>
-              <div>
-                <label className="block text-xs font-medium text-gray-500 dark:text-gray-400 mb-1">프로젝트명</label>
-                <input
-                  type="text"
-                  placeholder="예: Smart Contract Security Tool"
-                  value={item.name}
-                  onChange={(e) => updateProjectItem(index, 'name', e.target.value)}
                   className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
                 />
               </div>
@@ -764,7 +786,7 @@ function TimelineEditor({ data, setData }: { data: AboutData; setData: (d: About
                   className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
                 />
               </div>
-              <div>
+              <div className="col-span-2">
                 <label className="block text-xs font-medium text-gray-500 dark:text-gray-400 mb-1">링크 (선택)</label>
                 <input
                   type="text"
