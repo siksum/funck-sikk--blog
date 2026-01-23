@@ -3,6 +3,7 @@ import Link from 'next/link';
 import SikkCategoryPageContent from '@/components/sikk/SikkCategoryPageContent';
 import DatabaseTableView from '@/components/sikk/DatabaseTableView';
 import DatabaseItemContent from '@/components/sikk/DatabaseItemContent';
+import DatabaseItemProperties from '@/components/sikk/DatabaseItemProperties';
 import ReadingProgressBar from '@/components/blog/ReadingProgressBar';
 import PostNavigation from '@/components/blog/PostNavigation';
 import FloatingActions from '@/components/blog/FloatingActions';
@@ -31,8 +32,13 @@ import { checkSikkPostAccess } from '@/lib/sikk-access';
 interface Column {
   id: string;
   name: string;
-  type: 'date' | 'title' | 'text' | 'files' | 'url' | 'select' | 'number';
+  type: 'date' | 'dateRange' | 'title' | 'text' | 'files' | 'url' | 'select' | 'number';
   options?: string[];
+}
+
+interface DateRangeValue {
+  start: string;
+  end: string;
 }
 
 // Helper function to extract proper filename from various URL types
@@ -710,55 +716,13 @@ export default async function SikkCategoryPage({ params }: CategoryPageProps) {
             {title}
           </h1>
 
-          <div className="flex flex-wrap gap-4 text-sm" style={{ color: 'var(--foreground)', opacity: 0.7 }}>
-            {columns
-              .filter((c) => c.type !== 'title' && c.type !== 'files' && data[c.id])
-              .slice(0, 4)
-              .map((column) => (
-                <div key={column.id} className="flex items-center gap-1">
-                  <span className="font-medium">{column.name}:</span>
-                  <span>
-                    {column.type === 'url' ? (
-                      <a
-                        href={String(data[column.id])}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="text-pink-600 dark:text-pink-400 hover:underline"
-                      >
-                        링크
-                      </a>
-                    ) : (
-                      String(data[column.id])
-                    )}
-                  </span>
-                </div>
-              ))}
-          </div>
-
-          {/* Files Section */}
-          {columns
-            .filter((c) => c.type === 'files' && Array.isArray(data[c.id]) && (data[c.id] as string[]).length > 0)
-            .map((column) => (
-              <div key={column.id} className="mt-4">
-                <span className="text-sm font-medium" style={{ color: 'var(--foreground)', opacity: 0.7 }}>{column.name}:</span>
-                <div className="flex flex-wrap gap-2 mt-2">
-                  {(data[column.id] as string[]).map((file: string, i: number) => (
-                    <a
-                      key={i}
-                      href={file}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="inline-flex items-center gap-1.5 px-3 py-1.5 text-sm bg-purple-100 dark:bg-purple-900/30 text-purple-700 dark:text-purple-300 rounded-lg hover:bg-purple-200 dark:hover:bg-purple-800/40 transition-colors"
-                    >
-                      <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-                      </svg>
-                      {getFileDisplayName(file)}
-                    </a>
-                  ))}
-                </div>
-              </div>
-            ))}
+          <DatabaseItemProperties
+            databaseId={database.id}
+            itemId={item.id}
+            columns={columns}
+            data={data}
+            isAdmin={isAdmin}
+          />
         </header>
 
         <hr className="mb-8 border-t-2 border-purple-400 dark:border-purple-500" />
