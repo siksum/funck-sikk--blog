@@ -74,6 +74,8 @@ export default function SikkPostEditor({ initialData = {}, isEdit = false }: Sik
   const pdfInputRef = useRef<HTMLInputElement>(null);
   const [saving, setSaving] = useState(false);
   const [uploading, setUploading] = useState(false);
+  const [pdfUploadDestination, setPdfUploadDestination] = useState<'cloudinary' | 'google-drive'>('cloudinary');
+  const [showPdfDropdown, setShowPdfDropdown] = useState(false);
   const [showTableEditor, setShowTableEditor] = useState(false);
   const [showCodeBlockEditor, setShowCodeBlockEditor] = useState(false);
   const [showCodeLanguageDropdown, setShowCodeLanguageDropdown] = useState(false);
@@ -448,7 +450,13 @@ export default function SikkPostEditor({ initialData = {}, isEdit = false }: Sik
       const formDataUpload = new FormData();
       formDataUpload.append('file', file);
 
-      const response = await fetch('/api/upload', {
+      // Route PDFs to selected destination
+      const isPdf = file.type === 'application/pdf';
+      const endpoint = isPdf && pdfUploadDestination === 'google-drive'
+        ? '/api/upload/google-drive'
+        : '/api/upload';
+
+      const response = await fetch(endpoint, {
         method: 'POST',
         body: formDataUpload,
       });
@@ -462,7 +470,7 @@ export default function SikkPostEditor({ initialData = {}, isEdit = false }: Sik
 
       // Generate appropriate markdown based on file type
       let markdown: string;
-      if (file.type === 'application/pdf') {
+      if (isPdf) {
         markdown = `[📄 ${file.name}](${data.url})`;
       } else {
         markdown = `![${file.name}](${data.url})`;
@@ -1079,6 +1087,48 @@ export default function SikkPostEditor({ initialData = {}, isEdit = false }: Sik
             </div>
           </div>
         )}
+      </div>
+
+      {/* PDF Upload Destination */}
+      <div className="mb-4 p-4 bg-gray-50 dark:bg-gray-800/50 rounded-lg">
+        <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+          PDF 업로드 대상
+        </label>
+        <div className="flex gap-2">
+          <button
+            type="button"
+            onClick={() => setPdfUploadDestination('cloudinary')}
+            className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
+              pdfUploadDestination === 'cloudinary'
+                ? 'bg-pink-100 text-pink-700 ring-2 ring-pink-400 dark:bg-pink-900/30 dark:text-pink-300'
+                : 'bg-white text-gray-600 hover:bg-gray-100 dark:bg-gray-700 dark:text-gray-300 dark:hover:bg-gray-600'
+            }`}
+          >
+            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 15a4 4 0 004 4h9a5 5 0 10-.1-9.999 5.002 5.002 0 10-9.78 2.096A4.001 4.001 0 003 15z" />
+            </svg>
+            Cloudinary
+          </button>
+          <button
+            type="button"
+            onClick={() => setPdfUploadDestination('google-drive')}
+            className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
+              pdfUploadDestination === 'google-drive'
+                ? 'bg-blue-100 text-blue-700 ring-2 ring-blue-400 dark:bg-blue-900/30 dark:text-blue-300'
+                : 'bg-white text-gray-600 hover:bg-gray-100 dark:bg-gray-700 dark:text-gray-300 dark:hover:bg-gray-600'
+            }`}
+          >
+            <svg className="w-4 h-4" viewBox="0 0 24 24" fill="currentColor">
+              <path d="M4.433 22l-1.966-3.4 6.514-11.267L10.947 11l-6.514 11z" />
+              <path d="M19.567 22H8.365l1.965-3.4h11.203l-1.966 3.4z" />
+              <path d="M14.967 11L8.453 0h3.932l6.514 11h-3.932z" />
+            </svg>
+            Google Drive
+          </button>
+        </div>
+        <p className="mt-2 text-xs text-gray-500 dark:text-gray-400">
+          PDF 파일을 드래그 앤 드롭하거나 붙여넣기하면 선택한 대상에 업로드됩니다.
+        </p>
       </div>
 
       {/* Tags & Date & Public */}
