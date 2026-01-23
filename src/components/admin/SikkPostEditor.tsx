@@ -1089,45 +1089,68 @@ export default function SikkPostEditor({ initialData = {}, isEdit = false }: Sik
         )}
       </div>
 
-      {/* PDF Upload Destination */}
+      {/* PDF Upload */}
       <div className="mb-4 p-4 bg-gray-50 dark:bg-gray-800/50 rounded-lg">
         <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-          PDF 업로드 대상
+          PDF 업로드
         </label>
-        <div className="flex gap-2">
-          <button
-            type="button"
-            onClick={() => setPdfUploadDestination('cloudinary')}
-            className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
-              pdfUploadDestination === 'cloudinary'
-                ? 'bg-pink-100 text-pink-700 ring-2 ring-pink-400 dark:bg-pink-900/30 dark:text-pink-300'
-                : 'bg-white text-gray-600 hover:bg-gray-100 dark:bg-gray-700 dark:text-gray-300 dark:hover:bg-gray-600'
-            }`}
-          >
+        <div className="flex flex-wrap items-center gap-3">
+          {/* Upload destination buttons */}
+          <div className="flex gap-2">
+            <button
+              type="button"
+              onClick={() => setPdfUploadDestination('cloudinary')}
+              className={`flex items-center gap-2 px-3 py-1.5 rounded-lg text-sm font-medium transition-colors ${
+                pdfUploadDestination === 'cloudinary'
+                  ? 'bg-pink-100 text-pink-700 ring-2 ring-pink-400 dark:bg-pink-900/30 dark:text-pink-300'
+                  : 'bg-white text-gray-600 hover:bg-gray-100 dark:bg-gray-700 dark:text-gray-300 dark:hover:bg-gray-600'
+              }`}
+            >
+              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 15a4 4 0 004 4h9a5 5 0 10-.1-9.999 5.002 5.002 0 10-9.78 2.096A4.001 4.001 0 003 15z" />
+              </svg>
+              Cloudinary
+            </button>
+            <button
+              type="button"
+              onClick={() => setPdfUploadDestination('google-drive')}
+              className={`flex items-center gap-2 px-3 py-1.5 rounded-lg text-sm font-medium transition-colors ${
+                pdfUploadDestination === 'google-drive'
+                  ? 'bg-blue-100 text-blue-700 ring-2 ring-blue-400 dark:bg-blue-900/30 dark:text-blue-300'
+                  : 'bg-white text-gray-600 hover:bg-gray-100 dark:bg-gray-700 dark:text-gray-300 dark:hover:bg-gray-600'
+              }`}
+            >
+              <svg className="w-4 h-4" viewBox="0 0 24 24" fill="currentColor">
+                <path d="M4.433 22l-1.966-3.4 6.514-11.267L10.947 11l-6.514 11z" />
+                <path d="M19.567 22H8.365l1.965-3.4h11.203l-1.966 3.4z" />
+                <path d="M14.967 11L8.453 0h3.932l6.514 11h-3.932z" />
+              </svg>
+              Google Drive
+            </button>
+          </div>
+
+          {/* Upload button */}
+          <label className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium cursor-pointer transition-colors ${
+            uploading
+              ? 'bg-gray-200 text-gray-500 cursor-not-allowed dark:bg-gray-600'
+              : 'bg-pink-500 text-white hover:bg-pink-600 dark:bg-pink-600 dark:hover:bg-pink-700'
+          }`}>
             <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 15a4 4 0 004 4h9a5 5 0 10-.1-9.999 5.002 5.002 0 10-9.78 2.096A4.001 4.001 0 003 15z" />
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z" />
             </svg>
-            Cloudinary
-          </button>
-          <button
-            type="button"
-            onClick={() => setPdfUploadDestination('google-drive')}
-            className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
-              pdfUploadDestination === 'google-drive'
-                ? 'bg-blue-100 text-blue-700 ring-2 ring-blue-400 dark:bg-blue-900/30 dark:text-blue-300'
-                : 'bg-white text-gray-600 hover:bg-gray-100 dark:bg-gray-700 dark:text-gray-300 dark:hover:bg-gray-600'
-            }`}
-          >
-            <svg className="w-4 h-4" viewBox="0 0 24 24" fill="currentColor">
-              <path d="M4.433 22l-1.966-3.4 6.514-11.267L10.947 11l-6.514 11z" />
-              <path d="M19.567 22H8.365l1.965-3.4h11.203l-1.966 3.4z" />
-              <path d="M14.967 11L8.453 0h3.932l6.514 11h-3.932z" />
-            </svg>
-            Google Drive
-          </button>
+            {uploading ? '업로드 중...' : 'PDF 파일 선택'}
+            <input
+              ref={pdfInputRef}
+              type="file"
+              accept="application/pdf"
+              className="hidden"
+              disabled={uploading}
+              onChange={handlePdfChange}
+            />
+          </label>
         </div>
         <p className="mt-2 text-xs text-gray-500 dark:text-gray-400">
-          PDF 파일을 드래그 앤 드롭하거나 붙여넣기하면 선택한 대상에 업로드됩니다.
+          PDF 파일을 선택하거나 에디터에 드래그 앤 드롭하면 선택한 대상에 업로드됩니다.
         </p>
       </div>
 
