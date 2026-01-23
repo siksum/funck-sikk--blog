@@ -87,7 +87,6 @@ export default function AboutPage() {
     awards: true,
     certificate: true,
     patents: true,
-    activities: true,
     press: true,
   });
   const [activeEducationTab, setActiveEducationTab] = useState<'education' | 'scholarship' | 'project'>('education');
@@ -1203,122 +1202,6 @@ export default function AboutPage() {
                 </div>
               </motion.div>
             ))}
-          </div>
-          </motion.div>
-          )}
-          </AnimatePresence>
-        </motion.section>
-
-        {/* Professional Activities */}
-        <motion.section
-          initial={{ opacity: 0, y: 20 }}
-          whileInView={{ opacity: 1, y: 0 }}
-          viewport={{ margin: "-100px" }}
-          transition={{ duration: 0.5 }}
-        >
-          <SectionHeader
-            sectionKey="activities"
-            icon={<svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" /></svg>}
-            title="Professional Activities"
-          />
-          <AnimatePresence>
-          {expandedSections.activities && (
-          <motion.div
-            initial={{ height: 0, opacity: 0 }}
-            animate={{ height: "auto", opacity: 1 }}
-            exit={{ height: 0, opacity: 0 }}
-            transition={{ duration: 0.3 }}
-          >
-          <div className="space-y-6">
-            {/* Club & CTF - Combined Section */}
-            <h3 className="text-lg font-semibold section-subtitle">Club & CTF</h3>
-            <div className="grid md:grid-cols-2 gap-4">
-              {/* Club Box */}
-              <motion.div
-                className="p-5 rounded-xl border border-violet-200 dark:border-violet-500/30"
-                style={{ background: 'var(--card-bg)' }}
-                initial={{ opacity: 0, y: 10 }}
-                whileInView={{ opacity: 1, y: 0 }}
-                viewport={{ }}
-                transition={{ delay: 0.1 }}
-                whileHover={{ borderColor: "rgb(139 92 246 / 0.5)" }}
-              >
-                <h4 className="font-semibold card-title mb-3">{data.activities.club.name}</h4>
-                <p className="text-sm text-gray-600 dark:text-gray-400 mb-3">{data.activities.club.period} | {data.activities.club.description}</p>
-                <div className="flex flex-wrap gap-2">
-                  {data.activities.club.roles.map((role, i) => (
-                    <motion.span
-                      key={role}
-                      className="px-3 py-1 bg-violet-100 dark:bg-transparent text-violet-700 dark:text-violet-200 rounded-full text-sm border border-violet-200 dark:border-violet-400"
-                      initial={{ opacity: 0, x: -10 }}
-                      whileInView={{ opacity: 1, x: 0 }}
-                      viewport={{ }}
-                      transition={{ delay: i * 0.1 }}
-                    >
-                      {role}
-                    </motion.span>
-                  ))}
-                </div>
-              </motion.div>
-
-              {/* CTF Box */}
-              <motion.div
-                className="p-5 rounded-xl border border-orange-200 dark:border-orange-500/30"
-                style={{ background: 'var(--card-bg)' }}
-                initial={{ opacity: 0, y: 10 }}
-                whileInView={{ opacity: 1, y: 0 }}
-                viewport={{ }}
-                transition={{ delay: 0.2 }}
-                whileHover={{ borderColor: "rgb(249 115 22 / 0.5)" }}
-              >
-                <h4 className="font-semibold card-title mb-3">CTF Competitions</h4>
-                <div className="space-y-2">
-                  {data.activities.ctf.map((ctf, index) => (
-                    <motion.div
-                      key={index}
-                      className="flex items-center gap-2"
-                      initial={{ opacity: 0, x: -10 }}
-                      whileInView={{ opacity: 1, x: 0 }}
-                      viewport={{ }}
-                      transition={{ delay: index * 0.1 }}
-                    >
-                      <span className={`px-2 py-0.5 rounded text-xs font-medium ${
-                        ctf.rank === '1st'
-                          ? 'bg-amber-100 dark:bg-amber-500/20 text-amber-700 dark:text-amber-300'
-                          : 'bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300'
-                      }`}>
-                        {ctf.rank}
-                      </span>
-                      <span className="text-sm card-title">{ctf.event}</span>
-                      <span className="text-xs text-gray-500 dark:text-gray-400">({ctf.year})</span>
-                    </motion.div>
-                  ))}
-                </div>
-              </motion.div>
-            </div>
-
-            {/* External Activities */}
-            <h3 className="text-lg font-semibold section-subtitle">External Activities</h3>
-            <div className="grid md:grid-cols-2 gap-4">
-              {data.activities.external.map((activity, index) => (
-                <motion.div
-                  key={index}
-                  className="p-4 rounded-xl border border-gray-200 dark:border-gray-700/50"
-                  style={{ background: 'var(--card-bg)' }}
-                  initial={{ opacity: 0, y: 10 }}
-                  whileInView={{ opacity: 1, y: 0 }}
-                  viewport={{ }}
-                  transition={{ delay: index * 0.1 }}
-                  whileHover={{ borderColor: "rgb(139 92 246 / 0.5)" }}
-                >
-                  <span className="text-xs text-gray-500 dark:text-gray-400">{activity.period}</span>
-                  <h4 className="font-medium card-title">{activity.title}</h4>
-                  <p className="text-accent-violet text-sm">{activity.org}</p>
-                  {activity.role && <p className="text-sm text-accent-indigo">{activity.role}</p>}
-                  <p className="text-sm text-gray-600 dark:text-gray-300 mt-2">{activity.desc}</p>
-                </motion.div>
-              ))}
-            </div>
           </div>
           </motion.div>
           )}
