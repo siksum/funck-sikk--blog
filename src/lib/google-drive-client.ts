@@ -32,20 +32,20 @@ export async function uploadToGoogleDriveDirect(
 
   // Step 3: Create multipart/related body for Google Drive API
   const boundary = '-------314159265358979323846';
-  const delimiter = '\r\n--' + boundary + '\r\n';
-  const closeDelimiter = '\r\n--' + boundary + '--';
 
   // Read file as ArrayBuffer
   const fileArrayBuffer = await file.arrayBuffer();
   const fileBytes = new Uint8Array(fileArrayBuffer);
 
-  // Build multipart body
+  // Build multipart body - first boundary has no leading CRLF
   const metadataPart =
-    delimiter +
+    '--' + boundary + '\r\n' +
     'Content-Type: application/json; charset=UTF-8\r\n\r\n' +
-    JSON.stringify(metadata);
+    JSON.stringify(metadata) + '\r\n';
 
-  const filePart = delimiter + 'Content-Type: ' + (file.type || 'application/pdf') + '\r\n\r\n';
+  const filePart = '--' + boundary + '\r\n' + 'Content-Type: ' + (file.type || 'application/pdf') + '\r\n\r\n';
+
+  const closeDelimiter = '\r\n--' + boundary + '--';
 
   // Combine parts
   const encoder = new TextEncoder();
@@ -77,8 +77,15 @@ export async function uploadToGoogleDriveDirect(
 
   if (!uploadResponse.ok) {
     const errorText = await uploadResponse.text();
-    console.error('Google Drive upload error:', errorText);
-    throw new Error(`Upload failed: ${uploadResponse.status}`);
+    console.error('Google Drive upload error:', uploadResponse.status, errorText);
+    // Try to parse JSON error for better message
+    try {
+      const errorJson = JSON.parse(errorText);
+      const message = errorJson.error?.message || errorText;
+      throw new Error(`Google Drive: ${message}`);
+    } catch {
+      throw new Error(`Upload failed: ${uploadResponse.status} - ${errorText.substring(0, 200)}`);
+    }
   }
 
   const uploadResult = await uploadResponse.json();
