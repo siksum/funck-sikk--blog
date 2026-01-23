@@ -166,11 +166,11 @@ export async function PUT(request: NextRequest) {
       });
     }
 
-    // Revalidate share page
+    // Revalidate share pages - use 'layout' type to revalidate all nested pages
     if (share.publicToken) {
-      revalidatePath(`/sc/${share.publicToken}`);
+      revalidatePath(`/sc/${share.publicToken}`, 'layout');
     }
-    revalidatePath(`/sikk/categories/${slugPath.join('/')}`);
+    revalidatePath(`/sikk/categories/${slugPath.join('/')}`, 'layout');
 
     return NextResponse.json({ share });
   } catch (error) {

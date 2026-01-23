@@ -1,5 +1,6 @@
 import { notFound } from 'next/navigation';
 import Link from 'next/link';
+import { unstable_noStore as noStore } from 'next/cache';
 import { prisma } from '@/lib/db';
 import { checkSikkCategoryAccessByToken } from '@/lib/sikk-access';
 import { isValidTokenFormat } from '@/lib/token';
@@ -8,7 +9,7 @@ import ReadingProgressBar from '@/components/blog/ReadingProgressBar';
 import DifficultyBadge from '@/components/blog/DifficultyBadge';
 import FloatingActions from '@/components/blog/FloatingActions';
 
-export const revalidate = 10;
+export const dynamic = 'force-dynamic';
 
 interface SharedCategoryPostPageProps {
   params: Promise<{ token: string; slug: string }>;
