@@ -77,7 +77,7 @@ interface AboutData {
   lastUpdated: string;
 }
 
-type TabType = 'profile' | 'timeline' | 'publications' | 'awards' | 'press';
+type TabType = 'profile' | 'timeline' | 'publications' | 'awards' | 'credentials' | 'press';
 
 export default function AdminAboutPage() {
   const [data, setData] = useState<AboutData | null>(null);
@@ -179,6 +179,7 @@ export default function AdminAboutPage() {
     { id: 'timeline', label: '타임라인', icon: '📅' },
     { id: 'publications', label: '논문', icon: '📄' },
     { id: 'awards', label: '수상', icon: '🏆' },
+    { id: 'credentials', label: '자격/특허', icon: '📜' },
     { id: 'press', label: '언론', icon: '📰' },
   ];
 
@@ -241,6 +242,9 @@ export default function AdminAboutPage() {
         )}
         {activeTab === 'awards' && (
           <AwardsEditor data={data} setData={setData} />
+        )}
+        {activeTab === 'credentials' && (
+          <CredentialsEditor data={data} setData={setData} />
         )}
         {activeTab === 'press' && (
           <PressEditor data={data} setData={setData} />
@@ -1987,6 +1991,211 @@ function AwardsEditor({ data, setData }: { data: AboutData; setData: (d: AboutDa
       >
         + 수상 추가
       </button>
+    </div>
+  );
+}
+
+// Credentials Editor (Certificates & Patents)
+function CredentialsEditor({ data, setData }: { data: AboutData; setData: (d: AboutData) => void }) {
+  const [activeCredTab, setActiveCredTab] = useState<'certificates' | 'patents'>('certificates');
+
+  const addCertificate = () => {
+    setData({
+      ...data,
+      certificates: [...data.certificates, { title: '', org: '', date: '' }],
+    });
+  };
+
+  const updateCertificate = (index: number, field: string, value: string) => {
+    const newItems = [...data.certificates];
+    newItems[index] = { ...newItems[index], [field]: value };
+    setData({ ...data, certificates: newItems });
+  };
+
+  const removeCertificate = (index: number) => {
+    setData({
+      ...data,
+      certificates: data.certificates.filter((_, i) => i !== index),
+    });
+  };
+
+  const addPatent = () => {
+    setData({
+      ...data,
+      patents: [...data.patents, { title: '', code: '', date: '', korean: '' }],
+    });
+  };
+
+  const updatePatent = (index: number, field: string, value: string) => {
+    const newItems = [...data.patents];
+    newItems[index] = { ...newItems[index], [field]: value };
+    setData({ ...data, patents: newItems });
+  };
+
+  const removePatent = (index: number) => {
+    setData({
+      ...data,
+      patents: data.patents.filter((_, i) => i !== index),
+    });
+  };
+
+  return (
+    <div className="space-y-6">
+      {/* Stats */}
+      <div className="grid grid-cols-2 gap-4 text-center">
+        <div className="p-4 bg-teal-50 dark:bg-teal-900/20 rounded-lg">
+          <p className="text-2xl font-bold text-teal-600 dark:text-teal-400">{data.certificates.length}</p>
+          <p className="text-sm text-gray-600 dark:text-gray-400">자격증</p>
+        </div>
+        <div className="p-4 bg-purple-50 dark:bg-purple-900/20 rounded-lg">
+          <p className="text-2xl font-bold text-purple-600 dark:text-purple-400">{data.patents.length}</p>
+          <p className="text-sm text-gray-600 dark:text-gray-400">특허/저작권</p>
+        </div>
+      </div>
+
+      {/* Tabs */}
+      <div className="flex gap-2">
+        <button
+          onClick={() => setActiveCredTab('certificates')}
+          className={`px-4 py-2 rounded-lg ${
+            activeCredTab === 'certificates'
+              ? 'bg-teal-100 dark:bg-teal-900/30 text-teal-700 dark:text-teal-300'
+              : 'text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-700'
+          }`}
+        >
+          자격증
+        </button>
+        <button
+          onClick={() => setActiveCredTab('patents')}
+          className={`px-4 py-2 rounded-lg ${
+            activeCredTab === 'patents'
+              ? 'bg-purple-100 dark:bg-purple-900/30 text-purple-700 dark:text-purple-300'
+              : 'text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-700'
+          }`}
+        >
+          특허/저작권
+        </button>
+      </div>
+
+      {/* Certificates Tab */}
+      {activeCredTab === 'certificates' && (
+        <div className="space-y-4">
+          {data.certificates.map((cert, index) => (
+            <div
+              key={index}
+              className="p-4 border border-gray-200 dark:border-gray-700 rounded-lg space-y-3"
+            >
+              <div className="flex items-center justify-between">
+                <span className="text-sm font-medium text-gray-500 dark:text-gray-400">#{index + 1}</span>
+                <button onClick={() => removeCertificate(index)} className="text-red-500 text-sm hover:underline">삭제</button>
+              </div>
+              <div>
+                <label className="block text-xs font-medium text-gray-500 dark:text-gray-400 mb-1">자격증명</label>
+                <input
+                  type="text"
+                  placeholder="예: Engineer Information Processing (정보처리기사)"
+                  value={cert.title}
+                  onChange={(e) => updateCertificate(index, 'title', e.target.value)}
+                  className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
+                />
+              </div>
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className="block text-xs font-medium text-gray-500 dark:text-gray-400 mb-1">발급 기관</label>
+                  <input
+                    type="text"
+                    placeholder="예: Human Resources Development Service of Korea"
+                    value={cert.org}
+                    onChange={(e) => updateCertificate(index, 'org', e.target.value)}
+                    className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
+                  />
+                </div>
+                <div>
+                  <label className="block text-xs font-medium text-gray-500 dark:text-gray-400 mb-1">취득일</label>
+                  <input
+                    type="text"
+                    placeholder="예: 2024.09"
+                    value={cert.date}
+                    onChange={(e) => updateCertificate(index, 'date', e.target.value)}
+                    className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
+                  />
+                </div>
+              </div>
+            </div>
+          ))}
+          <button
+            onClick={addCertificate}
+            className="w-full px-4 py-2 text-teal-600 dark:text-teal-400 border border-dashed border-teal-300 dark:border-teal-700 rounded-lg hover:bg-teal-50 dark:hover:bg-teal-900/20"
+          >
+            + 자격증 추가
+          </button>
+        </div>
+      )}
+
+      {/* Patents Tab */}
+      {activeCredTab === 'patents' && (
+        <div className="space-y-4">
+          {data.patents.map((patent, index) => (
+            <div
+              key={index}
+              className="p-4 border border-gray-200 dark:border-gray-700 rounded-lg space-y-3"
+            >
+              <div className="flex items-center justify-between">
+                <span className="text-sm font-medium text-gray-500 dark:text-gray-400">#{index + 1}</span>
+                <button onClick={() => removePatent(index)} className="text-red-500 text-sm hover:underline">삭제</button>
+              </div>
+              <div>
+                <label className="block text-xs font-medium text-gray-500 dark:text-gray-400 mb-1">제목 (영문)</label>
+                <input
+                  type="text"
+                  placeholder="예: Global lock-based smart contract security module"
+                  value={patent.title}
+                  onChange={(e) => updatePatent(index, 'title', e.target.value)}
+                  className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
+                />
+              </div>
+              <div>
+                <label className="block text-xs font-medium text-gray-500 dark:text-gray-400 mb-1">제목 (한글)</label>
+                <input
+                  type="text"
+                  placeholder="예: 글로벌 락 기반 스마트 컨트랙트 보안 모듈"
+                  value={patent.korean}
+                  onChange={(e) => updatePatent(index, 'korean', e.target.value)}
+                  className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
+                />
+              </div>
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className="block text-xs font-medium text-gray-500 dark:text-gray-400 mb-1">등록번호</label>
+                  <input
+                    type="text"
+                    placeholder="예: C-2025-031743"
+                    value={patent.code}
+                    onChange={(e) => updatePatent(index, 'code', e.target.value)}
+                    className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
+                  />
+                </div>
+                <div>
+                  <label className="block text-xs font-medium text-gray-500 dark:text-gray-400 mb-1">등록일</label>
+                  <input
+                    type="text"
+                    placeholder="예: Jul. 10, 2025"
+                    value={patent.date}
+                    onChange={(e) => updatePatent(index, 'date', e.target.value)}
+                    className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
+                  />
+                </div>
+              </div>
+            </div>
+          ))}
+          <button
+            onClick={addPatent}
+            className="w-full px-4 py-2 text-purple-600 dark:text-purple-400 border border-dashed border-purple-300 dark:border-purple-700 rounded-lg hover:bg-purple-50 dark:hover:bg-purple-900/20"
+          >
+            + 특허/저작권 추가
+          </button>
+        </div>
+      )}
     </div>
   );
 }
