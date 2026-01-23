@@ -120,6 +120,7 @@ export default function SikkPostEditor({ initialData = {}, isEdit = false }: Sik
     return `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`;
   };
 
+  const originalSlug = initialData.slug || '';
   const [formData, setFormData] = useState({
     slug: initialData.slug || '',
     title: initialData.title || '',
@@ -732,9 +733,11 @@ export default function SikkPostEditor({ initialData = {}, isEdit = false }: Sik
       const payload = {
         ...formData,
         tags: tagsArray,
+        // If editing and slug changed, send the new slug
+        ...(isEdit && formData.slug !== originalSlug ? { newSlug: formData.slug, slug: originalSlug } : {}),
       };
 
-      const url = isEdit ? `/api/sikk/${formData.slug}` : '/api/sikk';
+      const url = isEdit ? `/api/sikk/${originalSlug}` : '/api/sikk';
       const method = isEdit ? 'PUT' : 'POST';
 
       const response = await fetch(url, {
@@ -763,20 +766,21 @@ export default function SikkPostEditor({ initialData = {}, isEdit = false }: Sik
     setFormData(prev => ({ ...prev, content: html }));
 
     // If editing existing post, save to database immediately
-    if (isEdit && formData.slug) {
+    if (isEdit && originalSlug) {
       try {
         const tagsArray = formData.tags
           .split(',')
           .map((tag) => tag.trim())
           .filter(Boolean);
 
-        const response = await fetch(`/api/sikk/${formData.slug}`, {
+        const response = await fetch(`/api/sikk/${originalSlug}`, {
           method: 'PUT',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
             ...formData,
             content: html,
             tags: tagsArray,
+            // Don't include newSlug for content-only saves
           }),
         });
 
@@ -826,11 +830,19 @@ export default function SikkPostEditor({ initialData = {}, isEdit = false }: Sik
             type="text"
             value={formData.slug}
             onChange={(e) => setFormData({ ...formData, slug: e.target.value })}
-            className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-pink-500"
+            className={`w-full px-4 py-2 border rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-pink-500 ${
+              isEdit && formData.slug !== originalSlug
+                ? 'border-yellow-400 dark:border-yellow-500'
+                : 'border-gray-300 dark:border-gray-600'
+            }`}
             placeholder="my-study-post"
             required
-            disabled={isEdit}
           />
+          {isEdit && formData.slug !== originalSlug && (
+            <p className="mt-1 text-xs text-yellow-600 dark:text-yellow-400">
+              슬러그가 변경됩니다. 기존 URL로 접근 시 404 오류가 발생할 수 있습니다.
+            </p>
+          )}
         </div>
 
         {/* Category - Two-step selection */}
