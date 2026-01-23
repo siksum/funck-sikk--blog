@@ -72,7 +72,8 @@ async function parseSlugPath(slugPath: string[]) {
   }
 
   // PRIORITY 1: Check for posts FIRST (most common case)
-  // This ensures posts are found even when database/category lookups have issues
+  // Post slugs are unique, so if a post exists with this slug, always show it
+  // The category path in URL is for SEO/readability, not for routing
   if (slugPath.length >= 1) {
     const possiblePostSlug = slugPath[slugPath.length - 1];
     const possibleCategorySlugPath = slugPath.slice(0, -1);
@@ -81,24 +82,9 @@ async function parseSlugPath(slugPath: string[]) {
     const post = await getSikkPostBySlugAsync(possiblePostSlug);
 
     if (post) {
-      // Verify the post belongs to this category path
-      const postCategoryPath = post.categorySlugPath || [];
-
-      const pathsMatch = possibleCategorySlugPath.length === postCategoryPath.length &&
-        possibleCategorySlugPath.every((slug, i) => {
-          // Normalize for comparison
-          const normalizedSlug = slug.normalize('NFC').toLowerCase();
-          const normalizedPostSlug = (postCategoryPath[i] || '').normalize('NFC').toLowerCase();
-          return normalizedSlug === normalizedPostSlug;
-        });
-
-      // Allow access if:
-      // 1. paths match exactly, OR
-      // 2. URL has no category path (accessing at /sikk/categories/slug), OR
-      // 3. Post has no category (fallback - post exists but wasn't categorized properly)
-      if (pathsMatch || possibleCategorySlugPath.length === 0 || postCategoryPath.length === 0) {
-        return { type: 'post' as const, categorySlugPath: possibleCategorySlugPath, postSlug: possiblePostSlug, post };
-      }
+      // Post found - always return it (slug is unique across all categories)
+      // Use the post's actual category path for the response
+      return { type: 'post' as const, categorySlugPath: post.categorySlugPath || [], postSlug: possiblePostSlug, post };
     }
   }
 
