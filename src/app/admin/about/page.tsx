@@ -2,6 +2,14 @@
 
 import { useState, useEffect } from 'react';
 
+interface TimelineItem {
+  year: string;
+  title: string;
+  subtitle: string;
+  org: string;
+  detail: string;
+}
+
 interface AboutData {
   profile: {
     name: string;
@@ -11,6 +19,7 @@ interface AboutData {
     github: string;
     email: string;
     telegram: string;
+    highlightName?: string;
   };
   bio: {
     quote: string;
@@ -19,16 +28,19 @@ interface AboutData {
   researchInterests: string[];
   inProgress: string[];
   timeline: {
-    education: Array<{ year: string; title: string; subtitle: string; org: string; detail: string }>;
-    work: Array<{ year: string; title: string; subtitle: string; org: string; detail: string }>;
-    research: Array<{ year: string; title: string; subtitle: string; org: string; detail: string }>;
+    education: TimelineItem[];
+    scholarship: TimelineItem[];
+    project: TimelineItem[];
+    work: TimelineItem[];
+    research: TimelineItem[];
+    activities: TimelineItem[];
   };
   publications: {
     journals: Array<{ authors: string; title: string; venue: string; badge: string; featured?: boolean; korean?: string }>;
     international: Array<{ authors: string; title: string; venue: string }>;
     domestic: Array<{ authors: string; title: string; venue: string; korean?: string; award?: string }>;
   };
-  awards: Array<{ title: string; org: string; year: string; highlight?: boolean; korean?: string }>;
+  awards: Array<{ title: string; org: string; year: string; highlight?: boolean; korean?: string; linkedSection?: string }>;
   certificates: Array<{ title: string; org: string; date: string }>;
   patents: Array<{ title: string; code: string; date: string; korean: string }>;
   activities: {
@@ -245,6 +257,17 @@ function ProfileEditor({ data, setData }: { data: AboutData; setData: (d: AboutD
             className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
           />
         </div>
+        <div>
+          <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">강조 표시할 이름 (논문)</label>
+          <input
+            type="text"
+            value={data.profile.highlightName || ''}
+            onChange={(e) => setData({ ...data, profile: { ...data.profile, highlightName: e.target.value } })}
+            placeholder="예: Namryeong Kim"
+            className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
+          />
+          <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">논문 저자 목록에서 이 이름을 굵게 + 밑줄로 표시합니다</p>
+        </div>
       </div>
 
       <h2 className="text-lg font-semibold text-gray-900 dark:text-white mt-8">소개</h2>
@@ -346,24 +369,48 @@ function ArrayEditor({
 }
 
 // Timeline Editor
+type TimelineTabType = 'education' | 'scholarship' | 'project' | 'work' | 'research' | 'activities';
+
 function TimelineEditor({ data, setData }: { data: AboutData; setData: (d: AboutData) => void }) {
-  const [tab, setTab] = useState<'education' | 'work' | 'research'>('education');
+  const [tab, setTab] = useState<TimelineTabType>('education');
   const [dragIndex, setDragIndex] = useState<number | null>(null);
   const [dragOverIndex, setDragOverIndex] = useState<number | null>(null);
 
-  const addItem = (type: 'education' | 'work' | 'research') => {
+  // Ensure timeline has all required properties
+  const ensureTimelineStructure = () => {
+    if (!data.timeline.scholarship) {
+      setData({
+        ...data,
+        timeline: {
+          ...data.timeline,
+          scholarship: [],
+          project: data.timeline.project || [],
+          activities: data.timeline.activities || [],
+        },
+      });
+    }
+  };
+
+  // Call on mount
+  if (!data.timeline.scholarship || !data.timeline.project || !data.timeline.activities) {
+    ensureTimelineStructure();
+  }
+
+  const addItem = (type: TimelineTabType) => {
     const newItem = { year: '', title: '', subtitle: '', org: '', detail: '' };
+    const currentItems = data.timeline[type] || [];
     setData({
       ...data,
       timeline: {
         ...data.timeline,
-        [type]: [...data.timeline[type], newItem],
+        [type]: [...currentItems, newItem],
       },
     });
   };
 
-  const updateItem = (type: 'education' | 'work' | 'research', index: number, field: string, value: string) => {
-    const newItems = [...data.timeline[type]];
+  const updateItem = (type: TimelineTabType, index: number, field: string, value: string) => {
+    const currentItems = data.timeline[type] || [];
+    const newItems = [...currentItems];
     newItems[index] = { ...newItems[index], [field]: value };
     setData({
       ...data,
@@ -374,19 +421,21 @@ function TimelineEditor({ data, setData }: { data: AboutData; setData: (d: About
     });
   };
 
-  const removeItem = (type: 'education' | 'work' | 'research', index: number) => {
+  const removeItem = (type: TimelineTabType, index: number) => {
+    const currentItems = data.timeline[type] || [];
     setData({
       ...data,
       timeline: {
         ...data.timeline,
-        [type]: data.timeline[type].filter((_, i) => i !== index),
+        [type]: currentItems.filter((_, i) => i !== index),
       },
     });
   };
 
-  const moveItem = (type: 'education' | 'work' | 'research', fromIndex: number, toIndex: number) => {
+  const moveItem = (type: TimelineTabType, fromIndex: number, toIndex: number) => {
     if (fromIndex === toIndex) return;
-    const newItems = [...data.timeline[type]];
+    const currentItems = data.timeline[type] || [];
+    const newItems = [...currentItems];
     const [movedItem] = newItems.splice(fromIndex, 1);
     newItems.splice(toIndex, 0, movedItem);
     setData({
@@ -428,24 +477,54 @@ function TimelineEditor({ data, setData }: { data: AboutData; setData: (d: About
     setDragOverIndex(null);
   };
 
-  const items = data.timeline[tab];
+  const items = data.timeline[tab] || [];
+
+  const tabLabels: Record<TimelineTabType, string> = {
+    education: '학력',
+    scholarship: '장학금',
+    project: '프로젝트',
+    work: '경력',
+    research: '연구',
+    activities: '활동',
+  };
 
   return (
     <div className="space-y-6">
-      <div className="flex gap-2">
-        {(['education', 'work', 'research'] as const).map((t) => (
-          <button
-            key={t}
-            onClick={() => setTab(t)}
-            className={`px-4 py-2 rounded-lg ${
-              tab === t
-                ? 'bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300'
-                : 'text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-700'
-            }`}
-          >
-            {t === 'education' ? '학력' : t === 'work' ? '경력' : '연구'}
-          </button>
-        ))}
+      {/* Section Dividers */}
+      <div className="space-y-4">
+        <div className="text-sm font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide">Education 섹션</div>
+        <div className="flex gap-2 flex-wrap">
+          {(['education', 'scholarship', 'project'] as const).map((t) => (
+            <button
+              key={t}
+              onClick={() => setTab(t)}
+              className={`px-4 py-2 rounded-lg ${
+                tab === t
+                  ? 'bg-violet-100 dark:bg-violet-900/30 text-violet-700 dark:text-violet-300'
+                  : 'text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-700'
+              }`}
+            >
+              {tabLabels[t]} ({(data.timeline[t] || []).length})
+            </button>
+          ))}
+        </div>
+
+        <div className="text-sm font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide mt-4">Experience 섹션</div>
+        <div className="flex gap-2 flex-wrap">
+          {(['research', 'work', 'activities'] as const).map((t) => (
+            <button
+              key={t}
+              onClick={() => setTab(t)}
+              className={`px-4 py-2 rounded-lg ${
+                tab === t
+                  ? 'bg-emerald-100 dark:bg-emerald-900/30 text-emerald-700 dark:text-emerald-300'
+                  : 'text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-700'
+              }`}
+            >
+              {tabLabels[t]} ({(data.timeline[t] || []).length})
+            </button>
+          ))}
+        </div>
       </div>
 
       <div className="space-y-4">
@@ -851,7 +930,7 @@ function AwardsEditor({ data, setData }: { data: AboutData; setData: (d: AboutDa
   const addAward = () => {
     setData({
       ...data,
-      awards: [...data.awards, { title: '', org: '', year: '', korean: '' }],
+      awards: [...data.awards, { title: '', org: '', year: '', korean: '', linkedSection: '' }],
     });
   };
 
@@ -865,8 +944,41 @@ function AwardsEditor({ data, setData }: { data: AboutData; setData: (d: AboutDa
     setData({ ...data, awards: data.awards.filter((_, i) => i !== index) });
   };
 
+  const sectionOptions = [
+    { value: '', label: '선택 안함' },
+    { value: 'publications', label: '📄 Research (논문)' },
+    { value: 'competition', label: '🥇 Competition (대회)' },
+    { value: 'activity', label: '🎯 Activity (활동)' },
+  ];
+
   return (
     <div className="space-y-4">
+      {/* Stats */}
+      <div className="grid grid-cols-4 gap-4 text-center mb-6">
+        <div className="p-4 bg-amber-50 dark:bg-amber-900/20 rounded-lg">
+          <p className="text-2xl font-bold text-amber-600 dark:text-amber-400">{data.awards.length}</p>
+          <p className="text-sm text-gray-600 dark:text-gray-400">전체</p>
+        </div>
+        <div className="p-4 bg-violet-50 dark:bg-violet-900/20 rounded-lg">
+          <p className="text-2xl font-bold text-violet-600 dark:text-violet-400">
+            {data.awards.filter(a => a.linkedSection === 'publications' || a.linkedSection === 'research').length}
+          </p>
+          <p className="text-sm text-gray-600 dark:text-gray-400">Research</p>
+        </div>
+        <div className="p-4 bg-blue-50 dark:bg-blue-900/20 rounded-lg">
+          <p className="text-2xl font-bold text-blue-600 dark:text-blue-400">
+            {data.awards.filter(a => a.linkedSection === 'competition').length}
+          </p>
+          <p className="text-sm text-gray-600 dark:text-gray-400">Competition</p>
+        </div>
+        <div className="p-4 bg-green-50 dark:bg-green-900/20 rounded-lg">
+          <p className="text-2xl font-bold text-green-600 dark:text-green-400">
+            {data.awards.filter(a => a.linkedSection === 'activity').length}
+          </p>
+          <p className="text-sm text-gray-600 dark:text-gray-400">Activity</p>
+        </div>
+      </div>
+
       {data.awards.map((award, index) => (
         <div key={index} className="p-4 border border-gray-200 dark:border-gray-700 rounded-lg space-y-3">
           <div className="grid grid-cols-2 gap-3">
@@ -910,6 +1022,21 @@ function AwardsEditor({ data, setData }: { data: AboutData; setData: (d: AboutDa
                 className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
               />
             </div>
+          </div>
+          <div>
+            <label className="block text-xs font-medium text-gray-500 dark:text-gray-400 mb-1">연결된 섹션</label>
+            <select
+              value={award.linkedSection || ''}
+              onChange={(e) => updateAward(index, 'linkedSection', e.target.value)}
+              className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
+            >
+              {sectionOptions.map((option) => (
+                <option key={option.value} value={option.value}>
+                  {option.label}
+                </option>
+              ))}
+            </select>
+            <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">About 페이지에서 카테고리별로 필터링할 때 사용됩니다</p>
           </div>
           <div className="flex items-center justify-between">
             <label className="flex items-center gap-2 text-sm text-gray-600 dark:text-gray-400">

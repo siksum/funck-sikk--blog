@@ -6,7 +6,8 @@
     "location": "Sungshin Women's University, Prime #603",
     "github": "https://github.com/siksum",
     "email": "namyoung0718@gmail.com",
-    "telegram": "https://t.me/siksum"
+    "telegram": "https://t.me/siksum",
+    "highlightName": "Namryeong Kim"
   },
   "bio": {
     "quote": "올바른 가치관과 신념으로 나눌 줄 아는, 지혜로운 사람이 되고 싶습니다",
@@ -23,6 +24,8 @@
       { "year": "2024.09 - Current", "title": "M.S. Candidate", "subtitle": "Convergence Security Engineering", "org": "Sungshin Women's University", "detail": "Advisor: Ilgu Lee | GPA: 4.5/4.5" },
       { "year": "2019.03 - 2023.02", "title": "B.S.", "subtitle": "Convergence Security Engineering", "org": "Sungshin Women's University", "detail": "GPA: 4.33/4.5" }
     ],
+    "scholarship": [],
+    "project": [],
     "work": [
       { "year": "2025.03 - 08", "title": "Research Assistant (RA)", "subtitle": "CSE Lab", "org": "Sungshin Women's University", "detail": "Advisor: Ilgu Lee" },
       { "year": "2024.03 - 06", "title": "Community Manager", "subtitle": "Protocol Camp 6th", "org": "Hanwha Life (Dreamplus)", "detail": "" },
@@ -32,6 +35,12 @@
       { "year": "2022.03 - 2023.01", "title": "Undergraduate Internship", "subtitle": "Pwnlab", "org": "Sungshin Women's University", "detail": "Advisor: Daehee Jang" },
       { "year": "2022.01 - 02", "title": "Undergraduate Internship", "subtitle": "NSSec", "org": "Sungshin Women's University", "detail": "Advisor: Sungmin Kim" },
       { "year": "2021.03 - 12", "title": "Undergraduate Internship", "subtitle": "CSE Lab", "org": "Sungshin Women's University", "detail": "Advisor: Ilgu Lee" }
+    ],
+    "activities": [
+      { "year": "2025.05 - 2025.12", "title": "Convergence Security Crew", "subtitle": "AI Security Team Leader (크루장)", "org": "KISIA", "detail": "DeFi vulnerability detection with LLM & prompt injection prevention" },
+      { "year": "2023.09 - 2023.12", "title": "Protocol Camp 5th", "subtitle": "Team Leader (AntiBug)", "org": "Dreamplus X Hashed", "detail": "VSCode security assistant for smart contract development" },
+      { "year": "2023.03 - 2023.06", "title": "DreamPlus Academy 2nd", "subtitle": "Bootcamper", "org": "Dreamplus X Theori", "detail": "Blockchain security training & static analysis detector development" },
+      { "year": "2021.01 - 2022.12", "title": "HASH (Hacking Club)", "subtitle": "Founding Member / Vice President / President", "org": "Sungshin Women's University", "detail": "성신여대 융합보안공학과 해킹동아리" }
     ]
   },
   "publications": {
@@ -61,16 +70,16 @@
     ]
   },
   "awards": [
-    { "title": "ICT Convergence Security Crew Best Crew Award", "org": "KISIA", "year": "2025", "highlight": true, "korean": "ICT 융합보안크루 최우수 크루상" },
-    { "title": "National Security Technology Research Institute Director Award", "org": "ACK 2025", "year": "2025", "highlight": true, "korean": "국가보안기술연구소 소장상" },
-    { "title": "Korea Information Technology Association President's Award", "org": "ACK 2025", "year": "2025", "highlight": true, "korean": "한국정보기술학술단체총연합회 회장상" },
-    { "title": "The Third Prize", "org": "ACK 2025", "year": "2025", "korean": "동상" },
-    { "title": "Best Paper Award", "org": "KCSA 2024 Autumn Conference", "year": "2024", "korean": "최우수논문상" },
-    { "title": "First Prize, Convergence Security Software Competition", "org": "Sungshin Women's University", "year": "2024", "korean": "융합보안소프트웨어경진대회 대상" },
-    { "title": "First Prize, Protocol Camp 5th", "org": "Dreamplus X HASHED", "year": "2024", "korean": "프로토콜캠프 5기 대상" },
-    { "title": "First Prize, Sungshin CSE x I.Sly() CTF", "org": "", "year": "2023", "korean": "성신여대 융합보안공학과 x I.Sly() CTF 1위" },
-    { "title": "The Third Prize", "org": "KCSA 2022 Summer Conference", "year": "2022", "korean": "장려상" },
-    { "title": "Excellent Paper Award", "org": "KIICE 50th Conference", "year": "2021", "korean": "우수논문상" }
+    { "title": "ICT Convergence Security Crew Best Crew Award", "org": "KISIA", "year": "2025", "highlight": true, "korean": "ICT 융합보안크루 최우수 크루상", "linkedSection": "activity" },
+    { "title": "National Security Technology Research Institute Director Award", "org": "ACK 2025", "year": "2025", "highlight": true, "korean": "국가보안기술연구소 소장상", "linkedSection": "publications" },
+    { "title": "Korea Information Technology Association President's Award", "org": "ACK 2025", "year": "2025", "highlight": true, "korean": "한국정보기술학술단체총연합회 회장상", "linkedSection": "publications" },
+    { "title": "The Third Prize", "org": "ACK 2025", "year": "2025", "korean": "동상", "linkedSection": "publications" },
+    { "title": "Best Paper Award", "org": "KCSA 2024 Autumn Conference", "year": "2024", "korean": "최우수논문상", "linkedSection": "publications" },
+    { "title": "First Prize, Convergence Security Software Competition", "org": "Sungshin Women's University", "year": "2024", "korean": "융합보안소프트웨어경진대회 대상", "linkedSection": "competition" },
+    { "title": "First Prize, Protocol Camp 5th", "org": "Dreamplus X HASHED", "year": "2024", "korean": "프로토콜캠프 5기 대상", "linkedSection": "competition" },
+    { "title": "First Prize, Sungshin CSE x I.Sly() CTF", "org": "", "year": "2023", "korean": "성신여대 융합보안공학과 x I.Sly() CTF 1위", "linkedSection": "competition" },
+    { "title": "The Third Prize", "org": "KCSA 2022 Summer Conference", "year": "2022", "korean": "장려상", "linkedSection": "publications" },
+    { "title": "Excellent Paper Award", "org": "KIICE 50th Conference", "year": "2021", "korean": "우수논문상", "linkedSection": "publications" }
   ],
   "certificates": [
     { "title": "Engineer Information Processing (정보처리기사)", "org": "Human Resources Development Service of Korea", "date": "2024.09" }
