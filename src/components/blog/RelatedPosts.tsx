@@ -1,5 +1,6 @@
 import Link from 'next/link';
 import { Post } from '@/types';
+import { getBlogPostUrl } from '@/lib/url';
 
 interface RelatedPostsProps {
   posts: Post[];
@@ -43,7 +44,7 @@ export default function RelatedPosts({ posts }: RelatedPostsProps) {
           return (
             <Link
               key={post.slug}
-              href={`/blog/${post.slug}`}
+              href={getBlogPostUrl(post.categorySlugPath || [], post.slug)}
               className="group block p-4 rounded-xl border transition-all duration-300
                 hover:border-violet-400 dark:hover:border-violet-400/60
                 hover:shadow-lg hover:shadow-violet-200/20 dark:hover:shadow-violet-500/10"

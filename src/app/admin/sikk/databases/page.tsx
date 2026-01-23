@@ -46,9 +46,14 @@ export default function SikkDatabasesPage() {
     return options;
   }, [categories]);
 
-  // Generate database URL - simple /sikk/db/[slug] format
+  // Generate database URL - /sikk/categories/[...category]/db/[slug] format
   const getDatabaseUrl = (db: Database) => {
-    return `/sikk/db/${db.slug}`;
+    if (db.category) {
+      // Category path (e.g., "대학교" or "대학교/과제") - convert to URL-encoded path
+      const categoryPath = db.category.split('/').map(s => encodeURIComponent(s)).join('/');
+      return `/sikk/categories/${categoryPath}/db/${encodeURIComponent(db.slug)}`;
+    }
+    return `/sikk/categories/uncategorized/db/${encodeURIComponent(db.slug)}`;
   };
 
   const fetchDatabases = async () => {

@@ -225,10 +225,15 @@ export default function DatabaseDetailPage({ params }: DatabasePageProps) {
     return options;
   }, [categories]);
 
-  // Generate database URL - simple /sikk/db/[slug] format
+  // Generate database URL - /sikk/categories/[...category]/db/[slug] format
   const getDatabaseViewUrl = () => {
     if (!database) return '/sikk';
-    return `/sikk/db/${database.slug}`;
+    if (database.category) {
+      // Category path (e.g., "대학교" or "대학교/과제") - convert to URL-encoded path
+      const categoryPath = database.category.split('/').map(s => encodeURIComponent(s)).join('/');
+      return `/sikk/categories/${categoryPath}/db/${encodeURIComponent(database.slug)}`;
+    }
+    return `/sikk/categories/uncategorized/db/${encodeURIComponent(database.slug)}`;
   };
 
   const fetchDatabase = useCallback(async () => {

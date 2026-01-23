@@ -31,6 +31,7 @@ interface DatabaseItemViewProps {
   data: Record<string, unknown>;
   content: string;
   isAdmin: boolean;
+  categorySlugPath?: string[];
 }
 
 export default function DatabaseItemView({
@@ -42,7 +43,12 @@ export default function DatabaseItemView({
   data: initialData,
   content: initialContent,
   isAdmin,
+  categorySlugPath,
 }: DatabaseItemViewProps) {
+  // Generate database URL based on category path
+  const databaseHref = categorySlugPath && categorySlugPath.length > 0
+    ? `/sikk/categories/${categorySlugPath.map(s => encodeURIComponent(s)).join('/')}/db/${encodeURIComponent(databaseSlug)}`
+    : `/sikk/categories/uncategorized/db/${encodeURIComponent(databaseSlug)}`;
   const router = useRouter();
   const [data, setData] = useState(initialData);
   const [content, setContent] = useState(initialContent);
@@ -277,7 +283,7 @@ export default function DatabaseItemView({
           </Link>
           <span className="mx-2">/</span>
           <Link
-            href={`/sikk/db/${databaseSlug}`}
+            href={databaseHref}
             className="hover:text-pink-600 dark:hover:text-pink-400 transition-colors"
           >
             {databaseTitle}
@@ -411,7 +417,7 @@ export default function DatabaseItemView({
       {/* Footer */}
       <footer className="mt-12 pt-8 border-t" style={{ borderColor: 'var(--card-border)' }}>
         <Link
-          href={`/sikk/db/${databaseSlug}`}
+          href={databaseHref}
           className="inline-flex items-center text-pink-600 dark:text-pink-400 hover:underline"
         >
           <svg

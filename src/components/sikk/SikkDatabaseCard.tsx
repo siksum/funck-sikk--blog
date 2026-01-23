@@ -39,8 +39,10 @@ export default function SikkDatabaseCard({
   categorySlugPath,
   variant = 'card',
 }: SikkDatabaseCardProps) {
-  // Simple URL format: /sikk/db/[slug]
-  const href = `/sikk/db/${slug}`;
+  // New URL format: /sikk/categories/[...categoryPath]/db/[slug]
+  const href = categorySlugPath && categorySlugPath.length > 0
+    ? `/sikk/categories/${categorySlugPath.map(s => encodeURIComponent(s)).join('/')}/db/${encodeURIComponent(slug)}`
+    : `/sikk/categories/uncategorized/db/${encodeURIComponent(slug)}`;
 
   // List variant
   if (variant === 'list') {

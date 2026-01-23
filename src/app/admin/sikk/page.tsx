@@ -408,6 +408,26 @@ export default function SikkPostsManagementPage() {
     return options;
   }, [dbCategories]);
 
+  // Generate database URL - /sikk/categories/[...category]/db/[slug] format
+  const getDatabaseUrl = (category: string | null, slug: string) => {
+    if (category) {
+      // Category path (e.g., "대학교" or "대학교/과제") - convert to URL-encoded path
+      const categoryPath = category.split('/').map(s => encodeURIComponent(s)).join('/');
+      return `/sikk/categories/${categoryPath}/db/${encodeURIComponent(slug)}`;
+    }
+    return `/sikk/categories/uncategorized/db/${encodeURIComponent(slug)}`;
+  };
+
+  // Generate post URL - /sikk/categories/[...category]/[slug] format
+  const getPostUrl = (category: string, slug: string) => {
+    if (category) {
+      // Category path (e.g., "대학교" or "대학교/과제") - convert to URL-encoded path
+      const categoryPath = category.split('/').map(s => encodeURIComponent(s)).join('/');
+      return `/sikk/categories/${categoryPath}/${encodeURIComponent(slug)}`;
+    }
+    return `/sikk/categories/uncategorized/${encodeURIComponent(slug)}`;
+  };
+
   // Group categories by section for sidebar display
   const categoriesBySection = useMemo(() => {
     const grouped: { section: DBSection | null; categories: typeof sidebarCategories }[] = [];
@@ -1424,7 +1444,7 @@ export default function SikkPostsManagementPage() {
                       )}
                       <div className="flex gap-3 mt-3 pt-3 border-t border-gray-100 dark:border-gray-700">
                         <Link
-                          href={`/sikk/${post.slug}`}
+                          href={getPostUrl(post.category, post.slug)}
                           className="text-xs text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white"
                         >
                           보기
@@ -1594,7 +1614,7 @@ export default function SikkPostsManagementPage() {
                           <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
                             <div className="flex justify-end gap-2">
                               <Link
-                                href={`/sikk/${post.slug}`}
+                                href={getPostUrl(post.category, post.slug)}
                                 className="px-2 py-1 text-gray-600 hover:text-gray-900 dark:text-gray-400 dark:hover:text-white rounded hover:bg-gray-100 dark:hover:bg-gray-700"
                               >
                                 보기
@@ -1634,7 +1654,7 @@ export default function SikkPostsManagementPage() {
                                     {db.title}
                                   </div>
                                   <div className="text-xs text-gray-500 dark:text-gray-400 mt-1">
-                                    {db._count?.items || 0}개 항목 · /sikk/db/{db.slug}
+                                    {db._count?.items || 0}개 항목 · {getDatabaseUrl(db.category, db.slug)}
                                   </div>
                                 </div>
                               </Link>
@@ -1687,7 +1707,7 @@ export default function SikkPostsManagementPage() {
                             <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
                               <div className="flex justify-end gap-2">
                                 <Link
-                                  href={`/sikk/db/${db.slug}`}
+                                  href={getDatabaseUrl(db.category, db.slug)}
                                   className="px-2 py-1 text-gray-600 hover:text-gray-900 dark:text-gray-400 dark:hover:text-white rounded hover:bg-gray-100 dark:hover:bg-gray-700"
                                 >
                                   보기
