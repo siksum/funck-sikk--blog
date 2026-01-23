@@ -648,7 +648,13 @@ export async function getSikkCategoryBySlugPathFromDbAsync(slugPath: string[]): 
           ],
         },
       });
-      const foundCat = allCategories.find((c) => c.parentId === currentParentId);
+      // Handle null/undefined parentId comparison more robustly
+      const foundCat = allCategories.find((c) => {
+        const isRootLevel = !currentParentId;
+        const catHasNoParent = !c.parentId;
+        if (isRootLevel && catHasNoParent) return true;
+        return c.parentId === currentParentId;
+      });
 
       if (!foundCat) return null;
 
@@ -717,7 +723,13 @@ export async function getSikkChildCategoriesFromDbAsync(parentSlugPath: string[]
           ],
         },
       });
-      const foundCat = allCategories.find((c) => c.parentId === currentParentId);
+      // Handle null/undefined parentId comparison more robustly
+      const foundCat = allCategories.find((c) => {
+        const isRootLevel = !currentParentId;
+        const catHasNoParent = !c.parentId;
+        if (isRootLevel && catHasNoParent) return true;
+        return c.parentId === currentParentId;
+      });
 
       if (!foundCat) return [];
 
