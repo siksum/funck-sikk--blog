@@ -1,18 +1,26 @@
 // Helper function to extract proper filename from various URL types
 export function getFileDisplayName(url: string): string {
   try {
-    // Google Drive URL: https://drive.google.com/uc?id=xxx&export=download
-    if (url.includes('drive.google.com/uc?id=')) {
-      const match = url.match(/id=([^&]+)/);
-      if (match) {
-        return `📄 Drive (${match[1].substring(0, 8)}...)`;
+    // Google Drive URL with name parameter: https://drive.google.com/uc?id=xxx&export=download&name=filename.pdf
+    if (url.includes('drive.google.com')) {
+      // First check for name parameter (new format)
+      const nameMatch = url.match(/[?&]name=([^&]+)/);
+      if (nameMatch) {
+        return decodeURIComponent(nameMatch[1]);
       }
-    }
-    // Google Drive view URL: https://drive.google.com/file/d/xxx/view
-    if (url.includes('drive.google.com/file/d/')) {
-      const match = url.match(/\/d\/([^/]+)/);
-      if (match) {
-        return `📄 Drive (${match[1].substring(0, 8)}...)`;
+      // Fallback to Drive ID display for old URLs
+      if (url.includes('/uc?id=')) {
+        const idMatch = url.match(/id=([^&]+)/);
+        if (idMatch) {
+          return `📄 Drive (${idMatch[1].substring(0, 8)}...)`;
+        }
+      }
+      // Google Drive view URL: https://drive.google.com/file/d/xxx/view
+      if (url.includes('/file/d/')) {
+        const idMatch = url.match(/\/d\/([^/]+)/);
+        if (idMatch) {
+          return `📄 Drive (${idMatch[1].substring(0, 8)}...)`;
+        }
       }
     }
     // Cloudinary URL: https://res.cloudinary.com/.../filename.ext

@@ -187,10 +187,13 @@ export async function uploadToGoogleDriveDirect(
     console.warn('Failed to set public permissions, file may not be accessible');
   }
 
+  const fileName = uploadResult.name || file.name;
+
   return {
-    url: `https://drive.google.com/uc?id=${fileId}&export=download`,
+    // Include filename in URL as query parameter for display purposes
+    url: `https://drive.google.com/uc?id=${fileId}&export=download&name=${encodeURIComponent(fileName)}`,
     fileId: fileId,
-    fileName: uploadResult.name || file.name,
+    fileName: fileName,
     webViewLink: uploadResult.webViewLink || `https://drive.google.com/file/d/${fileId}/view`,
     mimeType: uploadResult.mimeType || file.type,
     provider: 'google-drive',
