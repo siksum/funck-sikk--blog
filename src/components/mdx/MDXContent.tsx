@@ -131,7 +131,7 @@ export default function MDXContent({ content }: MDXContentProps) {
 
   return (
     <>
-      <article className="max-w-none" style={{ color: 'var(--foreground)' }}>
+      <article className="mdx-content max-w-none" style={{ color: 'var(--foreground)' }}>
         <ReactMarkdown
           remarkPlugins={[remarkGfm, remarkMath]}
           rehypePlugins={[rehypeRaw, rehypeKatex, rehypeHighlight]}

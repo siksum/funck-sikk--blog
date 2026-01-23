@@ -682,3 +682,45 @@ iframe[src*="drive.google.com"],
   border-color: rgba(236, 72, 153, 0.3);
 }
 
+/* MDX Content Table Styles */
+.mdx-content table {
+  width: 100%;
+  border-collapse: collapse;
+  margin: 1rem 0;
+  border: 1px solid rgb(221 214 254);
+}
+
+.mdx-content th,
+.mdx-content td {
+  border: 1px solid rgb(221 214 254);
+  padding: 0.5rem 1rem;
+  text-align: left;
+}
+
+.mdx-content th {
+  background-color: rgb(245 243 255);
+  font-weight: 600;
+}
+
+.mdx-content tr:hover {
+  background-color: rgba(139, 92, 246, 0.03);
+}
+
+/* MDX Content Table - Dark Mode */
+.dark .mdx-content table {
+  border-color: rgba(139, 92, 246, 0.3);
+}
+
+.dark .mdx-content th,
+.dark .mdx-content td {
+  border-color: rgba(139, 92, 246, 0.3);
+}
+
+.dark .mdx-content th {
+  background-color: rgba(139, 92, 246, 0.1);
+}
+
+.dark .mdx-content tr:hover {
+  background-color: rgba(139, 92, 246, 0.05);
+}
+
