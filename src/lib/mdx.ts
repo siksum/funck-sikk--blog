@@ -3,9 +3,10 @@ import { Post, Category, CategoryTreeNode } from '@/types';
 
 function slugify(text: string): string {
   return text
+    .normalize('NFC')  // Normalize to composed form for consistent Korean handling
     .toLowerCase()
     .trim()
-    .replace(/[^a-z0-9가-힣\s-]/g, '')  // Preserve Korean characters
+    .replace(/[^a-z0-9가-힣\s-]/g, '')  // Preserve Korean characters (가-힣 is NFC range)
     .replace(/[\s_-]+/g, '-')
     .replace(/^-+|-+$/g, '');
 }
