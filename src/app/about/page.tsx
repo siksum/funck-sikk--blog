@@ -12,6 +12,20 @@ interface TimelineItem {
   detail: string;
 }
 
+interface ScholarshipItem {
+  name: string;
+  org: string;
+  date: string;
+}
+
+interface ProjectItem {
+  category: string;
+  name: string;
+  description: string;
+  link?: string;
+  org: string;
+}
+
 interface AboutData {
   profile: {
     name: string;
@@ -31,8 +45,8 @@ interface AboutData {
   inProgress: string[];
   timeline: {
     education: TimelineItem[];
-    scholarship: TimelineItem[];
-    project: TimelineItem[];
+    scholarship: ScholarshipItem[];
+    project: ProjectItem[];
     work: TimelineItem[];
     research: TimelineItem[];
     activities: TimelineItem[];
@@ -393,17 +407,94 @@ export default function AboutPage() {
 
               <div className="space-y-4">
                 {(() => {
-                  const filteredItems = data.timeline[activeEducationTab] || [];
+                  // Education tab - TimelineItem[]
+                  if (activeEducationTab === 'education') {
+                    const items = data.timeline.education || [];
+                    if (items.length === 0) {
+                      return (
+                        <div className="text-center py-8 text-gray-500 dark:text-gray-400">
+                          아직 등록된 항목이 없습니다.
+                        </div>
+                      );
+                    }
+                    return items.map((item, index) => (
+                      <motion.div
+                        key={index}
+                        className="relative pl-8"
+                        initial={{ opacity: 0, x: -10 }}
+                        animate={{ opacity: 1, x: 0 }}
+                        transition={{ duration: 0.3, delay: index * 0.1 }}
+                      >
+                        <div className="absolute left-0 top-4 w-6 h-6 rounded-full flex items-center justify-center z-10 bg-violet-500">
+                          <div className="w-2 h-2 rounded-full bg-white" />
+                        </div>
+                        <motion.div
+                          className="p-4 rounded-xl border border-gray-200 dark:border-violet-500/20 shadow-sm hover:shadow-md transition-all"
+                          style={{ background: 'var(--card-bg)' }}
+                          whileHover={{ x: 4 }}
+                        >
+                          <div className="flex flex-wrap items-center gap-2 mb-2">
+                            <span className="px-2.5 py-0.5 rounded-full text-xs font-medium border bg-violet-100 dark:bg-transparent text-violet-700 dark:text-violet-200 border-violet-200 dark:border-violet-400">
+                              {item.year}
+                            </span>
+                          </div>
+                          <h3 className="text-lg font-semibold card-title">{item.title}</h3>
+                          <p className="text-accent-violet font-medium text-sm">{item.subtitle}</p>
+                          {item.org && <p className="text-gray-600 dark:text-gray-400 text-sm">{item.org}</p>}
+                          {item.detail && <p className="text-gray-500 dark:text-gray-500 text-xs mt-1">{item.detail}</p>}
+                        </motion.div>
+                      </motion.div>
+                    ));
+                  }
 
-                  if (filteredItems.length === 0) {
+                  // Scholarship tab - ScholarshipItem[] (name, org, date)
+                  if (activeEducationTab === 'scholarship') {
+                    const items = data.timeline.scholarship || [];
+                    if (items.length === 0) {
+                      return (
+                        <div className="text-center py-8 text-gray-500 dark:text-gray-400">
+                          아직 등록된 항목이 없습니다.
+                        </div>
+                      );
+                    }
+                    return items.map((item, index) => (
+                      <motion.div
+                        key={index}
+                        className="relative pl-8"
+                        initial={{ opacity: 0, x: -10 }}
+                        animate={{ opacity: 1, x: 0 }}
+                        transition={{ duration: 0.3, delay: index * 0.1 }}
+                      >
+                        <div className="absolute left-0 top-4 w-6 h-6 rounded-full flex items-center justify-center z-10 bg-amber-500">
+                          <div className="w-2 h-2 rounded-full bg-white" />
+                        </div>
+                        <motion.div
+                          className="p-4 rounded-xl border border-gray-200 dark:border-violet-500/20 shadow-sm hover:shadow-md transition-all"
+                          style={{ background: 'var(--card-bg)' }}
+                          whileHover={{ x: 4 }}
+                        >
+                          <div className="flex flex-wrap items-center gap-2 mb-2">
+                            <span className="px-2.5 py-0.5 rounded-full text-xs font-medium border bg-amber-100 dark:bg-transparent text-amber-700 dark:text-amber-200 border-amber-200 dark:border-amber-400">
+                              {item.date}
+                            </span>
+                          </div>
+                          <h3 className="text-lg font-semibold card-title">{item.name}</h3>
+                          {item.org && <p className="text-accent-violet font-medium text-sm">{item.org}</p>}
+                        </motion.div>
+                      </motion.div>
+                    ));
+                  }
+
+                  // Project tab - ProjectItem[] (category, name, description, link, org)
+                  const items = data.timeline.project || [];
+                  if (items.length === 0) {
                     return (
                       <div className="text-center py-8 text-gray-500 dark:text-gray-400">
                         아직 등록된 항목이 없습니다.
                       </div>
                     );
                   }
-
-                  return filteredItems.map((item, index) => (
+                  return items.map((item, index) => (
                     <motion.div
                       key={index}
                       className="relative pl-8"
@@ -411,38 +502,41 @@ export default function AboutPage() {
                       animate={{ opacity: 1, x: 0 }}
                       transition={{ duration: 0.3, delay: index * 0.1 }}
                     >
-                      {/* Timeline dot */}
-                      <div className={`absolute left-0 top-4 w-6 h-6 rounded-full flex items-center justify-center z-10 ${
-                        activeEducationTab === 'education'
-                          ? 'bg-violet-500'
-                          : activeEducationTab === 'scholarship'
-                          ? 'bg-amber-500'
-                          : 'bg-cyan-500'
-                      }`}>
+                      <div className="absolute left-0 top-4 w-6 h-6 rounded-full flex items-center justify-center z-10 bg-cyan-500">
                         <div className="w-2 h-2 rounded-full bg-white" />
                       </div>
-
-                      {/* Content Card */}
                       <motion.div
                         className="p-4 rounded-xl border border-gray-200 dark:border-violet-500/20 shadow-sm hover:shadow-md transition-all"
                         style={{ background: 'var(--card-bg)' }}
                         whileHover={{ x: 4 }}
                       >
                         <div className="flex flex-wrap items-center gap-2 mb-2">
-                          <span className={`px-2.5 py-0.5 rounded-full text-xs font-medium border ${
-                            activeEducationTab === 'education'
-                              ? 'bg-violet-100 dark:bg-transparent text-violet-700 dark:text-violet-200 border-violet-200 dark:border-violet-400'
-                              : activeEducationTab === 'scholarship'
-                              ? 'bg-amber-100 dark:bg-transparent text-amber-700 dark:text-amber-200 border-amber-200 dark:border-amber-400'
-                              : 'bg-cyan-100 dark:bg-transparent text-cyan-700 dark:text-cyan-200 border-cyan-200 dark:border-cyan-400'
-                          }`}>
-                            {item.year}
+                          <span className="px-2.5 py-0.5 rounded-full text-xs font-medium border bg-cyan-100 dark:bg-transparent text-cyan-700 dark:text-cyan-200 border-cyan-200 dark:border-cyan-400">
+                            {item.category}
                           </span>
+                          {item.org && (
+                            <span className="px-2 py-0.5 rounded text-xs bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300">
+                              {item.org}
+                            </span>
+                          )}
                         </div>
-                        <h3 className="text-lg font-semibold card-title">{item.title}</h3>
-                        <p className="text-accent-violet font-medium text-sm">{item.subtitle}</p>
-                        {item.org && <p className="text-gray-600 dark:text-gray-400 text-sm">{item.org}</p>}
-                        {item.detail && <p className="text-gray-500 dark:text-gray-500 text-xs mt-1">{item.detail}</p>}
+                        <h3 className="text-lg font-semibold card-title">{item.name}</h3>
+                        {item.description && (
+                          <p className="text-gray-600 dark:text-gray-400 text-sm mt-2 whitespace-pre-line">{item.description}</p>
+                        )}
+                        {item.link && (
+                          <a
+                            href={item.link}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="inline-flex items-center gap-1 mt-3 text-sm text-accent-violet hover:underline"
+                          >
+                            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
+                            </svg>
+                            Link
+                          </a>
+                        )}
                       </motion.div>
                     </motion.div>
                   ));

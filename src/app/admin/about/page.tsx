@@ -10,6 +10,20 @@ interface TimelineItem {
   detail: string;
 }
 
+interface ScholarshipItem {
+  name: string;
+  org: string;
+  date: string;
+}
+
+interface ProjectItem {
+  category: string;
+  name: string;
+  description: string;
+  link?: string;
+  org: string;
+}
+
 interface AboutData {
   profile: {
     name: string;
@@ -29,8 +43,8 @@ interface AboutData {
   inProgress: string[];
   timeline: {
     education: TimelineItem[];
-    scholarship: TimelineItem[];
-    project: TimelineItem[];
+    scholarship: ScholarshipItem[];
+    project: ProjectItem[];
     work: TimelineItem[];
     research: TimelineItem[];
     activities: TimelineItem[];
@@ -378,15 +392,14 @@ function TimelineEditor({ data, setData }: { data: AboutData; setData: (d: About
 
   // Ensure timeline has all required properties
   const ensureTimelineStructure = () => {
-    if (!data.timeline.scholarship) {
+    const updates: Partial<typeof data.timeline> = {};
+    if (!data.timeline.scholarship) updates.scholarship = [];
+    if (!data.timeline.project) updates.project = [];
+    if (!data.timeline.activities) updates.activities = [];
+    if (Object.keys(updates).length > 0) {
       setData({
         ...data,
-        timeline: {
-          ...data.timeline,
-          scholarship: [],
-          project: data.timeline.project || [],
-          activities: data.timeline.activities || [],
-        },
+        timeline: { ...data.timeline, ...updates },
       });
     }
   };
@@ -396,28 +409,64 @@ function TimelineEditor({ data, setData }: { data: AboutData; setData: (d: About
     ensureTimelineStructure();
   }
 
-  const addItem = (type: TimelineTabType) => {
-    const newItem = { year: '', title: '', subtitle: '', org: '', detail: '' };
-    const currentItems = data.timeline[type] || [];
+  // Add functions for each type
+  const addTimelineItem = (type: 'education' | 'work' | 'research' | 'activities') => {
+    const newItem: TimelineItem = { year: '', title: '', subtitle: '', org: '', detail: '' };
     setData({
       ...data,
       timeline: {
         ...data.timeline,
-        [type]: [...currentItems, newItem],
+        [type]: [...(data.timeline[type] || []), newItem],
       },
     });
   };
 
-  const updateItem = (type: TimelineTabType, index: number, field: string, value: string) => {
-    const currentItems = data.timeline[type] || [];
-    const newItems = [...currentItems];
-    newItems[index] = { ...newItems[index], [field]: value };
+  const addScholarshipItem = () => {
+    const newItem: ScholarshipItem = { name: '', org: '', date: '' };
     setData({
       ...data,
       timeline: {
         ...data.timeline,
-        [type]: newItems,
+        scholarship: [...(data.timeline.scholarship || []), newItem],
       },
+    });
+  };
+
+  const addProjectItem = () => {
+    const newItem: ProjectItem = { category: '', name: '', description: '', link: '', org: '' };
+    setData({
+      ...data,
+      timeline: {
+        ...data.timeline,
+        project: [...(data.timeline.project || []), newItem],
+      },
+    });
+  };
+
+  const updateTimelineItem = (type: 'education' | 'work' | 'research' | 'activities', index: number, field: string, value: string) => {
+    const currentItems = [...(data.timeline[type] || [])];
+    currentItems[index] = { ...currentItems[index], [field]: value };
+    setData({
+      ...data,
+      timeline: { ...data.timeline, [type]: currentItems },
+    });
+  };
+
+  const updateScholarshipItem = (index: number, field: string, value: string) => {
+    const currentItems = [...(data.timeline.scholarship || [])];
+    currentItems[index] = { ...currentItems[index], [field]: value };
+    setData({
+      ...data,
+      timeline: { ...data.timeline, scholarship: currentItems },
+    });
+  };
+
+  const updateProjectItem = (index: number, field: string, value: string) => {
+    const currentItems = [...(data.timeline.project || [])];
+    currentItems[index] = { ...currentItems[index], [field]: value };
+    setData({
+      ...data,
+      timeline: { ...data.timeline, project: currentItems },
     });
   };
 
@@ -427,22 +476,21 @@ function TimelineEditor({ data, setData }: { data: AboutData; setData: (d: About
       ...data,
       timeline: {
         ...data.timeline,
-        [type]: currentItems.filter((_, i) => i !== index),
+        [type]: (currentItems as unknown[]).filter((_, i) => i !== index),
       },
     });
   };
 
   const moveItem = (type: TimelineTabType, fromIndex: number, toIndex: number) => {
     if (fromIndex === toIndex) return;
-    const currentItems = data.timeline[type] || [];
-    const newItems = [...currentItems];
-    const [movedItem] = newItems.splice(fromIndex, 1);
-    newItems.splice(toIndex, 0, movedItem);
+    const currentItems = [...(data.timeline[type] || [])] as unknown[];
+    const [movedItem] = currentItems.splice(fromIndex, 1);
+    currentItems.splice(toIndex, 0, movedItem);
     setData({
       ...data,
       timeline: {
         ...data.timeline,
-        [type]: newItems,
+        [type]: currentItems,
       },
     });
   };
@@ -477,8 +525,6 @@ function TimelineEditor({ data, setData }: { data: AboutData; setData: (d: About
     setDragOverIndex(null);
   };
 
-  const items = data.timeline[tab] || [];
-
   const tabLabels: Record<TimelineTabType, string> = {
     education: '학력',
     scholarship: '장학금',
@@ -486,6 +532,269 @@ function TimelineEditor({ data, setData }: { data: AboutData; setData: (d: About
     work: '경력',
     research: '연구',
     activities: '활동',
+  };
+
+  // Render functions for each type
+  const renderTimelineItems = (type: 'education' | 'work' | 'research' | 'activities') => {
+    const items = data.timeline[type] || [];
+    return (
+      <div className="space-y-4">
+        {items.map((item, index) => (
+          <div
+            key={index}
+            draggable
+            onDragStart={(e) => handleDragStart(e, index)}
+            onDragOver={(e) => handleDragOver(e, index)}
+            onDragLeave={handleDragLeave}
+            onDrop={(e) => handleDrop(e, index)}
+            onDragEnd={handleDragEnd}
+            className={`p-4 border rounded-lg space-y-3 transition-all ${
+              dragIndex === index
+                ? 'opacity-50 border-blue-400 bg-blue-50 dark:bg-blue-900/20'
+                : dragOverIndex === index
+                ? 'border-blue-500 border-2 bg-blue-50 dark:bg-blue-900/10'
+                : 'border-gray-200 dark:border-gray-700'
+            }`}
+          >
+            <div className="flex items-center justify-between mb-2">
+              <div className="flex items-center gap-2 text-gray-400 dark:text-gray-500 cursor-move">
+                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 8h16M4 16h16" />
+                </svg>
+                <span className="text-xs font-medium">#{index + 1} 드래그하여 순서 변경</span>
+              </div>
+              <button onClick={() => removeItem(type, index)} className="text-red-500 text-sm hover:underline">삭제</button>
+            </div>
+            <div className="grid grid-cols-2 gap-3">
+              <div>
+                <label className="block text-xs font-medium text-gray-500 dark:text-gray-400 mb-1">기간</label>
+                <input
+                  type="text"
+                  placeholder="예: 2024.09 - Current"
+                  value={item.year}
+                  onChange={(e) => updateTimelineItem(type, index, 'year', e.target.value)}
+                  className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
+                />
+              </div>
+              <div>
+                <label className="block text-xs font-medium text-gray-500 dark:text-gray-400 mb-1">직책/학위</label>
+                <input
+                  type="text"
+                  placeholder="예: M.S. Candidate"
+                  value={item.title}
+                  onChange={(e) => updateTimelineItem(type, index, 'title', e.target.value)}
+                  className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
+                />
+              </div>
+              <div>
+                <label className="block text-xs font-medium text-gray-500 dark:text-gray-400 mb-1">전공/부서</label>
+                <input
+                  type="text"
+                  placeholder="예: Convergence Security Engineering"
+                  value={item.subtitle}
+                  onChange={(e) => updateTimelineItem(type, index, 'subtitle', e.target.value)}
+                  className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
+                />
+              </div>
+              <div>
+                <label className="block text-xs font-medium text-gray-500 dark:text-gray-400 mb-1">기관</label>
+                <input
+                  type="text"
+                  placeholder="예: Sungshin Women's University"
+                  value={item.org}
+                  onChange={(e) => updateTimelineItem(type, index, 'org', e.target.value)}
+                  className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
+                />
+              </div>
+            </div>
+            <div>
+              <label className="block text-xs font-medium text-gray-500 dark:text-gray-400 mb-1">상세 정보</label>
+              <input
+                type="text"
+                placeholder="예: Advisor: Ilgu Lee | GPA: 4.5/4.5"
+                value={item.detail}
+                onChange={(e) => updateTimelineItem(type, index, 'detail', e.target.value)}
+                className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
+              />
+            </div>
+          </div>
+        ))}
+        <button
+          onClick={() => addTimelineItem(type)}
+          className="w-full px-4 py-2 text-blue-600 dark:text-blue-400 border border-dashed border-blue-300 dark:border-blue-700 rounded-lg hover:bg-blue-50 dark:hover:bg-blue-900/20"
+        >
+          + 항목 추가
+        </button>
+      </div>
+    );
+  };
+
+  const renderScholarshipItems = () => {
+    const items = data.timeline.scholarship || [];
+    return (
+      <div className="space-y-4">
+        {items.map((item, index) => (
+          <div
+            key={index}
+            draggable
+            onDragStart={(e) => handleDragStart(e, index)}
+            onDragOver={(e) => handleDragOver(e, index)}
+            onDragLeave={handleDragLeave}
+            onDrop={(e) => handleDrop(e, index)}
+            onDragEnd={handleDragEnd}
+            className={`p-4 border rounded-lg space-y-3 transition-all ${
+              dragIndex === index
+                ? 'opacity-50 border-amber-400 bg-amber-50 dark:bg-amber-900/20'
+                : dragOverIndex === index
+                ? 'border-amber-500 border-2 bg-amber-50 dark:bg-amber-900/10'
+                : 'border-gray-200 dark:border-gray-700'
+            }`}
+          >
+            <div className="flex items-center justify-between mb-2">
+              <div className="flex items-center gap-2 text-gray-400 dark:text-gray-500 cursor-move">
+                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 8h16M4 16h16" />
+                </svg>
+                <span className="text-xs font-medium">#{index + 1} 드래그하여 순서 변경</span>
+              </div>
+              <button onClick={() => removeItem('scholarship', index)} className="text-red-500 text-sm hover:underline">삭제</button>
+            </div>
+            <div className="grid grid-cols-3 gap-3">
+              <div>
+                <label className="block text-xs font-medium text-gray-500 dark:text-gray-400 mb-1">장학금명</label>
+                <input
+                  type="text"
+                  placeholder="예: 성적우수장학금"
+                  value={item.name}
+                  onChange={(e) => updateScholarshipItem(index, 'name', e.target.value)}
+                  className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
+                />
+              </div>
+              <div>
+                <label className="block text-xs font-medium text-gray-500 dark:text-gray-400 mb-1">수여 기관</label>
+                <input
+                  type="text"
+                  placeholder="예: 성신여자대학교"
+                  value={item.org}
+                  onChange={(e) => updateScholarshipItem(index, 'org', e.target.value)}
+                  className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
+                />
+              </div>
+              <div>
+                <label className="block text-xs font-medium text-gray-500 dark:text-gray-400 mb-1">수여 날짜</label>
+                <input
+                  type="text"
+                  placeholder="예: 2024.09"
+                  value={item.date}
+                  onChange={(e) => updateScholarshipItem(index, 'date', e.target.value)}
+                  className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
+                />
+              </div>
+            </div>
+          </div>
+        ))}
+        <button
+          onClick={addScholarshipItem}
+          className="w-full px-4 py-2 text-amber-600 dark:text-amber-400 border border-dashed border-amber-300 dark:border-amber-700 rounded-lg hover:bg-amber-50 dark:hover:bg-amber-900/20"
+        >
+          + 장학금 추가
+        </button>
+      </div>
+    );
+  };
+
+  const renderProjectItems = () => {
+    const items = data.timeline.project || [];
+    return (
+      <div className="space-y-4">
+        {items.map((item, index) => (
+          <div
+            key={index}
+            draggable
+            onDragStart={(e) => handleDragStart(e, index)}
+            onDragOver={(e) => handleDragOver(e, index)}
+            onDragLeave={handleDragLeave}
+            onDrop={(e) => handleDrop(e, index)}
+            onDragEnd={handleDragEnd}
+            className={`p-4 border rounded-lg space-y-3 transition-all ${
+              dragIndex === index
+                ? 'opacity-50 border-cyan-400 bg-cyan-50 dark:bg-cyan-900/20'
+                : dragOverIndex === index
+                ? 'border-cyan-500 border-2 bg-cyan-50 dark:bg-cyan-900/10'
+                : 'border-gray-200 dark:border-gray-700'
+            }`}
+          >
+            <div className="flex items-center justify-between mb-2">
+              <div className="flex items-center gap-2 text-gray-400 dark:text-gray-500 cursor-move">
+                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 8h16M4 16h16" />
+                </svg>
+                <span className="text-xs font-medium">#{index + 1} 드래그하여 순서 변경</span>
+              </div>
+              <button onClick={() => removeItem('project', index)} className="text-red-500 text-sm hover:underline">삭제</button>
+            </div>
+            <div className="grid grid-cols-2 gap-3">
+              <div>
+                <label className="block text-xs font-medium text-gray-500 dark:text-gray-400 mb-1">카테고리</label>
+                <input
+                  type="text"
+                  placeholder="예: 연구, 개인, 팀"
+                  value={item.category}
+                  onChange={(e) => updateProjectItem(index, 'category', e.target.value)}
+                  className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
+                />
+              </div>
+              <div>
+                <label className="block text-xs font-medium text-gray-500 dark:text-gray-400 mb-1">프로젝트명</label>
+                <input
+                  type="text"
+                  placeholder="예: Smart Contract Security Tool"
+                  value={item.name}
+                  onChange={(e) => updateProjectItem(index, 'name', e.target.value)}
+                  className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
+                />
+              </div>
+              <div>
+                <label className="block text-xs font-medium text-gray-500 dark:text-gray-400 mb-1">기관/소속</label>
+                <input
+                  type="text"
+                  placeholder="예: CSE Lab"
+                  value={item.org}
+                  onChange={(e) => updateProjectItem(index, 'org', e.target.value)}
+                  className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
+                />
+              </div>
+              <div>
+                <label className="block text-xs font-medium text-gray-500 dark:text-gray-400 mb-1">링크 (선택)</label>
+                <input
+                  type="text"
+                  placeholder="https://github.com/..."
+                  value={item.link || ''}
+                  onChange={(e) => updateProjectItem(index, 'link', e.target.value)}
+                  className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
+                />
+              </div>
+            </div>
+            <div>
+              <label className="block text-xs font-medium text-gray-500 dark:text-gray-400 mb-1">설명</label>
+              <textarea
+                placeholder="프로젝트에 대한 상세 설명을 입력하세요..."
+                value={item.description}
+                onChange={(e) => updateProjectItem(index, 'description', e.target.value)}
+                rows={3}
+                className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
+              />
+            </div>
+          </div>
+        ))}
+        <button
+          onClick={addProjectItem}
+          className="w-full px-4 py-2 text-cyan-600 dark:text-cyan-400 border border-dashed border-cyan-300 dark:border-cyan-700 rounded-lg hover:bg-cyan-50 dark:hover:bg-cyan-900/20"
+        >
+          + 프로젝트 추가
+        </button>
+      </div>
+    );
   };
 
   return (
@@ -527,100 +836,13 @@ function TimelineEditor({ data, setData }: { data: AboutData; setData: (d: About
         </div>
       </div>
 
-      <div className="space-y-4">
-        {items.map((item, index) => (
-          <div
-            key={index}
-            draggable
-            onDragStart={(e) => handleDragStart(e, index)}
-            onDragOver={(e) => handleDragOver(e, index)}
-            onDragLeave={handleDragLeave}
-            onDrop={(e) => handleDrop(e, index)}
-            onDragEnd={handleDragEnd}
-            className={`p-4 border rounded-lg space-y-3 transition-all ${
-              dragIndex === index
-                ? 'opacity-50 border-blue-400 bg-blue-50 dark:bg-blue-900/20'
-                : dragOverIndex === index
-                ? 'border-blue-500 border-2 bg-blue-50 dark:bg-blue-900/10'
-                : 'border-gray-200 dark:border-gray-700'
-            }`}
-          >
-            {/* Drag Handle */}
-            <div className="flex items-center justify-between mb-2">
-              <div className="flex items-center gap-2 text-gray-400 dark:text-gray-500 cursor-move">
-                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 8h16M4 16h16" />
-                </svg>
-                <span className="text-xs font-medium">#{index + 1} 드래그하여 순서 변경</span>
-              </div>
-              <button
-                onClick={() => removeItem(tab, index)}
-                className="text-red-500 text-sm hover:underline"
-              >
-                삭제
-              </button>
-            </div>
-            <div className="grid grid-cols-2 gap-3">
-              <div>
-                <label className="block text-xs font-medium text-gray-500 dark:text-gray-400 mb-1">기간</label>
-                <input
-                  type="text"
-                  placeholder="예: 2024.09 - Current"
-                  value={item.year}
-                  onChange={(e) => updateItem(tab, index, 'year', e.target.value)}
-                  className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
-                />
-              </div>
-              <div>
-                <label className="block text-xs font-medium text-gray-500 dark:text-gray-400 mb-1">직책/학위</label>
-                <input
-                  type="text"
-                  placeholder="예: M.S. Candidate"
-                  value={item.title}
-                  onChange={(e) => updateItem(tab, index, 'title', e.target.value)}
-                  className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
-                />
-              </div>
-              <div>
-                <label className="block text-xs font-medium text-gray-500 dark:text-gray-400 mb-1">전공/부서</label>
-                <input
-                  type="text"
-                  placeholder="예: Convergence Security Engineering"
-                  value={item.subtitle}
-                  onChange={(e) => updateItem(tab, index, 'subtitle', e.target.value)}
-                  className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
-                />
-              </div>
-              <div>
-                <label className="block text-xs font-medium text-gray-500 dark:text-gray-400 mb-1">기관</label>
-                <input
-                  type="text"
-                  placeholder="예: Sungshin Women's University"
-                  value={item.org}
-                  onChange={(e) => updateItem(tab, index, 'org', e.target.value)}
-                  className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
-                />
-              </div>
-            </div>
-            <div>
-              <label className="block text-xs font-medium text-gray-500 dark:text-gray-400 mb-1">상세 정보</label>
-              <input
-                type="text"
-                placeholder="예: Advisor: Ilgu Lee | GPA: 4.5/4.5"
-                value={item.detail}
-                onChange={(e) => updateItem(tab, index, 'detail', e.target.value)}
-                className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
-              />
-            </div>
-          </div>
-        ))}
-        <button
-          onClick={() => addItem(tab)}
-          className="w-full px-4 py-2 text-blue-600 dark:text-blue-400 border border-dashed border-blue-300 dark:border-blue-700 rounded-lg hover:bg-blue-50 dark:hover:bg-blue-900/20"
-        >
-          + 항목 추가
-        </button>
-      </div>
+      {/* Render appropriate editor based on tab */}
+      {tab === 'education' && renderTimelineItems('education')}
+      {tab === 'scholarship' && renderScholarshipItems()}
+      {tab === 'project' && renderProjectItems()}
+      {tab === 'work' && renderTimelineItems('work')}
+      {tab === 'research' && renderTimelineItems('research')}
+      {tab === 'activities' && renderTimelineItems('activities')}
     </div>
   );
 }
