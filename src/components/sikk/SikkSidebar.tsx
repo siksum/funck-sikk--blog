@@ -117,10 +117,23 @@ export default function SikkSidebar({
 
         // Always show sections, even without categories
         sections.forEach((section) => {
-          const sectionCategoryNames = section.categories.map((c) => c.name);
-          const sectionCategories = categories.filter((cat) =>
-            sectionCategoryNames.includes(cat.name)
-          );
+          // Find matching categories from posts OR create placeholder for section categories
+          const sectionCategories: Category[] = section.categories.map((dbCat) => {
+            // Try to find existing category with posts
+            const existingCat = categories.find((cat) => cat.name === dbCat.name);
+            if (existingCat) {
+              return existingCat;
+            }
+            // Create placeholder category for categories without posts
+            return {
+              name: dbCat.name,
+              slug: dbCat.slug,
+              count: 0,
+              path: [dbCat.name],
+              slugPath: [dbCat.slug],
+              depth: 0,
+            };
+          });
           grouped.push({ section, categories: sectionCategories });
         });
 
