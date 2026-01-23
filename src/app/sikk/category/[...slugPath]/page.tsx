@@ -35,6 +35,7 @@ interface CategoryPageProps {
 }
 
 export const revalidate = 10;
+export const dynamicParams = true;
 
 // Parse the slugPath to determine route type
 // New URL structure: /sikk/category/[categoryPath]/[dbSlug]/[?itemId]
@@ -247,14 +248,27 @@ export async function generateMetadata({ params }: CategoryPageProps) {
 }
 
 export async function generateStaticParams() {
-  const categories = await getAllSikkCategoriesHierarchicalAsync();
+  try {
+    const categories = await getAllSikkCategoriesHierarchicalAsync();
 
-  // Filter out categories with empty slugPath (catch-all route requires at least one segment)
-  return categories
-    .filter((category) => category.slugPath && category.slugPath.length > 0)
-    .map((category) => ({
-      slugPath: category.slugPath,
-    }));
+    // Filter out categories with empty or invalid slugPath (catch-all route requires at least one segment)
+    const validParams = categories
+      .filter((category) => {
+        // Ensure slugPath exists, is an array, and has at least one non-empty segment
+        if (!category.slugPath || !Array.isArray(category.slugPath)) return false;
+        if (category.slugPath.length === 0) return false;
+        // Ensure all segments are non-empty strings
+        return category.slugPath.every((segment) => typeof segment === 'string' && segment.length > 0);
+      })
+      .map((category) => ({
+        slugPath: category.slugPath,
+      }));
+
+    return validParams;
+  } catch (error) {
+    console.error('Error generating static params for sikk category:', error);
+    return [];
+  }
 }
 
 export default async function SikkCategoryPage({ params }: CategoryPageProps) {
