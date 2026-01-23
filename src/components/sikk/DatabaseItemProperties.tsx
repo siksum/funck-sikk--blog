@@ -2,6 +2,13 @@
 
 import { useState, useCallback, useRef, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
+import dynamic from 'next/dynamic';
+
+// Lazy load Google Drive File Browser
+const GoogleDriveFileBrowser = dynamic(
+  () => import('@/components/common/GoogleDriveFileBrowser'),
+  { ssr: false }
+);
 
 interface Column {
   id: string;
@@ -13,6 +20,17 @@ interface Column {
 interface DateRangeValue {
   start: string;
   end: string;
+}
+
+interface DriveFile {
+  id: string;
+  name: string;
+  mimeType: string;
+  webViewLink: string;
+  downloadUrl: string;
+  thumbnailLink?: string;
+  createdTime: string;
+  size?: string;
 }
 
 interface DatabaseItemPropertiesProps {
@@ -125,14 +143,18 @@ function getFileDisplayName(url: string): string {
 export default function DatabaseItemProperties({
   databaseId,
   itemId,
-  columns,
+  columns: initialColumns,
   data: initialData,
   isAdmin,
 }: DatabaseItemPropertiesProps) {
   const router = useRouter();
   const [data, setData] = useState(initialData);
+  const [columns, setColumns] = useState(initialColumns);
   const [editingField, setEditingField] = useState<string | null>(null);
   const [isSaving, setIsSaving] = useState(false);
+  const [showAddColumn, setShowAddColumn] = useState(false);
+  const [newColumnName, setNewColumnName] = useState('');
+  const [newColumnType, setNewColumnType] = useState<Column['type']>('text');
 
   // Filter columns (exclude title)
   const displayColumns = columns.filter(c => c.type !== 'title');
@@ -160,6 +182,60 @@ export default function DatabaseItemProperties({
     }
   }, [databaseId, itemId, data, initialData, router]);
 
+  // Update column options (for select fields)
+  const updateColumnOptions = useCallback(async (columnId: string, newOptions: string[]) => {
+    const updatedColumns = columns.map(col =>
+      col.id === columnId ? { ...col, options: newOptions } : col
+    );
+    setColumns(updatedColumns);
+
+    try {
+      const response = await fetch(`/api/sikk/databases/${databaseId}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ columns: updatedColumns }),
+      });
+
+      if (!response.ok) throw new Error('옵션 저장 실패');
+      router.refresh();
+    } catch (error) {
+      console.error('Column update error:', error);
+      setColumns(initialColumns);
+    }
+  }, [databaseId, columns, initialColumns, router]);
+
+  // Add new column
+  const addColumn = useCallback(async () => {
+    if (!newColumnName.trim()) return;
+
+    const newColumn: Column = {
+      id: `col_${Date.now()}`,
+      name: newColumnName.trim(),
+      type: newColumnType,
+      ...(newColumnType === 'select' && { options: [] }),
+    };
+
+    const updatedColumns = [...columns, newColumn];
+    setColumns(updatedColumns);
+    setShowAddColumn(false);
+    setNewColumnName('');
+    setNewColumnType('text');
+
+    try {
+      const response = await fetch(`/api/sikk/databases/${databaseId}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ columns: updatedColumns }),
+      });
+
+      if (!response.ok) throw new Error('열 추가 실패');
+      router.refresh();
+    } catch (error) {
+      console.error('Add column error:', error);
+      setColumns(initialColumns);
+    }
+  }, [databaseId, columns, initialColumns, newColumnName, newColumnType, router]);
+
   const handleFieldClick = useCallback((columnId: string) => {
     if (isAdmin) {
       setEditingField(columnId);
@@ -180,9 +256,73 @@ export default function DatabaseItemProperties({
             onClick={() => handleFieldClick(column.id)}
             onSave={(value) => saveField(column.id, value)}
             onCancel={() => setEditingField(null)}
+            onUpdateOptions={(options) => updateColumnOptions(column.id, options)}
+            databaseId={databaseId}
           />
         ))}
       </div>
+
+      {/* Add Column Button */}
+      {isAdmin && (
+        <div className="mt-4">
+          {showAddColumn ? (
+            <div className="p-4 bg-gray-50 dark:bg-gray-800/50 rounded-lg border border-gray-200 dark:border-gray-700">
+              <div className="flex flex-col gap-3">
+                <input
+                  type="text"
+                  value={newColumnName}
+                  onChange={(e) => setNewColumnName(e.target.value)}
+                  placeholder="속성 이름"
+                  className="px-3 py-2 text-sm border border-gray-300 dark:border-gray-600 rounded bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-purple-500"
+                  autoFocus
+                />
+                <select
+                  value={newColumnType}
+                  onChange={(e) => setNewColumnType(e.target.value as Column['type'])}
+                  className="px-3 py-2 text-sm border border-gray-300 dark:border-gray-600 rounded bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-purple-500"
+                >
+                  <option value="text">텍스트</option>
+                  <option value="number">숫자</option>
+                  <option value="date">날짜</option>
+                  <option value="dateRange">기간</option>
+                  <option value="url">URL</option>
+                  <option value="select">선택</option>
+                  <option value="files">파일</option>
+                </select>
+                <div className="flex gap-2">
+                  <button
+                    onClick={addColumn}
+                    disabled={!newColumnName.trim()}
+                    className="flex-1 px-3 py-2 text-sm bg-purple-500 text-white rounded hover:bg-purple-600 disabled:opacity-50"
+                  >
+                    추가
+                  </button>
+                  <button
+                    onClick={() => {
+                      setShowAddColumn(false);
+                      setNewColumnName('');
+                      setNewColumnType('text');
+                    }}
+                    className="px-3 py-2 text-sm border border-gray-300 dark:border-gray-600 rounded hover:bg-gray-100 dark:hover:bg-gray-700"
+                  >
+                    취소
+                  </button>
+                </div>
+              </div>
+            </div>
+          ) : (
+            <button
+              onClick={() => setShowAddColumn(true)}
+              className="flex items-center gap-2 text-sm text-gray-500 dark:text-gray-400 hover:text-purple-600 dark:hover:text-purple-400"
+            >
+              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
+              </svg>
+              속성 추가
+            </button>
+          )}
+        </div>
+      )}
     </div>
   );
 }
@@ -196,6 +336,8 @@ interface PropertyRowProps {
   onClick: () => void;
   onSave: (value: unknown) => void;
   onCancel: () => void;
+  onUpdateOptions: (options: string[]) => void;
+  databaseId: string;
 }
 
 function PropertyRow({
@@ -207,9 +349,15 @@ function PropertyRow({
   onClick,
   onSave,
   onCancel,
+  onUpdateOptions,
+  databaseId,
 }: PropertyRowProps) {
   const [editValue, setEditValue] = useState(value);
+  const [showOptionManager, setShowOptionManager] = useState(false);
+  const [newOption, setNewOption] = useState('');
+  const [showDriveBrowser, setShowDriveBrowser] = useState(false);
   const inputRef = useRef<HTMLInputElement>(null);
+  const optionInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
     if (isEditing && inputRef.current) {
@@ -220,6 +368,40 @@ function PropertyRow({
   useEffect(() => {
     setEditValue(value);
   }, [value]);
+
+  useEffect(() => {
+    if (showOptionManager && optionInputRef.current) {
+      optionInputRef.current.focus();
+    }
+  }, [showOptionManager]);
+
+  const handleAddOption = () => {
+    if (!newOption.trim()) return;
+    const currentOptions = column.options || [];
+    if (!currentOptions.includes(newOption.trim())) {
+      onUpdateOptions([...currentOptions, newOption.trim()]);
+    }
+    setNewOption('');
+  };
+
+  const handleRemoveOption = (optionToRemove: string) => {
+    const currentOptions = column.options || [];
+    onUpdateOptions(currentOptions.filter(opt => opt !== optionToRemove));
+  };
+
+  const handleDriveSelect = (files: DriveFile[]) => {
+    const currentFiles = Array.isArray(editValue) ? editValue : [];
+    const newFileUrls = files.map(f => {
+      // Use download URL with name parameter for display
+      const url = new URL(f.downloadUrl);
+      url.searchParams.set('name', f.name);
+      return url.toString();
+    });
+    const updatedFiles = [...currentFiles, ...newFileUrls];
+    setEditValue(updatedFiles);
+    onSave(updatedFiles);
+    setShowDriveBrowser(false);
+  };
 
   const handleKeyDown = (e: React.KeyboardEvent) => {
     if (e.key === 'Enter' && !e.shiftKey) {
@@ -377,21 +559,86 @@ function PropertyRow({
 
       case 'select':
         return (
-          <select
-            value={String(editValue || '')}
-            onChange={(e) => {
-              setEditValue(e.target.value);
-              onSave(e.target.value);
-            }}
-            onBlur={() => onSave(editValue)}
-            className="px-2 py-1 text-sm border border-purple-300 rounded bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-purple-500"
-            autoFocus
-          >
-            <option value="">선택...</option>
-            {column.options?.map((opt) => (
-              <option key={opt} value={opt}>{opt}</option>
-            ))}
-          </select>
+          <div className="space-y-2">
+            <div className="flex items-center gap-2">
+              <select
+                value={String(editValue || '')}
+                onChange={(e) => {
+                  setEditValue(e.target.value);
+                  onSave(e.target.value);
+                }}
+                className="px-2 py-1 text-sm border border-purple-300 rounded bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-purple-500"
+                autoFocus
+              >
+                <option value="">선택...</option>
+                {column.options?.map((opt) => (
+                  <option key={opt} value={opt}>{opt}</option>
+                ))}
+              </select>
+              <button
+                onClick={(e) => {
+                  e.stopPropagation();
+                  setShowOptionManager(!showOptionManager);
+                }}
+                className="p-1 text-gray-500 hover:text-purple-600 hover:bg-purple-50 dark:hover:bg-purple-900/20 rounded"
+                title="옵션 관리"
+              >
+                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" />
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                </svg>
+              </button>
+            </div>
+
+            {/* Option Manager Popup */}
+            {showOptionManager && (
+              <div className="p-3 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg shadow-lg">
+                <div className="text-xs font-medium text-gray-500 dark:text-gray-400 mb-2">옵션 관리</div>
+
+                {/* Existing options */}
+                <div className="space-y-1 mb-2">
+                  {(column.options || []).map((opt) => (
+                    <div key={opt} className="flex items-center justify-between px-2 py-1 bg-gray-50 dark:bg-gray-700 rounded">
+                      <span className="text-sm text-gray-700 dark:text-gray-300">{opt}</span>
+                      <button
+                        onClick={() => handleRemoveOption(opt)}
+                        className="p-0.5 text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 rounded"
+                      >
+                        <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                        </svg>
+                      </button>
+                    </div>
+                  ))}
+                </div>
+
+                {/* Add new option */}
+                <div className="flex items-center gap-2">
+                  <input
+                    ref={optionInputRef}
+                    type="text"
+                    value={newOption}
+                    onChange={(e) => setNewOption(e.target.value)}
+                    onKeyDown={(e) => {
+                      if (e.key === 'Enter') {
+                        e.preventDefault();
+                        handleAddOption();
+                      }
+                    }}
+                    placeholder="새 옵션"
+                    className="flex-1 px-2 py-1 text-sm border border-gray-300 dark:border-gray-600 rounded bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:outline-none focus:ring-1 focus:ring-purple-500"
+                  />
+                  <button
+                    onClick={handleAddOption}
+                    disabled={!newOption.trim()}
+                    className="px-2 py-1 text-xs bg-purple-500 text-white rounded hover:bg-purple-600 disabled:opacity-50"
+                  >
+                    추가
+                  </button>
+                </div>
+              </div>
+            )}
+          </div>
         );
 
       case 'number':
@@ -444,12 +691,32 @@ function PropertyRow({
                 + 파일 추가
               </button>
               <button
+                onClick={() => setShowDriveBrowser(true)}
+                className="text-sm text-blue-600 dark:text-blue-400 hover:underline flex items-center gap-1"
+              >
+                <svg className="w-4 h-4" viewBox="0 0 87.3 78" fill="currentColor">
+                  <path d="M6.6 66.85l28.4-49.2 14.1 24.45-28.4 49.2z" />
+                  <path d="M57.1 42.1l-14.1-24.45 28.4-49.2L85.5 66.85z" />
+                  <path d="M0 78l14.1-24.45h56.8L56.8 78z" />
+                </svg>
+                Drive에서 가져오기
+              </button>
+              <button
                 onClick={() => onSave(editValue)}
                 className="text-sm text-green-600 dark:text-green-400 hover:underline"
               >
                 저장
               </button>
             </div>
+
+            {/* Google Drive File Browser */}
+            <GoogleDriveFileBrowser
+              isOpen={showDriveBrowser}
+              onClose={() => setShowDriveBrowser(false)}
+              onSelect={handleDriveSelect}
+              driveType="sikk"
+              multiple={true}
+            />
           </div>
         );
 
