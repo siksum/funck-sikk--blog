@@ -4,6 +4,45 @@ import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import Image from 'next/image';
 
+interface AboutData {
+  profile: {
+    name: string;
+    title: string;
+    affiliation: string;
+    location: string;
+    github: string;
+    email: string;
+    telegram: string;
+  };
+  bio: {
+    quote: string;
+    description: string;
+  };
+  researchInterests: string[];
+  inProgress: string[];
+  timeline: {
+    education: Array<{ year: string; title: string; subtitle: string; org: string; detail: string }>;
+    work: Array<{ year: string; title: string; subtitle: string; org: string; detail: string }>;
+    research: Array<{ year: string; title: string; subtitle: string; org: string; detail: string }>;
+  };
+  publications: {
+    journals: Array<{ authors: string; title: string; venue: string; badge: string; featured?: boolean; korean?: string }>;
+    international: Array<{ authors: string; title: string; venue: string }>;
+    domestic: Array<{ authors: string; title: string; venue: string; korean?: string; award?: string }>;
+  };
+  awards: Array<{ title: string; org: string; year: string; highlight?: boolean; korean?: string }>;
+  certificates: Array<{ title: string; org: string; date: string }>;
+  patents: Array<{ title: string; code: string; date: string; korean: string }>;
+  activities: {
+    club: { name: string; period: string; description: string; roles: string[] };
+    external: Array<{ period: string; title: string; org: string; role?: string; desc: string }>;
+    ctf: Array<{ event: string; team: string; rank: string; year: string }>;
+  };
+  press: Array<{ title: string; date: string; source: string; url: string; image: string }>;
+  videos: Array<{ title: string; url: string }>;
+  lastUpdated: string;
+}
+
 export default function AboutPage() {
   const [expandedSections, setExpandedSections] = useState({
     research: true,
@@ -17,14 +56,34 @@ export default function AboutPage() {
   });
   const [activeTab, setActiveTab] = useState<'education' | 'work' | 'research'>('education');
   const [activePubTab, setActivePubTab] = useState<'journals' | 'international' | 'domestic'>('journals');
-  const [lastUpdated, setLastUpdated] = useState('');
+  const [data, setData] = useState<AboutData | null>(null);
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     fetch('/api/admin/about')
       .then(res => res.json())
-      .then(data => setLastUpdated(data.lastUpdated || ''))
-      .catch(() => {});
+      .then(fetchedData => {
+        setData(fetchedData);
+        setLoading(false);
+      })
+      .catch(() => setLoading(false));
   }, []);
+
+  if (loading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-violet-500"></div>
+      </div>
+    );
+  }
+
+  if (!data) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <p className="text-gray-500">데이터를 불러올 수 없습니다.</p>
+      </div>
+    );
+  }
 
   // Collapsible section header component
   const SectionHeader = ({
@@ -111,16 +170,16 @@ export default function AboutPage() {
             </motion.div>
 
             <motion.div className="text-center md:text-left flex-1" variants={fadeInUp}>
-              <h1 className="text-4xl font-bold mb-2" style={{ color: 'var(--foreground)' }}>Namryeong Kim</h1>
-              <p className="text-xl text-accent-violet font-medium mb-2">Security Researcher</p>
+              <h1 className="text-4xl font-bold mb-2" style={{ color: 'var(--foreground)' }}>{data.profile.name}</h1>
+              <p className="text-xl text-accent-violet font-medium mb-2">{data.profile.title}</p>
               <p className="mb-4" style={{ color: 'var(--foreground)' }}>
-                M.S. Candidate in Convergence Security Engineering<br />
-                Sungshin Women&apos;s University, Prime #603
+                {data.profile.affiliation}<br />
+                {data.profile.location}
               </p>
 
               <div className="flex flex-wrap justify-start gap-3">
                 <motion.a
-                  href="https://github.com/siksum"
+                  href={`https://github.com/${data.profile.github}`}
                   target="_blank"
                   rel="noopener noreferrer"
                   className="inline-flex items-center gap-2 px-4 py-2 bg-white dark:bg-gray-800 rounded-lg text-gray-700 dark:text-gray-300 hover:bg-violet-50 dark:hover:bg-violet-900/30 border border-violet-200 dark:border-violet-800 transition-all duration-200 text-sm shadow-sm"
@@ -132,7 +191,7 @@ export default function AboutPage() {
                   GitHub
                 </motion.a>
                 <motion.a
-                  href="mailto:namyoung0718@gmail.com"
+                  href={`mailto:${data.profile.email}`}
                   className="inline-flex items-center gap-2 px-4 py-2 bg-white dark:bg-gray-800 rounded-lg text-gray-700 dark:text-gray-300 hover:bg-violet-50 dark:hover:bg-violet-900/30 border border-violet-200 dark:border-violet-800 transition-all duration-200 text-sm shadow-sm"
                   whileHover={{ y: -2 }}
                 >
@@ -142,7 +201,7 @@ export default function AboutPage() {
                   Email
                 </motion.a>
                 <motion.a
-                  href="https://t.me/siksum"
+                  href={`https://t.me/${data.profile.telegram}`}
                   target="_blank"
                   rel="noopener noreferrer"
                   className="inline-flex items-center gap-2 px-4 py-2 bg-white dark:bg-gray-800 rounded-lg text-gray-700 dark:text-gray-300 hover:bg-violet-50 dark:hover:bg-violet-900/30 border border-violet-200 dark:border-violet-800 transition-all duration-200 text-sm shadow-sm"
@@ -169,13 +228,10 @@ export default function AboutPage() {
         >
           <div className="p-6 rounded-2xl border border-violet-200 dark:border-violet-500/30" style={{ background: 'var(--card-bg)' }}>
             <p className="text-lg text-violet-700 dark:text-violet-200 font-medium italic text-center mb-4">
-              &ldquo;올바른 가치관과 신념으로 나눌 줄 아는, 지혜로운 사람이 되고 싶습니다&rdquo;
+              &ldquo;{data.bio.quote}&rdquo;
             </p>
             <p className="leading-relaxed text-center" style={{ color: 'var(--foreground)' }}>
-              맡은 일에 대해 책임감 있으며 다양한 방법을 시도해보는 것을 좋아합니다.
-              알고 있는 것을 함께 나누기 위해 준비하고 실제로 나누는 과정에서 성취감을 느낍니다.
-              &lsquo;지식은 나눌수록 커진다.&rsquo;라는 말이 있듯, 누구나 쉽게 보안을 접하고 관심 가질 수 있도록
-              경험과 지식을 공유하는 사람이 되고 싶습니다.
+              {data.bio.description}
             </p>
           </div>
         </motion.section>
@@ -201,7 +257,7 @@ export default function AboutPage() {
             transition={{ duration: 0.3 }}
           >
           <div className="flex flex-wrap gap-3 mb-8">
-            {['Web3 Security', 'Automated Vulnerability Detection', 'AI Security'].map((interest, index) => (
+            {data.researchInterests.map((interest, index) => (
               <motion.span
                 key={interest}
                 className="px-5 py-2.5 about-interest-tag text-violet-400 dark:text-violet-200 rounded-full font-medium border border-violet-200 dark:border-violet-400"
@@ -221,11 +277,7 @@ export default function AboutPage() {
             In Progress
           </h3>
           <div className="space-y-3">
-            {[
-              'DeFi vulnerability detection techniques',
-              'LLM prompt injection detection and prevention',
-              'Decentralized ID threat modeling and security framework',
-            ].map((item, index) => (
+            {data.inProgress.map((item, index) => (
               <motion.div
                 key={index}
                 className="p-3 about-progress-item rounded-lg border border-lime-300 dark:border-lime-400 text-lime-600 dark:text-lime-300"
@@ -266,9 +318,9 @@ export default function AboutPage() {
           {/* Tabs */}
           <div className="flex gap-2 mb-6 p-1 about-tab-bar rounded-xl border border-gray-200 dark:border-gray-600">
             {[
-              { id: 'education' as const, label: 'Education', icon: '🎓', count: 2 },
-              { id: 'work' as const, label: 'Work', icon: '💼', count: 3 },
-              { id: 'research' as const, label: 'Research', icon: '🔬', count: 3 },
+              { id: 'education' as const, label: 'Education', icon: '🎓', count: data.timeline.education.length },
+              { id: 'work' as const, label: 'Work', icon: '💼', count: data.timeline.work.length },
+              { id: 'research' as const, label: 'Research', icon: '🔬', count: data.timeline.research.length },
             ].map((tab) => (
               <button
                 key={tab.id}
@@ -307,17 +359,7 @@ export default function AboutPage() {
 
               <div className="space-y-4">
                 {(() => {
-                  const allItems = [
-                    { year: '2024.09 - Current', title: 'M.S. Candidate', subtitle: 'Convergence Security Engineering', org: 'Sungshin Women\'s University', detail: 'Advisor: Ilgu Lee | GPA: 4.5/4.5', type: 'education' as const },
-                    { year: '2019.03 - 2023.02', title: 'B.S.', subtitle: 'Convergence Security Engineering', org: 'Sungshin Women\'s University', detail: 'GPA: 4.33/4.5', type: 'education' as const },
-                    { year: '2025.03 - 08', title: 'Research Assistant (RA)', subtitle: 'CSE Lab', org: 'Sungshin Women\'s University', detail: 'Advisor: Ilgu Lee', type: 'work' as const },
-                    { year: '2024.03 - 06', title: 'Community Manager', subtitle: 'Protocol Camp 6th', org: 'Hanwha Life (Dreamplus)', detail: '', type: 'work' as const },
-                    { year: '2023.07 - 08', title: 'Community Manager', subtitle: 'SWF Accelerator', org: 'Hanwha Life (Dreamplus)', detail: '', type: 'work' as const },
-                    { year: '2022.03 - 2023.01', title: 'Undergraduate Internship', subtitle: 'Pwnlab', org: 'Sungshin Women\'s University', detail: 'Advisor: Daehee Jang', type: 'research' as const },
-                    { year: '2022.01 - 02', title: 'Undergraduate Internship', subtitle: 'NSSec', org: 'Sungshin Women\'s University', detail: 'Advisor: Sungmin Kim', type: 'research' as const },
-                    { year: '2021.03 - 12', title: 'Undergraduate Internship', subtitle: 'CSE Lab', org: 'Sungshin Women\'s University', detail: 'Advisor: Ilgu Lee', type: 'research' as const },
-                  ];
-                  const filteredItems = allItems.filter(item => item.type === activeTab);
+                  const filteredItems = data.timeline[activeTab];
 
                   return filteredItems.map((item, index) => (
                     <motion.div
@@ -394,9 +436,9 @@ export default function AboutPage() {
           {/* Tabs */}
           <div className="flex gap-2 mb-6 p-1 about-tab-bar rounded-xl border border-gray-200 dark:border-gray-600">
             {[
-              { id: 'journals' as const, label: 'Journals', icon: '📚', count: 4 },
-              { id: 'international' as const, label: 'International', icon: '🌍', count: 3 },
-              { id: 'domestic' as const, label: 'Domestic', icon: '🇰🇷', count: 11 },
+              { id: 'journals' as const, label: 'Journals', icon: '📚', count: data.publications.journals.length },
+              { id: 'international' as const, label: 'International', icon: '🌍', count: data.publications.international.length },
+              { id: 'domestic' as const, label: 'Domestic', icon: '🇰🇷', count: data.publications.domestic.length },
             ].map((tab) => (
               <button
                 key={tab.id}
@@ -435,57 +477,6 @@ export default function AboutPage() {
 
               <div className="space-y-4">
               {(() => {
-                const journals = [
-                  {
-                    authors: 'Eunyoung Lee*, Namryeong Kim* (co-first), Chaerim Han, Nayeon Shin, Ilgu Lee',
-                    title: 'rPBFT: Reliable Practical Byzantine Fault Tolerance Mechanism for Faulty Distributed Networks',
-                    venue: 'IEEE Transactions on Big Data, 2025',
-                    badge: 'SCIE, IF5.7, Q1, JCR Top 11.9%',
-                    featured: true
-                  },
-                  {
-                    authors: 'Hyobeen Cho, Namryeong Kim, Ilgu Lee',
-                    title: 'Design and Evaluation of an Intelligent Static Analysis Framework for Detecting Access-Control Vulnerabilities in DeFi Smart Contracts',
-                    venue: 'Journal of the Korea Institute of Information Security & Cryptology, Vol. 35, No. 6, Dec 2025',
-                    badge: 'KCI',
-                    korean: 'DeFi 스마트 컨트랙트 접근 제어 취약점 탐지를 위한 지능형 정적 분석 프레임워크의 설계 및 평가'
-                  },
-                  {
-                    authors: 'Namryeong Kim, Dongju Ryu, Ilgu Lee',
-                    title: 'Code Similarity-Based Framework for Smart Contract Attack Surface Analysis',
-                    venue: 'Journal of Korea Information Assurance Society, Vol. 24, No. 5, 2024',
-                    badge: 'KCI',
-                    korean: '코드 유사성 비교 기반의 스마트 컨트랙트 공격 표면 분석 프레임워크'
-                  },
-                  {
-                    authors: 'Eunyoung Lee, Namryeong Kim, Chaerim Han, Ilgu Lee',
-                    title: 'Evaluation and Comparative Analysis of Scalability and Fault Tolerance for Practical Byzantine Fault Tolerant based Blockchain',
-                    venue: 'Journal of the Korea Institute of Information and Communication Engineering, Vol. 26, No. 2, 2022',
-                    badge: 'KCI',
-                    korean: '프랙티컬 비잔틴 장애 허용 기반 블록체인의 확장성과 내결함성 평가 및 비교분석'
-                  },
-                ];
-
-                const international = [
-                  { authors: 'Hyobeen Cho, Namryeong Kim, Sunwoo Jeong, Ilgu Lee', title: 'Enhancing DeFi Smart Contract Security via LangChain and Retrieval-Augmented Generation', venue: 'World Conference on Information Security Applications (WISA) 2025, Jeju, Aug. 21, 2025' },
-                  { authors: 'Namryeong Kim, Ilgu Lee', title: 'A Fault-Tolerant Consensus Mechanism for Scalable and Reliable Blockchain Systems', venue: 'IEEE International Conference on Consumer Technology - Pacific 2025, Matsue Shimane, Japan, Mar. 31, 2025' },
-                  { authors: 'Namryeong Kim, Ilgu Lee', title: 'Reliable Practical Byzantine Fault Tolerance Mechanism for High Throughput and Low Latency Blockchain Consensus', venue: 'World Conference on Information Security Applications (WISA) 2024, Aug. 22, 2024 (Poster)' },
-                ];
-
-                const domestic = [
-                  { authors: 'Namryeong Kim, Sunwoo Jeong, Hyobeen Cho, Eunseo Youk, Ilgu Lee', title: 'A Retrieval-Augmented Chain-of-Thought Framework for Vulnerability Detection in DeFi Smart Contracts', venue: 'Annual Conference of KIPS (ACK) 2025, Nov. 7, 2025', korean: 'Retrieval-Augmented Chain-of-Thought 프레임워크를 활용한 DeFi 스마트 컨트랙트 취약점 탐지' },
-                  { authors: 'Hyobeen Cho, Namryeong Kim, Sunwoo Jeong, Eunseo Youk, Ilgu Lee', title: 'A Static Analysis Approaches for Detecting Access Control Vulnerabilities in DeFi Smart Contracts', venue: 'Annual Conference of KIPS (ACK) 2025, Nov. 7, 2025', korean: 'DeFi 스마트 컨트랙트 접근 제어 취약점 탐지를 위한 정적 분석 기법' },
-                  { authors: 'Sunwoo Jeong, Namryeong Kim, Ilgu Lee', title: 'Attention Pattern Analysis for Prompt Injection Detection', venue: 'Annual Conference of KIPS (ACK) 2025, Nov. 7, 2025', korean: '어텐션 패턴 분석 기반 프롬프트 인젝션 탐지 시스템', award: '한국정보기술학술단체총연합회 회장상' },
-                  { authors: 'Sunwoo Jeong, Namryeong Kim, Hyobeen Cho, Eunseo Youk, Ilgu Lee', title: 'Watermark-based Prompt Injection Threat Analysis', venue: 'Annual Conference of KIPS (ACK) 2025, Nov. 7, 2025', korean: '워터마크 기반 프롬프트 인젝션 위협 분석', award: '동상' },
-                  { authors: 'Eunseo Youk, Namryeong Kim, Hyobeen Cho, Sunwoo Jeong, Ilgu Lee', title: 'A Static Analysis Framework for Detecting Smart Contract Business Logic Vulnerabilities', venue: 'Annual Conference of KIPS (ACK) 2025, Nov. 7, 2025', korean: '스마트 컨트랙트 비즈니스 로직 취약점 탐지를 위한 정적 분석 프레임워크', award: '국가보안기술연구소 소장상' },
-                  { authors: 'Hyobeen Cho, Namryeong Kim, Ilgu Lee', title: 'Network-Coding Based Multi-Link Transmission for Inter-Satellite Communications', venue: 'Annual Symposium of KIPS (ASK) 2025, May 31, 2025', korean: '위성 간 통신을 위한 네트워크 코딩 기반 다중 링크 전송' },
-                  { authors: 'Namryeong Kim, Dongju Ryu, Ilgu Lee', title: 'Method for detecting attack surface in smart contract using code similarity techniques', venue: 'Korea Convergence Security Association 2024 Autumn Conference, Nov. 8, 2024', korean: '코드 유사도 기법을 활용한 스마트 컨트랙트 공격 표면 탐지 방법', award: '최우수논문상' },
-                  { authors: 'Namryeong Kim, Nara Im, Daehee Jang', title: 'A Study on the analysis of security threats and measures in Metaverse', venue: 'Korea Convergence Security Association 2022 Summer Conference, Jul. 24, 2022', korean: '메타버스 내 보안 위협 분석 및 대책에 관한 연구', award: '장려상' },
-                  { authors: 'Eunyeong Ahn, Namryeong Kim, Nara Lim, Jisun Kim, Kyungjin Kim, Daehee Jang', title: 'Analysis of Vulnerabilities and Security Measures in OAuth 2.0', venue: 'Conference on Information Security and Cryptography-Summer 2022 (CISC-S\'22), KIISC, 2022', korean: 'OAuth 2.0의 보안 취약점 분석 및 보안 대책 연구' },
-                  { authors: 'Namryeong Kim, Jiwon Ock (co-first), Seongmin Kim', title: 'Secure de-identification for data privacy with SGX-based Artificial intelligence learning framework', venue: 'The 24th Korea Conference on Software Engineering (KCSE 2022), Jan. 2022', korean: '개인정보보호를 위한 SGX기반 학습데이터 비식별화 인공지능 학습 프레임워크' },
-                  { authors: 'Eunyoung Lee, Namryeong Kim, Chaerim Han, Ilgu Lee', title: 'Evaluation Framework for Practical Byzantine Fault Tolerant based Consensus Algorithms', venue: 'The 50th Korea Institute of Information and Communication Engineering Conference (KIICE), Oct. 28, 2021', korean: '프랙티컬 비잔틴 장애 허용 기반의 합의 알고리즘의 평가 프레임워크', award: '우수논문상' },
-                ];
-
                 const getDotColor = () => {
                   if (activePubTab === 'journals') return 'bg-violet-500';
                   if (activePubTab === 'international') return 'bg-blue-500';
@@ -493,7 +484,7 @@ export default function AboutPage() {
                 };
 
                 if (activePubTab === 'journals') {
-                  return journals.map((pub, index) => (
+                  return data.publications.journals.map((pub, index) => (
                     <motion.div
                       key={index}
                       className="relative pl-8"
@@ -523,7 +514,7 @@ export default function AboutPage() {
                 }
 
                 if (activePubTab === 'international') {
-                  return international.map((pub, index) => (
+                  return data.publications.international.map((pub, index) => (
                     <motion.div
                       key={index}
                       className="relative pl-8"
@@ -548,7 +539,7 @@ export default function AboutPage() {
                   ));
                 }
 
-                return domestic.map((pub, index) => (
+                return data.publications.domestic.map((pub, index) => (
                   <motion.div
                     key={index}
                     className="relative pl-8"
@@ -603,18 +594,7 @@ export default function AboutPage() {
             transition={{ duration: 0.3 }}
           >
           <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
-            {[
-              { title: 'ICT Convergence Security Crew Best Crew Award', org: 'KISIA', year: '2025', highlight: true, korean: 'ICT 융합보안크루 최우수 크루상' },
-              { title: 'National Security Technology Research Institute Director Award', org: 'ACK 2025', year: '2025', highlight: true, korean: '국가보안기술연구소 소장상' },
-              { title: 'Korea Information Technology Association President\'s Award', org: 'ACK 2025', year: '2025', highlight: true, korean: '한국정보기술학술단체총연합회 회장상' },
-              { title: 'The Third Prize', org: 'ACK 2025', year: '2025', korean: '동상' },
-              { title: 'Best Paper Award', org: 'KCSA 2024 Autumn Conference', year: '2024', korean: '최우수논문상' },
-              { title: 'First Prize, Convergence Security Software Competition', org: 'Sungshin Women\'s University', year: '2024', korean: '융합보안소프트웨어경진대회 대상' },
-              { title: 'First Prize, Protocol Camp 5th', org: 'Dreamplus X HASHED', year: '2024', korean: '프로토콜캠프 5기 대상' },
-              { title: 'First Prize, Sungshin CSE x I.Sly() CTF', org: '', year: '2023', korean: '성신여대 융합보안공학과 x I.Sly() CTF 1위' },
-              { title: 'The Third Prize', org: 'KCSA 2022 Summer Conference', year: '2022', korean: '장려상' },
-              { title: 'Excellent Paper Award', org: 'KIICE 50th Conference', year: '2021', korean: '우수논문상' },
-            ].map((award, index) => (
+            {data.awards.map((award, index) => (
               <motion.div
                 key={index}
                 className={`p-4 rounded-xl border ${award.highlight ? 'bg-violet-50 dark:bg-violet-500/10 border-violet-300 dark:border-violet-500/30' : 'border-gray-200 dark:border-gray-700/50'}`}
@@ -659,14 +639,19 @@ export default function AboutPage() {
             exit={{ height: 0, opacity: 0 }}
             transition={{ duration: 0.3 }}
           >
-          <motion.div
-            className="p-4 rounded-xl border border-gray-200 dark:border-gray-700/50 inline-block"
-            style={{ background: 'var(--card-bg)' }}
-            whileHover={{ scale: 1.02 }}
-          >
-            <p className="font-medium card-title">Engineer Information Processing (정보처리기사)</p>
-            <p className="text-sm text-gray-500 dark:text-gray-400">Human Resources Development Service of Korea | 2024.09</p>
-          </motion.div>
+          <div className="flex flex-wrap gap-4">
+            {data.certificates.map((cert, index) => (
+              <motion.div
+                key={index}
+                className="p-4 rounded-xl border border-gray-200 dark:border-gray-700/50"
+                style={{ background: 'var(--card-bg)' }}
+                whileHover={{ scale: 1.02 }}
+              >
+                <p className="font-medium card-title">{cert.title}</p>
+                <p className="text-sm text-gray-500 dark:text-gray-400">{cert.org} | {cert.date}</p>
+              </motion.div>
+            ))}
+          </div>
           </motion.div>
           )}
           </AnimatePresence>
@@ -693,10 +678,7 @@ export default function AboutPage() {
             transition={{ duration: 0.3 }}
           >
           <div className="grid md:grid-cols-2 gap-4">
-            {[
-              { title: 'Solidity compiler version automatic detection and installation management program', code: 'C-2025-031742', date: 'Jul. 10, 2025', korean: '솔리디티 컴파일러 버전 자동 탐지 및 설치 관리 프로그램' },
-              { title: 'Global lock-based smart contract security module', code: 'C-2025-031743', date: 'Jul. 10, 2025', korean: '글로벌 락 기반 스마트 컨트랙트 보안 모듈' },
-            ].map((patent, index) => (
+            {data.patents.map((patent, index) => (
               <motion.div
                 key={index}
                 className="p-4 rounded-xl border border-gray-200 dark:border-gray-700/50"
@@ -744,10 +726,10 @@ export default function AboutPage() {
           <div className="space-y-6">
             {/* Club */}
             <div className="p-5 rounded-xl border border-violet-200 dark:border-violet-500/30" style={{ background: 'var(--card-bg)' }}>
-              <h3 className="font-semibold card-title mb-3">HASH (Hacking Club) - Sungshin Women&apos;s University</h3>
-              <p className="text-sm text-gray-600 dark:text-gray-400 mb-3">2021.01 - 2022.12 | 성신여대 융합보안공학과 해킹동아리</p>
+              <h3 className="font-semibold card-title mb-3">{data.activities.club.name}</h3>
+              <p className="text-sm text-gray-600 dark:text-gray-400 mb-3">{data.activities.club.period} | {data.activities.club.description}</p>
               <div className="flex flex-wrap gap-2">
-                {['Founding Member', 'Vice President (2021)', 'President (2022)'].map((role, i) => (
+                {data.activities.club.roles.map((role, i) => (
                   <motion.span
                     key={role}
                     className="px-3 py-1 bg-violet-100 dark:bg-transparent text-violet-700 dark:text-violet-200 rounded-full text-sm border border-violet-200 dark:border-violet-400"
@@ -765,11 +747,7 @@ export default function AboutPage() {
             {/* External Activities */}
             <h3 className="text-lg font-semibold section-subtitle">External Activities</h3>
             <div className="grid md:grid-cols-2 gap-4">
-              {[
-                { period: '2025.05 - 2025.12', title: 'Convergence Security Crew', org: 'KISIA', role: 'AI Security Team Leader (크루장)', desc: 'DeFi vulnerability detection with LLM & prompt injection prevention' },
-                { period: '2023.09 - 2023.12', title: 'Protocol Camp 5th', org: 'Dreamplus X Hashed', role: 'Team Leader (AntiBug)', desc: 'VSCode security assistant for smart contract development' },
-                { period: '2023.03 - 2023.06', title: 'DreamPlus Academy 2nd', org: 'Dreamplus X Theori', desc: 'Blockchain security training & static analysis detector development' },
-              ].map((activity, index) => (
+              {data.activities.external.map((activity, index) => (
                 <motion.div
                   key={index}
                   className="p-4 rounded-xl border border-gray-200 dark:border-gray-700/50"
@@ -792,10 +770,7 @@ export default function AboutPage() {
             {/* CTF */}
             <h3 className="text-lg font-semibold section-subtitle">CTF</h3>
             <div className="flex flex-wrap gap-3">
-              {[
-                { event: 'Sungshin CSE x I.Sly() CTF', team: 'Team 역은카와 아이들', rank: '1st', year: '2023' },
-                { event: 'Power of XX', team: 'Team HAC', rank: '8th', year: '2021' },
-              ].map((ctf, index) => (
+              {data.activities.ctf.map((ctf, index) => (
                 <motion.div
                   key={index}
                   className="px-4 py-2 rounded-lg border border-gray-200 dark:border-gray-700/50"
@@ -839,12 +814,7 @@ export default function AboutPage() {
             transition={{ duration: 0.3 }}
           >
           <div className="grid md:grid-cols-2 gap-4">
-            {[
-              { title: '해시드, 실전 블록체인 프로그램 \'프로토콜 캠프\' 5기 성료', date: '2023.12.15', source: '한국경제', url: 'https://www.hankyung.com/article/202312158041O', image: 'https://img.hankyung.com/photo/202312/01.35339121.1.jpg' },
-              { title: '연구팀, 한국융합보안학회 추계학술대회서 최우수·우수논문상 수상', date: '2024.11.08', source: '성신여대', url: 'https://www.sungshin.ac.kr/main_kor/10941/subview.do?enc=Zm5jdDF8QEB8JTJGYmJzJTJGbWFpbl9rb3IlMkYzMTkyJTJGMTM3NTE3JTJGYXJ0Y2xWaWV3LmRvJTNG', image: 'http://www.sungshin.ac.kr/editorUpload/images/000509/001_3.jpg' },
-              { title: '성신여대, 한국정보처리학회 \'ACK2025\'에서 수상', date: '2025.11.10', source: '대학저널', url: 'https://m.dhnews.co.kr/news/view/1065600833585781', image: 'https://dhnews.co.kr/news/data/20251110/p1065600833585781_861_thum.jpg' },
-              { title: '성신여대, 4개 대학 연합 연구팀, ICT 융합보안크루 \'최우수\' 크루 선정', date: '2025.12.09', source: '중앙일보', url: 'https://www.joongang.co.kr/article/25395468', image: 'https://pds.joongang.co.kr/news/component/htmlphoto_mmdata/202601/06/50a295e4-0fc0-43b6-a8c1-e0ffe1cb37ac.jpg' },
-            ].map((press, index) => (
+            {data.press.map((press, index) => (
               <motion.a
                 key={index}
                 href={press.url}
@@ -893,54 +863,38 @@ export default function AboutPage() {
           </div>
 
           {/* Video Embeds */}
-          <h3 className="text-lg font-semibold section-subtitle mt-8 mb-4">Videos</h3>
-          <div className="grid md:grid-cols-2 gap-4">
-            <motion.div
-              className="rounded-xl overflow-hidden border border-gray-200 dark:border-gray-700/50"
-              initial={{ opacity: 0, y: 10 }}
-              whileInView={{ opacity: 1, y: 0 }}
-              viewport={{ }}
-              transition={{ delay: 0.1 }}
-            >
-              <div className="aspect-video">
-                <iframe
-                  width="100%"
-                  height="100%"
-                  src="https://www.youtube.com/embed/CvMrwqBIc_Y"
-                  title="Dreamplus Academy 2nd - 2023.03~2023.06"
-                  allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-                  allowFullScreen
-                  className="border-0"
-                />
+          {data.videos && data.videos.length > 0 && (
+            <>
+              <h3 className="text-lg font-semibold section-subtitle mt-8 mb-4">Videos</h3>
+              <div className="grid md:grid-cols-2 gap-4">
+                {data.videos.map((video, index) => (
+                  <motion.div
+                    key={index}
+                    className="rounded-xl overflow-hidden border border-gray-200 dark:border-gray-700/50"
+                    initial={{ opacity: 0, y: 10 }}
+                    whileInView={{ opacity: 1, y: 0 }}
+                    viewport={{ }}
+                    transition={{ delay: index * 0.1 }}
+                  >
+                    <div className="aspect-video">
+                      <iframe
+                        width="100%"
+                        height="100%"
+                        src={video.url}
+                        title={video.title}
+                        allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                        allowFullScreen
+                        className="border-0"
+                      />
+                    </div>
+                    <div className="p-3" style={{ background: 'var(--card-bg)' }}>
+                      <p className="text-sm card-title">{video.title}</p>
+                    </div>
+                  </motion.div>
+                ))}
               </div>
-              <div className="p-3" style={{ background: 'var(--card-bg)' }}>
-                <p className="text-sm card-title">Dreamplus Academy 2nd (2023.03~2023.06)</p>
-              </div>
-            </motion.div>
-
-            <motion.div
-              className="rounded-xl overflow-hidden border border-gray-200 dark:border-gray-700/50"
-              initial={{ opacity: 0, y: 10 }}
-              whileInView={{ opacity: 1, y: 0 }}
-              viewport={{ }}
-              transition={{ delay: 0.2 }}
-            >
-              <div className="aspect-video">
-                <iframe
-                  width="100%"
-                  height="100%"
-                  src="https://www.youtube.com/embed/683ser8W2GM"
-                  title="Protocol Camp 5th Final Demoday - 2023.09~2023.12"
-                  allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-                  allowFullScreen
-                  className="border-0"
-                />
-              </div>
-              <div className="p-3" style={{ background: 'var(--card-bg)' }}>
-                <p className="text-sm card-title">Protocol Camp 5th Final Demoday (2023.09~2023.12)</p>
-              </div>
-            </motion.div>
-          </div>
+            </>
+          )}
           </motion.div>
           )}
           </AnimatePresence>
@@ -948,7 +902,7 @@ export default function AboutPage() {
 
         {/* Footer */}
         <div className="text-center text-sm text-gray-400 dark:text-gray-500 pt-8 border-t border-gray-200 dark:border-gray-800">
-          Last Updated: {lastUpdated || '...'}
+          Last Updated: {data.lastUpdated || '...'}
         </div>
       </div>
     </div>
