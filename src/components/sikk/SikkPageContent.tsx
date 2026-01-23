@@ -44,14 +44,38 @@ export default function SikkPageContent({
   const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
 
   const groupedCategories = useMemo(() => {
+    // Helper function to find a category by name in the entire tree (including children)
+    const findCategoryByName = (name: string): CategoryWithTags | null => {
+      // First check root categories with tags
+      const rootMatch = rootCategoriesWithTags.find((cat) => cat.name === name);
+      if (rootMatch) {
+        return rootMatch;
+      }
+      // Then check children of root categories
+      for (const rootCat of categories) {
+        if (rootCat.children) {
+          const childMatch = rootCat.children.find((child) => child.name === name);
+          if (childMatch) {
+            return {
+              name: childMatch.name,
+              count: childMatch.count,
+              tags: [],
+              slugPath: childMatch.slugPath,
+            };
+          }
+        }
+      }
+      return null;
+    };
+
     // If we have DB sections with categories assigned, use them
     if (sections && sections.length > 0) {
       return sections.map((section) => {
         const categoryNames = section.categories.map((c) => c.name);
         // Build section categories - include all configured categories even if they have no posts
         const sectionCategories: CategoryWithTags[] = section.categories.map((dbCat) => {
-          // Find matching category from posts
-          const existingCat = rootCategoriesWithTags.find((cat) => cat.name === dbCat.name);
+          // Find matching category from posts (including children)
+          const existingCat = findCategoryByName(dbCat.name);
           if (existingCat) {
             return existingCat;
           }
