@@ -348,16 +348,40 @@ export async function getAdjacentSikkPostsAsync(currentSlug: string): Promise<{ 
   };
 }
 
+// Helper function for comparing slug segments (used in post filtering and category lookup)
+function normalizeSlugSegmentForComparison(segment: string): string {
+  try {
+    const decoded = decodeURIComponent(segment);
+    return decoded.normalize('NFC').toLowerCase();
+  } catch {
+    return segment.normalize('NFC').toLowerCase();
+  }
+}
+
 // Category helper functions
 export async function getSikkCategoryBySlugPathAsync(slugPath: string[]): Promise<CategoryTreeNode | null> {
   const tree = await buildSikkCategoryTreeAsync();
   let current = tree;
 
   for (const slug of slugPath) {
-    if (!current.children[slug]) {
-      return null;
+    const normalizedSlug = normalizeSlugSegmentForComparison(slug);
+
+    // Try exact match first, then normalized match
+    if (current.children[slug]) {
+      current = current.children[slug];
+    } else if (current.children[normalizedSlug]) {
+      current = current.children[normalizedSlug];
+    } else {
+      // Try case-insensitive match
+      const childKey = Object.keys(current.children).find(
+        (key) => normalizeSlugSegmentForComparison(key) === normalizedSlug
+      );
+      if (childKey) {
+        current = current.children[childKey];
+      } else {
+        return null;
+      }
     }
-    current = current.children[slug];
   }
 
   return current;
@@ -403,13 +427,23 @@ export async function getSikkPostsByCategoryPathAsync(
 ): Promise<Post[]> {
   const posts = await getAllSikkPostsAsync();
 
+  // Normalize the input slugPath for consistent comparison
+  const normalizedSlugPath = slugPath.map((s) => normalizeSlugSegmentForComparison(s));
+
   return posts.filter((post) => {
+    // Normalize the post's categorySlugPath for comparison
+    const normalizedPostSlugPath = post.categorySlugPath.map((s) => normalizeSlugSegmentForComparison(s));
+
     if (includeChildren) {
-      return slugPath.every((slug, index) => post.categorySlugPath[index] === slug);
+      return normalizedSlugPath.every(
+        (slug, index) => normalizedPostSlugPath[index] === slug
+      );
     } else {
       return (
-        post.categorySlugPath.length === slugPath.length &&
-        slugPath.every((slug, index) => post.categorySlugPath[index] === slug)
+        normalizedPostSlugPath.length === normalizedSlugPath.length &&
+        normalizedSlugPath.every(
+          (slug, index) => normalizedPostSlugPath[index] === slug
+        )
       );
     }
   });
@@ -489,10 +523,12 @@ export async function getSikkChildCategoriesWithTagsAsync(slugPath: string[]): P
 
   return childCategories
     .map((cat) => {
-      // Count posts in this category
-      const categoryPosts = posts.filter((post) =>
-        cat.slugPath.every((slug, index) => post.categorySlugPath[index] === slug)
-      );
+      // Count posts in this category (with normalized comparison)
+      const normalizedCatSlugPath = cat.slugPath.map((s) => normalizeSlugSegmentForComparison(s));
+      const categoryPosts = posts.filter((post) => {
+        const normalizedPostSlugPath = post.categorySlugPath.map((s) => normalizeSlugSegmentForComparison(s));
+        return normalizedCatSlugPath.every((slug, index) => normalizedPostSlugPath[index] === slug);
+      });
 
       // Count databases in this category (compare by slugified category path)
       const categoryDatabases = databases.filter((db) => {
