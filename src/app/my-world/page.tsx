@@ -294,6 +294,7 @@ export default function MyWorldDashboard() {
   const [archiveCategory, setArchiveCategory] = useState<string>('all');
   const [archiveStatus, setArchiveStatus] = useState<string>('all');
   const [archiveSortOrder, setArchiveSortOrder] = useState<'desc' | 'asc'>('desc');
+  const [carryingOver, setCarryingOver] = useState(false);
 
   // Update archive dates when period changes
   const updateArchiveDates = (period: 'day' | 'week' | 'month' | 'custom') => {
@@ -613,13 +614,16 @@ export default function MyWorldDashboard() {
     }
   };
 
-  const deleteTodo = async (id: string, category: 'personal' | 'research') => {
+  const deleteTodo = async (id: string, category: 'personal' | 'research', isArchive: boolean = false) => {
     try {
       const res = await fetch(`/api/my-world/todos/${id}`, {
         method: 'DELETE',
       });
 
       if (res.ok) {
+        if (isArchive) {
+          setArchiveTodos(prev => prev.filter(t => t.id !== id));
+        }
         if (category === 'personal') {
           setPersonalTodos(prev => prev.filter(t => t.id !== id));
         } else {
@@ -628,6 +632,38 @@ export default function MyWorldDashboard() {
       }
     } catch (error) {
       console.error('Failed to delete todo:', error);
+    }
+  };
+
+  // 어제 하지 못한 할일을 오늘로 복사
+  const carryOverYesterdayTodos = async () => {
+    if (carryingOver) return;
+
+    setCarryingOver(true);
+    try {
+      const res = await fetch('/api/my-world/todos/carryover', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ targetDate: todoDate }),
+      });
+
+      if (res.ok) {
+        const data = await res.json();
+        if (data.created && data.created.length > 0) {
+          // Refresh todos to show the new ones
+          await fetchTodos(todoDate);
+          alert(data.message);
+        } else {
+          alert(data.message);
+        }
+      } else {
+        alert('할일 복사에 실패했습니다.');
+      }
+    } catch (error) {
+      console.error('Failed to carry over todos:', error);
+      alert('할일 복사에 실패했습니다.');
+    } finally {
+      setCarryingOver(false);
     }
   };
 
@@ -1713,6 +1749,14 @@ export default function MyWorldDashboard() {
               </button>
             )}
             <button
+              onClick={carryOverYesterdayTodos}
+              disabled={carryingOver}
+              className="text-xs px-2 py-1 rounded-lg transition-colors bg-amber-100 dark:bg-amber-900/30 text-amber-600 dark:text-amber-400 hover:bg-amber-200 dark:hover:bg-amber-900/50 disabled:opacity-50 disabled:cursor-not-allowed"
+              title="어제 하지 못한 할일을 오늘로 복사합니다"
+            >
+              {carryingOver ? '복사 중...' : '🔄 어제 할일 가져오기'}
+            </button>
+            <button
               onClick={() => setShowTodoArchive(!showTodoArchive)}
               className={`text-xs px-2 py-1 rounded-lg transition-colors ${
                 showTodoArchive
@@ -1876,6 +1920,15 @@ export default function MyWorldDashboard() {
                                     >
                                       {statusConfig.label}
                                     </button>
+                                    <button
+                                      onClick={() => deleteTodo(todo.id, 'personal', true)}
+                                      className="text-gray-400 hover:text-red-500 transition-colors flex-shrink-0"
+                                      title="삭제"
+                                    >
+                                      <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                                      </svg>
+                                    </button>
                                   </div>
                                 );
                               })}
@@ -1918,6 +1971,15 @@ export default function MyWorldDashboard() {
                                       title="클릭하여 상태 변경"
                                     >
                                       {statusConfig.label}
+                                    </button>
+                                    <button
+                                      onClick={() => deleteTodo(todo.id, 'research', true)}
+                                      className="text-gray-400 hover:text-red-500 transition-colors flex-shrink-0"
+                                      title="삭제"
+                                    >
+                                      <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                                      </svg>
                                     </button>
                                   </div>
                                 );
