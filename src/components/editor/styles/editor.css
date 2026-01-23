@@ -385,3 +385,25 @@
 .dark .tiptap-editor iframe[src*="drive.google.com"] {
   border-color: rgba(236, 72, 153, 0.3);
 }
+
+/* Iframe Container (for TipTap iframe extension) */
+.tiptap-editor .iframe-container {
+  margin: 1rem 0;
+  border-radius: 12px;
+  overflow: hidden;
+  border: 1px solid #e5e7eb;
+}
+
+.dark .tiptap-editor .iframe-container {
+  border-color: rgba(236, 72, 153, 0.3);
+}
+
+.tiptap-editor .iframe-container iframe {
+  display: block;
+  width: 100%;
+  border: none;
+}
+
+.tiptap-editor .iframe-container.ProseMirror-selectednode {
+  outline: 3px solid #8b5cf6;
+}
