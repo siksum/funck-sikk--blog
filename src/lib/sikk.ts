@@ -618,6 +618,24 @@ export async function getSikkSectionsAsync() {
   }
 }
 
+// Helper function to find a SikkCategory by slug/name and parentId
+// Uses Prisma's findFirst which properly handles NULL parentId at database level
+async function findSikkDbCategoryBySlugAndParent(slug: string, parentId: string | null) {
+  // First try to find by slug
+  let category = await prisma.sikkCategory.findFirst({
+    where: { slug, parentId },
+  });
+
+  // If not found by slug, try by name (for URL compatibility)
+  if (!category) {
+    category = await prisma.sikkCategory.findFirst({
+      where: { name: slug, parentId },
+    });
+  }
+
+  return category;
+}
+
 // Get SikkCategory from database by slug path
 // This uses the actual SikkCategory table instead of building from posts
 export async function getSikkCategoryBySlugPathFromDbAsync(slugPath: string[]): Promise<{
@@ -629,7 +647,6 @@ export async function getSikkCategoryBySlugPathFromDbAsync(slugPath: string[]): 
   if (slugPath.length === 0) return null;
 
   try {
-    // Use the same pattern as getSikkChildCategoriesFromDbAsync for consistency
     let currentParentId: string | null = null;
     const pathNames: string[] = [];
     const pathSlugs: string[] = [];
@@ -638,23 +655,8 @@ export async function getSikkCategoryBySlugPathFromDbAsync(slugPath: string[]): 
 
     for (let i = 0; i < slugPath.length; i++) {
       const segment = slugPath[i];
-      // Find all categories with this slug OR name, then filter by parentId
-      // This handles cases where the URL might contain name instead of slug
-      const allCategories = await prisma.sikkCategory.findMany({
-        where: {
-          OR: [
-            { slug: segment },
-            { name: segment },
-          ],
-        },
-      });
-      // Handle null/undefined parentId comparison more robustly
-      const foundCat = allCategories.find((c) => {
-        const isRootLevel = !currentParentId;
-        const catHasNoParent = !c.parentId;
-        if (isRootLevel && catHasNoParent) return true;
-        return c.parentId === currentParentId;
-      });
+      // Use Prisma's findFirst which properly handles NULL parentId at DB level
+      const foundCat = await findSikkDbCategoryBySlugAndParent(segment, currentParentId);
 
       if (!foundCat) return null;
 
@@ -707,29 +709,15 @@ export async function getSikkChildCategoriesFromDbAsync(parentSlugPath: string[]
   }
 
   try {
-    // Find the parent category first
+    // Find the parent category first using the helper function
     let currentParentId: string | null = null;
     const pathNames: string[] = [];
     const pathSlugs: string[] = [];
 
     for (let i = 0; i < parentSlugPath.length; i++) {
       const segment = parentSlugPath[i];
-      // Find all categories with this slug OR name, then filter by parentId
-      const allCategories = await prisma.sikkCategory.findMany({
-        where: {
-          OR: [
-            { slug: segment },
-            { name: segment },
-          ],
-        },
-      });
-      // Handle null/undefined parentId comparison more robustly
-      const foundCat = allCategories.find((c) => {
-        const isRootLevel = !currentParentId;
-        const catHasNoParent = !c.parentId;
-        if (isRootLevel && catHasNoParent) return true;
-        return c.parentId === currentParentId;
-      });
+      // Use Prisma's findFirst which properly handles NULL parentId at DB level
+      const foundCat = await findSikkDbCategoryBySlugAndParent(segment, currentParentId);
 
       if (!foundCat) return [];
 
