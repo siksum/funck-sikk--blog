@@ -47,8 +47,9 @@ export async function POST(request: NextRequest) {
     });
   } catch (error) {
     console.error('Google Drive upload error:', error);
+    const errorMessage = error instanceof Error ? error.message : 'Unknown error';
     return NextResponse.json(
-      { error: 'Failed to upload file to Google Drive' },
+      { error: `Failed to upload file to Google Drive: ${errorMessage}` },
       { status: 500 }
     );
   }
