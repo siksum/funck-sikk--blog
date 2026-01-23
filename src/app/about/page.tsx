@@ -1102,7 +1102,7 @@ export default function AboutPage() {
                             </span>
                           )}
                         </div>
-                        <h3 className={`text-lg font-semibold ${award.highlight ? 'text-gray-900 dark:text-white' : 'card-title'}`}>
+                        <h3 className={`font-medium ${award.highlight ? 'text-gray-900 dark:text-white' : 'card-title'}`}>
                           {award.title}
                         </h3>
                         {award.korean && (
