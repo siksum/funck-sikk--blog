@@ -91,7 +91,7 @@ export default function AboutPage() {
     press: true,
   });
   const [activeEducationTab, setActiveEducationTab] = useState<'education' | 'scholarship' | 'project'>('education');
-  const [activeExperienceTab, setActiveExperienceTab] = useState<'research' | 'work' | 'activities'>('research');
+  const [activeExperienceTab, setActiveExperienceTab] = useState<'research' | 'work' | 'activities' | 'club'>('research');
   const [activePubTab, setActivePubTab] = useState<'journals' | 'international' | 'domestic'>('journals');
   const [activeAwardsTab, setActiveAwardsTab] = useState<'all' | 'research' | 'competition' | 'activity'>('all');
   const [data, setData] = useState<AboutData | null>(null);
@@ -457,7 +457,7 @@ export default function AboutPage() {
                     ));
                   }
 
-                  // Scholarship tab - ScholarshipItem[] (name, org, date)
+                  // Scholarship tab - ScholarshipItem[] (name, org, date) - Grouped by year
                   if (activeEducationTab === 'scholarship') {
                     const items = data.timeline.scholarship || [];
                     if (items.length === 0) {
@@ -467,31 +467,45 @@ export default function AboutPage() {
                         </div>
                       );
                     }
-                    return items.map((item, index) => (
+                    // Group by year (extract year from date like "2025.09" -> "2025")
+                    const groupedByYear = items.reduce((acc, item) => {
+                      const year = item.date.split('.')[0];
+                      if (!acc[year]) acc[year] = [];
+                      acc[year].push(item);
+                      return acc;
+                    }, {} as Record<string, typeof items>);
+                    const sortedYears = Object.keys(groupedByYear).sort((a, b) => Number(b) - Number(a));
+
+                    return sortedYears.map((year, yearIndex) => (
                       <motion.div
-                        key={index}
+                        key={year}
                         className="relative pl-8"
                         initial={{ opacity: 0, x: -10 }}
                         animate={{ opacity: 1, x: 0 }}
-                        transition={{ duration: 0.3, delay: index * 0.1 }}
+                        transition={{ duration: 0.3, delay: yearIndex * 0.1 }}
                       >
-                        <div className="absolute left-0 top-4 w-6 h-6 rounded-full flex items-center justify-center z-10 bg-amber-500">
+                        <div className="absolute left-0 top-3 w-6 h-6 rounded-full flex items-center justify-center z-10 bg-amber-500">
                           <div className="w-2 h-2 rounded-full bg-white" />
                         </div>
-                        <motion.div
-                          className="p-4 rounded-xl border border-gray-200 dark:border-violet-500/20 shadow-sm hover:shadow-md transition-all"
-                          style={{ background: 'var(--card-bg)' }}
-                          whileHover={{ x: 4 }}
-                        >
-                          <div className="flex flex-wrap items-center gap-2 mb-2">
-                            <span className="px-2.5 py-0.5 rounded-full text-xs font-medium border bg-amber-100 dark:bg-transparent text-amber-700 dark:text-amber-200 border-amber-200 dark:border-amber-400">
-                              {item.date}
+                        <div className="p-3 rounded-xl border border-gray-200 dark:border-violet-500/20" style={{ background: 'var(--card-bg)' }}>
+                          <div className="flex items-center gap-2 mb-2">
+                            <span className="px-2.5 py-0.5 rounded-full text-xs font-bold border bg-amber-100 dark:bg-transparent text-amber-700 dark:text-amber-200 border-amber-200 dark:border-amber-400">
+                              {year}
                             </span>
+                            <span className="text-xs text-gray-400">({groupedByYear[year].length})</span>
                           </div>
-                          <h3 className="text-lg font-semibold card-title">{item.name}</h3>
-                          {item.korean && <p className="text-gray-500 dark:text-gray-400 text-sm"># {item.korean}</p>}
-                          {item.org && <p className="text-accent-violet font-medium text-sm">{item.org}</p>}
-                        </motion.div>
+                          <div className="space-y-2">
+                            {groupedByYear[year].map((item, idx) => (
+                              <div key={idx} className="flex items-start gap-2 py-1.5 border-b border-gray-100 dark:border-gray-700/50 last:border-0">
+                                <span className="text-xs text-gray-400 dark:text-gray-500 min-w-[45px]">{item.date.split('.')[1]}월</span>
+                                <div className="flex-1 min-w-0">
+                                  <p className="text-sm font-medium card-title truncate">{item.name}</p>
+                                  {item.korean && <p className="text-xs text-gray-400 dark:text-gray-500"># {item.korean}</p>}
+                                </div>
+                              </div>
+                            ))}
+                          </div>
+                        </div>
                       </motion.div>
                     ));
                   }
@@ -587,6 +601,7 @@ export default function AboutPage() {
               { id: 'research' as const, label: 'Research', icon: '🔬', count: data.timeline.research?.length || 0 },
               { id: 'work' as const, label: 'Work', icon: '💼', count: data.timeline.work?.length || 0 },
               { id: 'activities' as const, label: 'Activities', icon: '🎯', count: data.timeline.activities?.length || 0 },
+              { id: 'club' as const, label: 'Club & CTF', icon: '🏆', count: data.activities.ctf?.length || 0 },
             ].map((tab) => (
               <button
                 key={tab.id}
@@ -620,6 +635,8 @@ export default function AboutPage() {
                   ? 'bg-gradient-to-b from-indigo-500 via-blue-500 to-cyan-500'
                   : activeExperienceTab === 'work'
                   ? 'bg-gradient-to-b from-emerald-500 via-teal-500 to-green-500'
+                  : activeExperienceTab === 'club'
+                  ? 'bg-gradient-to-b from-violet-500 via-orange-400 to-amber-500'
                   : 'bg-gradient-to-b from-purple-500 via-pink-500 to-rose-500'
               }`} />
 
@@ -669,8 +686,71 @@ export default function AboutPage() {
                     ));
                   }
 
+                  // Handle club tab - Club info and CTF list
+                  if (activeExperienceTab === 'club') {
+                    return (
+                      <div className="space-y-6 pl-8">
+                        {/* Club Section */}
+                        <motion.div
+                          className="relative"
+                          initial={{ opacity: 0, y: 10 }}
+                          animate={{ opacity: 1, y: 0 }}
+                          transition={{ duration: 0.3 }}
+                        >
+                          <div className="absolute -left-8 top-3 w-6 h-6 rounded-full flex items-center justify-center z-10 bg-violet-500">
+                            <div className="w-2 h-2 rounded-full bg-white" />
+                          </div>
+                          <div className="p-4 rounded-xl border border-violet-200 dark:border-violet-500/30" style={{ background: 'var(--card-bg)' }}>
+                            <h4 className="font-semibold card-title text-lg mb-2">{data.activities.club.name}</h4>
+                            <p className="text-sm text-gray-600 dark:text-gray-400 mb-3">{data.activities.club.period} | {data.activities.club.description}</p>
+                            <div className="flex flex-wrap gap-2">
+                              {data.activities.club.roles.map((role, i) => (
+                                <span
+                                  key={i}
+                                  className="px-2.5 py-1 bg-violet-100 dark:bg-transparent text-violet-700 dark:text-violet-200 rounded-full text-xs border border-violet-200 dark:border-violet-400"
+                                >
+                                  {role}
+                                </span>
+                              ))}
+                            </div>
+                          </div>
+                        </motion.div>
+
+                        {/* CTF Section */}
+                        <motion.div
+                          className="relative"
+                          initial={{ opacity: 0, y: 10 }}
+                          animate={{ opacity: 1, y: 0 }}
+                          transition={{ duration: 0.3, delay: 0.1 }}
+                        >
+                          <div className="absolute -left-8 top-3 w-6 h-6 rounded-full flex items-center justify-center z-10 bg-orange-500">
+                            <div className="w-2 h-2 rounded-full bg-white" />
+                          </div>
+                          <div className="p-4 rounded-xl border border-orange-200 dark:border-orange-500/30" style={{ background: 'var(--card-bg)' }}>
+                            <h4 className="font-semibold card-title text-lg mb-3">CTF Competitions</h4>
+                            <div className="space-y-2">
+                              {data.activities.ctf.map((ctf, index) => (
+                                <div key={index} className="flex items-center gap-2">
+                                  <span className={`px-2 py-0.5 rounded text-xs font-medium ${
+                                    ctf.rank === '1st'
+                                      ? 'bg-amber-100 dark:bg-amber-500/20 text-amber-700 dark:text-amber-300'
+                                      : 'bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300'
+                                  }`}>
+                                    {ctf.rank}
+                                  </span>
+                                  <span className="text-sm card-title">{ctf.event}</span>
+                                  <span className="text-xs text-gray-500 dark:text-gray-400">({ctf.year})</span>
+                                </div>
+                              ))}
+                            </div>
+                          </div>
+                        </motion.div>
+                      </div>
+                    );
+                  }
+
                   // Handle research and work tabs with TimelineItem structure
-                  const filteredItems = data.timeline[activeExperienceTab] || [];
+                  const filteredItems = data.timeline[activeExperienceTab as 'research' | 'work'] || [];
 
                   if (filteredItems.length === 0) {
                     return (
