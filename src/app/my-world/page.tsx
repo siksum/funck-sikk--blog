@@ -1496,10 +1496,21 @@ export default function MyWorldDashboard() {
     return { top, height };
   };
 
+  // State to track current time for the time indicator
+  const [currentTime, setCurrentTime] = useState(() => new Date());
+
+  // Update current time every minute
+  useEffect(() => {
+    const interval = setInterval(() => {
+      setCurrentTime(new Date());
+    }, 60000); // Update every minute
+
+    return () => clearInterval(interval);
+  }, []);
+
   const currentTimePosition = useMemo(() => {
-    const now = new Date();
-    const hours = now.getHours();
-    const minutes = now.getMinutes();
+    const hours = currentTime.getHours();
+    const minutes = currentTime.getMinutes();
     const totalMinutes = hours * 60 + minutes;
 
     // Check if current time is within view (7 AM to 11 PM)
@@ -1508,7 +1519,7 @@ export default function MyWorldDashboard() {
     const hourHeight = 48;
     const offset = totalMinutes - 420;
     return (offset / 60) * hourHeight;
-  }, []);
+  }, [currentTime]);
 
   // Detailed statistics calculation based on period
   const detailedStats = useMemo(() => {
