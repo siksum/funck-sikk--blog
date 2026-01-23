@@ -141,6 +141,7 @@ export default function EditorToolbar({ editor, onSave, onCancel, driveType = 'b
   const [isImageUploading, setIsImageUploading] = useState(false);
   const [isPdfUploading, setIsPdfUploading] = useState(false);
   const [pdfUploadDestination, setPdfUploadDestination] = useState<'cloudinary' | 'google-drive'>('cloudinary');
+  const [pdfDisplayMode, setPdfDisplayMode] = useState<'box' | 'embed'>('box');
   const fileInputRef = useRef<HTMLInputElement>(null);
   const pdfInputRef = useRef<HTMLInputElement>(null);
 
@@ -211,11 +212,13 @@ export default function EditorToolbar({ editor, onSave, onCancel, driveType = 'b
     setIsPdfUploading(true);
     try {
       let url: string;
+      let fileId: string | null = null;
 
       if (pdfUploadDestination === 'google-drive') {
         // Use direct upload to Google Drive (bypasses server size limit)
         const result = await uploadToGoogleDriveDirect(file, { driveType, category });
         url = result.url;
+        fileId = result.fileId;
       } else {
         // Upload via server to Cloudinary
         const formData = new FormData();
@@ -240,32 +243,23 @@ export default function EditorToolbar({ editor, onSave, onCancel, driveType = 'b
         url = data.url;
       }
 
-      // Insert PDF as a styled box
-      const pdfBox = `
-<div class="pdf-attachment" style="display: flex; align-items: center; gap: 12px; padding: 16px; margin: 16px 0; border: 1px solid #e5e7eb; border-radius: 12px; background: linear-gradient(135deg, #fdf2f8 0%, #fce7f3 100%); max-width: 400px;">
-  <div style="flex-shrink: 0; width: 48px; height: 48px; display: flex; align-items: center; justify-content: center; background: #ec4899; border-radius: 8px;">
-    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-      <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
-      <polyline points="14 2 14 8 20 8"></polyline>
-      <line x1="16" y1="13" x2="8" y2="13"></line>
-      <line x1="16" y1="17" x2="8" y2="17"></line>
-      <polyline points="10 9 9 9 8 9"></polyline>
-    </svg>
-  </div>
-  <div style="flex: 1; min-width: 0;">
-    <div style="font-weight: 600; color: #1f2937; font-size: 14px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">${file.name}</div>
-    <div style="font-size: 12px; color: #6b7280; margin-top: 2px;">PDF 문서</div>
-  </div>
-  <a href="${url}" target="_blank" rel="noopener noreferrer" style="flex-shrink: 0; display: flex; align-items: center; justify-content: center; width: 36px; height: 36px; background: white; border-radius: 8px; border: 1px solid #e5e7eb; color: #ec4899; text-decoration: none;">
-    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-      <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
-      <polyline points="7 10 12 15 17 10"></polyline>
-      <line x1="12" y1="15" x2="12" y2="3"></line>
-    </svg>
-  </a>
-</div>
-<p></p>`;
-      editor.chain().focus().insertContent(pdfBox).run();
+      let pdfContent: string;
+
+      if (pdfDisplayMode === 'embed' && fileId) {
+        // Insert PDF as embedded viewer (Google Drive only)
+        // Use iframe element which TipTap can handle
+        const embedUrl = `https://drive.google.com/file/d/${fileId}/preview`;
+        pdfContent = `<p><strong>📄 ${file.name}</strong> <a href="${url}" target="_blank" rel="noopener noreferrer">다운로드</a></p><iframe src="${embedUrl}" width="100%" height="600" frameborder="0" allowfullscreen="true"></iframe><p></p>`;
+      } else if (pdfDisplayMode === 'embed' && !fileId) {
+        // Cloudinary doesn't support embedding, show warning and use box mode
+        alert('PDF 임베딩은 Google Drive 업로드에서만 지원됩니다. 링크로 삽입합니다.');
+        pdfContent = `<p><a href="${url}" target="_blank" rel="noopener noreferrer" class="pdf-link">📄 ${file.name}</a></p>`;
+      } else {
+        // Insert PDF as a styled link (CSS will handle the box styling)
+        pdfContent = `<p><a href="${url}" target="_blank" rel="noopener noreferrer" class="pdf-link">📄 ${file.name}</a></p>`;
+      }
+
+      editor.chain().focus().insertContent(pdfContent).run();
       setShowImageInput(false);
     } catch (error) {
       console.error('Upload error:', error);
@@ -277,7 +271,7 @@ export default function EditorToolbar({ editor, onSave, onCancel, driveType = 'b
         pdfInputRef.current.value = '';
       }
     }
-  }, [editor, pdfUploadDestination]);
+  }, [editor, pdfUploadDestination, pdfDisplayMode, driveType, category]);
 
   return (
     <div className="sticky top-0 z-10 bg-white/95 dark:bg-gray-900/95 backdrop-blur border-2 border-pink-200 dark:border-pink-500/40 rounded-lg p-2 mb-4 flex flex-wrap items-center gap-1">
@@ -706,6 +700,54 @@ export default function EditorToolbar({ editor, onSave, onCancel, driveType = 'b
                   Google Drive
                 </button>
               </div>
+              <label className="block text-xs font-semibold text-gray-500 dark:text-gray-400 mb-1 mt-2">
+                표시 방식
+              </label>
+              <div className="flex gap-1 mb-2">
+                <button
+                  type="button"
+                  onClick={(e) => {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    setPdfDisplayMode('box');
+                  }}
+                  className={`flex-1 px-2 py-1 rounded text-xs font-medium transition-colors flex items-center justify-center gap-1 ${
+                    pdfDisplayMode === 'box'
+                      ? 'bg-pink-100 text-pink-700 dark:bg-pink-900/30 dark:text-pink-300'
+                      : 'bg-gray-100 text-gray-600 dark:bg-gray-700 dark:text-gray-400'
+                  }`}
+                >
+                  <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z" />
+                  </svg>
+                  박스
+                </button>
+                <button
+                  type="button"
+                  onClick={(e) => {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    setPdfDisplayMode('embed');
+                  }}
+                  className={`flex-1 px-2 py-1 rounded text-xs font-medium transition-colors flex items-center justify-center gap-1 ${
+                    pdfDisplayMode === 'embed'
+                      ? 'bg-violet-100 text-violet-700 dark:bg-violet-900/30 dark:text-violet-300'
+                      : 'bg-gray-100 text-gray-600 dark:bg-gray-700 dark:text-gray-400'
+                  }`}
+                  title="Google Drive에서만 지원"
+                >
+                  <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+                  </svg>
+                  임베드
+                </button>
+              </div>
+              {pdfDisplayMode === 'embed' && pdfUploadDestination !== 'google-drive' && (
+                <p className="text-xs text-amber-600 dark:text-amber-400 mb-2">
+                  ⚠️ 임베드는 Google Drive에서만 지원됩니다
+                </p>
+              )}
               <input
                 ref={pdfInputRef}
                 type="file"

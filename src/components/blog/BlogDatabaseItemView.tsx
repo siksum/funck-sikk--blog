@@ -106,37 +106,21 @@ export default function BlogDatabaseItemView({
 
     try {
       for (const file of Array.from(files)) {
-        const isPdf = file.type === 'application/pdf' || file.name.toLowerCase().endsWith('.pdf');
-
-        if (isPdf) {
-          // Use direct upload to Google Drive (bypasses server size limit)
-          try {
-            const result = await uploadToGoogleDriveDirect(file, { driveType: 'blog' });
-            uploadedUrls.push(result.url);
-          } catch (driveError) {
-            console.warn('Google Drive upload failed, falling back to Cloudinary:', driveError);
-            // Fallback to Cloudinary
-            const formData = new FormData();
-            formData.append('file', file);
-            const fallbackRes = await fetch('/api/upload', {
-              method: 'POST',
-              body: formData,
-            });
-            if (fallbackRes.ok) {
-              const result = await fallbackRes.json();
-              uploadedUrls.push(result.url);
-            }
-          }
-        } else {
-          // Non-PDF files go to Cloudinary
+        // Upload all files to Google Drive (with Cloudinary fallback)
+        try {
+          const result = await uploadToGoogleDriveDirect(file, { driveType: 'blog' });
+          uploadedUrls.push(result.url);
+        } catch (driveError) {
+          console.warn('Google Drive upload failed, falling back to Cloudinary:', driveError);
+          // Fallback to Cloudinary
           const formData = new FormData();
           formData.append('file', file);
-          const res = await fetch('/api/upload', {
+          const fallbackRes = await fetch('/api/upload', {
             method: 'POST',
             body: formData,
           });
-          if (res.ok) {
-            const result = await res.json();
+          if (fallbackRes.ok) {
+            const result = await fallbackRes.json();
             uploadedUrls.push(result.url);
           }
         }
