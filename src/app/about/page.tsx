@@ -34,6 +34,7 @@ interface ProjectItem {
   description: string;
   link?: string;
   org: string;
+  date?: string;
 }
 
 interface AboutData {
@@ -509,7 +510,7 @@ export default function AboutPage() {
                     ));
                   }
 
-                  // Project tab - ProjectItem[] (category, name, description, link, org)
+                  // Project tab - ProjectItem[] - Grouped by year
                   const items = data.timeline.project || [];
                   if (items.length === 0) {
                     return (
@@ -518,51 +519,70 @@ export default function AboutPage() {
                       </div>
                     );
                   }
-                  return items.map((item, index) => (
+                  // Group by year (extract year from date like "2025.09" -> "2025", or use "기타" if no date)
+                  const groupedByYear = items.reduce((acc, item) => {
+                    const year = item.date ? item.date.split('.')[0] : '기타';
+                    if (!acc[year]) acc[year] = [];
+                    acc[year].push(item);
+                    return acc;
+                  }, {} as Record<string, typeof items>);
+                  const sortedYears = Object.keys(groupedByYear).sort((a, b) => {
+                    if (a === '기타') return 1;
+                    if (b === '기타') return -1;
+                    return Number(b) - Number(a);
+                  });
+
+                  return sortedYears.map((year, yearIndex) => (
                     <motion.div
-                      key={index}
+                      key={year}
                       className="relative pl-8"
                       initial={{ opacity: 0, x: -10 }}
                       animate={{ opacity: 1, x: 0 }}
-                      transition={{ duration: 0.3, delay: index * 0.1 }}
+                      transition={{ duration: 0.3, delay: yearIndex * 0.1 }}
                     >
-                      <div className="absolute left-0 top-4 w-6 h-6 rounded-full flex items-center justify-center z-10 bg-cyan-500">
+                      <div className="absolute left-0 top-3 w-6 h-6 rounded-full flex items-center justify-center z-10 bg-cyan-500">
                         <div className="w-2 h-2 rounded-full bg-white" />
                       </div>
-                      <motion.div
-                        className="p-4 rounded-xl border border-gray-200 dark:border-violet-500/20 shadow-sm hover:shadow-md transition-all"
-                        style={{ background: 'var(--card-bg)' }}
-                        whileHover={{ x: 4 }}
-                      >
-                        <div className="flex flex-wrap items-center gap-2 mb-2">
-                          <span className="px-2.5 py-0.5 rounded-full text-xs font-medium border bg-cyan-100 dark:bg-transparent text-cyan-700 dark:text-cyan-200 border-cyan-200 dark:border-cyan-400">
-                            {item.category}
+                      <div className="p-3 rounded-xl border border-gray-200 dark:border-violet-500/20" style={{ background: 'var(--card-bg)' }}>
+                        <div className="flex items-center gap-2 mb-3">
+                          <span className="px-2.5 py-0.5 rounded-full text-xs font-bold border bg-cyan-100 dark:bg-transparent text-cyan-700 dark:text-cyan-200 border-cyan-200 dark:border-cyan-400">
+                            {year}
                           </span>
-                          {item.org && (
-                            <span className="px-2 py-0.5 rounded text-xs bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300">
-                              {item.org}
-                            </span>
-                          )}
+                          <span className="text-xs text-gray-400">({groupedByYear[year].length})</span>
                         </div>
-                        <h3 className="text-lg font-semibold card-title">{item.name}</h3>
-                        {item.korean && <p className="text-gray-500 dark:text-gray-400 text-sm"># {item.korean}</p>}
-                        {item.description && (
-                          <p className="text-gray-600 dark:text-gray-400 text-sm mt-2 whitespace-pre-line">{item.description}</p>
-                        )}
-                        {item.link && (
-                          <a
-                            href={item.link}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            className="inline-flex items-center gap-1 mt-3 text-sm text-accent-violet hover:underline"
-                          >
-                            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
-                            </svg>
-                            Link
-                          </a>
-                        )}
-                      </motion.div>
+                        <div className="space-y-3">
+                          {groupedByYear[year].map((item, idx) => (
+                            <div key={idx} className="pb-3 border-b border-gray-100 dark:border-gray-700/50 last:border-0 last:pb-0">
+                              <div className="flex flex-wrap items-center gap-2 mb-1">
+                                <span className="px-2 py-0.5 rounded text-xs bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300">
+                                  {item.category}
+                                </span>
+                                {item.org && (
+                                  <span className="text-xs text-gray-400">{item.org}</span>
+                                )}
+                              </div>
+                              <h4 className="font-medium card-title">{item.name}</h4>
+                              {item.korean && <p className="text-xs text-gray-400 dark:text-gray-500"># {item.korean}</p>}
+                              {item.description && (
+                                <p className="text-gray-600 dark:text-gray-400 text-sm mt-1 whitespace-pre-line">{item.description}</p>
+                              )}
+                              {item.link && (
+                                <a
+                                  href={item.link}
+                                  target="_blank"
+                                  rel="noopener noreferrer"
+                                  className="inline-flex items-center gap-1 mt-2 text-xs text-accent-violet hover:underline"
+                                >
+                                  <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
+                                  </svg>
+                                  Link
+                                </a>
+                              )}
+                            </div>
+                          ))}
+                        </div>
+                      </div>
                     </motion.div>
                   ));
                 })()}
@@ -877,99 +897,166 @@ export default function AboutPage() {
                   return 'bg-amber-500';
                 };
 
+                // Helper to extract year from venue string
+                const extractYear = (venue: string): string => {
+                  const match = venue.match(/\b(20\d{2})\b/);
+                  return match ? match[1] : '기타';
+                };
+
                 if (activePubTab === 'journals') {
-                  return data.publications.journals.map((pub, index) => (
+                  const items = data.publications.journals;
+                  const groupedByYear = items.reduce((acc, item) => {
+                    const year = extractYear(item.venue);
+                    if (!acc[year]) acc[year] = [];
+                    acc[year].push(item);
+                    return acc;
+                  }, {} as Record<string, typeof items>);
+                  const sortedYears = Object.keys(groupedByYear).sort((a, b) => {
+                    if (a === '기타') return 1;
+                    if (b === '기타') return -1;
+                    return Number(b) - Number(a);
+                  });
+
+                  return sortedYears.map((year, yearIndex) => (
                     <motion.div
-                      key={index}
+                      key={year}
                       className="relative pl-8"
                       initial={{ opacity: 0, x: -10 }}
                       animate={{ opacity: 1, x: 0 }}
-                      transition={{ duration: 0.3, delay: index * 0.1 }}
+                      transition={{ duration: 0.3, delay: yearIndex * 0.1 }}
                     >
-                      {/* Timeline dot */}
-                      <div className={`absolute left-0 top-4 w-6 h-6 rounded-full flex items-center justify-center z-10 ${getDotColor()}`}>
+                      <div className={`absolute left-0 top-3 w-6 h-6 rounded-full flex items-center justify-center z-10 ${getDotColor()}`}>
                         <div className="w-2 h-2 rounded-full bg-white" />
                       </div>
-                      <motion.div
-                        className={`p-5 rounded-xl border ${pub.featured ? 'bg-violet-50 dark:bg-violet-500/10 border-violet-300 dark:border-violet-500/30' : 'border-gray-200 dark:border-gray-700/50'}`}
-                        style={{ background: pub.featured ? undefined : 'var(--card-bg)' }}
-                        whileHover={{ x: 4 }}
-                      >
-                        <div className="flex flex-wrap gap-2 mb-2">
-                          {pub.badge.split(',').map((b, i) => (
-                            <span key={i} className={`px-2 py-0.5 rounded text-xs font-medium ${pub.featured ? 'bg-amber-100 dark:bg-amber-500/20 text-amber-700 dark:text-amber-300' : 'bg-gray-100 dark:bg-gray-700/50 text-gray-600 dark:text-gray-300'}`}>{b.trim()}</span>
+                      <div className="p-3 rounded-xl border border-gray-200 dark:border-violet-500/20" style={{ background: 'var(--card-bg)' }}>
+                        <div className="flex items-center gap-2 mb-3">
+                          <span className="px-2.5 py-0.5 rounded-full text-xs font-bold border bg-violet-100 dark:bg-transparent text-violet-700 dark:text-violet-200 border-violet-200 dark:border-violet-400">
+                            {year}
+                          </span>
+                          <span className="text-xs text-gray-400">({groupedByYear[year].length})</span>
+                        </div>
+                        <div className="space-y-3">
+                          {groupedByYear[year].map((pub, idx) => (
+                            <div key={idx} className={`pb-3 border-b border-gray-100 dark:border-gray-700/50 last:border-0 last:pb-0 ${pub.featured ? 'bg-violet-50/50 dark:bg-violet-500/5 -mx-2 px-2 py-2 rounded-lg' : ''}`}>
+                              <div className="flex flex-wrap gap-2 mb-1">
+                                {pub.badge.split(',').map((b, i) => (
+                                  <span key={i} className={`px-2 py-0.5 rounded text-xs font-medium ${pub.featured ? 'bg-amber-100 dark:bg-amber-500/20 text-amber-700 dark:text-amber-300' : 'bg-gray-100 dark:bg-gray-700/50 text-gray-600 dark:text-gray-300'}`}>{b.trim()}</span>
+                                ))}
+                              </div>
+                              <p className="text-xs text-accent-violet mb-1">{highlightAuthorName(pub.authors)}</p>
+                              <h4 className={`font-medium text-sm ${pub.featured ? 'text-gray-900 dark:text-white' : 'pub-card-title'}`}>&ldquo;{pub.title}&rdquo;</h4>
+                              <p className="text-xs text-gray-500 dark:text-gray-400">{pub.venue}</p>
+                              {pub.korean && <p className="text-xs text-gray-400 dark:text-gray-500 mt-1"># {pub.korean}</p>}
+                            </div>
                           ))}
                         </div>
-                        <p className="text-sm text-accent-violet mb-1">{highlightAuthorName(pub.authors)}</p>
-                        <h4 className={`font-medium mb-1 ${pub.featured ? 'text-gray-900' : 'pub-card-title'}`}>&ldquo;{pub.title}&rdquo;</h4>
-                        <p className="text-sm text-gray-600 dark:text-gray-400">{pub.venue}</p>
-                        {pub.korean && <p className="text-xs text-gray-500 dark:text-gray-500 mt-1"># {pub.korean}</p>}
-                      </motion.div>
+                      </div>
                     </motion.div>
                   ));
                 }
 
                 if (activePubTab === 'international') {
-                  return data.publications.international.map((pub, index) => (
+                  const items = data.publications.international;
+                  const groupedByYear = items.reduce((acc, item) => {
+                    const year = extractYear(item.venue);
+                    if (!acc[year]) acc[year] = [];
+                    acc[year].push(item);
+                    return acc;
+                  }, {} as Record<string, typeof items>);
+                  const sortedYears = Object.keys(groupedByYear).sort((a, b) => {
+                    if (a === '기타') return 1;
+                    if (b === '기타') return -1;
+                    return Number(b) - Number(a);
+                  });
+
+                  return sortedYears.map((year, yearIndex) => (
                     <motion.div
-                      key={index}
+                      key={year}
                       className="relative pl-8"
                       initial={{ opacity: 0, x: -10 }}
                       animate={{ opacity: 1, x: 0 }}
-                      transition={{ duration: 0.3, delay: index * 0.1 }}
+                      transition={{ duration: 0.3, delay: yearIndex * 0.1 }}
                     >
-                      {/* Timeline dot */}
-                      <div className={`absolute left-0 top-4 w-6 h-6 rounded-full flex items-center justify-center z-10 ${getDotColor()}`}>
+                      <div className={`absolute left-0 top-3 w-6 h-6 rounded-full flex items-center justify-center z-10 ${getDotColor()}`}>
                         <div className="w-2 h-2 rounded-full bg-white" />
                       </div>
-                      <motion.div
-                        className="p-4 rounded-xl border border-gray-200 dark:border-gray-700/50"
-                        style={{ background: 'var(--card-bg)' }}
-                        whileHover={{ x: 4 }}
-                      >
-                        {pub.badge && (
-                          <div className="flex flex-wrap gap-2 mb-2">
-                            {pub.badge.split(',').map((b, i) => (
-                              <span key={i} className="px-2 py-0.5 rounded text-xs font-medium bg-blue-100 dark:bg-blue-500/20 text-blue-700 dark:text-blue-300">{b.trim()}</span>
-                            ))}
-                          </div>
-                        )}
-                        <p className="text-sm text-accent-violet mb-1">{highlightAuthorName(pub.authors)}</p>
-                        <h4 className="font-medium pub-card-title text-sm">&ldquo;{pub.title}&rdquo;</h4>
-                        <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">{pub.venue}</p>
-                      </motion.div>
+                      <div className="p-3 rounded-xl border border-gray-200 dark:border-violet-500/20" style={{ background: 'var(--card-bg)' }}>
+                        <div className="flex items-center gap-2 mb-3">
+                          <span className="px-2.5 py-0.5 rounded-full text-xs font-bold border bg-blue-100 dark:bg-transparent text-blue-700 dark:text-blue-200 border-blue-200 dark:border-blue-400">
+                            {year}
+                          </span>
+                          <span className="text-xs text-gray-400">({groupedByYear[year].length})</span>
+                        </div>
+                        <div className="space-y-3">
+                          {groupedByYear[year].map((pub, idx) => (
+                            <div key={idx} className="pb-3 border-b border-gray-100 dark:border-gray-700/50 last:border-0 last:pb-0">
+                              {pub.badge && (
+                                <div className="flex flex-wrap gap-2 mb-1">
+                                  {pub.badge.split(',').map((b, i) => (
+                                    <span key={i} className="px-2 py-0.5 rounded text-xs font-medium bg-blue-100 dark:bg-blue-500/20 text-blue-700 dark:text-blue-300">{b.trim()}</span>
+                                  ))}
+                                </div>
+                              )}
+                              <p className="text-xs text-accent-violet mb-1">{highlightAuthorName(pub.authors)}</p>
+                              <h4 className="font-medium pub-card-title text-sm">&ldquo;{pub.title}&rdquo;</h4>
+                              <p className="text-xs text-gray-500 dark:text-gray-400">{pub.venue}</p>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
                     </motion.div>
                   ));
                 }
 
-                return data.publications.domestic.map((pub, index) => (
+                // Domestic publications
+                const items = data.publications.domestic;
+                const groupedByYear = items.reduce((acc, item) => {
+                  const year = extractYear(item.venue);
+                  if (!acc[year]) acc[year] = [];
+                  acc[year].push(item);
+                  return acc;
+                }, {} as Record<string, typeof items>);
+                const sortedYears = Object.keys(groupedByYear).sort((a, b) => {
+                  if (a === '기타') return 1;
+                  if (b === '기타') return -1;
+                  return Number(b) - Number(a);
+                });
+
+                return sortedYears.map((year, yearIndex) => (
                   <motion.div
-                    key={index}
+                    key={year}
                     className="relative pl-8"
                     initial={{ opacity: 0, x: -10 }}
                     animate={{ opacity: 1, x: 0 }}
-                    transition={{ duration: 0.3, delay: index * 0.05 }}
+                    transition={{ duration: 0.3, delay: yearIndex * 0.1 }}
                   >
-                    {/* Timeline dot */}
-                    <div className={`absolute left-0 top-4 w-6 h-6 rounded-full flex items-center justify-center z-10 ${pub.award ? 'bg-amber-500' : getDotColor()}`}>
+                    <div className={`absolute left-0 top-3 w-6 h-6 rounded-full flex items-center justify-center z-10 ${getDotColor()}`}>
                       <div className="w-2 h-2 rounded-full bg-white" />
                     </div>
-                    <motion.div
-                      className={`p-4 rounded-xl border ${pub.award ? 'bg-amber-50 dark:bg-amber-500/10 border-amber-200 dark:border-amber-500/30' : 'border-gray-200 dark:border-gray-700/50'}`}
-                      style={{ background: pub.award ? undefined : 'var(--card-bg)' }}
-                      whileHover={{ x: 4 }}
-                    >
-                      <div className="flex flex-wrap gap-2 mb-2">
-                        {pub.badge && pub.badge.split(',').map((b, i) => (
-                          <span key={i} className="px-2 py-0.5 rounded text-xs font-medium bg-gray-100 dark:bg-gray-700/50 text-gray-600 dark:text-gray-300">{b.trim()}</span>
-                        ))}
-                        {pub.award && <span className="px-2 py-0.5 bg-amber-100 dark:bg-amber-500/20 text-amber-700 dark:text-amber-300 rounded text-xs font-medium">{pub.award}</span>}
+                    <div className="p-3 rounded-xl border border-gray-200 dark:border-violet-500/20" style={{ background: 'var(--card-bg)' }}>
+                      <div className="flex items-center gap-2 mb-3">
+                        <span className="px-2.5 py-0.5 rounded-full text-xs font-bold border bg-amber-100 dark:bg-transparent text-amber-700 dark:text-amber-200 border-amber-200 dark:border-amber-400">
+                          {year}
+                        </span>
+                        <span className="text-xs text-gray-400">({groupedByYear[year].length})</span>
                       </div>
-                      <p className="text-sm text-accent-violet mb-1">{highlightAuthorName(pub.authors)}</p>
-                      <h4 className={`font-medium text-sm ${pub.award ? 'text-gray-900' : 'pub-card-title'}`}>&ldquo;{pub.title}&rdquo;</h4>
-                      <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">{pub.venue}</p>
-                      {pub.korean && <p className="text-xs text-gray-400 dark:text-gray-500 mt-1"># {pub.korean}</p>}
-                    </motion.div>
+                      <div className="space-y-3">
+                        {groupedByYear[year].map((pub, idx) => (
+                          <div key={idx} className={`pb-3 border-b border-gray-100 dark:border-gray-700/50 last:border-0 last:pb-0 ${pub.award ? 'bg-amber-50/50 dark:bg-amber-500/5 -mx-2 px-2 py-2 rounded-lg' : ''}`}>
+                            <div className="flex flex-wrap gap-2 mb-1">
+                              {pub.badge && pub.badge.split(',').map((b, i) => (
+                                <span key={i} className="px-2 py-0.5 rounded text-xs font-medium bg-gray-100 dark:bg-gray-700/50 text-gray-600 dark:text-gray-300">{b.trim()}</span>
+                              ))}
+                              {pub.award && <span className="px-2 py-0.5 bg-amber-100 dark:bg-amber-500/20 text-amber-700 dark:text-amber-300 rounded text-xs font-medium">{pub.award}</span>}
+                            </div>
+                            <p className="text-xs text-accent-violet mb-1">{highlightAuthorName(pub.authors)}</p>
+                            <h4 className={`font-medium text-sm ${pub.award ? 'text-gray-900 dark:text-white' : 'pub-card-title'}`}>&ldquo;{pub.title}&rdquo;</h4>
+                            <p className="text-xs text-gray-500 dark:text-gray-400">{pub.venue}</p>
+                            {pub.korean && <p className="text-xs text-gray-400 dark:text-gray-500 mt-1"># {pub.korean}</p>}
+                          </div>
+                        ))}
+                      </div>
+                    </div>
                   </motion.div>
                 ));
               })()}
@@ -1056,68 +1143,73 @@ export default function AboutPage() {
                     );
                   }
 
-                  return filteredAwards.map((award, index) => (
+                  // Group by year
+                  const groupedByYear = filteredAwards.reduce((acc, award) => {
+                    const year = award.year || '기타';
+                    if (!acc[year]) acc[year] = [];
+                    acc[year].push(award);
+                    return acc;
+                  }, {} as Record<string, typeof filteredAwards>);
+                  const sortedYears = Object.keys(groupedByYear).sort((a, b) => {
+                    if (a === '기타') return 1;
+                    if (b === '기타') return -1;
+                    return Number(b) - Number(a);
+                  });
+
+                  return sortedYears.map((year, yearIndex) => (
                     <motion.div
-                      key={index}
+                      key={year}
                       className="relative pl-8"
                       initial={{ opacity: 0, x: -10 }}
                       animate={{ opacity: 1, x: 0 }}
-                      transition={{ duration: 0.3, delay: index * 0.05 }}
+                      transition={{ duration: 0.3, delay: yearIndex * 0.1 }}
                     >
-                      {/* Timeline dot */}
-                      <div className={`absolute left-0 top-4 w-6 h-6 rounded-full flex items-center justify-center z-10 ${
-                        award.highlight ? 'bg-amber-500' : 'bg-yellow-500'
-                      }`}>
+                      <div className="absolute left-0 top-3 w-6 h-6 rounded-full flex items-center justify-center z-10 bg-amber-500">
                         <div className="w-2 h-2 rounded-full bg-white" />
                       </div>
-
-                      {/* Content Card */}
-                      <motion.div
-                        className={`p-4 rounded-xl border ${
-                          award.highlight
-                            ? 'bg-amber-50 dark:bg-amber-500/10 border-amber-300 dark:border-amber-500/30'
-                            : 'border-gray-200 dark:border-gray-700/50'
-                        }`}
-                        style={{ background: award.highlight ? undefined : 'var(--card-bg)' }}
-                        whileHover={{ x: 4 }}
-                      >
-                        <div className="flex flex-wrap items-center gap-2 mb-2">
-                          <span className={`px-2.5 py-0.5 rounded-full text-xs font-medium border ${
-                            award.highlight
-                              ? 'bg-amber-100 dark:bg-transparent text-amber-700 dark:text-amber-200 border-amber-200 dark:border-amber-400'
-                              : 'bg-yellow-100 dark:bg-transparent text-yellow-700 dark:text-yellow-200 border-yellow-200 dark:border-yellow-400'
-                          }`}>
-                            {award.year}
+                      <div className="p-3 rounded-xl border border-gray-200 dark:border-violet-500/20" style={{ background: 'var(--card-bg)' }}>
+                        <div className="flex items-center gap-2 mb-3">
+                          <span className="px-2.5 py-0.5 rounded-full text-xs font-bold border bg-amber-100 dark:bg-transparent text-amber-700 dark:text-amber-200 border-amber-200 dark:border-amber-400">
+                            {year}
                           </span>
-                          {award.badge && award.badge.split(',').map((b, i) => (
-                            <span key={i} className="px-2 py-0.5 rounded text-xs bg-violet-100 dark:bg-violet-500/20 text-violet-700 dark:text-violet-300">
-                              {b.trim()}
-                            </span>
-                          ))}
-                          {award.linkedSection && (
-                            <span className="px-2 py-0.5 rounded text-xs bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300">
-                              {award.linkedSection === 'conference' ? '📄 Conference' :
-                               award.linkedSection === 'competition' ? '🥇 Competition' :
-                               '🎯 Activity'}
-                            </span>
-                          )}
+                          <span className="text-xs text-gray-400">({groupedByYear[year].length})</span>
                         </div>
-                        <h3 className={`font-medium ${award.highlight ? 'text-gray-900 dark:text-white' : 'card-title'}`}>
-                          {award.title}
-                        </h3>
-                        {award.korean && (
-                          <p className="text-sm text-gray-500 dark:text-gray-400 mt-1"># {award.korean}</p>
-                        )}
-                        {award.org && (
-                          <p className="text-sm text-accent-violet mt-1">{award.org}</p>
-                        )}
-                        {award.linkedItem && (
-                          <p className="text-xs text-gray-500 dark:text-gray-400 mt-1 italic">→ {award.linkedItem}</p>
-                        )}
-                        {award.linkedItemNote && (
-                          <p className="text-xs text-gray-400 dark:text-gray-500 mt-1">{award.linkedItemNote}</p>
-                        )}
-                      </motion.div>
+                        <div className="space-y-3">
+                          {groupedByYear[year].map((award, idx) => (
+                            <div key={idx} className={`pb-3 border-b border-gray-100 dark:border-gray-700/50 last:border-0 last:pb-0 ${award.highlight ? 'bg-amber-50/50 dark:bg-amber-500/5 -mx-2 px-2 py-2 rounded-lg' : ''}`}>
+                              <div className="flex flex-wrap items-center gap-2 mb-1">
+                                {award.badge && award.badge.split(',').map((b, i) => (
+                                  <span key={i} className="px-2 py-0.5 rounded text-xs bg-violet-100 dark:bg-violet-500/20 text-violet-700 dark:text-violet-300">
+                                    {b.trim()}
+                                  </span>
+                                ))}
+                                {award.linkedSection && (
+                                  <span className="px-2 py-0.5 rounded text-xs bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300">
+                                    {award.linkedSection === 'conference' ? '📄 Conference' :
+                                     award.linkedSection === 'competition' ? '🥇 Competition' :
+                                     '🎯 Activity'}
+                                  </span>
+                                )}
+                              </div>
+                              <h4 className={`font-medium text-sm ${award.highlight ? 'text-gray-900 dark:text-white' : 'card-title'}`}>
+                                {award.title}
+                              </h4>
+                              {award.korean && (
+                                <p className="text-xs text-gray-500 dark:text-gray-400"># {award.korean}</p>
+                              )}
+                              {award.org && (
+                                <p className="text-xs text-accent-violet mt-1">{award.org}</p>
+                              )}
+                              {award.linkedItem && (
+                                <p className="text-xs text-gray-500 dark:text-gray-400 mt-1 italic">→ {award.linkedItem}</p>
+                              )}
+                              {award.linkedItemNote && (
+                                <p className="text-xs text-gray-400 dark:text-gray-500">{award.linkedItemNote}</p>
+                              )}
+                            </div>
+                          ))}
+                        </div>
+                      </div>
                     </motion.div>
                   ));
                 })()}
