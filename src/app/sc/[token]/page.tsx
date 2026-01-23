@@ -1,10 +1,11 @@
 import { notFound } from 'next/navigation';
 import Link from 'next/link';
+import { unstable_noStore as noStore } from 'next/cache';
 import { prisma } from '@/lib/db';
 import { checkSikkCategoryAccessByToken } from '@/lib/sikk-access';
 import { isValidTokenFormat } from '@/lib/token';
 
-export const revalidate = 10;
+export const dynamic = 'force-dynamic';
 
 interface SharedCategoryPageProps {
   params: Promise<{ token: string }>;
@@ -159,6 +160,64 @@ async function getChildCategories(categorySlugPath: string[]) {
   return childrenWithCounts;
 }
 
+async function getDatabasesInCategory(categorySlugPath: string[]) {
+  // Get the category by slug path
+  let currentCategory = await prisma.sikkCategory.findFirst({
+    where: { slug: categorySlugPath[0], parentId: null },
+    select: { id: true, name: true },
+  });
+
+  for (let i = 1; i < categorySlugPath.length; i++) {
+    if (!currentCategory) return [];
+    currentCategory = await prisma.sikkCategory.findFirst({
+      where: { slug: categorySlugPath[i], parentId: currentCategory.id },
+      select: { id: true, name: true },
+    });
+  }
+
+  if (!currentCategory) return [];
+
+  // Build category path string (using names)
+  const buildCategoryPath = async (categoryId: string): Promise<string> => {
+    const parts: string[] = [];
+    let id: string | null = categoryId;
+
+    while (id) {
+      const cat: { name: string; parentId: string | null } | null = await prisma.sikkCategory.findUnique({
+        where: { id },
+        select: { name: true, parentId: true },
+      });
+      if (!cat) break;
+      parts.unshift(cat.name);
+      id = cat.parentId;
+    }
+
+    return parts.join('/');
+  };
+
+  const categoryPath = await buildCategoryPath(currentCategory.id);
+
+  // Get databases in this category
+  const databases = await prisma.sikkDatabase.findMany({
+    where: {
+      category: categoryPath,
+      isPublic: true,
+    },
+    orderBy: { createdAt: 'desc' },
+    select: {
+      id: true,
+      title: true,
+      description: true,
+      slug: true,
+      _count: {
+        select: { items: true },
+      },
+    },
+  });
+
+  return databases;
+}
+
 export default async function SharedCategoryPage({ params }: SharedCategoryPageProps) {
   const { token } = await params;
 
@@ -185,6 +244,8 @@ export default async function SharedCategoryPage({ params }: SharedCategoryPageP
   const childCategories = accessResult.includeSubcategories
     ? await getChildCategories(accessResult.categorySlugPath)
     : [];
+
+  const databases = await getDatabasesInCategory(accessResult.categorySlugPath);
 
   // Check if expiring soon (within 7 days)
   const isExpiringSoon =
@@ -228,6 +289,7 @@ export default async function SharedCategoryPage({ params }: SharedCategoryPageP
           </h1>
           <p style={{ color: 'var(--foreground-muted)' }}>
             {posts.length}개의 포스트
+            {databases.length > 0 && ` · ${databases.length}개의 데이터베이스`}
             {childCategories.length > 0 && ` · ${childCategories.length}개의 하위 카테고리`}
           </p>
         </header>
@@ -267,6 +329,58 @@ export default async function SharedCategoryPage({ params }: SharedCategoryPageP
                     {child.count}개의 포스트
                   </p>
                 </div>
+              ))}
+            </div>
+          </section>
+        )}
+
+        {/* Databases */}
+        {databases.length > 0 && (
+          <section className="mb-12">
+            <h2 className="text-xl font-semibold mb-4" style={{ color: 'var(--foreground)' }}>
+              데이터베이스
+            </h2>
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+              {databases.map((db) => (
+                <Link
+                  key={db.id}
+                  href={`/sc/${token}/db/${db.slug}`}
+                  className="group block p-4 rounded-xl border-2 border-pink-200 dark:border-pink-500/40 hover:border-pink-400 dark:hover:border-pink-400 transition-colors"
+                  style={{ background: 'var(--card-bg)' }}
+                >
+                  <div className="flex items-center gap-2 mb-2">
+                    <svg
+                      className="w-5 h-5 text-pink-500 dark:text-pink-400"
+                      fill="none"
+                      stroke="currentColor"
+                      viewBox="0 0 24 24"
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth={2}
+                        d="M4 7v10c0 2.21 3.582 4 8 4s8-1.79 8-4V7M4 7c0 2.21 3.582 4 8 4s8-1.79 8-4M4 7c0-2.21 3.582-4 8-4s8 1.79 8 4m0 5c0 2.21-3.582 4-8 4s-8-1.79-8-4"
+                      />
+                    </svg>
+                    <span
+                      className="font-semibold group-hover:text-pink-600 dark:group-hover:text-pink-400 transition-colors"
+                      style={{ color: 'var(--foreground)' }}
+                    >
+                      {db.title}
+                    </span>
+                  </div>
+                  {db.description && (
+                    <p
+                      className="text-sm line-clamp-2 mb-2"
+                      style={{ color: 'var(--foreground-muted)' }}
+                    >
+                      {db.description}
+                    </p>
+                  )}
+                  <p className="text-xs" style={{ color: 'var(--foreground-muted)' }}>
+                    {db._count.items}개의 항목
+                  </p>
+                </Link>
               ))}
             </div>
           </section>
@@ -347,11 +461,11 @@ export default async function SharedCategoryPage({ params }: SharedCategoryPageP
               ))}
             </div>
           </section>
-        ) : (
+        ) : databases.length === 0 && childCategories.length === 0 ? (
           <div className="text-center py-12" style={{ color: 'var(--foreground-muted)' }}>
             이 카테고리에 포스트가 없습니다.
           </div>
-        )}
+        ) : null}
 
         {/* Footer */}
         <footer className="mt-12 pt-8 border-t" style={{ borderColor: 'var(--card-border)' }}>
