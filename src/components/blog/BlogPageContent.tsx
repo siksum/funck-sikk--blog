@@ -17,6 +17,8 @@ interface DBCategory {
   id: string;
   name: string;
   slug: string;
+  slugPath: string[];
+  path: string[];
 }
 
 interface DBSection {
@@ -75,46 +77,42 @@ export default function BlogPageContent({
   const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
 
   const groupedCategories = useMemo(() => {
-    // Helper function to find a category by name in the entire tree (including children)
-    const findCategoryByName = (name: string): CategoryWithTags | null => {
+    // Helper function to find category count and tags from post-built tree
+    const findCategoryInfo = (slugPath: string[]): { count: number; tags: string[] } => {
       // First check root categories with tags
-      const rootMatch = rootCategoriesWithTags.find((cat) => cat.name === name);
-      if (rootMatch) {
-        return rootMatch;
+      if (slugPath.length === 1) {
+        const rootMatch = rootCategoriesWithTags.find((cat) => cat.slugPath[0] === slugPath[0]);
+        if (rootMatch) {
+          return { count: rootMatch.count, tags: rootMatch.tags };
+        }
       }
       // Then check children of root categories
       for (const rootCat of categories) {
-        if (rootCat.children) {
-          const childMatch = rootCat.children.find((child) => child.name === name);
+        if (rootCat.children && slugPath.length >= 2 && rootCat.slugPath[0] === slugPath[0]) {
+          const childMatch = rootCat.children.find(
+            (child) => child.slugPath.length === slugPath.length &&
+              child.slugPath.every((s, i) => s === slugPath[i])
+          );
           if (childMatch) {
-            return {
-              name: childMatch.name,
-              count: childMatch.count,
-              tags: [],
-              slugPath: childMatch.slugPath,
-            };
+            return { count: childMatch.count, tags: [] };
           }
         }
       }
-      return null;
+      return { count: 0, tags: [] };
     };
 
     // If we have DB sections with categories assigned, use them
     if (sections && sections.length > 0) {
       return sections.map((section) => {
-        // Build section categories - include all configured categories even if they have no posts
+        // Build section categories using slugPath from DB
         const sectionCategories: CategoryWithTags[] = section.categories.map((dbCat) => {
-          // Find matching category from posts (including children)
-          const existingCat = findCategoryByName(dbCat.name);
-          if (existingCat) {
-            return existingCat;
-          }
-          // Create empty category entry for categories without posts
+          // Use slugPath from DB, get count/tags from posts
+          const { count, tags } = findCategoryInfo(dbCat.slugPath);
           return {
             name: dbCat.name,
-            count: 0,
-            tags: [],
-            slugPath: [dbCat.slug],
+            count,
+            tags,
+            slugPath: dbCat.slugPath, // Use slugPath from DB (includes parent path)
           };
         });
         return {
@@ -134,7 +132,7 @@ export default function BlogPageContent({
       );
       return { section, categories: sectionCategories };
     });
-  }, [rootCategoriesWithTags, sections]);
+  }, [rootCategoriesWithTags, categories, sections]);
 
   // Get uncategorized databases (those without category assigned)
   const uncategorizedDatabases = useMemo(() => {
