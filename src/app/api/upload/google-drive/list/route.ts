@@ -33,11 +33,17 @@ export async function GET(request: NextRequest) {
 
     const blogDriveId = process.env.GOOGLE_DRIVE_BLOG_ID;
     const sikkDriveId = process.env.GOOGLE_DRIVE_SIKK_ID;
+    const homeDriveId = process.env.GOOGLE_DRIVE_HOME_ID;
     const legacyFolderId = process.env.GOOGLE_DRIVE_FOLDER_ID;
 
-    const driveId = driveType === 'sikk'
-      ? (sikkDriveId || legacyFolderId)
-      : (blogDriveId || legacyFolderId);
+    let driveId: string | undefined;
+    if (driveType === 'sikk') {
+      driveId = sikkDriveId || legacyFolderId;
+    } else if (driveType === 'home') {
+      driveId = homeDriveId || legacyFolderId;
+    } else {
+      driveId = blogDriveId || legacyFolderId;
+    }
 
     if (!clientEmail || !privateKey || !driveId) {
       return NextResponse.json(

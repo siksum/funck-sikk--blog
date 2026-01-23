@@ -22,7 +22,7 @@ interface GoogleDriveFileBrowserProps {
   isOpen: boolean;
   onClose: () => void;
   onSelect: (files: DriveFile[]) => void;
-  driveType?: 'blog' | 'sikk';
+  driveType?: 'blog' | 'sikk' | 'home';
   multiple?: boolean;
   acceptedTypes?: string[]; // e.g., ['application/pdf', 'image/*']
 }
@@ -44,7 +44,7 @@ export default function GoogleDriveFileBrowser({
   const [folderPath, setFolderPath] = useState<{ id: string; name: string }[]>([]);
   const [selectedFiles, setSelectedFiles] = useState<DriveFile[]>([]);
   const [nextPageToken, setNextPageToken] = useState<string | null>(null);
-  const [activeDriveType, setActiveDriveType] = useState<'blog' | 'sikk'>(initialDriveType);
+  const [activeDriveType, setActiveDriveType] = useState<'blog' | 'sikk' | 'home'>(initialDriveType);
 
   const loadFiles = useCallback(async (folderId?: string, append = false) => {
     setLoading(true);
@@ -100,7 +100,7 @@ export default function GoogleDriveFileBrowser({
     }
   }, [isOpen, activeDriveType]);
 
-  const switchDrive = (drive: 'blog' | 'sikk') => {
+  const switchDrive = (drive: 'blog' | 'sikk' | 'home') => {
     if (drive !== activeDriveType) {
       setActiveDriveType(drive);
       setFolderPath([]);
@@ -226,6 +226,16 @@ export default function GoogleDriveFileBrowser({
           >
             📁 Sikk Drive
           </button>
+          <button
+            onClick={() => switchDrive('home')}
+            className={`flex-1 px-4 py-2 text-sm font-medium transition-colors ${
+              activeDriveType === 'home'
+                ? 'text-pink-600 dark:text-pink-400 border-b-2 border-pink-500'
+                : 'text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300'
+            }`}
+          >
+            🏠 Home Drive
+          </button>
         </div>
 
         {/* Breadcrumb */}
@@ -234,7 +244,7 @@ export default function GoogleDriveFileBrowser({
             onClick={navigateToRoot}
             className="hover:text-pink-600 dark:hover:text-pink-400 whitespace-nowrap"
           >
-            📁 {activeDriveType === 'sikk' ? 'Sikk Drive' : 'Blog Drive'}
+            📁 {activeDriveType === 'home' ? 'Home Drive' : activeDriveType === 'sikk' ? 'Sikk Drive' : 'Blog Drive'}
           </button>
           {folderPath.map((folder, index) => (
             <span key={folder.id} className="flex items-center gap-1">
