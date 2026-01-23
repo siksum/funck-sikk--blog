@@ -136,6 +136,41 @@ export async function getAllSikkTagsAsync(): Promise<{ name: string; count: numb
 
 async function buildSikkCategoryTreeAsync(): Promise<CategoryTreeNode> {
   const posts = await getAllSikkPostsAsync();
+
+  // Also get databases for counting
+  const databases = await prisma.sikkDatabase.findMany({
+    where: { isPublic: true },
+    select: { category: true },
+  });
+
+  // Get all SikkCategories from DB for path resolution
+  const dbCategories = await prisma.sikkCategory.findMany({
+    include: {
+      parent: {
+        include: {
+          parent: true,
+        },
+      },
+    },
+  });
+
+  // Build a map from category name to full path
+  const categoryNameToPath = new Map<string, string[]>();
+  dbCategories.forEach((cat) => {
+    const path: string[] = [];
+    // Build path from parent chain
+    if (cat.parent?.parent) {
+      path.push(cat.parent.parent.name);
+    }
+    if (cat.parent) {
+      path.push(cat.parent.name);
+    }
+    path.push(cat.name);
+    categoryNameToPath.set(cat.name, path);
+    // Also map by full path for exact matches
+    categoryNameToPath.set(path.join('/'), path);
+  });
+
   const root: CategoryTreeNode = {
     name: 'root',
     slug: '',
@@ -146,8 +181,54 @@ async function buildSikkCategoryTreeAsync(): Promise<CategoryTreeNode> {
     slugPath: [],
   };
 
+  // Count posts
   posts.forEach((post) => {
     const pathSegments = post.categoryPath;
+    let current = root;
+
+    pathSegments.forEach((segment, index) => {
+      const segmentSlug = slugify(segment);
+      const currentPath = pathSegments.slice(0, index + 1);
+      const currentSlugPath = currentPath.map(slugify);
+
+      if (!current.children[segmentSlug]) {
+        current.children[segmentSlug] = {
+          name: segment,
+          slug: segmentSlug,
+          count: 0,
+          directCount: 0,
+          children: {},
+          path: currentPath,
+          slugPath: currentSlugPath,
+        };
+      }
+
+      current.children[segmentSlug].count++;
+
+      if (index === pathSegments.length - 1) {
+        current.children[segmentSlug].directCount++;
+      }
+
+      current = current.children[segmentSlug];
+    });
+  });
+
+  // Count databases (each database counts as 1)
+  databases.forEach((db) => {
+    if (!db.category) return;
+
+    // Try to resolve the full path from the category name
+    // Database category might be just the name (e.g., "대학교") or full path (e.g., "성신여자대학교/대학교")
+    let pathSegments = parseCategoryPath(db.category);
+
+    // If only one segment, try to find the full path from DB categories
+    if (pathSegments.length === 1) {
+      const fullPath = categoryNameToPath.get(pathSegments[0]);
+      if (fullPath) {
+        pathSegments = fullPath;
+      }
+    }
+
     let current = root;
 
     pathSegments.forEach((segment, index) => {
@@ -361,8 +442,8 @@ export async function getSikkChildCategoriesWithTagsAsync(slugPath: string[]): P
 
   // If no categories found from posts, fall back to database
   if (childCategories.length === 0) {
-    const dbCategories = await getSikkChildCategoriesFromDbAsync(slugPath);
-    childCategories = dbCategories.map((cat) => ({
+    const dbCategoriesFromDb = await getSikkChildCategoriesFromDbAsync(slugPath);
+    childCategories = dbCategoriesFromDb.map((cat) => ({
       name: cat.name,
       slug: cat.slug,
       count: cat.count,
@@ -374,11 +455,62 @@ export async function getSikkChildCategoriesWithTagsAsync(slugPath: string[]): P
 
   const posts = await getAllSikkPostsAsync();
 
+  // Get databases for counting
+  const databases = await prisma.sikkDatabase.findMany({
+    where: { isPublic: true },
+    select: { category: true },
+  });
+
+  // Get all SikkCategories from DB for path resolution
+  const dbCategoryRecords = await prisma.sikkCategory.findMany({
+    include: {
+      parent: {
+        include: {
+          parent: true,
+        },
+      },
+    },
+  });
+
+  // Build a map from category name to full path
+  const categoryNameToPath = new Map<string, string[]>();
+  dbCategoryRecords.forEach((cat) => {
+    const path: string[] = [];
+    if (cat.parent?.parent) {
+      path.push(cat.parent.parent.name);
+    }
+    if (cat.parent) {
+      path.push(cat.parent.name);
+    }
+    path.push(cat.name);
+    categoryNameToPath.set(cat.name, path);
+    categoryNameToPath.set(path.join('/'), path);
+  });
+
   return childCategories
     .map((cat) => {
+      // Count posts in this category
       const categoryPosts = posts.filter((post) =>
         cat.slugPath.every((slug, index) => post.categorySlugPath[index] === slug)
       );
+
+      // Count databases in this category (compare by slugified category path)
+      const categoryDatabases = databases.filter((db) => {
+        if (!db.category) return false;
+
+        // Resolve the full path from category name
+        let dbPath = parseCategoryPath(db.category);
+        if (dbPath.length === 1) {
+          const fullPath = categoryNameToPath.get(dbPath[0]);
+          if (fullPath) {
+            dbPath = fullPath;
+          }
+        }
+
+        const dbSlugPath = dbPath.map(slugify);
+        return cat.slugPath.every((slug, index) => dbSlugPath[index] === slug);
+      });
+
       const tagSet = new Set<string>();
       categoryPosts.forEach((post) => {
         post.tags.forEach((tag) => tagSet.add(tag));
@@ -386,7 +518,7 @@ export async function getSikkChildCategoriesWithTagsAsync(slugPath: string[]): P
 
       return {
         name: cat.name,
-        count: categoryPosts.length, // Use actual count from posts
+        count: categoryPosts.length + categoryDatabases.length, // Include both posts and databases
         tags: Array.from(tagSet),
         slugPath: cat.slugPath,
       };
@@ -574,28 +706,27 @@ export async function getSikkChildCategoriesFromDbAsync(parentSlugPath: string[]
 
   try {
     // Find the parent category first
-    let parentId: string | null = null;
+    let currentParentId: string | null = null;
     const pathNames: string[] = [];
     const pathSlugs: string[] = [];
 
-    for (const slug of parentSlugPath) {
-      const category = await prisma.sikkCategory.findFirst({
-        where: {
-          slug,
-          parentId,
-        },
+    for (let i = 0; i < parentSlugPath.length; i++) {
+      const slug = parentSlugPath[i];
+      const allCategories = await prisma.sikkCategory.findMany({
+        where: { slug },
       });
+      const foundCat = allCategories.find((c) => c.parentId === currentParentId);
 
-      if (!category) return [];
+      if (!foundCat) return [];
 
-      parentId = category.id;
-      pathNames.push(category.name);
-      pathSlugs.push(category.slug);
+      currentParentId = foundCat.id;
+      pathNames.push(foundCat.name);
+      pathSlugs.push(foundCat.slug);
     }
 
     // Now get all children of this parent
     const children = await prisma.sikkCategory.findMany({
-      where: { parentId },
+      where: { parentId: currentParentId },
       orderBy: { order: 'asc' },
     });
 
