@@ -1016,6 +1016,44 @@ export default function EditorToolbar({ editor, onSave, onCancel, driveType = 'b
                 e.preventDefault();
                 e.stopPropagation();
                 editor.chain().focus().insertTable({ rows: 3, cols: 3, withHeaderRow: false }).run();
+                // Toggle header column after insertion
+                setTimeout(() => {
+                  editor.chain().focus().toggleHeaderColumn().run();
+                }, 10);
+                setShowTableInsertMenu(false);
+              }}
+              className="w-full text-left px-2 py-1.5 text-sm rounded hover:bg-pink-100 dark:hover:bg-pink-500/20 flex items-center gap-2"
+            >
+              <svg className="w-4 h-4 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 3v18M14 3v18m-4-9h8m0-7H5a2 2 0 00-2 2v12a2 2 0 002 2h14a2 2 0 002-2V5a2 2 0 00-2-2z" />
+              </svg>
+              제목열 포함
+            </button>
+            <button
+              type="button"
+              onClick={(e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                editor.chain().focus().insertTable({ rows: 3, cols: 3, withHeaderRow: true }).run();
+                // Toggle header column after insertion
+                setTimeout(() => {
+                  editor.chain().focus().toggleHeaderColumn().run();
+                }, 10);
+                setShowTableInsertMenu(false);
+              }}
+              className="w-full text-left px-2 py-1.5 text-sm rounded hover:bg-pink-100 dark:hover:bg-pink-500/20 flex items-center gap-2"
+            >
+              <svg className="w-4 h-4 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 10h18M10 3v18m-7 5h14a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z" />
+              </svg>
+              제목행+열 포함
+            </button>
+            <button
+              type="button"
+              onClick={(e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                editor.chain().focus().insertTable({ rows: 3, cols: 3, withHeaderRow: false }).run();
                 setShowTableInsertMenu(false);
               }}
               className="w-full text-left px-2 py-1.5 text-sm rounded hover:bg-pink-100 dark:hover:bg-pink-500/20 flex items-center gap-2"
@@ -1023,7 +1061,7 @@ export default function EditorToolbar({ editor, onSave, onCancel, driveType = 'b
               <svg className="w-4 h-4 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 10h16M4 14h16M4 18h16" />
               </svg>
-              제목행 없음
+              제목 없음
             </button>
           </div>
         )}
@@ -1067,6 +1105,15 @@ export default function EditorToolbar({ editor, onSave, onCancel, driveType = 'b
           >
             <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 6v12a2 2 0 002 2h12a2 2 0 002-2V6M4 6l2-2h12l2 2" />
+            </svg>
+          </ToolbarButton>
+          {/* Toggle Header Column */}
+          <ToolbarButton
+            onClick={() => editor.chain().focus().toggleHeaderColumn().run()}
+            title="제목열 토글"
+          >
+            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 4v16M6 4h12a2 2 0 012 2v12a2 2 0 01-2 2H6M6 4l-2 2v12l2 2" />
             </svg>
           </ToolbarButton>
           {/* Table Cell Color */}
