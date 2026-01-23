@@ -145,9 +145,18 @@ async function getSikkSections() {
 
 async function getDatabasesByCategory(categoryPath: string) {
   try {
+    // Get the last part of the category path (e.g., "대학교" from "성신여자대학교/대학교")
+    const categoryParts = categoryPath.split('/');
+    const lastCategoryName = categoryParts[categoryParts.length - 1];
+
     const databases = await prisma.sikkDatabase.findMany({
       where: {
-        category: categoryPath,
+        OR: [
+          // Exact match with full path
+          { category: categoryPath },
+          // Match with just the category name (for backwards compatibility)
+          { category: lastCategoryName },
+        ],
         isPublic: true,
       },
       orderBy: { createdAt: 'desc' },
