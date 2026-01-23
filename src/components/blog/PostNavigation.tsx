@@ -8,7 +8,17 @@ interface PostNavigationProps {
   variant?: 'default' | 'pink';
 }
 
-export default function PostNavigation({ prevPost, nextPost, basePath = '/blog', variant = 'default' }: PostNavigationProps) {
+function getPostUrl(post: Post, basePath: string): string {
+  // If the post has categorySlugPath, use it to build the full URL
+  if (post.categorySlugPath && post.categorySlugPath.length > 0) {
+    const categoryPath = post.categorySlugPath.map(s => encodeURIComponent(s)).join('/');
+    return `${basePath}/${categoryPath}/${encodeURIComponent(post.slug)}`;
+  }
+  // Fallback for uncategorized posts
+  return `${basePath}/uncategorized/${encodeURIComponent(post.slug)}`;
+}
+
+export default function PostNavigation({ prevPost, nextPost, basePath = '/blog/categories', variant = 'default' }: PostNavigationProps) {
   const isPink = variant === 'pink';
 
   const hoverClasses = isPink
@@ -30,7 +40,7 @@ export default function PostNavigation({ prevPost, nextPost, basePath = '/blog',
         <div>
           {prevPost ? (
             <Link
-              href={`${basePath}/${prevPost.slug}`}
+              href={getPostUrl(prevPost, basePath)}
               className={`group block p-4 rounded-xl h-full transition-all duration-300 ${hoverClasses} ${borderClasses}`}
               style={{ background: 'var(--card-bg)', borderColor: isPink ? undefined : 'var(--card-border)' }}
             >
@@ -67,7 +77,7 @@ export default function PostNavigation({ prevPost, nextPost, basePath = '/blog',
         <div>
           {nextPost ? (
             <Link
-              href={`${basePath}/${nextPost.slug}`}
+              href={getPostUrl(nextPost, basePath)}
               className={`group block p-4 rounded-xl h-full transition-all duration-300 text-right ${hoverClasses} ${borderClasses}`}
               style={{ background: 'var(--card-bg)', borderColor: isPink ? undefined : 'var(--card-border)' }}
             >
