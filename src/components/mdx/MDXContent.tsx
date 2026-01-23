@@ -320,32 +320,45 @@ export default function MDXContent({ content }: MDXContentProps) {
               </div>
             ),
             thead: ({ children }) => (
-              <thead className="bg-violet-50 dark:bg-violet-500/10">{children}</thead>
+              <thead>{children}</thead>
             ),
             tbody: ({ children }) => <tbody>{children}</tbody>,
             tr: ({ children }) => (
               <tr className="border-b border-violet-200 dark:border-violet-500/30">{children}</tr>
             ),
-            th: ({ children, style, rowSpan, colSpan }) => (
-              <th
-                className="px-4 py-2 text-left font-semibold border border-violet-200 dark:border-violet-500/30 whitespace-nowrap"
-                style={{ color: 'var(--foreground)', minWidth: '80px', ...style }}
-                rowSpan={rowSpan}
-                colSpan={colSpan}
-              >
-                {children}
-              </th>
-            ),
-            td: ({ children, style, rowSpan, colSpan }) => (
-              <td
-                className="px-4 py-2 border border-violet-200 dark:border-violet-500/30"
-                style={{ color: 'var(--foreground)', minWidth: '80px', ...style }}
-                rowSpan={rowSpan}
-                colSpan={colSpan}
-              >
-                {children}
-              </td>
-            ),
+            th: ({ children, style, rowSpan, colSpan, node }) => {
+              // Get data-highlight attribute from the node
+              const dataHighlight = node?.properties?.dataHighlight as string | undefined;
+              // Only use inline style if user explicitly set a highlight color
+              // Otherwise, use Tailwind classes for proper light/dark mode support
+              const bgStyle = dataHighlight ? { backgroundColor: dataHighlight } : {};
+              const bgClass = dataHighlight ? '' : 'bg-violet-50 dark:bg-violet-500/10';
+              return (
+                <th
+                  className={`px-4 py-2 text-left font-semibold border border-violet-200 dark:border-violet-500/30 whitespace-nowrap ${bgClass}`}
+                  style={{ color: 'var(--foreground)', minWidth: '80px', ...bgStyle, ...style }}
+                  rowSpan={rowSpan}
+                  colSpan={colSpan}
+                >
+                  {children}
+                </th>
+              );
+            },
+            td: ({ children, style, rowSpan, colSpan, node }) => {
+              // Get data-highlight attribute from the node
+              const dataHighlight = node?.properties?.dataHighlight as string | undefined;
+              const bgStyle = dataHighlight ? { backgroundColor: dataHighlight } : {};
+              return (
+                <td
+                  className="px-4 py-2 border border-violet-200 dark:border-violet-500/30"
+                  style={{ color: 'var(--foreground)', minWidth: '80px', ...bgStyle, ...style }}
+                  rowSpan={rowSpan}
+                  colSpan={colSpan}
+                >
+                  {children}
+                </td>
+              );
+            },
             input: ({ type, checked, ...props }) => {
               if (type === 'checkbox') {
                 return (

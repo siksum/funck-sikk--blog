@@ -35,6 +35,35 @@ interface Column {
   options?: string[];
 }
 
+// Helper function to extract proper filename from various URL types
+function getFileDisplayName(url: string): string {
+  try {
+    // Google Drive URL with name parameter
+    if (url.includes('drive.google.com')) {
+      const nameMatch = url.match(/[?&]name=([^&]+)/);
+      if (nameMatch) {
+        return decodeURIComponent(nameMatch[1]);
+      }
+      // Fallback to Drive ID display for old URLs
+      const idMatch = url.match(/id=([^&]+)/) || url.match(/\/d\/([^/]+)/);
+      if (idMatch) {
+        return `Drive (${idMatch[1].substring(0, 8)}...)`;
+      }
+    }
+    // Cloudinary URL: https://res.cloudinary.com/.../filename.ext
+    if (url.includes('cloudinary.com')) {
+      const parts = url.split('/');
+      const filename = parts[parts.length - 1];
+      return filename.replace(/^v\d+_/, '');
+    }
+    // Default: just get the last part of the path
+    const parts = url.split('/');
+    return parts[parts.length - 1] || url;
+  } catch {
+    return url.substring(0, 20) + '...';
+  }
+}
+
 interface Item {
   id: string;
   data: Record<string, unknown>;
@@ -683,7 +712,7 @@ export default async function SikkCategoryPage({ params }: CategoryPageProps) {
 
           <div className="flex flex-wrap gap-4 text-sm" style={{ color: 'var(--foreground)', opacity: 0.7 }}>
             {columns
-              .filter((c) => c.type !== 'title' && data[c.id])
+              .filter((c) => c.type !== 'title' && c.type !== 'files' && data[c.id])
               .slice(0, 4)
               .map((column) => (
                 <div key={column.id} className="flex items-center gap-1">
@@ -698,8 +727,6 @@ export default async function SikkCategoryPage({ params }: CategoryPageProps) {
                       >
                         링크
                       </a>
-                    ) : column.type === 'files' && Array.isArray(data[column.id]) ? (
-                      `${(data[column.id] as string[]).length}개 파일`
                     ) : (
                       String(data[column.id])
                     )}
@@ -707,6 +734,31 @@ export default async function SikkCategoryPage({ params }: CategoryPageProps) {
                 </div>
               ))}
           </div>
+
+          {/* Files Section */}
+          {columns
+            .filter((c) => c.type === 'files' && Array.isArray(data[c.id]) && (data[c.id] as string[]).length > 0)
+            .map((column) => (
+              <div key={column.id} className="mt-4">
+                <span className="text-sm font-medium" style={{ color: 'var(--foreground)', opacity: 0.7 }}>{column.name}:</span>
+                <div className="flex flex-wrap gap-2 mt-2">
+                  {(data[column.id] as string[]).map((file: string, i: number) => (
+                    <a
+                      key={i}
+                      href={file}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="inline-flex items-center gap-1.5 px-3 py-1.5 text-sm bg-purple-100 dark:bg-purple-900/30 text-purple-700 dark:text-purple-300 rounded-lg hover:bg-purple-200 dark:hover:bg-purple-800/40 transition-colors"
+                    >
+                      <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                      </svg>
+                      {getFileDisplayName(file)}
+                    </a>
+                  ))}
+                </div>
+              </div>
+            ))}
         </header>
 
         <hr className="mb-8 border-t-2 border-purple-400 dark:border-purple-500" />

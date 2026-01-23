@@ -264,9 +264,9 @@ export default function TableEditor({ isOpen, onClose, onInsert }: TableEditorPr
     headers.forEach((header, colIndex) => {
       if (header.hidden) return;
       const bgColor = header.highlight || colHighlights[colIndex] || '';
-      const style = bgColor ? ` style="background-color: ${bgColor}"` : '';
+      const highlight = bgColor ? ` data-highlight="${bgColor}"` : '';
       const colSpan = header.colSpan > 1 ? ` colspan="${header.colSpan}"` : '';
-      html += `      <th${colSpan}${style}>${header.content || ''}</th>\n`;
+      html += `      <th${colSpan}${highlight}>${header.content || ''}</th>\n`;
     });
     html += '    </tr>\n  </thead>\n';
 
@@ -277,10 +277,10 @@ export default function TableEditor({ isOpen, onClose, onInsert }: TableEditorPr
       row.forEach((cell, colIndex) => {
         if (cell.hidden) return;
         const bgColor = getCellBackground(rowIndex, colIndex, cell);
-        const style = bgColor ? ` style="background-color: ${bgColor}"` : '';
+        const highlight = bgColor ? ` data-highlight="${bgColor}"` : '';
         const rowSpan = cell.rowSpan > 1 ? ` rowspan="${cell.rowSpan}"` : '';
         const colSpan = cell.colSpan > 1 ? ` colspan="${cell.colSpan}"` : '';
-        html += `      <td${rowSpan}${colSpan}${style}>${cell.content || ''}</td>\n`;
+        html += `      <td${rowSpan}${colSpan}${highlight}>${cell.content || ''}</td>\n`;
       });
       html += '    </tr>\n';
     });
