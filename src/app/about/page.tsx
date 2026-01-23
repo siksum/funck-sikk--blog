@@ -4,6 +4,14 @@ import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import Image from 'next/image';
 
+interface TimelineItem {
+  year: string;
+  title: string;
+  subtitle: string;
+  org: string;
+  detail: string;
+}
+
 interface AboutData {
   profile: {
     name: string;
@@ -13,6 +21,7 @@ interface AboutData {
     github: string;
     email: string;
     telegram: string;
+    highlightName?: string; // 논문에서 강조할 이름
   };
   bio: {
     quote: string;
@@ -21,16 +30,19 @@ interface AboutData {
   researchInterests: string[];
   inProgress: string[];
   timeline: {
-    education: Array<{ year: string; title: string; subtitle: string; org: string; detail: string }>;
-    work: Array<{ year: string; title: string; subtitle: string; org: string; detail: string }>;
-    research: Array<{ year: string; title: string; subtitle: string; org: string; detail: string }>;
+    education: TimelineItem[];
+    scholarship: TimelineItem[];
+    project: TimelineItem[];
+    work: TimelineItem[];
+    research: TimelineItem[];
+    activities: TimelineItem[];
   };
   publications: {
     journals: Array<{ authors: string; title: string; venue: string; badge: string; featured?: boolean; korean?: string }>;
     international: Array<{ authors: string; title: string; venue: string }>;
     domestic: Array<{ authors: string; title: string; venue: string; korean?: string; award?: string }>;
   };
-  awards: Array<{ title: string; org: string; year: string; highlight?: boolean; korean?: string }>;
+  awards: Array<{ title: string; org: string; year: string; highlight?: boolean; korean?: string; linkedSection?: string }>;
   certificates: Array<{ title: string; org: string; date: string }>;
   patents: Array<{ title: string; code: string; date: string; korean: string }>;
   activities: {
@@ -54,8 +66,10 @@ export default function AboutPage() {
     activities: true,
     press: true,
   });
-  const [activeTab, setActiveTab] = useState<'education' | 'work' | 'research'>('education');
+  const [activeEducationTab, setActiveEducationTab] = useState<'education' | 'scholarship' | 'project'>('education');
+  const [activeExperienceTab, setActiveExperienceTab] = useState<'research' | 'work' | 'activities'>('research');
   const [activePubTab, setActivePubTab] = useState<'journals' | 'international' | 'domestic'>('journals');
+  const [activeAwardsTab, setActiveAwardsTab] = useState<'all' | 'research' | 'competition' | 'activity'>('all');
   const [data, setData] = useState<AboutData | null>(null);
   const [loading, setLoading] = useState(true);
 
@@ -119,6 +133,26 @@ export default function AboutPage() {
 
   const toggleSection = (section: keyof typeof expandedSections) => {
     setExpandedSections(prev => ({ ...prev, [section]: !prev[section] }));
+  };
+
+  // Helper function to highlight author name in publication
+  const highlightAuthorName = (authors: string) => {
+    const highlightName = data?.profile.highlightName || 'Namryeong Kim';
+    if (!authors.includes(highlightName)) return authors;
+
+    const parts = authors.split(highlightName);
+    return (
+      <>
+        {parts.map((part, index) => (
+          <span key={index}>
+            {part}
+            {index < parts.length - 1 && (
+              <span className="font-bold underline decoration-violet-500">{highlightName}</span>
+            )}
+          </span>
+        ))}
+      </>
+    );
   };
   const fadeInUp = {
     initial: { opacity: 0, y: 20 },
@@ -295,7 +329,7 @@ export default function AboutPage() {
           </AnimatePresence>
         </motion.section>
 
-        {/* Education & Experience - Tabbed Timeline */}
+        {/* Education Section - Tabbed Timeline */}
         <motion.section
           initial={{ opacity: 0, y: 20 }}
           whileInView={{ opacity: 1, y: 0 }}
@@ -305,7 +339,7 @@ export default function AboutPage() {
           <SectionHeader
             sectionKey="education"
             icon={<svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" /></svg>}
-            title="Education & Experience"
+            title="Education"
           />
           <AnimatePresence>
           {expandedSections.education && (
@@ -318,15 +352,15 @@ export default function AboutPage() {
           {/* Tabs */}
           <div className="flex gap-2 mb-6 p-1 about-tab-bar rounded-xl border border-gray-200 dark:border-gray-600">
             {[
-              { id: 'education' as const, label: 'Education', icon: '🎓', count: data.timeline.education.length },
-              { id: 'work' as const, label: 'Work', icon: '💼', count: data.timeline.work.length },
-              { id: 'research' as const, label: 'Research', icon: '🔬', count: data.timeline.research.length },
+              { id: 'education' as const, label: 'Education', icon: '🎓', count: data.timeline.education?.length || 0 },
+              { id: 'scholarship' as const, label: 'Scholarship', icon: '🏅', count: data.timeline.scholarship?.length || 0 },
+              { id: 'project' as const, label: 'Project', icon: '📂', count: data.timeline.project?.length || 0 },
             ].map((tab) => (
               <button
                 key={tab.id}
-                onClick={() => setActiveTab(tab.id)}
+                onClick={() => setActiveEducationTab(tab.id)}
                 className={`flex-1 px-4 py-2.5 rounded-lg font-medium text-sm transition-all duration-200 flex items-center justify-center gap-2 ${
-                  activeTab === tab.id
+                  activeEducationTab === tab.id
                     ? 'about-tab-active text-accent-violet shadow-sm dark:shadow-none border-transparent dark:border dark:border-violet-400'
                     : 'about-tab-inactive hover:text-gray-900'
                 }`}
@@ -341,7 +375,7 @@ export default function AboutPage() {
           {/* Timeline Content */}
           <AnimatePresence mode="wait">
             <motion.div
-              key={activeTab}
+              key={activeEducationTab}
               initial={{ opacity: 0, y: 10 }}
               animate={{ opacity: 1, y: 0 }}
               exit={{ opacity: 0, y: -10 }}
@@ -350,16 +384,24 @@ export default function AboutPage() {
             >
               {/* Timeline line */}
               <div className={`absolute left-3 top-0 bottom-0 w-0.5 rounded-full ${
-                activeTab === 'education'
+                activeEducationTab === 'education'
                   ? 'bg-gradient-to-b from-violet-500 via-indigo-500 to-purple-500'
-                  : activeTab === 'work'
-                  ? 'bg-gradient-to-b from-emerald-500 via-teal-500 to-green-500'
-                  : 'bg-gradient-to-b from-indigo-500 via-blue-500 to-cyan-500'
+                  : activeEducationTab === 'scholarship'
+                  ? 'bg-gradient-to-b from-amber-500 via-yellow-500 to-orange-500'
+                  : 'bg-gradient-to-b from-cyan-500 via-teal-500 to-emerald-500'
               }`} />
 
               <div className="space-y-4">
                 {(() => {
-                  const filteredItems = data.timeline[activeTab];
+                  const filteredItems = data.timeline[activeEducationTab] || [];
+
+                  if (filteredItems.length === 0) {
+                    return (
+                      <div className="text-center py-8 text-gray-500 dark:text-gray-400">
+                        아직 등록된 항목이 없습니다.
+                      </div>
+                    );
+                  }
 
                   return filteredItems.map((item, index) => (
                     <motion.div
@@ -371,11 +413,11 @@ export default function AboutPage() {
                     >
                       {/* Timeline dot */}
                       <div className={`absolute left-0 top-4 w-6 h-6 rounded-full flex items-center justify-center z-10 ${
-                        activeTab === 'education'
+                        activeEducationTab === 'education'
                           ? 'bg-violet-500'
-                          : activeTab === 'work'
-                          ? 'bg-emerald-500'
-                          : 'bg-indigo-500'
+                          : activeEducationTab === 'scholarship'
+                          ? 'bg-amber-500'
+                          : 'bg-cyan-500'
                       }`}>
                         <div className="w-2 h-2 rounded-full bg-white" />
                       </div>
@@ -388,11 +430,137 @@ export default function AboutPage() {
                       >
                         <div className="flex flex-wrap items-center gap-2 mb-2">
                           <span className={`px-2.5 py-0.5 rounded-full text-xs font-medium border ${
-                            activeTab === 'education'
+                            activeEducationTab === 'education'
                               ? 'bg-violet-100 dark:bg-transparent text-violet-700 dark:text-violet-200 border-violet-200 dark:border-violet-400'
-                              : activeTab === 'work'
+                              : activeEducationTab === 'scholarship'
+                              ? 'bg-amber-100 dark:bg-transparent text-amber-700 dark:text-amber-200 border-amber-200 dark:border-amber-400'
+                              : 'bg-cyan-100 dark:bg-transparent text-cyan-700 dark:text-cyan-200 border-cyan-200 dark:border-cyan-400'
+                          }`}>
+                            {item.year}
+                          </span>
+                        </div>
+                        <h3 className="text-lg font-semibold card-title">{item.title}</h3>
+                        <p className="text-accent-violet font-medium text-sm">{item.subtitle}</p>
+                        {item.org && <p className="text-gray-600 dark:text-gray-400 text-sm">{item.org}</p>}
+                        {item.detail && <p className="text-gray-500 dark:text-gray-500 text-xs mt-1">{item.detail}</p>}
+                      </motion.div>
+                    </motion.div>
+                  ));
+                })()}
+              </div>
+            </motion.div>
+          </AnimatePresence>
+          </motion.div>
+          )}
+          </AnimatePresence>
+        </motion.section>
+
+        {/* Experience Section - Tabbed Timeline */}
+        <motion.section
+          initial={{ opacity: 0, y: 20 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ margin: "-100px" }}
+          transition={{ duration: 0.5 }}
+        >
+          <SectionHeader
+            sectionKey="education"
+            icon={<svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 13.255A23.931 23.931 0 0112 15c-3.183 0-6.22-.62-9-1.745M16 6V4a2 2 0 00-2-2h-4a2 2 0 00-2 2v2m4 6h.01M5 20h14a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" /></svg>}
+            title="Experience"
+          />
+          <AnimatePresence>
+          {expandedSections.education && (
+          <motion.div
+            initial={{ height: 0, opacity: 0 }}
+            animate={{ height: "auto", opacity: 1 }}
+            exit={{ height: 0, opacity: 0 }}
+            transition={{ duration: 0.3 }}
+          >
+          {/* Tabs */}
+          <div className="flex gap-2 mb-6 p-1 about-tab-bar rounded-xl border border-gray-200 dark:border-gray-600">
+            {[
+              { id: 'research' as const, label: 'Research', icon: '🔬', count: data.timeline.research?.length || 0 },
+              { id: 'work' as const, label: 'Work', icon: '💼', count: data.timeline.work?.length || 0 },
+              { id: 'activities' as const, label: 'Activities', icon: '🎯', count: data.timeline.activities?.length || 0 },
+            ].map((tab) => (
+              <button
+                key={tab.id}
+                onClick={() => setActiveExperienceTab(tab.id)}
+                className={`flex-1 px-4 py-2.5 rounded-lg font-medium text-sm transition-all duration-200 flex items-center justify-center gap-2 ${
+                  activeExperienceTab === tab.id
+                    ? 'about-tab-active text-accent-violet shadow-sm dark:shadow-none border-transparent dark:border dark:border-violet-400'
+                    : 'about-tab-inactive hover:text-gray-900'
+                }`}
+              >
+                <span>{tab.icon}</span>
+                <span className="hidden sm:inline">{tab.label}</span>
+                <span className="text-xs opacity-60">({tab.count})</span>
+              </button>
+            ))}
+          </div>
+
+          {/* Timeline Content */}
+          <AnimatePresence mode="wait">
+            <motion.div
+              key={activeExperienceTab}
+              initial={{ opacity: 0, y: 10 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -10 }}
+              transition={{ duration: 0.2 }}
+              className="relative"
+            >
+              {/* Timeline line */}
+              <div className={`absolute left-3 top-0 bottom-0 w-0.5 rounded-full ${
+                activeExperienceTab === 'research'
+                  ? 'bg-gradient-to-b from-indigo-500 via-blue-500 to-cyan-500'
+                  : activeExperienceTab === 'work'
+                  ? 'bg-gradient-to-b from-emerald-500 via-teal-500 to-green-500'
+                  : 'bg-gradient-to-b from-purple-500 via-pink-500 to-rose-500'
+              }`} />
+
+              <div className="space-y-4">
+                {(() => {
+                  const filteredItems = data.timeline[activeExperienceTab] || [];
+
+                  if (filteredItems.length === 0) {
+                    return (
+                      <div className="text-center py-8 text-gray-500 dark:text-gray-400">
+                        아직 등록된 항목이 없습니다.
+                      </div>
+                    );
+                  }
+
+                  return filteredItems.map((item, index) => (
+                    <motion.div
+                      key={index}
+                      className="relative pl-8"
+                      initial={{ opacity: 0, x: -10 }}
+                      animate={{ opacity: 1, x: 0 }}
+                      transition={{ duration: 0.3, delay: index * 0.1 }}
+                    >
+                      {/* Timeline dot */}
+                      <div className={`absolute left-0 top-4 w-6 h-6 rounded-full flex items-center justify-center z-10 ${
+                        activeExperienceTab === 'research'
+                          ? 'bg-indigo-500'
+                          : activeExperienceTab === 'work'
+                          ? 'bg-emerald-500'
+                          : 'bg-purple-500'
+                      }`}>
+                        <div className="w-2 h-2 rounded-full bg-white" />
+                      </div>
+
+                      {/* Content Card */}
+                      <motion.div
+                        className="p-4 rounded-xl border border-gray-200 dark:border-violet-500/20 shadow-sm hover:shadow-md transition-all"
+                        style={{ background: 'var(--card-bg)' }}
+                        whileHover={{ x: 4 }}
+                      >
+                        <div className="flex flex-wrap items-center gap-2 mb-2">
+                          <span className={`px-2.5 py-0.5 rounded-full text-xs font-medium border ${
+                            activeExperienceTab === 'research'
+                              ? 'bg-indigo-100 dark:bg-transparent text-indigo-700 dark:text-indigo-200 border-indigo-200 dark:border-indigo-400'
+                              : activeExperienceTab === 'work'
                               ? 'bg-emerald-100 dark:bg-transparent text-emerald-700 dark:text-emerald-200 border-emerald-200 dark:border-emerald-400'
-                              : 'bg-indigo-100 dark:bg-transparent text-indigo-700 dark:text-indigo-200 border-indigo-200 dark:border-indigo-400'
+                              : 'bg-purple-100 dark:bg-transparent text-purple-700 dark:text-purple-200 border-purple-200 dark:border-purple-400'
                           }`}>
                             {item.year}
                           </span>
@@ -504,7 +672,7 @@ export default function AboutPage() {
                         <div className="flex flex-wrap gap-2 mb-2">
                           <span className={`px-2 py-0.5 rounded text-xs font-medium ${pub.featured ? 'bg-amber-100 dark:bg-amber-500/20 text-amber-700 dark:text-amber-300' : 'bg-gray-100 dark:bg-gray-700/50 text-gray-600 dark:text-gray-300'}`}>{pub.badge}</span>
                         </div>
-                        <p className="text-sm text-accent-violet mb-1">{pub.authors}</p>
+                        <p className="text-sm text-accent-violet mb-1">{highlightAuthorName(pub.authors)}</p>
                         <h4 className={`font-medium mb-1 ${pub.featured ? 'text-gray-900' : 'pub-card-title'}`}>&ldquo;{pub.title}&rdquo;</h4>
                         <p className="text-sm text-gray-600 dark:text-gray-400">{pub.venue}</p>
                         {pub.korean && <p className="text-xs text-gray-500 dark:text-gray-500 mt-1"># {pub.korean}</p>}
@@ -531,7 +699,7 @@ export default function AboutPage() {
                         style={{ background: 'var(--card-bg)' }}
                         whileHover={{ x: 4 }}
                       >
-                        <p className="text-sm text-accent-violet mb-1">{pub.authors}</p>
+                        <p className="text-sm text-accent-violet mb-1">{highlightAuthorName(pub.authors)}</p>
                         <h4 className="font-medium pub-card-title text-sm">&ldquo;{pub.title}&rdquo;</h4>
                         <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">{pub.venue}</p>
                       </motion.div>
@@ -557,7 +725,7 @@ export default function AboutPage() {
                       whileHover={{ x: 4 }}
                     >
                       {pub.award && <span className="inline-block px-2 py-0.5 bg-amber-100 dark:bg-amber-500/20 text-amber-700 dark:text-amber-300 rounded text-xs font-medium mb-2">{pub.award}</span>}
-                      <p className="text-sm text-accent-violet mb-1">{pub.authors}</p>
+                      <p className="text-sm text-accent-violet mb-1">{highlightAuthorName(pub.authors)}</p>
                       <h4 className={`font-medium text-sm ${pub.award ? 'text-gray-900' : 'pub-card-title'}`}>&ldquo;{pub.title}&rdquo;</h4>
                       <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">{pub.venue}</p>
                       {pub.korean && <p className="text-xs text-gray-400 dark:text-gray-500 mt-1"># {pub.korean}</p>}
@@ -573,7 +741,7 @@ export default function AboutPage() {
           </AnimatePresence>
         </motion.section>
 
-        {/* Honors & Awards */}
+        {/* Honors & Awards - Timeline Format */}
         <motion.section
           initial={{ opacity: 0, y: 20 }}
           whileInView={{ opacity: 1, y: 0 }}
@@ -593,27 +761,119 @@ export default function AboutPage() {
             exit={{ height: 0, opacity: 0 }}
             transition={{ duration: 0.3 }}
           >
-          <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
-            {data.awards.map((award, index) => (
-              <motion.div
-                key={index}
-                className={`p-4 rounded-xl border ${award.highlight ? 'bg-violet-50 dark:bg-violet-500/10 border-violet-300 dark:border-violet-500/30' : 'border-gray-200 dark:border-gray-700/50'}`}
-                style={{ background: award.highlight ? undefined : 'var(--card-bg)' }}
-                initial={{ opacity: 0, scale: 0.95 }}
-                whileInView={{ opacity: 1, scale: 1 }}
-                viewport={{ }}
-                transition={{ delay: index * 0.05 }}
-                whileHover={{ scale: 1.02 }}
+          {/* Filter Tabs */}
+          <div className="flex gap-2 mb-6 p-1 about-tab-bar rounded-xl border border-gray-200 dark:border-gray-600">
+            {[
+              { id: 'all' as const, label: 'All', icon: '🏆', count: data.awards.length },
+              { id: 'research' as const, label: 'Research', icon: '📄', count: data.awards.filter(a => a.linkedSection === 'research' || a.linkedSection === 'publications').length },
+              { id: 'competition' as const, label: 'Competition', icon: '🥇', count: data.awards.filter(a => a.linkedSection === 'competition').length },
+              { id: 'activity' as const, label: 'Activity', icon: '🎯', count: data.awards.filter(a => a.linkedSection === 'activity').length },
+            ].map((tab) => (
+              <button
+                key={tab.id}
+                onClick={() => setActiveAwardsTab(tab.id)}
+                className={`flex-1 px-4 py-2.5 rounded-lg font-medium text-sm transition-all duration-200 flex items-center justify-center gap-2 ${
+                  activeAwardsTab === tab.id
+                    ? 'about-tab-active text-accent-violet shadow-sm dark:shadow-none border-transparent dark:border dark:border-violet-400'
+                    : 'about-tab-inactive hover:text-gray-900'
+                }`}
               >
-                <p className={`font-medium text-sm mb-1 ${award.highlight ? 'text-gray-900' : 'card-title'}`}>{award.title}</p>
-                {award.korean && <p className="text-xs text-gray-400 dark:text-gray-500 mb-1"># {award.korean}</p>}
-                <div className="flex items-center gap-2 text-xs text-gray-500 dark:text-gray-400">
-                  <span>{award.year}</span>
-                  {award.org && <span className="truncate">| {award.org}</span>}
-                </div>
-              </motion.div>
+                <span>{tab.icon}</span>
+                <span className="hidden sm:inline">{tab.label}</span>
+                <span className="text-xs opacity-60">({tab.count})</span>
+              </button>
             ))}
           </div>
+
+          {/* Timeline Content */}
+          <AnimatePresence mode="wait">
+            <motion.div
+              key={activeAwardsTab}
+              initial={{ opacity: 0, y: 10 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -10 }}
+              transition={{ duration: 0.2 }}
+              className="relative"
+            >
+              {/* Timeline line */}
+              <div className="absolute left-3 top-0 bottom-0 w-0.5 rounded-full bg-gradient-to-b from-amber-500 via-yellow-500 to-orange-500" />
+
+              <div className="space-y-4">
+                {(() => {
+                  const filteredAwards = activeAwardsTab === 'all'
+                    ? data.awards
+                    : activeAwardsTab === 'research'
+                    ? data.awards.filter(a => a.linkedSection === 'research' || a.linkedSection === 'publications')
+                    : activeAwardsTab === 'competition'
+                    ? data.awards.filter(a => a.linkedSection === 'competition')
+                    : data.awards.filter(a => a.linkedSection === 'activity');
+
+                  if (filteredAwards.length === 0) {
+                    return (
+                      <div className="text-center py-8 text-gray-500 dark:text-gray-400">
+                        해당 카테고리에 등록된 수상이 없습니다.
+                      </div>
+                    );
+                  }
+
+                  return filteredAwards.map((award, index) => (
+                    <motion.div
+                      key={index}
+                      className="relative pl-8"
+                      initial={{ opacity: 0, x: -10 }}
+                      animate={{ opacity: 1, x: 0 }}
+                      transition={{ duration: 0.3, delay: index * 0.05 }}
+                    >
+                      {/* Timeline dot */}
+                      <div className={`absolute left-0 top-4 w-6 h-6 rounded-full flex items-center justify-center z-10 ${
+                        award.highlight ? 'bg-amber-500' : 'bg-yellow-500'
+                      }`}>
+                        <div className="w-2 h-2 rounded-full bg-white" />
+                      </div>
+
+                      {/* Content Card */}
+                      <motion.div
+                        className={`p-4 rounded-xl border ${
+                          award.highlight
+                            ? 'bg-amber-50 dark:bg-amber-500/10 border-amber-300 dark:border-amber-500/30'
+                            : 'border-gray-200 dark:border-gray-700/50'
+                        }`}
+                        style={{ background: award.highlight ? undefined : 'var(--card-bg)' }}
+                        whileHover={{ x: 4 }}
+                      >
+                        <div className="flex flex-wrap items-center gap-2 mb-2">
+                          <span className={`px-2.5 py-0.5 rounded-full text-xs font-medium border ${
+                            award.highlight
+                              ? 'bg-amber-100 dark:bg-transparent text-amber-700 dark:text-amber-200 border-amber-200 dark:border-amber-400'
+                              : 'bg-yellow-100 dark:bg-transparent text-yellow-700 dark:text-yellow-200 border-yellow-200 dark:border-yellow-400'
+                          }`}>
+                            {award.year}
+                          </span>
+                          {award.linkedSection && (
+                            <span className="px-2 py-0.5 rounded text-xs bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300">
+                              {award.linkedSection === 'publications' ? '📄 Research' :
+                               award.linkedSection === 'research' ? '📄 Research' :
+                               award.linkedSection === 'competition' ? '🥇 Competition' :
+                               '🎯 Activity'}
+                            </span>
+                          )}
+                        </div>
+                        <h3 className={`text-lg font-semibold ${award.highlight ? 'text-gray-900 dark:text-white' : 'card-title'}`}>
+                          {award.title}
+                        </h3>
+                        {award.korean && (
+                          <p className="text-sm text-gray-500 dark:text-gray-400 mt-1"># {award.korean}</p>
+                        )}
+                        {award.org && (
+                          <p className="text-sm text-accent-violet mt-1">{award.org}</p>
+                        )}
+                      </motion.div>
+                    </motion.div>
+                  ));
+                })()}
+              </div>
+            </motion.div>
+          </AnimatePresence>
           </motion.div>
           )}
           </AnimatePresence>
