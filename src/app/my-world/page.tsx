@@ -63,6 +63,7 @@ interface Todo {
   category: 'personal' | 'research';
   date: string;
   order: number;
+  sourceId?: string | null; // 복사된 할일의 원본 ID
 }
 
 const todoStatusConfig = {
@@ -598,16 +599,27 @@ export default function MyWorldDashboard() {
 
       if (res.ok) {
         const updatedTodo = await res.json();
-        if (isArchive) {
-          // Update archive todos
-          setArchiveTodos(prev => prev.map(t => t.id === id ? { ...t, ...updatedTodo } : t));
-        } else {
-          if (category === 'personal') {
-            setPersonalTodos(prev => prev.map(t => t.id === id ? { ...t, ...updatedTodo } : t));
-          } else {
-            setResearchTodos(prev => prev.map(t => t.id === id ? { ...t, ...updatedTodo } : t));
-          }
-        }
+        const linkedTodoIds: string[] = updatedTodo.linkedTodoIds || [];
+        const statusUpdate = { status: nextStatus, completed };
+
+        // Helper function to update todos with linked IDs
+        const updateTodosWithLinked = (todos: Todo[]) =>
+          todos.map(t => {
+            if (t.id === id) {
+              return { ...t, ...updatedTodo };
+            }
+            if (linkedTodoIds.includes(t.id)) {
+              return { ...t, ...statusUpdate };
+            }
+            return t;
+          });
+
+        // Update archive todos (always, to sync linked todos across dates)
+        setArchiveTodos(prev => updateTodosWithLinked(prev));
+
+        // Update main view todos
+        setPersonalTodos(prev => updateTodosWithLinked(prev));
+        setResearchTodos(prev => updateTodosWithLinked(prev));
       }
     } catch (error) {
       console.error('Failed to toggle todo:', error);

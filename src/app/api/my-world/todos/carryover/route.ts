@@ -88,24 +88,10 @@ export async function POST(request: NextRequest) {
       existingTodayTodos.map(t => `${t.category}:${t.content}`)
     );
 
-    // Create new todos for today
-    const todosToCreate = incompleteTodos
-      .filter(todo => !existingContent.has(`${todo.category}:${todo.content}`))
-      .map((todo, index) => {
-        const categoryTodosBeforeThis = incompleteTodos
-          .slice(0, incompleteTodos.indexOf(todo))
-          .filter(t => t.category === todo.category).length;
-
-        return {
-          userId,
-          content: todo.content,
-          category: todo.category,
-          date: todayStart,
-          status: 'not_started',
-          completed: false,
-          order: (maxOrders[todo.category] ?? -1) + 1 + categoryTodosBeforeThis,
-        };
-      });
+    // Filter todos to create (exclude duplicates)
+    const todosToCreate = incompleteTodos.filter(
+      todo => !existingContent.has(`${todo.category}:${todo.content}`)
+    );
 
     if (todosToCreate.length === 0) {
       return NextResponse.json({
@@ -114,11 +100,26 @@ export async function POST(request: NextRequest) {
       });
     }
 
-    // Create todos in database
+    // Create new todos for today with sourceId linking to original
     const created = await prisma.$transaction(
-      todosToCreate.map(todo =>
-        prisma.todo.create({ data: todo })
-      )
+      todosToCreate.map((todo, index) => {
+        const categoryTodosBeforeThis = todosToCreate
+          .slice(0, index)
+          .filter(t => t.category === todo.category).length;
+
+        return prisma.todo.create({
+          data: {
+            userId,
+            content: todo.content,
+            category: todo.category,
+            date: todayStart,
+            status: todo.status, // 원본 상태 유지
+            completed: false,
+            order: (maxOrders[todo.category] ?? -1) + 1 + categoryTodosBeforeThis,
+            sourceId: todo.id, // 원본 할일과 연결
+          },
+        });
+      })
     );
 
     return NextResponse.json({

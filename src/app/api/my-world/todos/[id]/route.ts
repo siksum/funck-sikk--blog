@@ -19,10 +19,58 @@ export async function PATCH(
     const { id } = await params;
     const body = await request.json();
 
+    // Get the current todo to check for linked todos
+    const currentTodo = await prisma.todo.findUnique({
+      where: { id },
+      include: {
+        source: true, // 원본 할일 (이 할일이 복사본인 경우)
+        copies: true, // 복사본들 (이 할일이 원본인 경우)
+      },
+    });
+
+    if (!currentTodo) {
+      return NextResponse.json({ error: 'Todo not found' }, { status: 404 });
+    }
+
+    // Update the current todo
     const todo = await prisma.todo.update({
       where: { id },
       data: body,
     });
+
+    // If status or completed is being changed, sync with linked todos
+    if ('status' in body || 'completed' in body) {
+      const statusUpdate = {
+        ...(body.status && { status: body.status }),
+        ...(body.completed !== undefined && { completed: body.completed }),
+      };
+
+      const linkedTodoIds: string[] = [];
+
+      // Sync with source (if this is a copy)
+      if (currentTodo.sourceId) {
+        linkedTodoIds.push(currentTodo.sourceId);
+      }
+
+      // Sync with all copies (if this is the original)
+      if (currentTodo.copies.length > 0) {
+        linkedTodoIds.push(...currentTodo.copies.map(c => c.id));
+      }
+
+      // Update all linked todos
+      if (linkedTodoIds.length > 0) {
+        await prisma.todo.updateMany({
+          where: { id: { in: linkedTodoIds } },
+          data: statusUpdate,
+        });
+      }
+
+      // Return updated todo with linked todo IDs for frontend sync
+      return NextResponse.json({
+        ...todo,
+        linkedTodoIds,
+      });
+    }
 
     return NextResponse.json(todo);
   } catch (error) {

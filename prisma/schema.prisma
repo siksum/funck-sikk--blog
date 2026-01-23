@@ -495,10 +495,16 @@ model Todo {
 
   order     Int      @default(0)
 
+  // 복사된 할일의 원본 추적 (어제 할일 -> 오늘 복사)
+  sourceId  String?
+  source    Todo?    @relation("TodoCopy", fields: [sourceId], references: [id], onDelete: SetNull)
+  copies    Todo[]   @relation("TodoCopy")
+
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
   user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@index([userId, date, category])
+  @@index([sourceId])
 }
