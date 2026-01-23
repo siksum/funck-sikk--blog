@@ -20,22 +20,41 @@ class GoogleDriveService {
 
   constructor() {
     const clientEmail = process.env.GOOGLE_DRIVE_CLIENT_EMAIL;
-    const privateKey = process.env.GOOGLE_DRIVE_PRIVATE_KEY?.replace(/\\n/g, '\n');
+    let privateKey = process.env.GOOGLE_DRIVE_PRIVATE_KEY;
     const folderId = process.env.GOOGLE_DRIVE_FOLDER_ID;
+
+    // Handle different private key formats
+    if (privateKey) {
+      // Replace literal \n with actual newlines
+      privateKey = privateKey.replace(/\\n/g, '\n');
+      // Also handle case where JSON.parse might be needed
+      if (privateKey.startsWith('"') && privateKey.endsWith('"')) {
+        try {
+          privateKey = JSON.parse(privateKey);
+        } catch {
+          // Keep as is if JSON parse fails
+        }
+      }
+    }
 
     this.isConfigured = !!(clientEmail && privateKey && folderId);
     this.folderId = folderId || '';
 
     if (this.isConfigured) {
-      const auth = new google.auth.GoogleAuth({
-        credentials: {
-          client_email: clientEmail,
-          private_key: privateKey,
-        },
-        scopes: ['https://www.googleapis.com/auth/drive.file'],
-      });
+      try {
+        const auth = new google.auth.GoogleAuth({
+          credentials: {
+            client_email: clientEmail,
+            private_key: privateKey,
+          },
+          scopes: ['https://www.googleapis.com/auth/drive.file'],
+        });
 
-      this.drive = google.drive({ version: 'v3', auth });
+        this.drive = google.drive({ version: 'v3', auth });
+      } catch (error) {
+        console.error('Failed to initialize Google Drive auth:', error);
+        this.isConfigured = false;
+      }
     }
   }
 
