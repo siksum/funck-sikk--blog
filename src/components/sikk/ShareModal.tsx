@@ -40,6 +40,8 @@ export default function ShareModal({ slug, title, isOpen, onClose }: ShareModalP
   const [inviteExpiry, setInviteExpiry] = useState('');
   const [linkExpiry, setLinkExpiry] = useState('');
   const [copied, setCopied] = useState(false);
+  const [hasLinkExpiry, setHasLinkExpiry] = useState(false);
+  const [hasInviteExpiry, setHasInviteExpiry] = useState(false);
 
   const fetchShareSettings = useCallback(async () => {
     try {
@@ -50,6 +52,10 @@ export default function ShareModal({ slug, title, isOpen, onClose }: ShareModalP
         setShare(data.share);
         if (data.share?.publicExpiresAt) {
           setLinkExpiry(data.share.publicExpiresAt.split('T')[0]);
+          setHasLinkExpiry(true);
+        } else {
+          setLinkExpiry('');
+          setHasLinkExpiry(false);
         }
       }
     } catch (error) {
@@ -86,19 +92,22 @@ export default function ShareModal({ slug, title, isOpen, onClose }: ShareModalP
     }
   };
 
-  const handleUpdateExpiry = async () => {
+  const handleUpdateExpiry = async (withExpiry: boolean) => {
     try {
       setSaving(true);
       const res = await fetch(`/api/sikk/${slug}/share`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          publicExpiresAt: linkExpiry || null,
+          publicExpiresAt: withExpiry && linkExpiry ? linkExpiry : null,
         }),
       });
       if (res.ok) {
         const data = await res.json();
         setShare(data.share);
+        if (!withExpiry) {
+          setLinkExpiry('');
+        }
       }
     } catch (error) {
       console.error('Failed to update expiry:', error);
@@ -146,12 +155,13 @@ export default function ShareModal({ slug, title, isOpen, onClose }: ShareModalP
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           emails,
-          expiresAt: inviteExpiry || null,
+          expiresAt: hasInviteExpiry && inviteExpiry ? inviteExpiry : null,
         }),
       });
       if (res.ok) {
         setInviteEmail('');
         setInviteExpiry('');
+        setHasInviteExpiry(false);
         fetchShareSettings();
       }
     } catch (error) {
@@ -274,21 +284,50 @@ export default function ShareModal({ slug, title, isOpen, onClose }: ShareModalP
                     </button>
                   </div>
 
-                  <div className="flex items-center gap-2">
-                    <label className="text-sm text-gray-600 dark:text-gray-400">만료일:</label>
-                    <input
-                      type="date"
-                      value={linkExpiry}
-                      onChange={(e) => setLinkExpiry(e.target.value)}
-                      className="flex-1 px-3 py-1.5 text-sm border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
-                    />
-                    <button
-                      onClick={handleUpdateExpiry}
-                      disabled={saving}
-                      className="px-3 py-1.5 text-sm bg-gray-200 dark:bg-gray-600 text-gray-700 dark:text-gray-300 rounded-lg hover:bg-gray-300 dark:hover:bg-gray-500 transition-colors"
-                    >
-                      적용
-                    </button>
+                  {/* Link Expiry Toggle */}
+                  <div className="space-y-2">
+                    <div className="flex items-center gap-4">
+                      <label className="flex items-center gap-2 cursor-pointer">
+                        <input
+                          type="radio"
+                          name="linkExpiry"
+                          checked={!hasLinkExpiry}
+                          onChange={() => {
+                            setHasLinkExpiry(false);
+                            handleUpdateExpiry(false);
+                          }}
+                          className="w-4 h-4 text-pink-500 focus:ring-pink-500"
+                        />
+                        <span className="text-sm text-gray-600 dark:text-gray-400">만료일 없음</span>
+                      </label>
+                      <label className="flex items-center gap-2 cursor-pointer">
+                        <input
+                          type="radio"
+                          name="linkExpiry"
+                          checked={hasLinkExpiry}
+                          onChange={() => setHasLinkExpiry(true)}
+                          className="w-4 h-4 text-pink-500 focus:ring-pink-500"
+                        />
+                        <span className="text-sm text-gray-600 dark:text-gray-400">만료일 설정</span>
+                      </label>
+                    </div>
+                    {hasLinkExpiry && (
+                      <div className="flex items-center gap-2">
+                        <input
+                          type="date"
+                          value={linkExpiry}
+                          onChange={(e) => setLinkExpiry(e.target.value)}
+                          className="flex-1 px-3 py-1.5 text-sm border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
+                        />
+                        <button
+                          onClick={() => handleUpdateExpiry(true)}
+                          disabled={saving || !linkExpiry}
+                          className="px-3 py-1.5 text-sm bg-gray-200 dark:bg-gray-600 text-gray-700 dark:text-gray-300 rounded-lg hover:bg-gray-300 dark:hover:bg-gray-500 transition-colors disabled:opacity-50"
+                        >
+                          적용
+                        </button>
+                      </div>
+                    )}
                   </div>
 
                   <button
@@ -341,14 +380,41 @@ export default function ShareModal({ slug, title, isOpen, onClose }: ShareModalP
                     초대
                   </button>
                 </div>
-                <div className="flex items-center gap-2">
-                  <label className="text-sm text-gray-600 dark:text-gray-400">초대 만료:</label>
-                  <input
-                    type="date"
-                    value={inviteExpiry}
-                    onChange={(e) => setInviteExpiry(e.target.value)}
-                    className="flex-1 px-3 py-1.5 text-sm border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
-                  />
+                {/* Invite Expiry Toggle */}
+                <div className="space-y-2">
+                  <div className="flex items-center gap-4">
+                    <label className="flex items-center gap-2 cursor-pointer">
+                      <input
+                        type="radio"
+                        name="inviteExpiry"
+                        checked={!hasInviteExpiry}
+                        onChange={() => {
+                          setHasInviteExpiry(false);
+                          setInviteExpiry('');
+                        }}
+                        className="w-4 h-4 text-pink-500 focus:ring-pink-500"
+                      />
+                      <span className="text-sm text-gray-600 dark:text-gray-400">만료일 없음</span>
+                    </label>
+                    <label className="flex items-center gap-2 cursor-pointer">
+                      <input
+                        type="radio"
+                        name="inviteExpiry"
+                        checked={hasInviteExpiry}
+                        onChange={() => setHasInviteExpiry(true)}
+                        className="w-4 h-4 text-pink-500 focus:ring-pink-500"
+                      />
+                      <span className="text-sm text-gray-600 dark:text-gray-400">만료일 설정</span>
+                    </label>
+                  </div>
+                  {hasInviteExpiry && (
+                    <input
+                      type="date"
+                      value={inviteExpiry}
+                      onChange={(e) => setInviteExpiry(e.target.value)}
+                      className="w-full px-3 py-1.5 text-sm border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
+                    />
+                  )}
                 </div>
               </div>
 

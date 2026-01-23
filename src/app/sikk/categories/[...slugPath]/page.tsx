@@ -353,6 +353,7 @@ export default async function SikkCategoryPage({ params }: CategoryPageProps) {
   }
 
   // For post pages, allow access for admin or invited users
+  let isFullAccess = false; // Only admin has full navigation access
   if (parsed.type === 'post') {
     const accessResult = await checkSikkPostAccess(parsed.postSlug, session);
     if (!accessResult.canAccess) {
@@ -362,6 +363,7 @@ export default async function SikkCategoryPage({ params }: CategoryPageProps) {
       }
       redirect('/');
     }
+    isFullAccess = accessResult.accessType === 'admin';
   } else {
     // For category/database pages, require admin access
     if (!session?.user?.isAdmin) {
@@ -437,10 +439,11 @@ export default async function SikkCategoryPage({ params }: CategoryPageProps) {
           content={post.content}
           tags={post.tags}
           category={post.category}
-          relatedPosts={relatedPosts}
-          categories={categories}
+          relatedPosts={isFullAccess ? relatedPosts : []}
+          categories={isFullAccess ? categories : []}
           currentCategorySlugPath={post.categorySlugPath}
-          sections={sections}
+          sections={isFullAccess ? sections : []}
+          hideNavigation={!isFullAccess}
         >
           {/* Banner Image */}
           {post.thumbnail && (
@@ -459,19 +462,28 @@ export default async function SikkCategoryPage({ params }: CategoryPageProps) {
 
           {/* Header */}
           <header className="mb-8">
+            {/* Breadcrumb - only show links for admin users */}
             <div className="flex items-center text-sm mb-4" style={{ color: 'var(--foreground)', opacity: 0.7 }}>
-              <Link href="/sikk" className="hover:text-pink-600 dark:hover:text-pink-400 transition-colors">
-                Sikk
-              </Link>
+              {isFullAccess ? (
+                <Link href="/sikk" className="hover:text-pink-600 dark:hover:text-pink-400 transition-colors">
+                  Sikk
+                </Link>
+              ) : (
+                <span>Sikk</span>
+              )}
               {post.category && (
                 <>
                   <span className="mx-2">/</span>
-                  <Link
-                    href={`/sikk/categories/${(post.categorySlugPath || []).map(s => encodeURIComponent(s)).join('/')}`}
-                    className="hover:text-pink-600 dark:hover:text-pink-400 transition-colors"
-                  >
-                    {post.category}
-                  </Link>
+                  {isFullAccess ? (
+                    <Link
+                      href={`/sikk/categories/${(post.categorySlugPath || []).map(s => encodeURIComponent(s)).join('/')}`}
+                      className="hover:text-pink-600 dark:hover:text-pink-400 transition-colors"
+                    >
+                      {post.category}
+                    </Link>
+                  ) : (
+                    <span>{post.category}</span>
+                  )}
                 </>
               )}
             </div>
@@ -553,38 +565,42 @@ export default async function SikkCategoryPage({ params }: CategoryPageProps) {
             }}
           />
 
-          {/* Post Navigation */}
-          <PostNavigation
-            prevPost={prevPost}
-            nextPost={nextPost}
-            basePath="/sikk/categories"
-            variant="pink"
-          />
+          {/* Post Navigation - only for admin users */}
+          {isFullAccess && (
+            <PostNavigation
+              prevPost={prevPost}
+              nextPost={nextPost}
+              basePath="/sikk/categories"
+              variant="pink"
+            />
+          )}
 
-          {/* Footer */}
-          <footer className="mt-12 pt-8 border-t-2 border-pink-300 dark:border-pink-500">
-            <Link
-              href={post.categorySlugPath && post.categorySlugPath.length > 0
-                ? `/sikk/categories/${post.categorySlugPath.map(s => encodeURIComponent(s)).join('/')}`
-                : '/sikk'}
-              className="inline-flex items-center text-pink-600 dark:text-pink-400 hover:underline"
-            >
-              <svg
-                className="w-4 h-4 mr-2"
-                fill="none"
-                stroke="currentColor"
-                viewBox="0 0 24 24"
+          {/* Footer - only show navigation back for admin users */}
+          {isFullAccess && (
+            <footer className="mt-12 pt-8 border-t-2 border-pink-300 dark:border-pink-500">
+              <Link
+                href={post.categorySlugPath && post.categorySlugPath.length > 0
+                  ? `/sikk/categories/${post.categorySlugPath.map(s => encodeURIComponent(s)).join('/')}`
+                  : '/sikk'}
+                className="inline-flex items-center text-pink-600 dark:text-pink-400 hover:underline"
               >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth={2}
-                  d="M10 19l-7-7m0 0l7-7m-7 7h18"
-                />
-              </svg>
-              {post.category || 'Sikk'} 목록으로 돌아가기
-            </Link>
-          </footer>
+                <svg
+                  className="w-4 h-4 mr-2"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M10 19l-7-7m0 0l7-7m-7 7h18"
+                  />
+                </svg>
+                {post.category || 'Sikk'} 목록으로 돌아가기
+              </Link>
+            </footer>
+          )}
         </SikkPostLayout>
         <FloatingActions />
       </>
