@@ -25,22 +25,34 @@ class GoogleDriveService {
 
     // Handle different private key formats
     if (privateKey) {
-      // Replace literal \n with actual newlines
-      privateKey = privateKey.replace(/\\n/g, '\n');
-      // Also handle case where JSON.parse might be needed
+      // Remove surrounding quotes if the entire value is quoted
       if (privateKey.startsWith('"') && privateKey.endsWith('"')) {
-        try {
-          privateKey = JSON.parse(privateKey);
-        } catch {
-          // Keep as is if JSON parse fails
-        }
+        privateKey = privateKey.slice(1, -1);
+      }
+      // Also handle case where only starting quote exists (partial copy)
+      if (privateKey.startsWith('"')) {
+        privateKey = privateKey.slice(1);
+      }
+      if (privateKey.endsWith('"')) {
+        privateKey = privateKey.slice(0, -1);
+      }
+
+      // Replace literal \n with actual newlines (handles \\n in env vars)
+      privateKey = privateKey.replace(/\\n/g, '\n');
+
+      // Remove any extra whitespace around the key
+      privateKey = privateKey.trim();
+
+      // Ensure the key has proper format
+      if (!privateKey.includes('-----BEGIN')) {
+        console.error('Private key does not contain BEGIN marker');
       }
     }
 
     this.isConfigured = !!(clientEmail && privateKey && folderId);
     this.folderId = folderId || '';
 
-    if (this.isConfigured) {
+    if (this.isConfigured && privateKey) {
       try {
         const auth = new google.auth.GoogleAuth({
           credentials: {

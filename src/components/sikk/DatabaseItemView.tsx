@@ -114,7 +114,11 @@ export default function DatabaseItemView({
         const formData = new FormData();
         formData.append('file', file);
 
-        const res = await fetch('/api/upload', {
+        // PDF files are automatically uploaded to Google Drive
+        const isPdf = file.type === 'application/pdf' || file.name.toLowerCase().endsWith('.pdf');
+        const endpoint = isPdf ? '/api/upload/google-drive' : '/api/upload';
+
+        const res = await fetch(endpoint, {
           method: 'POST',
           body: formData,
         });
@@ -122,6 +126,18 @@ export default function DatabaseItemView({
         if (res.ok) {
           const result = await res.json();
           uploadedUrls.push(result.url);
+        } else {
+          // If Google Drive upload fails, fallback to Cloudinary for PDF
+          if (isPdf) {
+            const fallbackRes = await fetch('/api/upload', {
+              method: 'POST',
+              body: formData,
+            });
+            if (fallbackRes.ok) {
+              const result = await fallbackRes.json();
+              uploadedUrls.push(result.url);
+            }
+          }
         }
       }
 
