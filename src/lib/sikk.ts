@@ -618,19 +618,48 @@ export async function getSikkSectionsAsync() {
   }
 }
 
+// Helper function to normalize and decode a URL segment for database lookup
+// Handles URL encoding and Unicode normalization (NFC)
+function normalizeSlugSegment(segment: string): string {
+  try {
+    // Decode URL-encoded characters (e.g., %EB%8C%80%ED%95%99%EA%B5%90 -> 대학교)
+    const decoded = decodeURIComponent(segment);
+    // Normalize to NFC (composed form) for consistent database comparison
+    return decoded.normalize('NFC');
+  } catch {
+    // If decoding fails, just normalize the original string
+    return segment.normalize('NFC');
+  }
+}
+
 // Helper function to find a SikkCategory by slug/name and parentId
 // Uses Prisma's findFirst which properly handles NULL parentId at database level
 async function findSikkDbCategoryBySlugAndParent(slug: string, parentId: string | null) {
-  // First try to find by slug
+  // Normalize the slug for consistent comparison
+  const normalizedSlug = normalizeSlugSegment(slug);
+
+  // First try to find by slug (exact match)
   let category = await prisma.sikkCategory.findFirst({
-    where: { slug, parentId },
+    where: { slug: normalizedSlug, parentId },
   });
 
   // If not found by slug, try by name (for URL compatibility)
   if (!category) {
     category = await prisma.sikkCategory.findFirst({
-      where: { name: slug, parentId },
+      where: { name: normalizedSlug, parentId },
     });
+  }
+
+  // If still not found, try case-insensitive search
+  if (!category) {
+    const allCategoriesAtLevel = await prisma.sikkCategory.findMany({
+      where: { parentId },
+    });
+    category = allCategoriesAtLevel.find(
+      (c) =>
+        c.slug.normalize('NFC').toLowerCase() === normalizedSlug.toLowerCase() ||
+        c.name.normalize('NFC').toLowerCase() === normalizedSlug.toLowerCase()
+    ) || null;
   }
 
   return category;
