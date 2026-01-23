@@ -7,6 +7,37 @@ import dynamic from 'next/dynamic';
 import MDXContent from '@/components/mdx/MDXContent';
 import { uploadToGoogleDriveDirect } from '@/lib/google-drive-client';
 
+// Helper function to extract proper filename from various URL types
+function getFileDisplayName(url: string): string {
+  try {
+    // Google Drive URL: https://drive.google.com/uc?id=xxx&export=download
+    if (url.includes('drive.google.com/uc?id=')) {
+      const match = url.match(/id=([^&]+)/);
+      if (match) {
+        return `📄 Drive (${match[1].substring(0, 8)}...)`;
+      }
+    }
+    // Google Drive view URL: https://drive.google.com/file/d/xxx/view
+    if (url.includes('drive.google.com/file/d/')) {
+      const match = url.match(/\/d\/([^/]+)/);
+      if (match) {
+        return `📄 Drive (${match[1].substring(0, 8)}...)`;
+      }
+    }
+    // Cloudinary URL: https://res.cloudinary.com/.../filename.ext
+    if (url.includes('cloudinary.com')) {
+      const parts = url.split('/');
+      const filename = parts[parts.length - 1];
+      return filename.replace(/^v\d+_/, '');
+    }
+    // Default: just get the last part of the path
+    const parts = url.split('/');
+    return parts[parts.length - 1] || url;
+  } catch {
+    return url.substring(0, 20) + '...';
+  }
+}
+
 const TipTapEditor = dynamic(() => import('@/components/editor/TipTapEditor'), {
   loading: () => (
     <div className="flex items-center justify-center h-64">
@@ -106,23 +137,26 @@ export default function BlogDatabaseItemView({
 
     try {
       for (const file of Array.from(files)) {
-        // Upload all files to Google Drive (with Cloudinary fallback)
-        try {
-          const result = await uploadToGoogleDriveDirect(file, { driveType: 'blog' });
-          uploadedUrls.push(result.url);
-        } catch (driveError) {
-          console.warn('Google Drive upload failed, falling back to Cloudinary:', driveError);
-          // Fallback to Cloudinary
+        const isImage = file.type.startsWith('image/');
+
+        if (isImage) {
+          // Images → Cloudinary
           const formData = new FormData();
           formData.append('file', file);
-          const fallbackRes = await fetch('/api/upload', {
+          const res = await fetch('/api/upload', {
             method: 'POST',
             body: formData,
           });
-          if (fallbackRes.ok) {
-            const result = await fallbackRes.json();
+          if (res.ok) {
+            const result = await res.json();
             uploadedUrls.push(result.url);
+          } else {
+            throw new Error('Cloudinary upload failed');
           }
+        } else {
+          // Non-images (PDF, docs, etc.) → Google Drive only
+          const result = await uploadToGoogleDriveDirect(file, { driveType: 'blog' });
+          uploadedUrls.push(result.url);
         }
       }
 
@@ -130,6 +164,7 @@ export default function BlogDatabaseItemView({
       await handleUpdateField(columnId, newFiles);
     } catch (error) {
       console.error('File upload error:', error);
+      alert('파일 업로드에 실패했습니다. 다시 시도해주세요.');
     } finally {
       setUploadingFile(false);
     }
@@ -212,7 +247,7 @@ export default function BlogDatabaseItemView({
                 className="px-2 py-1 text-xs bg-gray-100 dark:bg-gray-700 rounded truncate max-w-[150px] hover:bg-gray-200 dark:hover:bg-gray-600"
                 title={file}
               >
-                {file.split('/').pop()}
+                {getFileDisplayName(file)}
               </a>
               {isAdmin && (
                 <button

@@ -5,6 +5,8 @@ import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import dynamic from 'next/dynamic';
 import MDXContent from '@/components/mdx/MDXContent';
+import { getFileDisplayName } from '@/lib/file-utils';
+import { uploadToGoogleDriveDirect } from '@/lib/google-drive-client';
 
 const TipTapEditor = dynamic(() => import('@/components/editor/TipTapEditor'), {
   loading: () => (
@@ -124,16 +126,25 @@ export default function AdminDatabaseItemPage({ params }: AdminDatabaseItemPageP
 
     try {
       for (const file of Array.from(files)) {
-        const formData = new FormData();
-        formData.append('file', file);
+        const isImage = file.type.startsWith('image/');
 
-        const res = await fetch('/api/upload', {
-          method: 'POST',
-          body: formData,
-        });
-
-        if (res.ok) {
-          const result = await res.json();
+        if (isImage) {
+          // Images → Cloudinary
+          const formData = new FormData();
+          formData.append('file', file);
+          const res = await fetch('/api/upload', {
+            method: 'POST',
+            body: formData,
+          });
+          if (res.ok) {
+            const result = await res.json();
+            uploadedUrls.push(result.url);
+          } else {
+            throw new Error('Cloudinary upload failed');
+          }
+        } else {
+          // Non-images (PDF, docs, etc.) → Google Drive only
+          const result = await uploadToGoogleDriveDirect(file, { driveType: 'blog' });
           uploadedUrls.push(result.url);
         }
       }
@@ -142,6 +153,7 @@ export default function AdminDatabaseItemPage({ params }: AdminDatabaseItemPageP
       await handleUpdateField(columnId, newFiles);
     } catch (error) {
       console.error('File upload error:', error);
+      alert('파일 업로드에 실패했습니다. 다시 시도해주세요.');
     } finally {
       setUploadingFile(false);
     }
@@ -249,7 +261,7 @@ export default function AdminDatabaseItemPage({ params }: AdminDatabaseItemPageP
                 className="px-2 py-1 text-xs bg-gray-100 dark:bg-gray-700 rounded truncate max-w-[150px] hover:bg-gray-200 dark:hover:bg-gray-600"
                 title={file}
               >
-                {file.split('/').pop()}
+                {getFileDisplayName(file)}
               </a>
               <button
                 onClick={() => handleRemoveFile(column.id, file)}
