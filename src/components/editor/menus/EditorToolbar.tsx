@@ -159,6 +159,7 @@ export default function EditorToolbar({ editor, onSave, onCancel, driveType = 'b
   const [showDriveBrowser, setShowDriveBrowser] = useState(false);
   const [driveBrowserMode, setDriveBrowserMode] = useState<'image' | 'pdf'>('pdf');
   const [showTableCellColorPicker, setShowTableCellColorPicker] = useState(false);
+  const [showTableInsertMenu, setShowTableInsertMenu] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const pdfInputRef = useRef<HTMLInputElement>(null);
 
@@ -980,14 +981,53 @@ export default function EditorToolbar({ editor, onSave, onCancel, driveType = 'b
       <ToolbarDivider />
 
       {/* Table */}
-      <ToolbarButton
-        onClick={() => editor.chain().focus().insertTable({ rows: 3, cols: 3, withHeaderRow: true }).run()}
-        title="표 삽입"
-      >
-        <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 10h18M3 14h18m-9-4v8m-7 0h14a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z" />
-        </svg>
-      </ToolbarButton>
+      <div className="relative">
+        <ToolbarButton
+          onClick={() => setShowTableInsertMenu(!showTableInsertMenu)}
+          title="표 삽입"
+        >
+          <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 10h18M3 14h18m-9-4v8m-7 0h14a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z" />
+          </svg>
+        </ToolbarButton>
+        {showTableInsertMenu && (
+          <div className="absolute top-full left-0 mt-2 p-2 bg-white dark:bg-gray-800 rounded-lg shadow-lg border border-pink-200 dark:border-pink-500/40 z-20 w-48">
+            <div className="text-xs font-semibold text-gray-500 dark:text-gray-400 mb-2 px-1">
+              표 삽입
+            </div>
+            <button
+              type="button"
+              onClick={(e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                editor.chain().focus().insertTable({ rows: 3, cols: 3, withHeaderRow: true }).run();
+                setShowTableInsertMenu(false);
+              }}
+              className="w-full text-left px-2 py-1.5 text-sm rounded hover:bg-pink-100 dark:hover:bg-pink-500/20 flex items-center gap-2"
+            >
+              <svg className="w-4 h-4 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 10h18M3 14h18m-9-4v8m-7 0h14a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z" />
+              </svg>
+              제목행 포함
+            </button>
+            <button
+              type="button"
+              onClick={(e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                editor.chain().focus().insertTable({ rows: 3, cols: 3, withHeaderRow: false }).run();
+                setShowTableInsertMenu(false);
+              }}
+              className="w-full text-left px-2 py-1.5 text-sm rounded hover:bg-pink-100 dark:hover:bg-pink-500/20 flex items-center gap-2"
+            >
+              <svg className="w-4 h-4 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 10h16M4 14h16M4 18h16" />
+              </svg>
+              제목행 없음
+            </button>
+          </div>
+        )}
+      </div>
 
       {editor.isActive('table') && (
         <>
@@ -1018,6 +1058,15 @@ export default function EditorToolbar({ editor, onSave, onCancel, driveType = 'b
           <ToolbarButton onClick={() => editor.chain().focus().deleteTable().run()} title="표 삭제">
             <svg className="w-5 h-5 text-red-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+            </svg>
+          </ToolbarButton>
+          {/* Toggle Header Row */}
+          <ToolbarButton
+            onClick={() => editor.chain().focus().toggleHeaderRow().run()}
+            title="제목행 토글"
+          >
+            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 6v12a2 2 0 002 2h12a2 2 0 002-2V6M4 6l2-2h12l2 2" />
             </svg>
           </ToolbarButton>
           {/* Table Cell Color */}
