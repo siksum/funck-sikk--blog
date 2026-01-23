@@ -397,6 +397,7 @@ type TimelineTabType = 'education' | 'scholarship' | 'project' | 'work' | 'resea
 
 function TimelineEditor({ data, setData }: { data: AboutData; setData: (d: AboutData) => void }) {
   const [tab, setTab] = useState<TimelineTabType>('education');
+  const [activitySubTab, setActivitySubTab] = useState<'timeline' | 'club' | 'ctf'>('timeline');
   const [dragIndex, setDragIndex] = useState<number | null>(null);
   const [dragOverIndex, setDragOverIndex] = useState<number | null>(null);
 
@@ -555,6 +556,46 @@ function TimelineEditor({ data, setData }: { data: AboutData; setData: (d: About
     setDragOverIndex(null);
   };
 
+  // Club helper functions
+  const updateClub = (field: string, value: string | string[]) => {
+    setData({
+      ...data,
+      activities: { ...data.activities, club: { ...data.activities.club, [field]: value } }
+    });
+  };
+
+  // CTF helper functions
+  const addCTF = () => {
+    setData({
+      ...data,
+      activities: {
+        ...data.activities,
+        ctf: [...data.activities.ctf, { event: '', team: '', rank: '', year: '' }],
+      },
+    });
+  };
+
+  const updateCTF = (index: number, field: string, value: string) => {
+    const newItems = [...data.activities.ctf];
+    newItems[index] = { ...newItems[index], [field]: value };
+    setData({ ...data, activities: { ...data.activities, ctf: newItems } });
+  };
+
+  const removeCTF = (index: number) => {
+    setData({
+      ...data,
+      activities: { ...data.activities, ctf: data.activities.ctf.filter((_, i) => i !== index) },
+    });
+  };
+
+  const moveCTF = (fromIndex: number, toIndex: number) => {
+    if (fromIndex === toIndex) return;
+    const newItems = [...data.activities.ctf];
+    const [movedItem] = newItems.splice(fromIndex, 1);
+    newItems.splice(toIndex, 0, movedItem);
+    setData({ ...data, activities: { ...data.activities, ctf: newItems } });
+  };
+
   const tabLabels: Record<TimelineTabType, string> = {
     education: '학력',
     scholarship: '장학금',
@@ -661,94 +702,304 @@ function TimelineEditor({ data, setData }: { data: AboutData; setData: (d: About
 
   const renderActivityTimelineItems = () => {
     const items = data.timeline.activities || [];
+
+    const handleCTFDragStart = (e: React.DragEvent, index: number) => {
+      setDragIndex(index);
+      e.dataTransfer.effectAllowed = 'move';
+      e.dataTransfer.setData('text/plain', index.toString());
+    };
+
+    const handleCTFDrop = (e: React.DragEvent, toIndex: number) => {
+      e.preventDefault();
+      if (dragIndex !== null && dragIndex !== toIndex) {
+        moveCTF(dragIndex, toIndex);
+      }
+      setDragIndex(null);
+      setDragOverIndex(null);
+    };
+
     return (
       <div className="space-y-4">
-        {items.map((item, index) => (
-          <div
-            key={index}
-            draggable
-            onDragStart={(e) => handleDragStart(e, index)}
-            onDragOver={(e) => handleDragOver(e, index)}
-            onDragLeave={handleDragLeave}
-            onDrop={(e) => handleDrop(e, index)}
-            onDragEnd={handleDragEnd}
-            className={`p-4 border rounded-lg space-y-3 transition-all ${
-              dragIndex === index
-                ? 'opacity-50 border-purple-400 bg-purple-50 dark:bg-purple-900/20'
-                : dragOverIndex === index
-                ? 'border-purple-500 border-2 bg-purple-50 dark:bg-purple-900/10'
-                : 'border-gray-200 dark:border-gray-700'
+        {/* Sub-tabs for Timeline, Club, CTF */}
+        <div className="flex gap-2 border-b border-gray-200 dark:border-gray-700 pb-3">
+          <button
+            onClick={() => setActivitySubTab('timeline')}
+            className={`px-3 py-1.5 rounded-lg text-sm ${
+              activitySubTab === 'timeline'
+                ? 'bg-purple-100 dark:bg-purple-900/30 text-purple-700 dark:text-purple-300'
+                : 'text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-700'
             }`}
           >
-            <div className="flex items-center justify-between mb-2">
-              <div className="flex items-center gap-2 text-gray-400 dark:text-gray-500 cursor-move">
-                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 8h16M4 16h16" />
-                </svg>
-                <span className="text-xs font-medium">#{index + 1} 드래그하여 순서 변경</span>
+            타임라인 ({items.length})
+          </button>
+          <button
+            onClick={() => setActivitySubTab('club')}
+            className={`px-3 py-1.5 rounded-lg text-sm ${
+              activitySubTab === 'club'
+                ? 'bg-violet-100 dark:bg-violet-900/30 text-violet-700 dark:text-violet-300'
+                : 'text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-700'
+            }`}
+          >
+            동아리
+          </button>
+          <button
+            onClick={() => setActivitySubTab('ctf')}
+            className={`px-3 py-1.5 rounded-lg text-sm ${
+              activitySubTab === 'ctf'
+                ? 'bg-orange-100 dark:bg-orange-900/30 text-orange-700 dark:text-orange-300'
+                : 'text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-700'
+            }`}
+          >
+            CTF ({data.activities.ctf.length})
+          </button>
+        </div>
+
+        {/* Timeline Activities */}
+        {activitySubTab === 'timeline' && (
+          <>
+            {items.map((item, index) => (
+              <div
+                key={index}
+                draggable
+                onDragStart={(e) => handleDragStart(e, index)}
+                onDragOver={(e) => handleDragOver(e, index)}
+                onDragLeave={handleDragLeave}
+                onDrop={(e) => handleDrop(e, index)}
+                onDragEnd={handleDragEnd}
+                className={`p-4 border rounded-lg space-y-3 transition-all ${
+                  dragIndex === index
+                    ? 'opacity-50 border-purple-400 bg-purple-50 dark:bg-purple-900/20'
+                    : dragOverIndex === index
+                    ? 'border-purple-500 border-2 bg-purple-50 dark:bg-purple-900/10'
+                    : 'border-gray-200 dark:border-gray-700'
+                }`}
+              >
+                <div className="flex items-center justify-between mb-2">
+                  <div className="flex items-center gap-2 text-gray-400 dark:text-gray-500 cursor-move">
+                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 8h16M4 16h16" />
+                    </svg>
+                    <span className="text-xs font-medium">#{index + 1} 드래그하여 순서 변경</span>
+                  </div>
+                  <button onClick={() => removeItem('activities', index)} className="text-red-500 text-sm hover:underline">삭제</button>
+                </div>
+                <div className="grid grid-cols-2 gap-3">
+                  <div>
+                    <label className="block text-xs font-medium text-gray-500 dark:text-gray-400 mb-1">활동 기간</label>
+                    <input
+                      type="text"
+                      placeholder="예: 2024.03 - 2024.11"
+                      value={item.period}
+                      onChange={(e) => updateActivityTimelineItem(index, 'period', e.target.value)}
+                      className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-xs font-medium text-gray-500 dark:text-gray-400 mb-1">역할 (선택)</label>
+                    <input
+                      type="text"
+                      placeholder="예: 팀장, 부트캠퍼"
+                      value={item.role || ''}
+                      onChange={(e) => updateActivityTimelineItem(index, 'role', e.target.value)}
+                      className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
+                    />
+                  </div>
+                </div>
+                <div>
+                  <label className="block text-xs font-medium text-gray-500 dark:text-gray-400 mb-1">프로그램/활동명</label>
+                  <input
+                    type="text"
+                    placeholder="예: Protocol Camp 5th"
+                    value={item.title}
+                    onChange={(e) => updateActivityTimelineItem(index, 'title', e.target.value)}
+                    className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
+                  />
+                </div>
+                <div>
+                  <label className="block text-xs font-medium text-gray-500 dark:text-gray-400 mb-1">주최 기관</label>
+                  <input
+                    type="text"
+                    placeholder="예: KISIA"
+                    value={item.org}
+                    onChange={(e) => updateActivityTimelineItem(index, 'org', e.target.value)}
+                    className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
+                  />
+                </div>
+                <div>
+                  <label className="block text-xs font-medium text-gray-500 dark:text-gray-400 mb-1">설명</label>
+                  <input
+                    type="text"
+                    placeholder="예: 블록체인 보안 교육 및 정적 분석 도구 개발"
+                    value={item.desc}
+                    onChange={(e) => updateActivityTimelineItem(index, 'desc', e.target.value)}
+                    className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
+                  />
+                </div>
               </div>
-              <button onClick={() => removeItem('activities', index)} className="text-red-500 text-sm hover:underline">삭제</button>
-            </div>
-            <div className="grid grid-cols-2 gap-3">
+            ))}
+            <button
+              onClick={addActivityTimelineItem}
+              className="w-full px-4 py-2 text-purple-600 dark:text-purple-400 border border-dashed border-purple-300 dark:border-purple-700 rounded-lg hover:bg-purple-50 dark:hover:bg-purple-900/20"
+            >
+              + 활동 추가
+            </button>
+          </>
+        )}
+
+        {/* Club Editor */}
+        {activitySubTab === 'club' && (
+          <div className="p-4 border border-gray-200 dark:border-gray-700 rounded-lg space-y-4">
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <label className="block text-xs font-medium text-gray-500 dark:text-gray-400 mb-1">동아리명</label>
+                <input
+                  type="text"
+                  placeholder="예: Layer7"
+                  value={data.activities.club.name}
+                  onChange={(e) => updateClub('name', e.target.value)}
+                  className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
+                />
+              </div>
               <div>
                 <label className="block text-xs font-medium text-gray-500 dark:text-gray-400 mb-1">활동 기간</label>
                 <input
                   type="text"
-                  placeholder="예: 2024.03 - 2024.11"
-                  value={item.period}
-                  onChange={(e) => updateActivityTimelineItem(index, 'period', e.target.value)}
+                  placeholder="예: 2020.03 - 2024.02"
+                  value={data.activities.club.period}
+                  onChange={(e) => updateClub('period', e.target.value)}
                   className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
                 />
               </div>
-              <div>
-                <label className="block text-xs font-medium text-gray-500 dark:text-gray-400 mb-1">역할 (선택)</label>
-                <input
-                  type="text"
-                  placeholder="예: 팀장, 부트캠퍼"
-                  value={item.role || ''}
-                  onChange={(e) => updateActivityTimelineItem(index, 'role', e.target.value)}
-                  className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
-                />
-              </div>
-            </div>
-            <div>
-              <label className="block text-xs font-medium text-gray-500 dark:text-gray-400 mb-1">프로그램/활동명</label>
-              <input
-                type="text"
-                placeholder="예: Protocol Camp 5th"
-                value={item.title}
-                onChange={(e) => updateActivityTimelineItem(index, 'title', e.target.value)}
-                className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
-              />
-            </div>
-            <div>
-              <label className="block text-xs font-medium text-gray-500 dark:text-gray-400 mb-1">주최 기관</label>
-              <input
-                type="text"
-                placeholder="예: KISIA"
-                value={item.org}
-                onChange={(e) => updateActivityTimelineItem(index, 'org', e.target.value)}
-                className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
-              />
             </div>
             <div>
               <label className="block text-xs font-medium text-gray-500 dark:text-gray-400 mb-1">설명</label>
-              <input
-                type="text"
-                placeholder="예: 블록체인 보안 교육 및 정적 분석 도구 개발"
-                value={item.desc}
-                onChange={(e) => updateActivityTimelineItem(index, 'desc', e.target.value)}
+              <textarea
+                placeholder="동아리 설명"
+                value={data.activities.club.description}
+                onChange={(e) => updateClub('description', e.target.value)}
+                rows={2}
                 className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
               />
             </div>
+            <div>
+              <label className="block text-xs font-medium text-gray-500 dark:text-gray-400 mb-2">역할</label>
+              <div className="space-y-2">
+                {data.activities.club.roles.map((role, i) => (
+                  <div key={i} className="flex gap-2">
+                    <input
+                      type="text"
+                      placeholder="예: 회장 (2023)"
+                      value={role}
+                      onChange={(e) => {
+                        const newRoles = [...data.activities.club.roles];
+                        newRoles[i] = e.target.value;
+                        updateClub('roles', newRoles);
+                      }}
+                      className="flex-1 px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
+                    />
+                    <button
+                      onClick={() => {
+                        const newRoles = data.activities.club.roles.filter((_, idx) => idx !== i);
+                        updateClub('roles', newRoles);
+                      }}
+                      className="px-3 py-2 text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg"
+                    >
+                      삭제
+                    </button>
+                  </div>
+                ))}
+                <button
+                  onClick={() => updateClub('roles', [...data.activities.club.roles, ''])}
+                  className="w-full px-4 py-2 text-violet-600 dark:text-violet-400 border border-dashed border-violet-300 dark:border-violet-700 rounded-lg hover:bg-violet-50 dark:hover:bg-violet-900/20"
+                >
+                  + 역할 추가
+                </button>
+              </div>
+            </div>
           </div>
-        ))}
-        <button
-          onClick={addActivityTimelineItem}
-          className="w-full px-4 py-2 text-purple-600 dark:text-purple-400 border border-dashed border-purple-300 dark:border-purple-700 rounded-lg hover:bg-purple-50 dark:hover:bg-purple-900/20"
-        >
-          + 활동 추가
-        </button>
+        )}
+
+        {/* CTF Editor */}
+        {activitySubTab === 'ctf' && (
+          <>
+            {data.activities.ctf.map((ctf, index) => (
+              <div
+                key={index}
+                draggable
+                onDragStart={(e) => handleCTFDragStart(e, index)}
+                onDragOver={(e) => handleDragOver(e, index)}
+                onDragLeave={handleDragLeave}
+                onDrop={(e) => handleCTFDrop(e, index)}
+                onDragEnd={handleDragEnd}
+                className={`p-4 border rounded-lg space-y-3 transition-all ${
+                  dragIndex === index
+                    ? 'opacity-50 border-orange-400 bg-orange-50 dark:bg-orange-900/20'
+                    : dragOverIndex === index
+                    ? 'border-orange-500 border-2 bg-orange-50 dark:bg-orange-900/10'
+                    : 'border-gray-200 dark:border-gray-700'
+                }`}
+              >
+                <div className="flex items-center justify-between mb-2">
+                  <div className="flex items-center gap-2 text-gray-400 dark:text-gray-500 cursor-move">
+                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 8h16M4 16h16" />
+                    </svg>
+                    <span className="text-xs font-medium">#{index + 1} 드래그하여 순서 변경</span>
+                  </div>
+                  <button onClick={() => removeCTF(index)} className="text-red-500 text-sm hover:underline">삭제</button>
+                </div>
+                <div className="grid grid-cols-2 gap-3">
+                  <div>
+                    <label className="block text-xs font-medium text-gray-500 dark:text-gray-400 mb-1">대회명</label>
+                    <input
+                      type="text"
+                      placeholder="예: Codegate CTF"
+                      value={ctf.event}
+                      onChange={(e) => updateCTF(index, 'event', e.target.value)}
+                      className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-xs font-medium text-gray-500 dark:text-gray-400 mb-1">팀명</label>
+                    <input
+                      type="text"
+                      placeholder="예: HASH"
+                      value={ctf.team}
+                      onChange={(e) => updateCTF(index, 'team', e.target.value)}
+                      className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-xs font-medium text-gray-500 dark:text-gray-400 mb-1">순위</label>
+                    <input
+                      type="text"
+                      placeholder="예: 1st, 2nd, Finalist"
+                      value={ctf.rank}
+                      onChange={(e) => updateCTF(index, 'rank', e.target.value)}
+                      className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-xs font-medium text-gray-500 dark:text-gray-400 mb-1">연도</label>
+                    <input
+                      type="text"
+                      placeholder="예: 2023"
+                      value={ctf.year}
+                      onChange={(e) => updateCTF(index, 'year', e.target.value)}
+                      className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
+                    />
+                  </div>
+                </div>
+              </div>
+            ))}
+            <button
+              onClick={addCTF}
+              className="w-full px-4 py-2 text-orange-600 dark:text-orange-400 border border-dashed border-orange-300 dark:border-orange-700 rounded-lg hover:bg-orange-50 dark:hover:bg-orange-900/20"
+            >
+              + CTF 추가
+            </button>
+          </>
+        )}
       </div>
     );
   };
