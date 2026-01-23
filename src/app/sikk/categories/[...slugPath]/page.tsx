@@ -26,6 +26,7 @@ import {
 } from '@/lib/sikk';
 import { prisma } from '@/lib/db';
 import { auth } from '@/lib/auth';
+import { checkSikkPostAccess } from '@/lib/sikk-access';
 
 interface Column {
   id: string;
@@ -343,19 +344,32 @@ export async function generateStaticParams() {
 }
 
 export default async function SikkCategoryPage({ params }: CategoryPageProps) {
-  // Check admin access - Sikk is admin-only
   const session = await auth();
-  if (!session?.user?.isAdmin) {
-    redirect('/');
-  }
-
-  const isAdmin = session?.user?.isAdmin || false;
   const { slugPath } = await params;
   const parsed = await parseSlugPath(slugPath);
 
   if (parsed.type === 'invalid') {
     notFound();
   }
+
+  // For post pages, allow access for admin or invited users
+  if (parsed.type === 'post') {
+    const accessResult = await checkSikkPostAccess(parsed.postSlug, session);
+    if (!accessResult.canAccess) {
+      if (accessResult.reason === 'login_required') {
+        const encodedPath = slugPath.map(s => encodeURIComponent(s)).join('/');
+        redirect(`/auth/signin?callbackUrl=/sikk/categories/${encodedPath}`);
+      }
+      redirect('/');
+    }
+  } else {
+    // For category/database pages, require admin access
+    if (!session?.user?.isAdmin) {
+      redirect('/');
+    }
+  }
+
+  const isAdmin = session?.user?.isAdmin || false;
 
   // For database pages, use DB-based category lookup (works even with no posts in category)
   // For normal category pages, use post-based lookup with DB fallback
@@ -524,7 +538,7 @@ export default async function SikkCategoryPage({ params }: CategoryPageProps) {
           <SikkPostContent
             content={post.content}
             slug={post.slug}
-            isAdmin={true}
+            isAdmin={isAdmin}
             initialMetadata={{
               title: post.title,
               description: post.description || '',
