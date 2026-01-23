@@ -3,6 +3,7 @@
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { Post } from '@/types';
+import { getBlogPostUrl } from '@/lib/url';
 
 interface KeyboardNavigationProps {
   prevPost: Post | null;
@@ -26,11 +27,11 @@ export default function KeyboardNavigation({ prevPost, nextPost }: KeyboardNavig
 
       if (e.key === 'j' || e.key === 'J') {
         if (prevPost) {
-          router.push(`/blog/${prevPost.slug}`);
+          router.push(getBlogPostUrl(prevPost.categorySlugPath || [], prevPost.slug));
         }
       } else if (e.key === 'k' || e.key === 'K') {
         if (nextPost) {
-          router.push(`/blog/${nextPost.slug}`);
+          router.push(getBlogPostUrl(nextPost.categorySlugPath || [], nextPost.slug));
         }
       } else if (e.key === '?') {
         setShowHint((prev) => !prev);

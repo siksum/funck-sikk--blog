@@ -4,6 +4,7 @@ import { useState, useEffect, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import { Post } from '@/types';
 import { searchPosts } from '@/lib/search';
+import { getBlogPostUrl } from '@/lib/url';
 
 interface SearchModalProps {
   isOpen: boolean;
@@ -54,10 +55,10 @@ export default function SearchModal({ isOpen, onClose, posts }: SearchModalProps
   }, [isOpen, onClose]);
 
   const handleResultClick = useCallback(
-    (slug: string) => {
+    (post: Post) => {
       onClose();
       setQuery('');
-      router.push(`/blog/${slug}`);
+      router.push(getBlogPostUrl(post.categorySlugPath || [], post.slug));
     },
     [onClose, router]
   );
@@ -119,7 +120,7 @@ export default function SearchModal({ isOpen, onClose, posts }: SearchModalProps
                 {results.map((post) => (
                   <li key={post.slug}>
                     <button
-                      onClick={() => handleResultClick(post.slug)}
+                      onClick={() => handleResultClick(post)}
                       className="w-full px-5 py-4 text-left hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors"
                     >
                       <div className="flex items-start gap-3">

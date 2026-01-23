@@ -4,6 +4,7 @@ import { useState } from 'react';
 import Link from 'next/link';
 import { Post, Category } from '@/types';
 import TableOfContents from './TableOfContents';
+import { getBlogPostUrl } from '@/lib/url';
 
 interface DBSection {
   id: string;
@@ -41,7 +42,7 @@ function CategoryTreeItem({
 
   const [isExpanded, setIsExpanded] = useState(depth === 0 || isParentOfCurrent);
   const hasChildren = category.children && category.children.length > 0;
-  const href = `/categories/${category.slugPath.map(s => encodeURIComponent(s)).join('/')}`;
+  const href = `/blog/categories/${category.slugPath.map(s => encodeURIComponent(s)).join('/')}`;
 
   return (
     <>
@@ -234,7 +235,7 @@ export default function BlogPostSidebar({
             {relatedPosts.slice(0, 3).map((post, index) => (
               <li key={post.slug} className={index === 0 ? 'pb-3' : 'py-3'}>
                 <Link
-                  href={`/blog/${post.slug}`}
+                  href={getBlogPostUrl(post.categorySlugPath || [], post.slug)}
                   className="block group"
                 >
                   <h4

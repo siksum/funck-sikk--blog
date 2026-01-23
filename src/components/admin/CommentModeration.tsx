@@ -118,6 +118,16 @@ interface PostWithComments {
   comments: Comment[];
 }
 
+// Generate post URL - /blog/categories/[...category]/[slug] format
+function getPostUrl(category: string, slug: string) {
+  if (category) {
+    // Category path (e.g., "카테고리" or "카테고리/서브카테고리") - convert to URL-encoded path
+    const categoryPath = category.split('/').map(s => encodeURIComponent(s)).join('/');
+    return `/blog/categories/${categoryPath}/${encodeURIComponent(slug)}`;
+  }
+  return `/blog/categories/uncategorized/${encodeURIComponent(slug)}`;
+}
+
 interface CommentsData {
   posts: PostWithComments[];
   categoryStats: Record<string, number>;
@@ -480,7 +490,7 @@ export default function CommentModeration() {
                     </span>
                   </div>
                   <a
-                    href={`/blog/${post.slug}`}
+                    href={getPostUrl(post.category, post.slug)}
                     target="_blank"
                     rel="noopener noreferrer"
                     className="text-sm text-blue-600 dark:text-blue-400 hover:underline flex items-center gap-1"

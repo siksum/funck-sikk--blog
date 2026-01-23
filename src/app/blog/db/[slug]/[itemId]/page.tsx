@@ -1,93 +1,45 @@
-import { notFound } from 'next/navigation';
+import { redirect, notFound } from 'next/navigation';
 import { prisma } from '@/lib/db';
-import { auth } from '@/lib/auth';
-import BlogDatabaseItemView from '@/components/blog/BlogDatabaseItemView';
-
-export const revalidate = 10;
-
-interface Column {
-  id: string;
-  name: string;
-  type: string;
-  options?: string[];
-}
+import { getBlogDatabaseItemUrl } from '@/lib/url';
 
 interface DatabaseItemPageProps {
   params: Promise<{ slug: string; itemId: string }>;
 }
 
-export async function generateMetadata({ params }: DatabaseItemPageProps) {
+// Redirect old /blog/db/[slug]/[itemId] URLs to new /blog/categories/[...category]/db/[slug]/[itemId] URLs
+export default async function DatabaseItemRedirect({ params }: DatabaseItemPageProps) {
   const { slug, itemId } = await params;
 
   const database = await prisma.blogDatabase.findUnique({
     where: { slug },
-    select: { title: true, columns: true },
+    select: { slug: true, category: true },
   });
 
   if (!database) {
-    return { title: 'Not Found' };
+    notFound();
   }
 
+  // Verify the item exists
   const item = await prisma.blogDatabaseItem.findFirst({
     where: { id: itemId, database: { slug } },
-    select: { data: true },
+    select: { id: true },
   });
 
   if (!item) {
-    return { title: 'Not Found' };
+    notFound();
   }
 
-  const columns = database.columns as unknown as Column[];
-  const titleColumn = columns.find((c) => c.type === 'title');
-  const data = item.data as Record<string, unknown>;
-  const title = titleColumn ? String(data[titleColumn.id] || '제목 없음') : '제목 없음';
+  // Convert category name path to slug path
+  const categorySlugPath = database.category
+    ? database.category.split('/')
+    : [];
 
-  return {
-    title: `${title} | ${database.title} | Blog`,
-  };
+  // Redirect to the new URL format
+  const newUrl = getBlogDatabaseItemUrl(categorySlugPath, database.slug, itemId);
+  redirect(newUrl);
 }
 
-export default async function DatabaseItemPage({ params }: DatabaseItemPageProps) {
-  const { slug, itemId } = await params;
-
-  const database = await prisma.blogDatabase.findUnique({
-    where: { slug },
-    select: { id: true, title: true, slug: true, columns: true, isPublic: true },
-  });
-
-  if (!database) {
-    notFound();
-  }
-
-  const session = await auth();
-  const isAdmin = session?.user?.isAdmin || false;
-
-  // If database is private and user is not admin, show 404
-  if (!database.isPublic && !isAdmin) {
-    notFound();
-  }
-
-  const item = await prisma.blogDatabaseItem.findFirst({
-    where: { id: itemId, databaseId: database.id },
-  });
-
-  if (!item) {
-    notFound();
-  }
-
-  const columns = database.columns as unknown as Column[];
-  const data = item.data as Record<string, unknown>;
-
-  return (
-    <BlogDatabaseItemView
-      databaseId={database.id}
-      databaseSlug={database.slug}
-      databaseTitle={database.title}
-      itemId={item.id}
-      columns={columns}
-      data={data}
-      content={item.content}
-      isAdmin={isAdmin}
-    />
-  );
+// Keep generateStaticParams for backwards compatibility during build
+export async function generateStaticParams() {
+  return [];
 }

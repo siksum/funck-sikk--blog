@@ -998,8 +998,10 @@ export default function DatabaseTableView({
     }
 
     if (column.type === 'title') {
-      // Simple URL format: /sikk/db/[slug]/[itemId]
-      const itemHref = `/sikk/db/${databaseSlug}/${item.id}`;
+      // New URL format: /sikk/categories/[...categoryPath]/db/[slug]/[itemId]
+      const itemHref = categorySlugPath && categorySlugPath.length > 0
+        ? `/sikk/categories/${categorySlugPath.map(s => encodeURIComponent(s)).join('/')}/db/${encodeURIComponent(databaseSlug)}/${item.id}`
+        : `/sikk/categories/uncategorized/db/${encodeURIComponent(databaseSlug)}/${item.id}`;
 
       return (
         <div className="relative group">

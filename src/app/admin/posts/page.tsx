@@ -99,6 +99,16 @@ interface Post {
   isPublic?: boolean;
 }
 
+// Generate post URL - /blog/categories/[...category]/[slug] format
+function getPostUrl(category: string, slug: string) {
+  if (category) {
+    // Category path (e.g., "카테고리" or "카테고리/서브카테고리") - convert to URL-encoded path
+    const categoryPath = category.split('/').map(s => encodeURIComponent(s)).join('/');
+    return `/blog/categories/${categoryPath}/${encodeURIComponent(slug)}`;
+  }
+  return `/blog/categories/uncategorized/${encodeURIComponent(slug)}`;
+}
+
 interface DBSection {
   id: string;
   title: string;
@@ -1182,7 +1192,7 @@ export default function PostsManagementPage() {
                       )}
                       <div className="flex gap-3 mt-3 pt-3 border-t border-gray-100 dark:border-gray-700">
                         <Link
-                          href={`/blog/${post.slug}`}
+                          href={getPostUrl(post.category, post.slug)}
                           className="text-xs text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white"
                         >
                           보기
@@ -1353,7 +1363,7 @@ export default function PostsManagementPage() {
                           <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
                             <div className="flex justify-end gap-2">
                               <Link
-                                href={`/blog/${post.slug}`}
+                                href={getPostUrl(post.category, post.slug)}
                                 className="px-2 py-1 text-gray-600 hover:text-gray-900 dark:text-gray-400 dark:hover:text-white rounded hover:bg-gray-100 dark:hover:bg-gray-700"
                               >
                                 보기

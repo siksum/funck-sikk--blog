@@ -134,7 +134,7 @@ export default function SikkCategoryPageContent({
                 </svg>
                 {index < category.path.length - 1 ? (
                   <Link
-                    href={`/sikk/category/${category.slugPath.slice(0, index + 1).map(s => encodeURIComponent(s)).join('/')}`}
+                    href={`/sikk/categories/${category.slugPath.slice(0, index + 1).map(s => encodeURIComponent(s)).join('/')}`}
                     className="hover:text-pink-600 dark:hover:text-pink-400 transition-colors"
                   >
                     {name}

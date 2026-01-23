@@ -61,8 +61,8 @@ export default function SikkCategoryCard({ name, count, tags, slugPath, variant 
   const colors = defaultColors;
 
   const href = slugPath
-    ? `/sikk/category/${slugPath.map(s => encodeURIComponent(s)).join('/')}`
-    : `/sikk/category/${encodeURIComponent(name)}`;
+    ? `/sikk/categories/${slugPath.map(s => encodeURIComponent(s)).join('/')}`
+    : `/sikk/categories/${encodeURIComponent(name)}`;
 
   // List variant
   if (variant === 'list') {

@@ -2,6 +2,7 @@
 
 import Link from 'next/link';
 import { Post } from '@/types';
+import { getSikkPostUrl } from '@/lib/url';
 
 interface SikkPostCardProps {
   post: Post;
@@ -24,11 +25,14 @@ export default function SikkPostCard({ post, variant = 'default' }: SikkPostCard
   const status = post.status || 'not_started';
   const statusInfo = statusConfig[status];
 
+  // Generate category-based URL for the post
+  const postUrl = getSikkPostUrl(post.categorySlugPath || [], post.slug);
+
   const handleShare = async (e: React.MouseEvent) => {
     e.preventDefault();
     e.stopPropagation();
 
-    const url = `${window.location.origin}/sikk/${post.slug}`;
+    const url = `${window.location.origin}${postUrl}`;
 
     if (navigator.share) {
       try {
@@ -57,7 +61,7 @@ export default function SikkPostCard({ post, variant = 'default' }: SikkPostCard
   if (variant === 'compact') {
     return (
       <Link
-        href={`/sikk/${post.slug}`}
+        href={postUrl}
         className="block group p-4 transition-colors hover:bg-pink-50 dark:hover:bg-pink-500/10"
       >
         <h3
@@ -82,7 +86,7 @@ export default function SikkPostCard({ post, variant = 'default' }: SikkPostCard
           hover:shadow-lg hover:shadow-pink-200/20 dark:hover:shadow-[0_0_20px_rgba(236,72,153,0.2)]"
         style={{ background: 'var(--card-bg)' }}
       >
-        <Link href={`/sikk/${post.slug}`} className="block">
+        <Link href={postUrl} className="block">
           <div className="p-4">
             {/* Category Breadcrumb */}
             <div className="flex items-center gap-1 mb-2 flex-wrap">
@@ -176,7 +180,7 @@ export default function SikkPostCard({ post, variant = 'default' }: SikkPostCard
         hover:-translate-y-1"
       style={{ background: 'var(--card-bg)' }}
     >
-      <Link href={`/sikk/${post.slug}`} className="block">
+      <Link href={postUrl} className="block">
         {/* Thumbnail */}
         {post.thumbnail ? (
           <div className="relative w-full h-36 overflow-hidden">

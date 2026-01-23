@@ -153,7 +153,7 @@ export default function CategoryPageContent({
                 </svg>
                 {index < category.path.length - 1 ? (
                   <Link
-                    href={`/categories/${category.slugPath.slice(0, index + 1).map(s => encodeURIComponent(s)).join('/')}`}
+                    href={`/blog/categories/${category.slugPath.slice(0, index + 1).map(s => encodeURIComponent(s)).join('/')}`}
                     className="hover:text-violet-600 dark:hover:text-violet-400 transition-colors"
                   >
                     {name}

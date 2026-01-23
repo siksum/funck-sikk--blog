@@ -1,117 +1,45 @@
-import { notFound } from 'next/navigation';
+import { redirect, notFound } from 'next/navigation';
 import { prisma } from '@/lib/db';
-import { auth } from '@/lib/auth';
-import DatabaseItemView from '@/components/sikk/DatabaseItemView';
-
-export const revalidate = 10;
-
-interface Column {
-  id: string;
-  name: string;
-  type: string;
-  options?: string[];
-}
+import { getSikkDatabaseItemUrl } from '@/lib/url';
 
 interface DatabaseItemPageProps {
   params: Promise<{ slug: string; itemId: string }>;
 }
 
-export async function generateMetadata({ params }: DatabaseItemPageProps) {
+// Redirect old /sikk/db/[slug]/[itemId] URLs to new /sikk/categories/[...category]/db/[slug]/[itemId] URLs
+export default async function DatabaseItemRedirect({ params }: DatabaseItemPageProps) {
   const { slug, itemId } = await params;
 
   const database = await prisma.sikkDatabase.findUnique({
     where: { slug },
-    select: { title: true, columns: true },
+    select: { slug: true, category: true },
   });
 
   if (!database) {
-    return { title: 'Not Found' };
+    notFound();
   }
 
+  // Verify the item exists
   const item = await prisma.sikkDatabaseItem.findFirst({
     where: { id: itemId, database: { slug } },
-    select: { data: true },
+    select: { id: true },
   });
 
   if (!item) {
-    return { title: 'Not Found' };
+    notFound();
   }
 
-  // Safely parse columns
-  let columns: Column[] = [];
-  try {
-    const rawColumns = database.columns;
-    if (Array.isArray(rawColumns)) {
-      columns = rawColumns as Column[];
-    } else if (typeof rawColumns === 'string') {
-      columns = JSON.parse(rawColumns) as Column[];
-    }
-  } catch (e) {
-    console.error('Failed to parse columns in metadata:', e);
-  }
+  // Convert category name path to slug path
+  const categorySlugPath = database.category
+    ? database.category.split('/')
+    : [];
 
-  const titleColumn = columns.find((c) => c.type === 'title');
-  const data = (item.data || {}) as Record<string, unknown>;
-  const title = titleColumn ? String(data[titleColumn.id] || '제목 없음') : '제목 없음';
-
-  return {
-    title: `${title} | ${database.title} | func(sikk)`,
-  };
+  // Redirect to the new URL format
+  const newUrl = getSikkDatabaseItemUrl(categorySlugPath, database.slug, itemId);
+  redirect(newUrl);
 }
 
-export default async function DatabaseItemPage({ params }: DatabaseItemPageProps) {
-  const { slug, itemId } = await params;
-
-  const database = await prisma.sikkDatabase.findUnique({
-    where: { slug },
-    select: { id: true, title: true, slug: true, columns: true, isPublic: true },
-  });
-
-  if (!database) {
-    notFound();
-  }
-
-  const session = await auth();
-  const isAdmin = session?.user?.isAdmin || false;
-
-  // If database is private and user is not admin, show 404
-  if (!database.isPublic && !isAdmin) {
-    notFound();
-  }
-
-  const item = await prisma.sikkDatabaseItem.findFirst({
-    where: { id: itemId, databaseId: database.id },
-  });
-
-  if (!item) {
-    notFound();
-  }
-
-  // Safely parse columns
-  let columns: Column[] = [];
-  try {
-    const rawColumns = database.columns;
-    if (Array.isArray(rawColumns)) {
-      columns = rawColumns as Column[];
-    } else if (typeof rawColumns === 'string') {
-      columns = JSON.parse(rawColumns) as Column[];
-    }
-  } catch (e) {
-    console.error('Failed to parse columns:', e);
-  }
-
-  const data = (item.data || {}) as Record<string, unknown>;
-
-  return (
-    <DatabaseItemView
-      databaseId={database.id}
-      databaseSlug={database.slug}
-      databaseTitle={database.title}
-      itemId={item.id}
-      columns={columns}
-      data={data}
-      content={item.content}
-      isAdmin={isAdmin}
-    />
-  );
+// Keep generateStaticParams for backwards compatibility during build
+export async function generateStaticParams() {
+  return [];
 }
