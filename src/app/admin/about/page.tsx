@@ -872,6 +872,8 @@ function TimelineEditor({ data, setData }: { data: AboutData; setData: (d: About
 // Publications Editor
 function PublicationsEditor({ data, setData }: { data: AboutData; setData: (d: AboutData) => void }) {
   const [pubTab, setPubTab] = useState<'journals' | 'international' | 'domestic'>('journals');
+  const [dragIndex, setDragIndex] = useState<number | null>(null);
+  const [dragOverIndex, setDragOverIndex] = useState<number | null>(null);
 
   const addJournal = () => {
     setData({
@@ -894,6 +896,14 @@ function PublicationsEditor({ data, setData }: { data: AboutData; setData: (d: A
       ...data,
       publications: { ...data.publications, journals: data.publications.journals.filter((_, i) => i !== index) },
     });
+  };
+
+  const moveJournal = (fromIndex: number, toIndex: number) => {
+    if (fromIndex === toIndex) return;
+    const newJournals = [...data.publications.journals];
+    const [movedItem] = newJournals.splice(fromIndex, 1);
+    newJournals.splice(toIndex, 0, movedItem);
+    setData({ ...data, publications: { ...data.publications, journals: newJournals } });
   };
 
   const addInternational = () => {
@@ -919,6 +929,14 @@ function PublicationsEditor({ data, setData }: { data: AboutData; setData: (d: A
     });
   };
 
+  const moveInternational = (fromIndex: number, toIndex: number) => {
+    if (fromIndex === toIndex) return;
+    const newItems = [...data.publications.international];
+    const [movedItem] = newItems.splice(fromIndex, 1);
+    newItems.splice(toIndex, 0, movedItem);
+    setData({ ...data, publications: { ...data.publications, international: newItems } });
+  };
+
   const addDomestic = () => {
     setData({
       ...data,
@@ -940,6 +958,41 @@ function PublicationsEditor({ data, setData }: { data: AboutData; setData: (d: A
       ...data,
       publications: { ...data.publications, domestic: data.publications.domestic.filter((_, i) => i !== index) },
     });
+  };
+
+  const moveDomestic = (fromIndex: number, toIndex: number) => {
+    if (fromIndex === toIndex) return;
+    const newItems = [...data.publications.domestic];
+    const [movedItem] = newItems.splice(fromIndex, 1);
+    newItems.splice(toIndex, 0, movedItem);
+    setData({ ...data, publications: { ...data.publications, domestic: newItems } });
+  };
+
+  const handleDragStart = (e: React.DragEvent, index: number) => {
+    setDragIndex(index);
+    e.dataTransfer.effectAllowed = 'move';
+    e.dataTransfer.setData('text/plain', index.toString());
+  };
+
+  const handleDragOver = (e: React.DragEvent, index: number) => {
+    e.preventDefault();
+    setDragOverIndex(index);
+  };
+
+  const handleDrop = (e: React.DragEvent, toIndex: number, type: 'journals' | 'international' | 'domestic') => {
+    e.preventDefault();
+    if (dragIndex !== null) {
+      if (type === 'journals') moveJournal(dragIndex, toIndex);
+      else if (type === 'international') moveInternational(dragIndex, toIndex);
+      else moveDomestic(dragIndex, toIndex);
+    }
+    setDragIndex(null);
+    setDragOverIndex(null);
+  };
+
+  const handleDragEnd = () => {
+    setDragIndex(null);
+    setDragOverIndex(null);
   };
 
   return (
@@ -981,7 +1034,31 @@ function PublicationsEditor({ data, setData }: { data: AboutData; setData: (d: A
       {pubTab === 'journals' && (
         <div className="space-y-4">
           {data.publications.journals.map((item, index) => (
-            <div key={index} className="p-4 border border-gray-200 dark:border-gray-700 rounded-lg space-y-3">
+            <div
+              key={index}
+              draggable
+              onDragStart={(e) => handleDragStart(e, index)}
+              onDragOver={(e) => handleDragOver(e, index)}
+              onDragLeave={() => setDragOverIndex(null)}
+              onDrop={(e) => handleDrop(e, index, 'journals')}
+              onDragEnd={handleDragEnd}
+              className={`p-4 border rounded-lg space-y-3 transition-all ${
+                dragIndex === index
+                  ? 'opacity-50 border-violet-400 bg-violet-50 dark:bg-violet-900/20'
+                  : dragOverIndex === index
+                  ? 'border-violet-500 border-2 bg-violet-50 dark:bg-violet-900/10'
+                  : 'border-gray-200 dark:border-gray-700'
+              }`}
+            >
+              <div className="flex items-center justify-between mb-2">
+                <div className="flex items-center gap-2 text-gray-400 dark:text-gray-500 cursor-move">
+                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 8h16M4 16h16" />
+                  </svg>
+                  <span className="text-xs font-medium">#{index + 1} 드래그하여 순서 변경</span>
+                </div>
+                <button onClick={() => removeJournal(index)} className="text-red-500 text-sm hover:underline">삭제</button>
+              </div>
               <div>
                 <label className="block text-xs font-medium text-gray-500 dark:text-gray-400 mb-1">저자</label>
                 <input
@@ -1032,7 +1109,7 @@ function PublicationsEditor({ data, setData }: { data: AboutData; setData: (d: A
                   />
                 </div>
               </div>
-              <div className="flex items-center justify-between">
+              <div className="flex items-center">
                 <label className="flex items-center gap-2 text-sm text-gray-600 dark:text-gray-400">
                   <input
                     type="checkbox"
@@ -1042,7 +1119,6 @@ function PublicationsEditor({ data, setData }: { data: AboutData; setData: (d: A
                   />
                   하이라이트 (대표 논문)
                 </label>
-                <button onClick={() => removeJournal(index)} className="text-red-500 text-sm hover:underline">삭제</button>
               </div>
             </div>
           ))}
@@ -1059,7 +1135,31 @@ function PublicationsEditor({ data, setData }: { data: AboutData; setData: (d: A
       {pubTab === 'international' && (
         <div className="space-y-4">
           {data.publications.international.map((item, index) => (
-            <div key={index} className="p-4 border border-gray-200 dark:border-gray-700 rounded-lg space-y-3">
+            <div
+              key={index}
+              draggable
+              onDragStart={(e) => handleDragStart(e, index)}
+              onDragOver={(e) => handleDragOver(e, index)}
+              onDragLeave={() => setDragOverIndex(null)}
+              onDrop={(e) => handleDrop(e, index, 'international')}
+              onDragEnd={handleDragEnd}
+              className={`p-4 border rounded-lg space-y-3 transition-all ${
+                dragIndex === index
+                  ? 'opacity-50 border-blue-400 bg-blue-50 dark:bg-blue-900/20'
+                  : dragOverIndex === index
+                  ? 'border-blue-500 border-2 bg-blue-50 dark:bg-blue-900/10'
+                  : 'border-gray-200 dark:border-gray-700'
+              }`}
+            >
+              <div className="flex items-center justify-between mb-2">
+                <div className="flex items-center gap-2 text-gray-400 dark:text-gray-500 cursor-move">
+                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 8h16M4 16h16" />
+                  </svg>
+                  <span className="text-xs font-medium">#{index + 1} 드래그하여 순서 변경</span>
+                </div>
+                <button onClick={() => removeInternational(index)} className="text-red-500 text-sm hover:underline">삭제</button>
+              </div>
               <div>
                 <label className="block text-xs font-medium text-gray-500 dark:text-gray-400 mb-1">저자</label>
                 <input
@@ -1088,7 +1188,6 @@ function PublicationsEditor({ data, setData }: { data: AboutData; setData: (d: A
                   className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
                 />
               </div>
-              <button onClick={() => removeInternational(index)} className="text-red-500 text-sm hover:underline">삭제</button>
             </div>
           ))}
           <button
@@ -1104,7 +1203,31 @@ function PublicationsEditor({ data, setData }: { data: AboutData; setData: (d: A
       {pubTab === 'domestic' && (
         <div className="space-y-4">
           {data.publications.domestic.map((item, index) => (
-            <div key={index} className="p-4 border border-gray-200 dark:border-gray-700 rounded-lg space-y-3">
+            <div
+              key={index}
+              draggable
+              onDragStart={(e) => handleDragStart(e, index)}
+              onDragOver={(e) => handleDragOver(e, index)}
+              onDragLeave={() => setDragOverIndex(null)}
+              onDrop={(e) => handleDrop(e, index, 'domestic')}
+              onDragEnd={handleDragEnd}
+              className={`p-4 border rounded-lg space-y-3 transition-all ${
+                dragIndex === index
+                  ? 'opacity-50 border-amber-400 bg-amber-50 dark:bg-amber-900/20'
+                  : dragOverIndex === index
+                  ? 'border-amber-500 border-2 bg-amber-50 dark:bg-amber-900/10'
+                  : 'border-gray-200 dark:border-gray-700'
+              }`}
+            >
+              <div className="flex items-center justify-between mb-2">
+                <div className="flex items-center gap-2 text-gray-400 dark:text-gray-500 cursor-move">
+                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 8h16M4 16h16" />
+                  </svg>
+                  <span className="text-xs font-medium">#{index + 1} 드래그하여 순서 변경</span>
+                </div>
+                <button onClick={() => removeDomestic(index)} className="text-red-500 text-sm hover:underline">삭제</button>
+              </div>
               <div>
                 <label className="block text-xs font-medium text-gray-500 dark:text-gray-400 mb-1">저자</label>
                 <input
@@ -1154,7 +1277,6 @@ function PublicationsEditor({ data, setData }: { data: AboutData; setData: (d: A
                   />
                 </div>
               </div>
-              <button onClick={() => removeDomestic(index)} className="text-red-500 text-sm hover:underline">삭제</button>
             </div>
           ))}
           <button
@@ -1171,6 +1293,9 @@ function PublicationsEditor({ data, setData }: { data: AboutData; setData: (d: A
 
 // Awards Editor
 function AwardsEditor({ data, setData }: { data: AboutData; setData: (d: AboutData) => void }) {
+  const [dragIndex, setDragIndex] = useState<number | null>(null);
+  const [dragOverIndex, setDragOverIndex] = useState<number | null>(null);
+
   const addAward = () => {
     setData({
       ...data,
@@ -1186,6 +1311,39 @@ function AwardsEditor({ data, setData }: { data: AboutData; setData: (d: AboutDa
 
   const removeAward = (index: number) => {
     setData({ ...data, awards: data.awards.filter((_, i) => i !== index) });
+  };
+
+  const moveAward = (fromIndex: number, toIndex: number) => {
+    if (fromIndex === toIndex) return;
+    const newAwards = [...data.awards];
+    const [movedItem] = newAwards.splice(fromIndex, 1);
+    newAwards.splice(toIndex, 0, movedItem);
+    setData({ ...data, awards: newAwards });
+  };
+
+  const handleDragStart = (e: React.DragEvent, index: number) => {
+    setDragIndex(index);
+    e.dataTransfer.effectAllowed = 'move';
+    e.dataTransfer.setData('text/plain', index.toString());
+  };
+
+  const handleDragOver = (e: React.DragEvent, index: number) => {
+    e.preventDefault();
+    setDragOverIndex(index);
+  };
+
+  const handleDrop = (e: React.DragEvent, toIndex: number) => {
+    e.preventDefault();
+    if (dragIndex !== null) {
+      moveAward(dragIndex, toIndex);
+    }
+    setDragIndex(null);
+    setDragOverIndex(null);
+  };
+
+  const handleDragEnd = () => {
+    setDragIndex(null);
+    setDragOverIndex(null);
   };
 
   const sectionOptions = [
@@ -1224,7 +1382,31 @@ function AwardsEditor({ data, setData }: { data: AboutData; setData: (d: AboutDa
       </div>
 
       {data.awards.map((award, index) => (
-        <div key={index} className="p-4 border border-gray-200 dark:border-gray-700 rounded-lg space-y-3">
+        <div
+          key={index}
+          draggable
+          onDragStart={(e) => handleDragStart(e, index)}
+          onDragOver={(e) => handleDragOver(e, index)}
+          onDragLeave={() => setDragOverIndex(null)}
+          onDrop={(e) => handleDrop(e, index)}
+          onDragEnd={handleDragEnd}
+          className={`p-4 border rounded-lg space-y-3 transition-all ${
+            dragIndex === index
+              ? 'opacity-50 border-amber-400 bg-amber-50 dark:bg-amber-900/20'
+              : dragOverIndex === index
+              ? 'border-amber-500 border-2 bg-amber-50 dark:bg-amber-900/10'
+              : 'border-gray-200 dark:border-gray-700'
+          }`}
+        >
+          <div className="flex items-center justify-between mb-2">
+            <div className="flex items-center gap-2 text-gray-400 dark:text-gray-500 cursor-move">
+              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 8h16M4 16h16" />
+              </svg>
+              <span className="text-xs font-medium">#{index + 1} 드래그하여 순서 변경</span>
+            </div>
+            <button onClick={() => removeAward(index)} className="text-red-500 text-sm hover:underline">삭제</button>
+          </div>
           <div className="grid grid-cols-2 gap-3">
             <div>
               <label className="block text-xs font-medium text-gray-500 dark:text-gray-400 mb-1">수상명 (영문)</label>
@@ -1282,7 +1464,7 @@ function AwardsEditor({ data, setData }: { data: AboutData; setData: (d: AboutDa
             </select>
             <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">About 페이지에서 카테고리별로 필터링할 때 사용됩니다</p>
           </div>
-          <div className="flex items-center justify-between">
+          <div className="flex items-center">
             <label className="flex items-center gap-2 text-sm text-gray-600 dark:text-gray-400">
               <input
                 type="checkbox"
@@ -1292,12 +1474,6 @@ function AwardsEditor({ data, setData }: { data: AboutData; setData: (d: AboutDa
               />
               하이라이트 (대표 수상)
             </label>
-            <button
-              onClick={() => removeAward(index)}
-              className="text-red-500 text-sm hover:underline"
-            >
-              삭제
-            </button>
           </div>
         </div>
       ))}
@@ -1314,6 +1490,8 @@ function AwardsEditor({ data, setData }: { data: AboutData; setData: (d: AboutDa
 // Activities Editor
 function ActivitiesEditor({ data, setData }: { data: AboutData; setData: (d: AboutData) => void }) {
   const [actTab, setActTab] = useState<'club' | 'external' | 'ctf'>('club');
+  const [dragIndex, setDragIndex] = useState<number | null>(null);
+  const [dragOverIndex, setDragOverIndex] = useState<number | null>(null);
 
   const updateClub = (field: string, value: string | string[]) => {
     setData({
@@ -1345,6 +1523,14 @@ function ActivitiesEditor({ data, setData }: { data: AboutData; setData: (d: Abo
     });
   };
 
+  const moveExternal = (fromIndex: number, toIndex: number) => {
+    if (fromIndex === toIndex) return;
+    const newItems = [...data.activities.external];
+    const [movedItem] = newItems.splice(fromIndex, 1);
+    newItems.splice(toIndex, 0, movedItem);
+    setData({ ...data, activities: { ...data.activities, external: newItems } });
+  };
+
   const addCTF = () => {
     setData({
       ...data,
@@ -1366,6 +1552,40 @@ function ActivitiesEditor({ data, setData }: { data: AboutData; setData: (d: Abo
       ...data,
       activities: { ...data.activities, ctf: data.activities.ctf.filter((_, i) => i !== index) },
     });
+  };
+
+  const moveCTF = (fromIndex: number, toIndex: number) => {
+    if (fromIndex === toIndex) return;
+    const newItems = [...data.activities.ctf];
+    const [movedItem] = newItems.splice(fromIndex, 1);
+    newItems.splice(toIndex, 0, movedItem);
+    setData({ ...data, activities: { ...data.activities, ctf: newItems } });
+  };
+
+  const handleDragStart = (e: React.DragEvent, index: number) => {
+    setDragIndex(index);
+    e.dataTransfer.effectAllowed = 'move';
+    e.dataTransfer.setData('text/plain', index.toString());
+  };
+
+  const handleDragOver = (e: React.DragEvent, index: number) => {
+    e.preventDefault();
+    setDragOverIndex(index);
+  };
+
+  const handleDrop = (e: React.DragEvent, toIndex: number, type: 'external' | 'ctf') => {
+    e.preventDefault();
+    if (dragIndex !== null) {
+      if (type === 'external') moveExternal(dragIndex, toIndex);
+      else moveCTF(dragIndex, toIndex);
+    }
+    setDragIndex(null);
+    setDragOverIndex(null);
+  };
+
+  const handleDragEnd = () => {
+    setDragIndex(null);
+    setDragOverIndex(null);
   };
 
   return (
@@ -1455,7 +1675,31 @@ function ActivitiesEditor({ data, setData }: { data: AboutData; setData: (d: Abo
       {actTab === 'external' && (
         <div className="space-y-4">
           {data.activities.external.map((item, index) => (
-            <div key={index} className="p-4 border border-gray-200 dark:border-gray-700 rounded-lg space-y-3">
+            <div
+              key={index}
+              draggable
+              onDragStart={(e) => handleDragStart(e, index)}
+              onDragOver={(e) => handleDragOver(e, index)}
+              onDragLeave={() => setDragOverIndex(null)}
+              onDrop={(e) => handleDrop(e, index, 'external')}
+              onDragEnd={handleDragEnd}
+              className={`p-4 border rounded-lg space-y-3 transition-all ${
+                dragIndex === index
+                  ? 'opacity-50 border-green-400 bg-green-50 dark:bg-green-900/20'
+                  : dragOverIndex === index
+                  ? 'border-green-500 border-2 bg-green-50 dark:bg-green-900/10'
+                  : 'border-gray-200 dark:border-gray-700'
+              }`}
+            >
+              <div className="flex items-center justify-between mb-2">
+                <div className="flex items-center gap-2 text-gray-400 dark:text-gray-500 cursor-move">
+                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 8h16M4 16h16" />
+                  </svg>
+                  <span className="text-xs font-medium">#{index + 1} 드래그하여 순서 변경</span>
+                </div>
+                <button onClick={() => removeExternal(index)} className="text-red-500 text-sm hover:underline">삭제</button>
+              </div>
               <div className="grid grid-cols-2 gap-3">
                 <div>
                   <label className="block text-xs font-medium text-gray-500 dark:text-gray-400 mb-1">활동 기간</label>
@@ -1508,7 +1752,6 @@ function ActivitiesEditor({ data, setData }: { data: AboutData; setData: (d: Abo
                   className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
                 />
               </div>
-              <button onClick={() => removeExternal(index)} className="text-red-500 text-sm hover:underline">삭제</button>
             </div>
           ))}
           <button
@@ -1524,7 +1767,31 @@ function ActivitiesEditor({ data, setData }: { data: AboutData; setData: (d: Abo
       {actTab === 'ctf' && (
         <div className="space-y-4">
           {data.activities.ctf.map((item, index) => (
-            <div key={index} className="p-4 border border-gray-200 dark:border-gray-700 rounded-lg space-y-3">
+            <div
+              key={index}
+              draggable
+              onDragStart={(e) => handleDragStart(e, index)}
+              onDragOver={(e) => handleDragOver(e, index)}
+              onDragLeave={() => setDragOverIndex(null)}
+              onDrop={(e) => handleDrop(e, index, 'ctf')}
+              onDragEnd={handleDragEnd}
+              className={`p-4 border rounded-lg space-y-3 transition-all ${
+                dragIndex === index
+                  ? 'opacity-50 border-orange-400 bg-orange-50 dark:bg-orange-900/20'
+                  : dragOverIndex === index
+                  ? 'border-orange-500 border-2 bg-orange-50 dark:bg-orange-900/10'
+                  : 'border-gray-200 dark:border-gray-700'
+              }`}
+            >
+              <div className="flex items-center justify-between mb-2">
+                <div className="flex items-center gap-2 text-gray-400 dark:text-gray-500 cursor-move">
+                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 8h16M4 16h16" />
+                  </svg>
+                  <span className="text-xs font-medium">#{index + 1} 드래그하여 순서 변경</span>
+                </div>
+                <button onClick={() => removeCTF(index)} className="text-red-500 text-sm hover:underline">삭제</button>
+              </div>
               <div className="grid grid-cols-2 gap-3">
                 <div>
                   <label className="block text-xs font-medium text-gray-500 dark:text-gray-400 mb-1">대회명</label>
@@ -1567,7 +1834,6 @@ function ActivitiesEditor({ data, setData }: { data: AboutData; setData: (d: Abo
                   />
                 </div>
               </div>
-              <button onClick={() => removeCTF(index)} className="text-red-500 text-sm hover:underline">삭제</button>
             </div>
           ))}
           <button
@@ -1584,6 +1850,11 @@ function ActivitiesEditor({ data, setData }: { data: AboutData; setData: (d: Abo
 
 // Press Editor
 function PressEditor({ data, setData }: { data: AboutData; setData: (d: AboutData) => void }) {
+  const [pressDragIndex, setPressDragIndex] = useState<number | null>(null);
+  const [pressDragOverIndex, setPressDragOverIndex] = useState<number | null>(null);
+  const [videoDragIndex, setVideoDragIndex] = useState<number | null>(null);
+  const [videoDragOverIndex, setVideoDragOverIndex] = useState<number | null>(null);
+
   const addPress = () => {
     setData({
       ...data,
@@ -1599,6 +1870,39 @@ function PressEditor({ data, setData }: { data: AboutData; setData: (d: AboutDat
 
   const removePress = (index: number) => {
     setData({ ...data, press: data.press.filter((_, i) => i !== index) });
+  };
+
+  const movePress = (fromIndex: number, toIndex: number) => {
+    if (fromIndex === toIndex) return;
+    const newPress = [...data.press];
+    const [movedItem] = newPress.splice(fromIndex, 1);
+    newPress.splice(toIndex, 0, movedItem);
+    setData({ ...data, press: newPress });
+  };
+
+  const handlePressDragStart = (e: React.DragEvent, index: number) => {
+    setPressDragIndex(index);
+    e.dataTransfer.effectAllowed = 'move';
+    e.dataTransfer.setData('text/plain', index.toString());
+  };
+
+  const handlePressDragOver = (e: React.DragEvent, index: number) => {
+    e.preventDefault();
+    setPressDragOverIndex(index);
+  };
+
+  const handlePressDrop = (e: React.DragEvent, toIndex: number) => {
+    e.preventDefault();
+    if (pressDragIndex !== null) {
+      movePress(pressDragIndex, toIndex);
+    }
+    setPressDragIndex(null);
+    setPressDragOverIndex(null);
+  };
+
+  const handlePressDragEnd = () => {
+    setPressDragIndex(null);
+    setPressDragOverIndex(null);
   };
 
   const addVideo = () => {
@@ -1618,11 +1922,68 @@ function PressEditor({ data, setData }: { data: AboutData; setData: (d: AboutDat
     setData({ ...data, videos: data.videos.filter((_, i) => i !== index) });
   };
 
+  const moveVideo = (fromIndex: number, toIndex: number) => {
+    if (fromIndex === toIndex) return;
+    const newVideos = [...data.videos];
+    const [movedItem] = newVideos.splice(fromIndex, 1);
+    newVideos.splice(toIndex, 0, movedItem);
+    setData({ ...data, videos: newVideos });
+  };
+
+  const handleVideoDragStart = (e: React.DragEvent, index: number) => {
+    setVideoDragIndex(index);
+    e.dataTransfer.effectAllowed = 'move';
+    e.dataTransfer.setData('text/plain', index.toString());
+  };
+
+  const handleVideoDragOver = (e: React.DragEvent, index: number) => {
+    e.preventDefault();
+    setVideoDragOverIndex(index);
+  };
+
+  const handleVideoDrop = (e: React.DragEvent, toIndex: number) => {
+    e.preventDefault();
+    if (videoDragIndex !== null) {
+      moveVideo(videoDragIndex, toIndex);
+    }
+    setVideoDragIndex(null);
+    setVideoDragOverIndex(null);
+  };
+
+  const handleVideoDragEnd = () => {
+    setVideoDragIndex(null);
+    setVideoDragOverIndex(null);
+  };
+
   return (
     <div className="space-y-6">
       <h3 className="text-lg font-semibold text-gray-900 dark:text-white">언론 보도</h3>
       {data.press.map((item, index) => (
-        <div key={index} className="p-4 border border-gray-200 dark:border-gray-700 rounded-lg space-y-3">
+        <div
+          key={index}
+          draggable
+          onDragStart={(e) => handlePressDragStart(e, index)}
+          onDragOver={(e) => handlePressDragOver(e, index)}
+          onDragLeave={() => setPressDragOverIndex(null)}
+          onDrop={(e) => handlePressDrop(e, index)}
+          onDragEnd={handlePressDragEnd}
+          className={`p-4 border rounded-lg space-y-3 transition-all ${
+            pressDragIndex === index
+              ? 'opacity-50 border-blue-400 bg-blue-50 dark:bg-blue-900/20'
+              : pressDragOverIndex === index
+              ? 'border-blue-500 border-2 bg-blue-50 dark:bg-blue-900/10'
+              : 'border-gray-200 dark:border-gray-700'
+          }`}
+        >
+          <div className="flex items-center justify-between mb-2">
+            <div className="flex items-center gap-2 text-gray-400 dark:text-gray-500 cursor-move">
+              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 8h16M4 16h16" />
+              </svg>
+              <span className="text-xs font-medium">#{index + 1} 드래그하여 순서 변경</span>
+            </div>
+            <button onClick={() => removePress(index)} className="text-red-500 text-sm hover:underline">삭제</button>
+          </div>
           <div>
             <label className="block text-xs font-medium text-gray-500 dark:text-gray-400 mb-1">기사 제목</label>
             <input
@@ -1675,12 +2036,6 @@ function PressEditor({ data, setData }: { data: AboutData; setData: (d: AboutDat
               className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
             />
           </div>
-          <button
-            onClick={() => removePress(index)}
-            className="text-red-500 text-sm hover:underline"
-          >
-            삭제
-          </button>
         </div>
       ))}
       <button
@@ -1692,7 +2047,31 @@ function PressEditor({ data, setData }: { data: AboutData; setData: (d: AboutDat
 
       <h3 className="text-lg font-semibold text-gray-900 dark:text-white mt-8">영상</h3>
       {data.videos.map((video, index) => (
-        <div key={index} className="p-4 border border-gray-200 dark:border-gray-700 rounded-lg space-y-3">
+        <div
+          key={index}
+          draggable
+          onDragStart={(e) => handleVideoDragStart(e, index)}
+          onDragOver={(e) => handleVideoDragOver(e, index)}
+          onDragLeave={() => setVideoDragOverIndex(null)}
+          onDrop={(e) => handleVideoDrop(e, index)}
+          onDragEnd={handleVideoDragEnd}
+          className={`p-4 border rounded-lg space-y-3 transition-all ${
+            videoDragIndex === index
+              ? 'opacity-50 border-purple-400 bg-purple-50 dark:bg-purple-900/20'
+              : videoDragOverIndex === index
+              ? 'border-purple-500 border-2 bg-purple-50 dark:bg-purple-900/10'
+              : 'border-gray-200 dark:border-gray-700'
+          }`}
+        >
+          <div className="flex items-center justify-between mb-2">
+            <div className="flex items-center gap-2 text-gray-400 dark:text-gray-500 cursor-move">
+              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 8h16M4 16h16" />
+              </svg>
+              <span className="text-xs font-medium">#{index + 1} 드래그하여 순서 변경</span>
+            </div>
+            <button onClick={() => removeVideo(index)} className="text-red-500 text-sm hover:underline">삭제</button>
+          </div>
           <div>
             <label className="block text-xs font-medium text-gray-500 dark:text-gray-400 mb-1">영상 제목</label>
             <input
@@ -1713,12 +2092,6 @@ function PressEditor({ data, setData }: { data: AboutData; setData: (d: AboutDat
               className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
             />
           </div>
-          <button
-            onClick={() => removeVideo(index)}
-            className="text-red-500 text-sm hover:underline"
-          >
-            삭제
-          </button>
         </div>
       ))}
       <button
