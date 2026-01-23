@@ -6,22 +6,21 @@ import Link from 'next/link';
 import dynamic from 'next/dynamic';
 import MDXContent from '@/components/mdx/MDXContent';
 import { uploadToGoogleDriveDirect } from '@/lib/google-drive-client';
+import GoogleDriveFileBrowser from '@/components/common/GoogleDriveFileBrowser';
 
 // Helper function to extract proper filename from various URL types
 function getFileDisplayName(url: string): string {
   try {
-    // Google Drive URL: https://drive.google.com/uc?id=xxx&export=download
-    if (url.includes('drive.google.com/uc?id=')) {
-      const match = url.match(/id=([^&]+)/);
-      if (match) {
-        return `📄 Drive (${match[1].substring(0, 8)}...)`;
+    // Google Drive URL with name parameter
+    if (url.includes('drive.google.com')) {
+      const nameMatch = url.match(/[?&]name=([^&]+)/);
+      if (nameMatch) {
+        return `📄 ${decodeURIComponent(nameMatch[1])}`;
       }
-    }
-    // Google Drive view URL: https://drive.google.com/file/d/xxx/view
-    if (url.includes('drive.google.com/file/d/')) {
-      const match = url.match(/\/d\/([^/]+)/);
-      if (match) {
-        return `📄 Drive (${match[1].substring(0, 8)}...)`;
+      // Fallback to Drive ID display for old URLs
+      const idMatch = url.match(/id=([^&]+)/) || url.match(/\/d\/([^/]+)/);
+      if (idMatch) {
+        return `📄 Drive (${idMatch[1].substring(0, 8)}...)`;
       }
     }
     // Cloudinary URL: https://res.cloudinary.com/.../filename.ext
@@ -82,6 +81,8 @@ export default function BlogDatabaseItemView({
   const [editingField, setEditingField] = useState<string | null>(null);
   const [editValue, setEditValue] = useState('');
   const [uploadingFile, setUploadingFile] = useState(false);
+  const [showDriveBrowser, setShowDriveBrowser] = useState(false);
+  const [driveBrowserColumnId, setDriveBrowserColumnId] = useState<string | null>(null);
 
   const titleColumn = columns.find((c) => c.type === 'title');
   const title = titleColumn ? String(data[titleColumn.id] || '제목 없음') : '제목 없음';
@@ -176,6 +177,18 @@ export default function BlogDatabaseItemView({
     await handleUpdateField(columnId, newFiles);
   }, [data, handleUpdateField]);
 
+  const handleDriveFileSelect = useCallback(async (files: { id: string; name: string; downloadUrl: string }[]) => {
+    if (!driveBrowserColumnId) return;
+
+    const existingFiles = Array.isArray(data[driveBrowserColumnId]) ? data[driveBrowserColumnId] as string[] : [];
+    const newUrls = files.map(f => f.downloadUrl);
+    const newFiles = [...existingFiles, ...newUrls];
+
+    await handleUpdateField(driveBrowserColumnId, newFiles);
+    setShowDriveBrowser(false);
+    setDriveBrowserColumnId(null);
+  }, [data, driveBrowserColumnId, handleUpdateField]);
+
   const renderFieldEditor = (column: Column) => {
     if (editingField !== column.id) return null;
 
@@ -260,30 +273,44 @@ export default function BlogDatabaseItemView({
             </div>
           ))}
           {isAdmin && (
-            <label className="inline-flex items-center gap-1 px-2 py-1 text-xs bg-violet-100 dark:bg-violet-900/30 text-violet-700 dark:text-violet-400 rounded cursor-pointer hover:bg-violet-200 dark:hover:bg-violet-900/50 transition-colors">
-              {uploadingFile ? (
-                <span className="animate-pulse">업로드 중...</span>
-              ) : (
-                <>
-                  <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
-                  </svg>
-                  <span>파일 추가</span>
-                  <input
-                    type="file"
-                    multiple
-                    className="hidden"
-                    accept="image/*,.pdf,.doc,.docx"
-                    onChange={(e) => {
-                      if (e.target.files && e.target.files.length > 0) {
-                        handleFileUpload(column.id, e.target.files);
-                        e.target.value = '';
-                      }
-                    }}
-                  />
-                </>
-              )}
-            </label>
+            <>
+              <label className="inline-flex items-center gap-1 px-2 py-1 text-xs bg-violet-100 dark:bg-violet-900/30 text-violet-700 dark:text-violet-400 rounded cursor-pointer hover:bg-violet-200 dark:hover:bg-violet-900/50 transition-colors">
+                {uploadingFile ? (
+                  <span className="animate-pulse">업로드 중...</span>
+                ) : (
+                  <>
+                    <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
+                    </svg>
+                    <span>파일 추가</span>
+                    <input
+                      type="file"
+                      multiple
+                      className="hidden"
+                      accept="image/*,.pdf,.doc,.docx"
+                      onChange={(e) => {
+                        if (e.target.files && e.target.files.length > 0) {
+                          handleFileUpload(column.id, e.target.files);
+                          e.target.value = '';
+                        }
+                      }}
+                    />
+                  </>
+                )}
+              </label>
+              <button
+                onClick={() => {
+                  setDriveBrowserColumnId(column.id);
+                  setShowDriveBrowser(true);
+                }}
+                className="inline-flex items-center gap-1 px-2 py-1 text-xs bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-400 rounded hover:bg-blue-200 dark:hover:bg-blue-900/50 transition-colors"
+              >
+                <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-6l-2-2H5a2 2 0 00-2 2z" />
+                </svg>
+                <span>Drive</span>
+              </button>
+            </>
           )}
           {files.length === 0 && !isAdmin && (
             <span className="text-gray-400">-</span>
@@ -472,6 +499,18 @@ export default function BlogDatabaseItemView({
           {databaseTitle}(으)로 돌아가기
         </Link>
       </footer>
+
+      {/* Google Drive File Browser */}
+      <GoogleDriveFileBrowser
+        isOpen={showDriveBrowser}
+        onClose={() => {
+          setShowDriveBrowser(false);
+          setDriveBrowserColumnId(null);
+        }}
+        onSelect={handleDriveFileSelect}
+        driveType="blog"
+        multiple={true}
+      />
     </div>
   );
 }
