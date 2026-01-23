@@ -29,7 +29,7 @@ export default function TableOfContents({ content, variant = 'default' }: TableO
       const text = match[2].trim();
       const id = text
         .toLowerCase()
-        .replace(/[^\w\s-]/g, '')
+        .replace(/[^a-z0-9가-힣\s-]/g, '')  // Preserve Korean characters
         .replace(/\s+/g, '-');
 
       items.push({ id, text, level });

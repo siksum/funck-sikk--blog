@@ -34,7 +34,7 @@ interface MDXContentProps {
 function generateId(text: string): string {
   return String(text)
     .toLowerCase()
-    .replace(/[^\w\s-]/g, '')
+    .replace(/[^a-z0-9가-힣\s-]/g, '')  // Preserve Korean characters
     .replace(/\s+/g, '-');
 }
 

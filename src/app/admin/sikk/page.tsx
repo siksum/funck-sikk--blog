@@ -339,10 +339,11 @@ export default function SikkPostsManagementPage() {
     }
   }, [selectedCategory, selectedSubcategory, selectedSection, searchTerm, expandedCategories, sortBy, sortOrder, startDate, endDate]);
 
-  // Build post count map from posts
-  const postCountMap = useMemo(() => {
+  // Build content count map from posts and databases
+  const contentCountMap = useMemo(() => {
     const countMap = new Map<string, { total: number; subs: Map<string, number> }>();
 
+    // Count posts
     posts.forEach((post) => {
       const parts = post.category.split('/');
       const mainCategory = parts[0];
@@ -359,23 +360,41 @@ export default function SikkPostsManagementPage() {
       }
     });
 
-    return countMap;
-  }, [posts]);
+    // Count databases
+    databases.forEach((db) => {
+      if (!db.category) return;
+      const parts = db.category.split('/');
+      const mainCategory = parts[0];
+      const subCategory = parts[1] || null;
 
-  // Merge DB categories with post counts
+      if (!countMap.has(mainCategory)) {
+        countMap.set(mainCategory, { total: 0, subs: new Map() });
+      }
+      const cat = countMap.get(mainCategory)!;
+      cat.total++;
+
+      if (subCategory) {
+        cat.subs.set(subCategory, (cat.subs.get(subCategory) || 0) + 1);
+      }
+    });
+
+    return countMap;
+  }, [posts, databases]);
+
+  // Merge DB categories with content counts (posts + databases)
   const sidebarCategories = useMemo(() => {
     return dbCategories.map((cat) => {
-      const postData = postCountMap.get(cat.name);
+      const countData = contentCountMap.get(cat.name);
       return {
         ...cat,
-        postCount: postData?.total || 0,
+        postCount: countData?.total || 0,
         children: cat.children.map((sub) => ({
           ...sub,
-          postCount: postData?.subs.get(sub.name) || 0,
+          postCount: countData?.subs.get(sub.name) || 0,
         })),
       };
     });
-  }, [dbCategories, postCountMap]);
+  }, [dbCategories, contentCountMap]);
 
   // Generate flat list of all category options for dropdowns
   const categoryOptions = useMemo(() => {
