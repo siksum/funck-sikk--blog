@@ -31,7 +31,7 @@ export default function GoogleDriveFileBrowser({
   isOpen,
   onClose,
   onSelect,
-  driveType = 'blog',
+  driveType: initialDriveType = 'blog',
   multiple = false,
   acceptedTypes,
 }: GoogleDriveFileBrowserProps) {
@@ -44,6 +44,7 @@ export default function GoogleDriveFileBrowser({
   const [folderPath, setFolderPath] = useState<{ id: string; name: string }[]>([]);
   const [selectedFiles, setSelectedFiles] = useState<DriveFile[]>([]);
   const [nextPageToken, setNextPageToken] = useState<string | null>(null);
+  const [activeDriveType, setActiveDriveType] = useState<'blog' | 'sikk'>(initialDriveType);
 
   const loadFiles = useCallback(async (folderId?: string, append = false) => {
     setLoading(true);
@@ -51,7 +52,7 @@ export default function GoogleDriveFileBrowser({
 
     try {
       const params = new URLSearchParams({
-        drive: driveType,
+        drive: activeDriveType,
         ...(folderId && { folderId }),
         ...(append && nextPageToken && { pageToken: nextPageToken }),
       });
@@ -79,7 +80,7 @@ export default function GoogleDriveFileBrowser({
     } finally {
       setLoading(false);
     }
-  }, [driveType, nextPageToken]);
+  }, [activeDriveType, nextPageToken]);
 
   useEffect(() => {
     if (isOpen) {
@@ -87,7 +88,16 @@ export default function GoogleDriveFileBrowser({
       setSelectedFiles([]);
       setFolderPath([]);
     }
-  }, [isOpen, loadFiles]);
+  }, [isOpen, activeDriveType]);
+
+  const switchDrive = (drive: 'blog' | 'sikk') => {
+    if (drive !== activeDriveType) {
+      setActiveDriveType(drive);
+      setFolderPath([]);
+      setSelectedFiles([]);
+      setNextPageToken(null);
+    }
+  };
 
   const navigateToFolder = (folder: DriveFolder) => {
     setFolderPath(prev => [...prev, folder]);
@@ -184,13 +194,37 @@ export default function GoogleDriveFileBrowser({
           </button>
         </div>
 
+        {/* Drive Type Tabs */}
+        <div className="flex border-b border-gray-200 dark:border-gray-700">
+          <button
+            onClick={() => switchDrive('blog')}
+            className={`flex-1 px-4 py-2 text-sm font-medium transition-colors ${
+              activeDriveType === 'blog'
+                ? 'text-pink-600 dark:text-pink-400 border-b-2 border-pink-500'
+                : 'text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300'
+            }`}
+          >
+            📁 Blog Drive
+          </button>
+          <button
+            onClick={() => switchDrive('sikk')}
+            className={`flex-1 px-4 py-2 text-sm font-medium transition-colors ${
+              activeDriveType === 'sikk'
+                ? 'text-pink-600 dark:text-pink-400 border-b-2 border-pink-500'
+                : 'text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300'
+            }`}
+          >
+            📁 Sikk Drive
+          </button>
+        </div>
+
         {/* Breadcrumb */}
         <div className="flex items-center gap-1 px-4 py-2 text-sm text-gray-600 dark:text-gray-400 border-b border-gray-200 dark:border-gray-700 overflow-x-auto">
           <button
             onClick={navigateToRoot}
             className="hover:text-pink-600 dark:hover:text-pink-400 whitespace-nowrap"
           >
-            📁 {driveType === 'sikk' ? 'Sikk Drive' : 'Blog Drive'}
+            📁 {activeDriveType === 'sikk' ? 'Sikk Drive' : 'Blog Drive'}
           </button>
           {folderPath.map((folder, index) => (
             <span key={folder.id} className="flex items-center gap-1">
