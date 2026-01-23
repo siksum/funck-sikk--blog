@@ -249,9 +249,12 @@ export async function generateMetadata({ params }: CategoryPageProps) {
 export async function generateStaticParams() {
   const categories = await getAllSikkCategoriesHierarchicalAsync();
 
-  return categories.map((category) => ({
-    slugPath: category.slugPath,
-  }));
+  // Filter out categories with empty slugPath (catch-all route requires at least one segment)
+  return categories
+    .filter((category) => category.slugPath && category.slugPath.length > 0)
+    .map((category) => ({
+      slugPath: category.slugPath,
+    }));
 }
 
 export default async function SikkCategoryPage({ params }: CategoryPageProps) {
