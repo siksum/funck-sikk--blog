@@ -420,6 +420,8 @@ export default function DatabaseItemView({
             onChange={setContent}
             onCancel={() => setIsEditingContent(false)}
             placeholder="내용을 입력하세요..."
+            driveType="sikk"
+            category={categorySlugPath?.length ? categorySlugPath[categorySlugPath.length - 1] : ''}
           />
         ) : content ? (
           <MDXContent content={content} />

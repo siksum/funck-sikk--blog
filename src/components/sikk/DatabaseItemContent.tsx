@@ -20,6 +20,7 @@ interface DatabaseItemContentProps {
   itemId: string;
   content: string;
   isAdmin: boolean;
+  categorySlugPath?: string[];
 }
 
 export default function DatabaseItemContent({
@@ -27,6 +28,7 @@ export default function DatabaseItemContent({
   itemId,
   content,
   isAdmin,
+  categorySlugPath,
 }: DatabaseItemContentProps) {
   const router = useRouter();
   const [isEditing, setIsEditing] = useState(false);
@@ -87,6 +89,8 @@ export default function DatabaseItemContent({
           onChange={setCurrentContent}
           onCancel={handleCancel}
           placeholder="내용을 입력하세요..."
+          driveType="sikk"
+          category={categorySlugPath?.length ? categorySlugPath[categorySlugPath.length - 1] : ''}
         />
       ) : currentContent ? (
         <MDXContent content={currentContent} />

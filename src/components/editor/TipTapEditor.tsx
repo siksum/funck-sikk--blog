@@ -87,6 +87,8 @@ interface TipTapEditorProps {
   onCancel: () => void;
   onChange?: (html: string) => void;
   placeholder?: string;
+  driveType?: 'blog' | 'sikk';
+  category?: string;
 }
 
 export default function TipTapEditor({
@@ -95,6 +97,8 @@ export default function TipTapEditor({
   onCancel,
   onChange,
   placeholder = '내용을 입력하세요...',
+  driveType = 'blog',
+  category = '',
 }: TipTapEditorProps) {
   const [isSaving, setIsSaving] = useState(false);
   const [lastSaved, setLastSaved] = useState<Date | null>(null);
@@ -232,7 +236,7 @@ export default function TipTapEditor({
   return (
     <div className="tiptap-container">
       {/* Toolbar */}
-      <EditorToolbar editor={editor} onSave={handleSave} onCancel={handleCancel} />
+      <EditorToolbar editor={editor} onSave={handleSave} onCancel={handleCancel} driveType={driveType} category={category} />
 
       {/* Bubble Menu */}
       <BubbleMenuComponent editor={editor} />

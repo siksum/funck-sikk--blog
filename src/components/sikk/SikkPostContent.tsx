@@ -34,9 +34,10 @@ interface SikkPostContentProps {
   slug: string;
   isAdmin: boolean;
   initialMetadata?: PostMetadata;
+  categorySlugPath?: string[];
 }
 
-export default function SikkPostContent({ content, slug, isAdmin, initialMetadata }: SikkPostContentProps) {
+export default function SikkPostContent({ content, slug, isAdmin, initialMetadata, categorySlugPath }: SikkPostContentProps) {
   const router = useRouter();
   const [isEditing, setIsEditing] = useState(false);
   const [isShareModalOpen, setIsShareModalOpen] = useState(false);
@@ -288,6 +289,8 @@ export default function SikkPostContent({ content, slug, isAdmin, initialMetadat
             onChange={setCurrentContent}
             onCancel={handleCancel}
             placeholder="포스트 내용을 입력하세요..."
+            driveType="sikk"
+            category={categorySlugPath?.length ? categorySlugPath[categorySlugPath.length - 1] : (metadata.category || '')}
           />
         </div>
       ) : (

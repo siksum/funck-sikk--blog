@@ -8,6 +8,8 @@ interface EditorToolbarProps {
   editor: Editor;
   onSave: () => void;
   onCancel: () => void;
+  driveType?: 'blog' | 'sikk';
+  category?: string;
 }
 
 interface ToolbarButtonProps {
@@ -124,7 +126,7 @@ const EMOJI_CATEGORIES = [
   },
 ];
 
-export default function EditorToolbar({ editor, onSave, onCancel }: EditorToolbarProps) {
+export default function EditorToolbar({ editor, onSave, onCancel, driveType = 'blog', category = '' }: EditorToolbarProps) {
   const [showLinkInput, setShowLinkInput] = useState(false);
   const [linkUrl, setLinkUrl] = useState('');
   const [showImageInput, setShowImageInput] = useState(false);
@@ -212,7 +214,7 @@ export default function EditorToolbar({ editor, onSave, onCancel }: EditorToolba
 
       if (pdfUploadDestination === 'google-drive') {
         // Use direct upload to Google Drive (bypasses server size limit)
-        const result = await uploadToGoogleDriveDirect(file, { driveType: 'blog' });
+        const result = await uploadToGoogleDriveDirect(file, { driveType, category });
         url = result.url;
       } else {
         // Upload via server to Cloudinary
