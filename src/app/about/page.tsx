@@ -897,7 +897,9 @@ export default function AboutPage() {
                         whileHover={{ x: 4 }}
                       >
                         <div className="flex flex-wrap gap-2 mb-2">
-                          <span className={`px-2 py-0.5 rounded text-xs font-medium ${pub.featured ? 'bg-amber-100 dark:bg-amber-500/20 text-amber-700 dark:text-amber-300' : 'bg-gray-100 dark:bg-gray-700/50 text-gray-600 dark:text-gray-300'}`}>{pub.badge}</span>
+                          {pub.badge.split(',').map((b, i) => (
+                            <span key={i} className={`px-2 py-0.5 rounded text-xs font-medium ${pub.featured ? 'bg-amber-100 dark:bg-amber-500/20 text-amber-700 dark:text-amber-300' : 'bg-gray-100 dark:bg-gray-700/50 text-gray-600 dark:text-gray-300'}`}>{b.trim()}</span>
+                          ))}
                         </div>
                         <p className="text-sm text-accent-violet mb-1">{highlightAuthorName(pub.authors)}</p>
                         <h4 className={`font-medium mb-1 ${pub.featured ? 'text-gray-900' : 'pub-card-title'}`}>&ldquo;{pub.title}&rdquo;</h4>
@@ -928,7 +930,9 @@ export default function AboutPage() {
                       >
                         {pub.badge && (
                           <div className="flex flex-wrap gap-2 mb-2">
-                            <span className="px-2 py-0.5 rounded text-xs font-medium bg-blue-100 dark:bg-blue-500/20 text-blue-700 dark:text-blue-300">{pub.badge}</span>
+                            {pub.badge.split(',').map((b, i) => (
+                              <span key={i} className="px-2 py-0.5 rounded text-xs font-medium bg-blue-100 dark:bg-blue-500/20 text-blue-700 dark:text-blue-300">{b.trim()}</span>
+                            ))}
                           </div>
                         )}
                         <p className="text-sm text-accent-violet mb-1">{highlightAuthorName(pub.authors)}</p>
@@ -957,7 +961,9 @@ export default function AboutPage() {
                       whileHover={{ x: 4 }}
                     >
                       <div className="flex flex-wrap gap-2 mb-2">
-                        {pub.badge && <span className="px-2 py-0.5 rounded text-xs font-medium bg-gray-100 dark:bg-gray-700/50 text-gray-600 dark:text-gray-300">{pub.badge}</span>}
+                        {pub.badge && pub.badge.split(',').map((b, i) => (
+                          <span key={i} className="px-2 py-0.5 rounded text-xs font-medium bg-gray-100 dark:bg-gray-700/50 text-gray-600 dark:text-gray-300">{b.trim()}</span>
+                        ))}
                         {pub.award && <span className="px-2 py-0.5 bg-amber-100 dark:bg-amber-500/20 text-amber-700 dark:text-amber-300 rounded text-xs font-medium">{pub.award}</span>}
                       </div>
                       <p className="text-sm text-accent-violet mb-1">{highlightAuthorName(pub.authors)}</p>
@@ -1084,11 +1090,11 @@ export default function AboutPage() {
                           }`}>
                             {award.year}
                           </span>
-                          {award.badge && (
-                            <span className="px-2 py-0.5 rounded text-xs bg-violet-100 dark:bg-violet-500/20 text-violet-700 dark:text-violet-300">
-                              {award.badge}
+                          {award.badge && award.badge.split(',').map((b, i) => (
+                            <span key={i} className="px-2 py-0.5 rounded text-xs bg-violet-100 dark:bg-violet-500/20 text-violet-700 dark:text-violet-300">
+                              {b.trim()}
                             </span>
-                          )}
+                          ))}
                           {award.linkedSection && (
                             <span className="px-2 py-0.5 rounded text-xs bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300">
                               {award.linkedSection === 'publications' ? '📄 Research' :
