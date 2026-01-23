@@ -16,19 +16,20 @@ export interface GoogleDriveUploadOptions {
   category?: string;
 }
 
-// Find or create a category folder in the shared drive
+// Find or create a category folder inside the parent folder
 async function findOrCreateCategoryFolder(
   accessToken: string,
-  driveId: string,
+  parentFolderId: string,
   categoryName: string
 ): Promise<string> {
-  // Search for existing folder
+  // Search for existing folder inside the parent folder
+  // Use corpora=allDrives to search across all shared drives
   const searchQuery = encodeURIComponent(
-    `name='${categoryName}' and mimeType='application/vnd.google-apps.folder' and '${driveId}' in parents and trashed=false`
+    `name='${categoryName}' and mimeType='application/vnd.google-apps.folder' and '${parentFolderId}' in parents and trashed=false`
   );
 
   const searchResponse = await fetch(
-    `https://www.googleapis.com/drive/v3/files?q=${searchQuery}&supportsAllDrives=true&includeItemsFromAllDrives=true&corpora=drive&driveId=${driveId}&fields=files(id,name)`,
+    `https://www.googleapis.com/drive/v3/files?q=${searchQuery}&supportsAllDrives=true&includeItemsFromAllDrives=true&corpora=allDrives&fields=files(id,name)`,
     {
       headers: {
         Authorization: `Bearer ${accessToken}`,
@@ -47,7 +48,7 @@ async function findOrCreateCategoryFolder(
   const folderMetadata = {
     name: categoryName,
     mimeType: 'application/vnd.google-apps.folder',
-    parents: [driveId],
+    parents: [parentFolderId],
   };
 
   const createResponse = await fetch(
