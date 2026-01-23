@@ -135,7 +135,8 @@ export default function EditorToolbar({ editor, onSave, onCancel }: EditorToolba
   const [showCodeLanguages, setShowCodeLanguages] = useState(false);
   const [showTextColorPicker, setShowTextColorPicker] = useState(false);
   const [showHighlightPicker, setShowHighlightPicker] = useState(false);
-  const [isUploading, setIsUploading] = useState(false);
+  const [isImageUploading, setIsImageUploading] = useState(false);
+  const [isPdfUploading, setIsPdfUploading] = useState(false);
   const [pdfUploadDestination, setPdfUploadDestination] = useState<'cloudinary' | 'google-drive'>('cloudinary');
   const fileInputRef = useRef<HTMLInputElement>(null);
   const pdfInputRef = useRef<HTMLInputElement>(null);
@@ -170,7 +171,7 @@ export default function EditorToolbar({ editor, onSave, onCancel }: EditorToolba
     const file = e.target.files?.[0];
     if (!file) return;
 
-    setIsUploading(true);
+    setIsImageUploading(true);
     try {
       const formData = new FormData();
       formData.append('file', file);
@@ -193,7 +194,7 @@ export default function EditorToolbar({ editor, onSave, onCancel }: EditorToolba
       console.error('Upload error:', error);
       alert('업로드 중 오류가 발생했습니다.');
     } finally {
-      setIsUploading(false);
+      setIsImageUploading(false);
       if (fileInputRef.current) {
         fileInputRef.current.value = '';
       }
@@ -204,7 +205,7 @@ export default function EditorToolbar({ editor, onSave, onCancel }: EditorToolba
     const file = e.target.files?.[0];
     if (!file) return;
 
-    setIsUploading(true);
+    setIsPdfUploading(true);
     try {
       const formData = new FormData();
       formData.append('file', file);
@@ -219,8 +220,12 @@ export default function EditorToolbar({ editor, onSave, onCancel }: EditorToolba
       });
 
       if (!response.ok) {
-        const error = await response.json();
-        alert(error.error || '업로드에 실패했습니다.');
+        try {
+          const error = await response.json();
+          alert(error.error || '업로드에 실패했습니다.');
+        } catch {
+          alert(`업로드 실패: ${response.status} ${response.statusText}`);
+        }
         return;
       }
 
@@ -231,9 +236,10 @@ export default function EditorToolbar({ editor, onSave, onCancel }: EditorToolba
       setShowImageInput(false);
     } catch (error) {
       console.error('Upload error:', error);
-      alert('업로드 중 오류가 발생했습니다.');
+      const errorMessage = error instanceof Error ? error.message : '알 수 없는 오류';
+      alert(`업로드 중 오류가 발생했습니다: ${errorMessage}`);
     } finally {
-      setIsUploading(false);
+      setIsPdfUploading(false);
       if (pdfInputRef.current) {
         pdfInputRef.current.value = '';
       }
@@ -599,7 +605,7 @@ export default function EditorToolbar({ editor, onSave, onCancel }: EditorToolba
                 type="file"
                 accept="image/*"
                 onChange={handleFileUpload}
-                disabled={isUploading}
+                disabled={isImageUploading}
                 className="hidden"
                 id="image-upload"
               />
@@ -610,10 +616,10 @@ export default function EditorToolbar({ editor, onSave, onCancel }: EditorToolba
                   e.stopPropagation();
                   fileInputRef.current?.click();
                 }}
-                disabled={isUploading}
+                disabled={isImageUploading}
                 className="w-full px-3 py-2 border-2 border-dashed border-gray-300 dark:border-gray-600 rounded-lg text-sm hover:border-pink-400 dark:hover:border-pink-500 transition-colors flex items-center justify-center gap-2 disabled:opacity-50"
               >
-                {isUploading ? (
+                {isImageUploading ? (
                   <>
                     <span className="animate-spin w-4 h-4 border-2 border-pink-500 border-t-transparent rounded-full"></span>
                     업로드 중...
@@ -672,7 +678,7 @@ export default function EditorToolbar({ editor, onSave, onCancel }: EditorToolba
                 type="file"
                 accept="application/pdf"
                 onChange={handlePdfUpload}
-                disabled={isUploading}
+                disabled={isPdfUploading}
                 className="hidden"
                 id="pdf-upload"
               />
@@ -683,10 +689,10 @@ export default function EditorToolbar({ editor, onSave, onCancel }: EditorToolba
                   e.stopPropagation();
                   pdfInputRef.current?.click();
                 }}
-                disabled={isUploading}
+                disabled={isPdfUploading}
                 className="w-full px-3 py-2 border-2 border-dashed border-gray-300 dark:border-gray-600 rounded-lg text-sm hover:border-pink-400 dark:hover:border-pink-500 transition-colors flex items-center justify-center gap-2 disabled:opacity-50"
               >
-                {isUploading ? (
+                {isPdfUploading ? (
                   <>
                     <span className="animate-spin w-4 h-4 border-2 border-pink-500 border-t-transparent rounded-full"></span>
                     업로드 중...
