@@ -5,7 +5,7 @@ function slugify(text: string): string {
   return text
     .toLowerCase()
     .trim()
-    .replace(/[^\w\s-]/g, '')
+    .replace(/[^a-z0-9가-힣\s-]/g, '')  // Preserve Korean characters
     .replace(/[\s_-]+/g, '-')
     .replace(/^-+|-+$/g, '');
 }
