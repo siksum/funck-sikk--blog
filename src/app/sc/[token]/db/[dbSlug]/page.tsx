@@ -4,6 +4,7 @@ import { unstable_noStore as noStore } from 'next/cache';
 import { prisma } from '@/lib/db';
 import { checkSikkCategoryAccessByToken } from '@/lib/sikk-access';
 import { isValidTokenFormat } from '@/lib/token';
+import { getFileDisplayName } from '@/lib/file-utils';
 
 export const dynamic = 'force-dynamic';
 
@@ -313,7 +314,7 @@ function CellValue({
               className="px-2 py-0.5 text-xs bg-gray-100 dark:bg-gray-700 rounded truncate max-w-[120px] hover:bg-gray-200 dark:hover:bg-gray-600"
               title={file}
             >
-              {file.split('/').pop()}
+              {getFileDisplayName(file)}
             </a>
           ))
         )}

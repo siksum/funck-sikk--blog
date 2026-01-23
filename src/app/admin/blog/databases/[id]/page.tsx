@@ -3,6 +3,8 @@
 import { useState, useEffect, useCallback, useMemo, use, useRef } from 'react';
 import Link from 'next/link';
 import { useRouter, useSearchParams } from 'next/navigation';
+import { getFileDisplayName } from '@/lib/file-utils';
+import { uploadToGoogleDriveDirect } from '@/lib/google-drive-client';
 
 interface Column {
   id: string;
@@ -574,17 +576,26 @@ export default function DatabaseDetailPage({ params }: DatabasePageProps) {
 
     try {
       for (const file of Array.from(files)) {
-        const formData = new FormData();
-        formData.append('file', file);
+        const isImage = file.type.startsWith('image/');
 
-        const res = await fetch('/api/upload', {
-          method: 'POST',
-          body: formData,
-        });
-
-        if (res.ok) {
-          const data = await res.json();
-          uploadedUrls.push(data.url);
+        if (isImage) {
+          // Images → Cloudinary
+          const formData = new FormData();
+          formData.append('file', file);
+          const res = await fetch('/api/upload', {
+            method: 'POST',
+            body: formData,
+          });
+          if (res.ok) {
+            const data = await res.json();
+            uploadedUrls.push(data.url);
+          } else {
+            throw new Error('Cloudinary upload failed');
+          }
+        } else {
+          // Non-images (PDF, docs, etc.) → Google Drive only
+          const result = await uploadToGoogleDriveDirect(file, { driveType: 'blog' });
+          uploadedUrls.push(result.url);
         }
       }
 
@@ -611,6 +622,7 @@ export default function DatabaseDetailPage({ params }: DatabasePageProps) {
       }
     } catch (error) {
       console.error('Failed to upload files:', error);
+      alert('파일 업로드에 실패했습니다. 다시 시도해주세요.');
     } finally {
       setUploadingCell(null);
     }
@@ -867,7 +879,7 @@ export default function DatabaseDetailPage({ params }: DatabasePageProps) {
                 className="px-2 py-0.5 text-xs bg-gray-100 dark:bg-gray-700 rounded truncate max-w-[120px] hover:bg-gray-200 dark:hover:bg-gray-600"
                 title={file}
               >
-                {file.split('/').pop()}
+                {getFileDisplayName(file)}
               </a>
               <button
                 onClick={(e) => {

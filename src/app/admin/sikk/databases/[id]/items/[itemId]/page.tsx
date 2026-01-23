@@ -5,6 +5,8 @@ import { useRouter, useParams } from 'next/navigation';
 import Link from 'next/link';
 import dynamic from 'next/dynamic';
 import MDXContent from '@/components/mdx/MDXContent';
+import { getFileDisplayName } from '@/lib/file-utils';
+import { uploadToGoogleDriveDirect } from '@/lib/google-drive-client';
 
 const TipTapEditor = dynamic(() => import('@/components/editor/TipTapEditor'), {
   loading: () => (
@@ -35,6 +37,7 @@ interface Database {
   title: string;
   slug: string;
   columns: Column[];
+  category?: string;
 }
 
 export default function AdminDatabaseItemPage() {
@@ -127,17 +130,27 @@ export default function AdminDatabaseItemPage() {
 
     try {
       for (const file of Array.from(files)) {
-        const formData = new FormData();
-        formData.append('file', file);
+        const isImage = file.type.startsWith('image/');
 
-        const res = await fetch('/api/upload', {
-          method: 'POST',
-          body: formData,
-        });
-
-        if (res.ok) {
-          const data = await res.json();
-          uploadedUrls.push(data.url);
+        if (isImage) {
+          // Images → Cloudinary
+          const formData = new FormData();
+          formData.append('file', file);
+          const res = await fetch('/api/upload', {
+            method: 'POST',
+            body: formData,
+          });
+          if (res.ok) {
+            const data = await res.json();
+            uploadedUrls.push(data.url);
+          } else {
+            throw new Error('Cloudinary upload failed');
+          }
+        } else {
+          // Non-images (PDF, docs, etc.) → Google Drive only
+          const category = database?.category?.split('/').pop() || '';
+          const result = await uploadToGoogleDriveDirect(file, { driveType: 'sikk', category });
+          uploadedUrls.push(result.url);
         }
       }
 
@@ -145,10 +158,11 @@ export default function AdminDatabaseItemPage() {
       await handleUpdateField(columnId, newFiles);
     } catch (error) {
       console.error('File upload error:', error);
+      alert('파일 업로드에 실패했습니다. 다시 시도해주세요.');
     } finally {
       setUploadingFile(false);
     }
-  }, [item, handleUpdateField]);
+  }, [item, handleUpdateField, database]);
 
   const handleRemoveFile = useCallback(async (columnId: string, fileUrl: string) => {
     if (!item) return;
@@ -258,7 +272,7 @@ export default function AdminDatabaseItemPage() {
                             className="px-2 py-1 text-xs bg-gray-100 dark:bg-gray-700 rounded truncate max-w-[150px] hover:bg-gray-200 dark:hover:bg-gray-600"
                             title={file}
                           >
-                            {file.split('/').pop()}
+                            {getFileDisplayName(file)}
                           </a>
                           <button
                             onClick={() => handleRemoveFile(column.id, file)}
