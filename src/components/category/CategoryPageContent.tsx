@@ -20,7 +20,7 @@ interface DBSection {
   title: string;
   description: string | null;
   order: number;
-  categories: { id: string; name: string; slug: string }[];
+  categories: { id: string; name: string; slug: string; slugPath: string[]; path: string[] }[];
 }
 
 interface BlogDatabase {
