@@ -12,6 +12,14 @@ interface TimelineItem {
   detail: string;
 }
 
+interface ActivityTimelineItem {
+  period: string;
+  title: string;
+  org: string;
+  role?: string;
+  desc: string;
+}
+
 interface ScholarshipItem {
   name: string;
   korean?: string;
@@ -51,14 +59,14 @@ interface AboutData {
     project: ProjectItem[];
     work: TimelineItem[];
     research: TimelineItem[];
-    activities: TimelineItem[];
+    activities: ActivityTimelineItem[];
   };
   publications: {
     journals: Array<{ authors: string; title: string; venue: string; badge: string; featured?: boolean; korean?: string }>;
-    international: Array<{ authors: string; title: string; venue: string }>;
-    domestic: Array<{ authors: string; title: string; venue: string; korean?: string; award?: string }>;
+    international: Array<{ authors: string; title: string; venue: string; badge?: string }>;
+    domestic: Array<{ authors: string; title: string; venue: string; korean?: string; award?: string; badge?: string }>;
   };
-  awards: Array<{ title: string; org: string; year: string; highlight?: boolean; korean?: string; linkedSection?: string }>;
+  awards: Array<{ title: string; org: string; year: string; highlight?: boolean; korean?: string; linkedSection?: string; linkedItem?: string; badge?: string }>;
   certificates: Array<{ title: string; org: string; date: string }>;
   patents: Array<{ title: string; code: string; date: string; korean: string }>;
   activities: {
@@ -617,6 +625,51 @@ export default function AboutPage() {
 
               <div className="space-y-4">
                 {(() => {
+                  // Handle activities tab separately with different structure
+                  if (activeExperienceTab === 'activities') {
+                    const activityItems = data.timeline.activities || [];
+                    if (activityItems.length === 0) {
+                      return (
+                        <div className="text-center py-8 text-gray-500 dark:text-gray-400">
+                          아직 등록된 항목이 없습니다.
+                        </div>
+                      );
+                    }
+                    return activityItems.map((item, index) => (
+                      <motion.div
+                        key={index}
+                        className="relative pl-8"
+                        initial={{ opacity: 0, x: -10 }}
+                        animate={{ opacity: 1, x: 0 }}
+                        transition={{ duration: 0.3, delay: index * 0.1 }}
+                      >
+                        <div className="absolute left-0 top-4 w-6 h-6 rounded-full flex items-center justify-center z-10 bg-purple-500">
+                          <div className="w-2 h-2 rounded-full bg-white" />
+                        </div>
+                        <motion.div
+                          className="p-4 rounded-xl border border-gray-200 dark:border-violet-500/20 shadow-sm hover:shadow-md transition-all"
+                          style={{ background: 'var(--card-bg)' }}
+                          whileHover={{ x: 4 }}
+                        >
+                          <div className="flex flex-wrap items-center gap-2 mb-2">
+                            <span className="px-2.5 py-0.5 rounded-full text-xs font-medium border bg-purple-100 dark:bg-transparent text-purple-700 dark:text-purple-200 border-purple-200 dark:border-purple-400">
+                              {item.period}
+                            </span>
+                            {item.role && (
+                              <span className="px-2 py-0.5 rounded text-xs bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300">
+                                {item.role}
+                              </span>
+                            )}
+                          </div>
+                          <h3 className="text-lg font-semibold card-title">{item.title}</h3>
+                          <p className="text-accent-violet font-medium text-sm">{item.org}</p>
+                          {item.desc && <p className="text-gray-600 dark:text-gray-400 text-sm mt-2">{item.desc}</p>}
+                        </motion.div>
+                      </motion.div>
+                    ));
+                  }
+
+                  // Handle research and work tabs with TimelineItem structure
                   const filteredItems = data.timeline[activeExperienceTab] || [];
 
                   if (filteredItems.length === 0) {
@@ -639,9 +692,7 @@ export default function AboutPage() {
                       <div className={`absolute left-0 top-4 w-6 h-6 rounded-full flex items-center justify-center z-10 ${
                         activeExperienceTab === 'research'
                           ? 'bg-indigo-500'
-                          : activeExperienceTab === 'work'
-                          ? 'bg-emerald-500'
-                          : 'bg-purple-500'
+                          : 'bg-emerald-500'
                       }`}>
                         <div className="w-2 h-2 rounded-full bg-white" />
                       </div>
@@ -656,9 +707,7 @@ export default function AboutPage() {
                           <span className={`px-2.5 py-0.5 rounded-full text-xs font-medium border ${
                             activeExperienceTab === 'research'
                               ? 'bg-indigo-100 dark:bg-transparent text-indigo-700 dark:text-indigo-200 border-indigo-200 dark:border-indigo-400'
-                              : activeExperienceTab === 'work'
-                              ? 'bg-emerald-100 dark:bg-transparent text-emerald-700 dark:text-emerald-200 border-emerald-200 dark:border-emerald-400'
-                              : 'bg-purple-100 dark:bg-transparent text-purple-700 dark:text-purple-200 border-purple-200 dark:border-purple-400'
+                              : 'bg-emerald-100 dark:bg-transparent text-emerald-700 dark:text-emerald-200 border-emerald-200 dark:border-emerald-400'
                           }`}>
                             {item.year}
                           </span>
@@ -797,6 +846,11 @@ export default function AboutPage() {
                         style={{ background: 'var(--card-bg)' }}
                         whileHover={{ x: 4 }}
                       >
+                        {pub.badge && (
+                          <div className="flex flex-wrap gap-2 mb-2">
+                            <span className="px-2 py-0.5 rounded text-xs font-medium bg-blue-100 dark:bg-blue-500/20 text-blue-700 dark:text-blue-300">{pub.badge}</span>
+                          </div>
+                        )}
                         <p className="text-sm text-accent-violet mb-1">{highlightAuthorName(pub.authors)}</p>
                         <h4 className="font-medium pub-card-title text-sm">&ldquo;{pub.title}&rdquo;</h4>
                         <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">{pub.venue}</p>
@@ -822,7 +876,10 @@ export default function AboutPage() {
                       style={{ background: pub.award ? undefined : 'var(--card-bg)' }}
                       whileHover={{ x: 4 }}
                     >
-                      {pub.award && <span className="inline-block px-2 py-0.5 bg-amber-100 dark:bg-amber-500/20 text-amber-700 dark:text-amber-300 rounded text-xs font-medium mb-2">{pub.award}</span>}
+                      <div className="flex flex-wrap gap-2 mb-2">
+                        {pub.badge && <span className="px-2 py-0.5 rounded text-xs font-medium bg-gray-100 dark:bg-gray-700/50 text-gray-600 dark:text-gray-300">{pub.badge}</span>}
+                        {pub.award && <span className="px-2 py-0.5 bg-amber-100 dark:bg-amber-500/20 text-amber-700 dark:text-amber-300 rounded text-xs font-medium">{pub.award}</span>}
+                      </div>
                       <p className="text-sm text-accent-violet mb-1">{highlightAuthorName(pub.authors)}</p>
                       <h4 className={`font-medium text-sm ${pub.award ? 'text-gray-900' : 'pub-card-title'}`}>&ldquo;{pub.title}&rdquo;</h4>
                       <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">{pub.venue}</p>
@@ -947,6 +1004,11 @@ export default function AboutPage() {
                           }`}>
                             {award.year}
                           </span>
+                          {award.badge && (
+                            <span className="px-2 py-0.5 rounded text-xs bg-violet-100 dark:bg-violet-500/20 text-violet-700 dark:text-violet-300">
+                              {award.badge}
+                            </span>
+                          )}
                           {award.linkedSection && (
                             <span className="px-2 py-0.5 rounded text-xs bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300">
                               {award.linkedSection === 'publications' ? '📄 Research' :
@@ -1082,24 +1144,71 @@ export default function AboutPage() {
             transition={{ duration: 0.3 }}
           >
           <div className="space-y-6">
-            {/* Club */}
-            <div className="p-5 rounded-xl border border-violet-200 dark:border-violet-500/30" style={{ background: 'var(--card-bg)' }}>
-              <h3 className="font-semibold card-title mb-3">{data.activities.club.name}</h3>
-              <p className="text-sm text-gray-600 dark:text-gray-400 mb-3">{data.activities.club.period} | {data.activities.club.description}</p>
-              <div className="flex flex-wrap gap-2">
-                {data.activities.club.roles.map((role, i) => (
-                  <motion.span
-                    key={role}
-                    className="px-3 py-1 bg-violet-100 dark:bg-transparent text-violet-700 dark:text-violet-200 rounded-full text-sm border border-violet-200 dark:border-violet-400"
-                    initial={{ opacity: 0, x: -10 }}
-                    whileInView={{ opacity: 1, x: 0 }}
-                    viewport={{ }}
-                    transition={{ delay: i * 0.1 }}
-                  >
-                    {role}
-                  </motion.span>
-                ))}
-              </div>
+            {/* Club & CTF - Combined Section */}
+            <h3 className="text-lg font-semibold section-subtitle">Club & CTF</h3>
+            <div className="grid md:grid-cols-2 gap-4">
+              {/* Club Box */}
+              <motion.div
+                className="p-5 rounded-xl border border-violet-200 dark:border-violet-500/30"
+                style={{ background: 'var(--card-bg)' }}
+                initial={{ opacity: 0, y: 10 }}
+                whileInView={{ opacity: 1, y: 0 }}
+                viewport={{ }}
+                transition={{ delay: 0.1 }}
+                whileHover={{ borderColor: "rgb(139 92 246 / 0.5)" }}
+              >
+                <h4 className="font-semibold card-title mb-3">{data.activities.club.name}</h4>
+                <p className="text-sm text-gray-600 dark:text-gray-400 mb-3">{data.activities.club.period} | {data.activities.club.description}</p>
+                <div className="flex flex-wrap gap-2">
+                  {data.activities.club.roles.map((role, i) => (
+                    <motion.span
+                      key={role}
+                      className="px-3 py-1 bg-violet-100 dark:bg-transparent text-violet-700 dark:text-violet-200 rounded-full text-sm border border-violet-200 dark:border-violet-400"
+                      initial={{ opacity: 0, x: -10 }}
+                      whileInView={{ opacity: 1, x: 0 }}
+                      viewport={{ }}
+                      transition={{ delay: i * 0.1 }}
+                    >
+                      {role}
+                    </motion.span>
+                  ))}
+                </div>
+              </motion.div>
+
+              {/* CTF Box */}
+              <motion.div
+                className="p-5 rounded-xl border border-orange-200 dark:border-orange-500/30"
+                style={{ background: 'var(--card-bg)' }}
+                initial={{ opacity: 0, y: 10 }}
+                whileInView={{ opacity: 1, y: 0 }}
+                viewport={{ }}
+                transition={{ delay: 0.2 }}
+                whileHover={{ borderColor: "rgb(249 115 22 / 0.5)" }}
+              >
+                <h4 className="font-semibold card-title mb-3">CTF Competitions</h4>
+                <div className="space-y-2">
+                  {data.activities.ctf.map((ctf, index) => (
+                    <motion.div
+                      key={index}
+                      className="flex items-center gap-2"
+                      initial={{ opacity: 0, x: -10 }}
+                      whileInView={{ opacity: 1, x: 0 }}
+                      viewport={{ }}
+                      transition={{ delay: index * 0.1 }}
+                    >
+                      <span className={`px-2 py-0.5 rounded text-xs font-medium ${
+                        ctf.rank === '1st'
+                          ? 'bg-amber-100 dark:bg-amber-500/20 text-amber-700 dark:text-amber-300'
+                          : 'bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300'
+                      }`}>
+                        {ctf.rank}
+                      </span>
+                      <span className="text-sm card-title">{ctf.event}</span>
+                      <span className="text-xs text-gray-500 dark:text-gray-400">({ctf.year})</span>
+                    </motion.div>
+                  ))}
+                </div>
+              </motion.div>
             </div>
 
             {/* External Activities */}
@@ -1121,27 +1230,6 @@ export default function AboutPage() {
                   <p className="text-accent-violet text-sm">{activity.org}</p>
                   {activity.role && <p className="text-sm text-accent-indigo">{activity.role}</p>}
                   <p className="text-sm text-gray-600 dark:text-gray-300 mt-2">{activity.desc}</p>
-                </motion.div>
-              ))}
-            </div>
-
-            {/* CTF */}
-            <h3 className="text-lg font-semibold section-subtitle">CTF</h3>
-            <div className="flex flex-wrap gap-3">
-              {data.activities.ctf.map((ctf, index) => (
-                <motion.div
-                  key={index}
-                  className="px-4 py-2 rounded-lg border border-gray-200 dark:border-gray-700/50"
-                  style={{ background: 'var(--card-bg)' }}
-                  initial={{ opacity: 0, scale: 0.9 }}
-                  whileInView={{ opacity: 1, scale: 1 }}
-                  viewport={{ }}
-                  transition={{ delay: index * 0.1 }}
-                >
-                  <span className={`text-sm font-medium ${ctf.rank === '1st' ? 'text-amber-600 dark:text-amber-400' : 'card-title'}`}>
-                    {ctf.rank}
-                  </span>
-                  <span className="text-sm card-title"> @ {ctf.event} ({ctf.year})</span>
                 </motion.div>
               ))}
             </div>

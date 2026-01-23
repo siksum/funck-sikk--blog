@@ -10,6 +10,14 @@ interface TimelineItem {
   detail: string;
 }
 
+interface ActivityTimelineItem {
+  period: string;
+  title: string;
+  org: string;
+  role?: string;
+  desc: string;
+}
+
 interface ScholarshipItem {
   name: string;
   korean?: string;
@@ -49,14 +57,14 @@ interface AboutData {
     project: ProjectItem[];
     work: TimelineItem[];
     research: TimelineItem[];
-    activities: TimelineItem[];
+    activities: ActivityTimelineItem[];
   };
   publications: {
     journals: Array<{ authors: string; title: string; venue: string; badge: string; featured?: boolean; korean?: string }>;
-    international: Array<{ authors: string; title: string; venue: string }>;
-    domestic: Array<{ authors: string; title: string; venue: string; korean?: string; award?: string }>;
+    international: Array<{ authors: string; title: string; venue: string; badge?: string }>;
+    domestic: Array<{ authors: string; title: string; venue: string; korean?: string; award?: string; badge?: string }>;
   };
-  awards: Array<{ title: string; org: string; year: string; highlight?: boolean; korean?: string; linkedSection?: string }>;
+  awards: Array<{ title: string; org: string; year: string; highlight?: boolean; korean?: string; linkedSection?: string; linkedItem?: string; badge?: string }>;
   certificates: Array<{ title: string; org: string; date: string }>;
   patents: Array<{ title: string; code: string; date: string; korean: string }>;
   activities: {
@@ -412,13 +420,24 @@ function TimelineEditor({ data, setData }: { data: AboutData; setData: (d: About
   }
 
   // Add functions for each type
-  const addTimelineItem = (type: 'education' | 'work' | 'research' | 'activities') => {
+  const addTimelineItem = (type: 'education' | 'work' | 'research') => {
     const newItem: TimelineItem = { year: '', title: '', subtitle: '', org: '', detail: '' };
     setData({
       ...data,
       timeline: {
         ...data.timeline,
         [type]: [...(data.timeline[type] || []), newItem],
+      },
+    });
+  };
+
+  const addActivityTimelineItem = () => {
+    const newItem: ActivityTimelineItem = { period: '', title: '', org: '', role: '', desc: '' };
+    setData({
+      ...data,
+      timeline: {
+        ...data.timeline,
+        activities: [...(data.timeline.activities || []), newItem],
       },
     });
   };
@@ -445,12 +464,21 @@ function TimelineEditor({ data, setData }: { data: AboutData; setData: (d: About
     });
   };
 
-  const updateTimelineItem = (type: 'education' | 'work' | 'research' | 'activities', index: number, field: string, value: string) => {
+  const updateTimelineItem = (type: 'education' | 'work' | 'research', index: number, field: string, value: string) => {
     const currentItems = [...(data.timeline[type] || [])];
     currentItems[index] = { ...currentItems[index], [field]: value };
     setData({
       ...data,
       timeline: { ...data.timeline, [type]: currentItems },
+    });
+  };
+
+  const updateActivityTimelineItem = (index: number, field: string, value: string) => {
+    const currentItems = [...(data.timeline.activities || [])];
+    currentItems[index] = { ...currentItems[index], [field]: value };
+    setData({
+      ...data,
+      timeline: { ...data.timeline, activities: currentItems },
     });
   };
 
@@ -537,7 +565,7 @@ function TimelineEditor({ data, setData }: { data: AboutData; setData: (d: About
   };
 
   // Render functions for each type
-  const renderTimelineItems = (type: 'education' | 'work' | 'research' | 'activities') => {
+  const renderTimelineItems = (type: 'education' | 'work' | 'research') => {
     const items = data.timeline[type] || [];
     return (
       <div className="space-y-4">
@@ -626,6 +654,100 @@ function TimelineEditor({ data, setData }: { data: AboutData; setData: (d: About
           className="w-full px-4 py-2 text-blue-600 dark:text-blue-400 border border-dashed border-blue-300 dark:border-blue-700 rounded-lg hover:bg-blue-50 dark:hover:bg-blue-900/20"
         >
           + 항목 추가
+        </button>
+      </div>
+    );
+  };
+
+  const renderActivityTimelineItems = () => {
+    const items = data.timeline.activities || [];
+    return (
+      <div className="space-y-4">
+        {items.map((item, index) => (
+          <div
+            key={index}
+            draggable
+            onDragStart={(e) => handleDragStart(e, index)}
+            onDragOver={(e) => handleDragOver(e, index)}
+            onDragLeave={handleDragLeave}
+            onDrop={(e) => handleDrop(e, index)}
+            onDragEnd={handleDragEnd}
+            className={`p-4 border rounded-lg space-y-3 transition-all ${
+              dragIndex === index
+                ? 'opacity-50 border-purple-400 bg-purple-50 dark:bg-purple-900/20'
+                : dragOverIndex === index
+                ? 'border-purple-500 border-2 bg-purple-50 dark:bg-purple-900/10'
+                : 'border-gray-200 dark:border-gray-700'
+            }`}
+          >
+            <div className="flex items-center justify-between mb-2">
+              <div className="flex items-center gap-2 text-gray-400 dark:text-gray-500 cursor-move">
+                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 8h16M4 16h16" />
+                </svg>
+                <span className="text-xs font-medium">#{index + 1} 드래그하여 순서 변경</span>
+              </div>
+              <button onClick={() => removeItem('activities', index)} className="text-red-500 text-sm hover:underline">삭제</button>
+            </div>
+            <div className="grid grid-cols-2 gap-3">
+              <div>
+                <label className="block text-xs font-medium text-gray-500 dark:text-gray-400 mb-1">활동 기간</label>
+                <input
+                  type="text"
+                  placeholder="예: 2024.03 - 2024.11"
+                  value={item.period}
+                  onChange={(e) => updateActivityTimelineItem(index, 'period', e.target.value)}
+                  className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
+                />
+              </div>
+              <div>
+                <label className="block text-xs font-medium text-gray-500 dark:text-gray-400 mb-1">역할 (선택)</label>
+                <input
+                  type="text"
+                  placeholder="예: 팀장, 부트캠퍼"
+                  value={item.role || ''}
+                  onChange={(e) => updateActivityTimelineItem(index, 'role', e.target.value)}
+                  className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
+                />
+              </div>
+            </div>
+            <div>
+              <label className="block text-xs font-medium text-gray-500 dark:text-gray-400 mb-1">프로그램/활동명</label>
+              <input
+                type="text"
+                placeholder="예: Protocol Camp 5th"
+                value={item.title}
+                onChange={(e) => updateActivityTimelineItem(index, 'title', e.target.value)}
+                className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
+              />
+            </div>
+            <div>
+              <label className="block text-xs font-medium text-gray-500 dark:text-gray-400 mb-1">주최 기관</label>
+              <input
+                type="text"
+                placeholder="예: KISIA"
+                value={item.org}
+                onChange={(e) => updateActivityTimelineItem(index, 'org', e.target.value)}
+                className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
+              />
+            </div>
+            <div>
+              <label className="block text-xs font-medium text-gray-500 dark:text-gray-400 mb-1">설명</label>
+              <input
+                type="text"
+                placeholder="예: 블록체인 보안 교육 및 정적 분석 도구 개발"
+                value={item.desc}
+                onChange={(e) => updateActivityTimelineItem(index, 'desc', e.target.value)}
+                className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
+              />
+            </div>
+          </div>
+        ))}
+        <button
+          onClick={addActivityTimelineItem}
+          className="w-full px-4 py-2 text-purple-600 dark:text-purple-400 border border-dashed border-purple-300 dark:border-purple-700 rounded-lg hover:bg-purple-50 dark:hover:bg-purple-900/20"
+        >
+          + 활동 추가
         </button>
       </div>
     );
@@ -864,7 +986,7 @@ function TimelineEditor({ data, setData }: { data: AboutData; setData: (d: About
       {tab === 'project' && renderProjectItems()}
       {tab === 'work' && renderTimelineItems('work')}
       {tab === 'research' && renderTimelineItems('research')}
-      {tab === 'activities' && renderTimelineItems('activities')}
+      {tab === 'activities' && renderActivityTimelineItems()}
     </div>
   );
 }
@@ -911,7 +1033,7 @@ function PublicationsEditor({ data, setData }: { data: AboutData; setData: (d: A
       ...data,
       publications: {
         ...data.publications,
-        international: [...data.publications.international, { authors: '', title: '', venue: '' }],
+        international: [...data.publications.international, { authors: '', title: '', venue: '', badge: '' }],
       },
     });
   };
@@ -942,7 +1064,7 @@ function PublicationsEditor({ data, setData }: { data: AboutData; setData: (d: A
       ...data,
       publications: {
         ...data.publications,
-        domestic: [...data.publications.domestic, { authors: '', title: '', venue: '', korean: '', award: '' }],
+        domestic: [...data.publications.domestic, { authors: '', title: '', venue: '', korean: '', award: '', badge: '' }],
       },
     });
   };
@@ -1178,15 +1300,27 @@ function PublicationsEditor({ data, setData }: { data: AboutData; setData: (d: A
                   className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
                 />
               </div>
-              <div>
-                <label className="block text-xs font-medium text-gray-500 dark:text-gray-400 mb-1">학회/장소</label>
-                <input
-                  type="text"
-                  placeholder="예: WISA 2025, Jeju, Aug. 21, 2025"
-                  value={item.venue}
-                  onChange={(e) => updateInternational(index, 'venue', e.target.value)}
-                  className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
-                />
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className="block text-xs font-medium text-gray-500 dark:text-gray-400 mb-1">학회/장소</label>
+                  <input
+                    type="text"
+                    placeholder="예: WISA 2025, Jeju, Aug. 21, 2025"
+                    value={item.venue}
+                    onChange={(e) => updateInternational(index, 'venue', e.target.value)}
+                    className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
+                  />
+                </div>
+                <div>
+                  <label className="block text-xs font-medium text-gray-500 dark:text-gray-400 mb-1">배지 (선택)</label>
+                  <input
+                    type="text"
+                    placeholder="예: Poster, Oral, Best Paper"
+                    value={item.badge || ''}
+                    onChange={(e) => updateInternational(index, 'badge', e.target.value)}
+                    className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
+                  />
+                </div>
               </div>
             </div>
           ))}
@@ -1255,7 +1389,7 @@ function PublicationsEditor({ data, setData }: { data: AboutData; setData: (d: A
                   className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
                 />
               </div>
-              <div className="grid grid-cols-2 gap-3">
+              <div className="grid grid-cols-3 gap-3">
                 <div>
                   <label className="block text-xs font-medium text-gray-500 dark:text-gray-400 mb-1">학회</label>
                   <input
@@ -1263,6 +1397,16 @@ function PublicationsEditor({ data, setData }: { data: AboutData; setData: (d: A
                     placeholder="예: ACK 2025, Nov. 7, 2025"
                     value={item.venue}
                     onChange={(e) => updateDomestic(index, 'venue', e.target.value)}
+                    className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
+                  />
+                </div>
+                <div>
+                  <label className="block text-xs font-medium text-gray-500 dark:text-gray-400 mb-1">배지 (선택)</label>
+                  <input
+                    type="text"
+                    placeholder="예: KCI, Poster"
+                    value={item.badge || ''}
+                    onChange={(e) => updateDomestic(index, 'badge', e.target.value)}
                     className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
                   />
                 </div>
@@ -1299,8 +1443,57 @@ function AwardsEditor({ data, setData }: { data: AboutData; setData: (d: AboutDa
   const addAward = () => {
     setData({
       ...data,
-      awards: [...data.awards, { title: '', org: '', year: '', korean: '', linkedSection: '' }],
+      awards: [...data.awards, { title: '', org: '', year: '', korean: '', linkedSection: '', linkedItem: '', badge: '' }],
     });
+  };
+
+  // Helper function to get items for linked section dropdown
+  const getLinkedItemOptions = (section: string) => {
+    const options: Array<{ value: string; label: string }> = [{ value: '', label: '선택 안함' }];
+
+    if (section === 'publications') {
+      // Add journals
+      data.publications.journals.forEach((pub, i) => {
+        const label = pub.korean || pub.title;
+        options.push({ value: `journals-${i}`, label: `[Journal] ${label.substring(0, 50)}${label.length > 50 ? '...' : ''}` });
+      });
+      // Add international
+      data.publications.international.forEach((pub, i) => {
+        options.push({ value: `international-${i}`, label: `[International] ${pub.title.substring(0, 50)}${pub.title.length > 50 ? '...' : ''}` });
+      });
+      // Add domestic
+      data.publications.domestic.forEach((pub, i) => {
+        const label = pub.korean || pub.title;
+        options.push({ value: `domestic-${i}`, label: `[Domestic] ${label.substring(0, 50)}${label.length > 50 ? '...' : ''}` });
+      });
+    } else if (section === 'competition') {
+      // Add competitions from awards (self-referencing)
+      data.awards.forEach((award, i) => {
+        if (award.linkedSection === 'competition' && award.title) {
+          const label = award.korean || award.title;
+          options.push({ value: `award-${i}`, label: `[Award] ${label.substring(0, 50)}${label.length > 50 ? '...' : ''}` });
+        }
+      });
+      // Add CTF competitions
+      data.activities.ctf.forEach((ctf, i) => {
+        options.push({ value: `ctf-${i}`, label: `[CTF] ${ctf.event} (${ctf.year})` });
+      });
+    } else if (section === 'activity') {
+      // Add timeline activities
+      data.timeline.activities.forEach((act, i) => {
+        options.push({ value: `timeline-${i}`, label: `[Timeline] ${act.title}` });
+      });
+      // Add external activities
+      data.activities.external.forEach((ext, i) => {
+        options.push({ value: `external-${i}`, label: `[External] ${ext.title}` });
+      });
+      // Add club
+      if (data.activities.club.name) {
+        options.push({ value: 'club-0', label: `[Club] ${data.activities.club.name}` });
+      }
+    }
+
+    return options;
   };
 
   const updateAward = (index: number, field: string, value: string | boolean) => {
@@ -1450,20 +1643,50 @@ function AwardsEditor({ data, setData }: { data: AboutData; setData: (d: AboutDa
             </div>
           </div>
           <div>
-            <label className="block text-xs font-medium text-gray-500 dark:text-gray-400 mb-1">연결된 섹션</label>
-            <select
-              value={award.linkedSection || ''}
-              onChange={(e) => updateAward(index, 'linkedSection', e.target.value)}
+            <label className="block text-xs font-medium text-gray-500 dark:text-gray-400 mb-1">배지/태그 (선택)</label>
+            <input
+              type="text"
+              placeholder="예: KCI, SCIE, Best Paper"
+              value={award.badge || ''}
+              onChange={(e) => updateAward(index, 'badge', e.target.value)}
               className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
-            >
-              {sectionOptions.map((option) => (
-                <option key={option.value} value={option.value}>
-                  {option.label}
-                </option>
-              ))}
-            </select>
-            <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">About 페이지에서 카테고리별로 필터링할 때 사용됩니다</p>
+            />
           </div>
+          <div className="grid grid-cols-2 gap-3">
+            <div>
+              <label className="block text-xs font-medium text-gray-500 dark:text-gray-400 mb-1">연결된 섹션</label>
+              <select
+                value={award.linkedSection || ''}
+                onChange={(e) => {
+                  updateAward(index, 'linkedSection', e.target.value);
+                  updateAward(index, 'linkedItem', ''); // Reset linked item when section changes
+                }}
+                className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
+              >
+                {sectionOptions.map((option) => (
+                  <option key={option.value} value={option.value}>
+                    {option.label}
+                  </option>
+                ))}
+              </select>
+            </div>
+            <div>
+              <label className="block text-xs font-medium text-gray-500 dark:text-gray-400 mb-1">연결된 항목 (선택)</label>
+              <select
+                value={award.linkedItem || ''}
+                onChange={(e) => updateAward(index, 'linkedItem', e.target.value)}
+                disabled={!award.linkedSection}
+                className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                {getLinkedItemOptions(award.linkedSection || '').map((option) => (
+                  <option key={option.value} value={option.value}>
+                    {option.label}
+                  </option>
+                ))}
+              </select>
+            </div>
+          </div>
+          <p className="text-xs text-gray-500 dark:text-gray-400">연결된 섹션은 카테고리 필터링에, 연결된 항목은 특정 항목 하이라이트에 사용됩니다</p>
           <div className="flex items-center">
             <label className="flex items-center gap-2 text-sm text-gray-600 dark:text-gray-400">
               <input
@@ -1659,14 +1882,39 @@ function ActivitiesEditor({ data, setData }: { data: AboutData; setData: (d: Abo
             />
           </div>
           <div>
-            <label className="block text-xs font-medium text-gray-500 dark:text-gray-400 mb-1">역할 (한 줄에 하나씩)</label>
-            <textarea
-              placeholder="예: 회장 (2023)&#10;부회장 (2022)"
-              value={data.activities.club.roles.join('\n')}
-              onChange={(e) => updateClub('roles', e.target.value.split('\n').filter(r => r.trim()))}
-              rows={3}
-              className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
-            />
+            <label className="block text-xs font-medium text-gray-500 dark:text-gray-400 mb-2">역할</label>
+            <div className="space-y-2">
+              {data.activities.club.roles.map((role, i) => (
+                <div key={i} className="flex gap-2">
+                  <input
+                    type="text"
+                    placeholder="예: 회장 (2023)"
+                    value={role}
+                    onChange={(e) => {
+                      const newRoles = [...data.activities.club.roles];
+                      newRoles[i] = e.target.value;
+                      updateClub('roles', newRoles);
+                    }}
+                    className="flex-1 px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
+                  />
+                  <button
+                    onClick={() => {
+                      const newRoles = data.activities.club.roles.filter((_, idx) => idx !== i);
+                      updateClub('roles', newRoles);
+                    }}
+                    className="px-3 py-2 text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg"
+                  >
+                    삭제
+                  </button>
+                </div>
+              ))}
+              <button
+                onClick={() => updateClub('roles', [...data.activities.club.roles, ''])}
+                className="w-full px-4 py-2 text-purple-600 dark:text-purple-400 border border-dashed border-purple-300 dark:border-purple-700 rounded-lg hover:bg-purple-50 dark:hover:bg-purple-900/20"
+              >
+                + 역할 추가
+              </button>
+            </div>
           </div>
         </div>
       )}
