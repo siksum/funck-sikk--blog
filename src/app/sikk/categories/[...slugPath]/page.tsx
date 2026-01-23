@@ -3,6 +3,14 @@ import Link from 'next/link';
 import SikkCategoryPageContent from '@/components/sikk/SikkCategoryPageContent';
 import DatabaseTableView from '@/components/sikk/DatabaseTableView';
 import DatabaseItemContent from '@/components/sikk/DatabaseItemContent';
+import ReadingProgressBar from '@/components/blog/ReadingProgressBar';
+import PostNavigation from '@/components/blog/PostNavigation';
+import FloatingActions from '@/components/blog/FloatingActions';
+import DifficultyBadge from '@/components/blog/DifficultyBadge';
+import SikkPostLayout from '@/components/sikk/SikkPostLayout';
+import SikkPostContent from '@/components/sikk/SikkPostContent';
+import ShareButton from '@/components/sikk/ShareButton';
+import { getSikkPostUrl } from '@/lib/url';
 import {
   getSikkCategoryBySlugPathAsync,
   getSikkCategoryBySlugPathFromDbAsync,
@@ -11,6 +19,10 @@ import {
   getAllSikkCategoriesHierarchicalAsync,
   getAllSikkTagsAsync,
   getSikkRootCategoriesAsync,
+  getSikkPostBySlugAsync,
+  getRelatedSikkPostsAsync,
+  getAdjacentSikkPostsAsync,
+  getSikkSectionsAsync,
 } from '@/lib/sikk';
 import { prisma } from '@/lib/db';
 import { auth } from '@/lib/auth';
@@ -118,6 +130,30 @@ async function parseSlugPath(slugPath: string[]) {
             return { type: 'database-item' as const, categorySlugPath: possibleCategorySlugPath2, dbSlug: possibleDbSlug2, itemId: possibleItemId };
           }
         }
+      }
+    }
+  }
+
+  // Check if this might be a post (last segment is a post slug)
+  if (slugPath.length >= 1) {
+    const possiblePostSlug = slugPath[slugPath.length - 1];
+    const possibleCategorySlugPath = slugPath.slice(0, -1);
+
+    // Check if a post exists with this slug
+    const post = await getSikkPostBySlugAsync(possiblePostSlug);
+    if (post) {
+      // Verify the post belongs to this category path
+      const postCategoryPath = post.categorySlugPath || [];
+      const pathsMatch = possibleCategorySlugPath.length === postCategoryPath.length &&
+        possibleCategorySlugPath.every((slug, i) => {
+          // Normalize for comparison
+          const normalizedSlug = slug.normalize('NFC').toLowerCase();
+          const normalizedPostSlug = (postCategoryPath[i] || '').normalize('NFC').toLowerCase();
+          return normalizedSlug === normalizedPostSlug;
+        });
+
+      if (pathsMatch || possibleCategorySlugPath.length === 0) {
+        return { type: 'post' as const, categorySlugPath: possibleCategorySlugPath, postSlug: possiblePostSlug, post };
       }
     }
   }
@@ -244,6 +280,14 @@ export async function generateMetadata({ params }: CategoryPageProps) {
     };
   }
 
+  // Post page
+  if (parsed.type === 'post') {
+    return {
+      title: `${parsed.post.title} | Sikk`,
+      description: parsed.post.description || '',
+    };
+  }
+
   // Database or database item
   const database = await prisma.sikkDatabase.findUnique({
     where: { slug: parsed.dbSlug },
@@ -339,6 +383,208 @@ export default async function SikkCategoryPage({ params }: CategoryPageProps) {
       };
     }
   }
+  // Handle post page first (before category null check)
+  if (parsed.type === 'post') {
+    const post = parsed.post;
+    const isPrivate = !post.isPublic;
+
+    const formattedDate = new Date(post.date).toLocaleDateString('ko-KR', {
+      year: 'numeric',
+      month: 'long',
+      day: 'numeric',
+    });
+
+    const calculateReadingTime = (content: string): number => {
+      const wordsPerMinute = 200;
+      const words = content.trim().split(/\s+/).length;
+      return Math.ceil(words / wordsPerMinute);
+    };
+
+    const estimateDifficulty = (content: string, tags: string[]): 'beginner' | 'intermediate' | 'advanced' => {
+      const words = content.trim().split(/\s+/).length;
+      const advancedTags = ['exploit', 'pwn', 'reverse', 'advanced', 'deep-dive'];
+      const beginnerTags = ['tutorial', 'beginner', 'intro', 'basic', '입문'];
+
+      if (tags.some((tag) => advancedTags.includes(tag.toLowerCase())) || words > 3000) {
+        return 'advanced';
+      }
+      if (tags.some((tag) => beginnerTags.includes(tag.toLowerCase())) || words < 1000) {
+        return 'beginner';
+      }
+      return 'intermediate';
+    };
+
+    const readingTime = calculateReadingTime(post.content);
+    const [relatedPosts, { prevPost, nextPost }, categories, sections] = await Promise.all([
+      getRelatedSikkPostsAsync(post.slug, 3),
+      getAdjacentSikkPostsAsync(post.slug),
+      getSikkRootCategoriesAsync(),
+      getSikkSectionsAsync(),
+    ]);
+    const difficulty = estimateDifficulty(post.content, post.tags);
+
+    return (
+      <>
+        <ReadingProgressBar readingTime={readingTime} />
+        <SikkPostLayout
+          content={post.content}
+          tags={post.tags}
+          category={post.category}
+          relatedPosts={relatedPosts}
+          categories={categories}
+          currentCategorySlugPath={post.categorySlugPath}
+          sections={sections}
+        >
+          {/* Banner Image */}
+          {post.thumbnail && (
+            <div className="mb-8 -mx-4 sm:-mx-6 lg:-mx-8 rounded-xl overflow-hidden">
+              <div
+                className="relative w-full h-64 sm:h-80 md:h-96 bg-gray-200 dark:bg-gray-700"
+                style={{
+                  backgroundImage: `url(${post.thumbnail})`,
+                  backgroundSize: `${post.thumbnailScale || 100}%`,
+                  backgroundPosition: `center ${post.thumbnailPosition || 50}%`,
+                  backgroundRepeat: 'no-repeat',
+                }}
+              />
+            </div>
+          )}
+
+          {/* Header */}
+          <header className="mb-8">
+            <div className="flex items-center text-sm mb-4" style={{ color: 'var(--foreground)', opacity: 0.7 }}>
+              <Link href="/sikk" className="hover:text-pink-600 dark:hover:text-pink-400 transition-colors">
+                Sikk
+              </Link>
+              {post.category && (
+                <>
+                  <span className="mx-2">/</span>
+                  <Link
+                    href={`/sikk/categories/${(post.categorySlugPath || []).map(s => encodeURIComponent(s)).join('/')}`}
+                    className="hover:text-pink-600 dark:hover:text-pink-400 transition-colors"
+                  >
+                    {post.category}
+                  </Link>
+                </>
+              )}
+            </div>
+
+            <div className="flex items-center gap-3 mb-4 flex-wrap">
+              <DifficultyBadge level={difficulty} />
+              {/* Status Badge */}
+              {post.status && (
+                <span className={`px-3 py-1 text-xs font-semibold rounded-full border ${
+                  post.status === 'completed'
+                    ? 'bg-green-100 dark:bg-green-900/30 text-green-800 dark:text-green-300 border-green-300 dark:border-green-700'
+                    : post.status === 'in_progress'
+                    ? 'bg-blue-100 dark:bg-blue-900/30 text-blue-800 dark:text-blue-300 border-blue-300 dark:border-blue-700'
+                    : 'bg-gray-100 dark:bg-gray-900/30 text-gray-800 dark:text-gray-300 border-gray-300 dark:border-gray-700'
+                }`}>
+                  {post.status === 'completed' ? '완료' : post.status === 'in_progress' ? '진행중' : '시작전'}
+                </span>
+              )}
+              {isPrivate ? (
+                <span className="px-3 py-1 text-xs font-semibold bg-yellow-100 dark:bg-yellow-900/30 text-yellow-800 dark:text-yellow-300 rounded-full border border-yellow-300 dark:border-yellow-700">
+                  비공개
+                </span>
+              ) : (
+                <ShareButton slug={post.slug} title={post.title} />
+              )}
+            </div>
+
+            <h1 className="text-3xl md:text-4xl font-bold mb-4" style={{ color: 'var(--foreground)' }}>
+              {post.title}
+            </h1>
+
+            <p className="text-lg mb-6" style={{ color: 'var(--foreground)', opacity: 0.8 }}>
+              {post.description}
+            </p>
+
+            <div className="flex flex-wrap items-center gap-4 text-sm mb-6" style={{ color: 'var(--foreground)', opacity: 0.7 }}>
+              <time dateTime={post.date}>{formattedDate}</time>
+              <span className="flex items-center gap-1">
+                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                </svg>
+                {readingTime}분 읽기
+              </span>
+              {post.tags.length > 0 && (
+                <div className="flex flex-wrap gap-2">
+                  {post.tags.map((tag) => (
+                    <span
+                      key={tag}
+                      className="px-2 py-1 rounded text-xs"
+                      style={{ backgroundColor: 'var(--tag-bg)', color: 'var(--tag-text)' }}
+                    >
+                      #{tag}
+                    </span>
+                  ))}
+                </div>
+              )}
+            </div>
+          </header>
+
+          {/* Pink Divider */}
+          <hr className="mb-8 border-t-2 border-pink-400 dark:border-pink-500" />
+
+          {/* Content */}
+          <SikkPostContent
+            content={post.content}
+            slug={post.slug}
+            isAdmin={true}
+            initialMetadata={{
+              title: post.title,
+              description: post.description || '',
+              date: post.date.split('T')[0],
+              tags: post.tags,
+              status: (post.status as 'not_started' | 'in_progress' | 'completed') || 'not_started',
+              isPublic: post.isPublic,
+              category: post.category || '',
+              thumbnail: post.thumbnail,
+              thumbnailPosition: post.thumbnailPosition,
+              thumbnailScale: post.thumbnailScale,
+            }}
+          />
+
+          {/* Post Navigation */}
+          <PostNavigation
+            prevPost={prevPost}
+            nextPost={nextPost}
+            basePath="/sikk/categories"
+            variant="pink"
+          />
+
+          {/* Footer */}
+          <footer className="mt-12 pt-8 border-t-2 border-pink-300 dark:border-pink-500">
+            <Link
+              href={post.categorySlugPath && post.categorySlugPath.length > 0
+                ? `/sikk/categories/${post.categorySlugPath.map(s => encodeURIComponent(s)).join('/')}`
+                : '/sikk'}
+              className="inline-flex items-center text-pink-600 dark:text-pink-400 hover:underline"
+            >
+              <svg
+                className="w-4 h-4 mr-2"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M10 19l-7-7m0 0l7-7m-7 7h18"
+                />
+              </svg>
+              {post.category || 'Sikk'} 목록으로 돌아가기
+            </Link>
+          </footer>
+        </SikkPostLayout>
+        <FloatingActions />
+      </>
+    );
+  }
+
+  // Category is required for all remaining routes (database, database-item, category)
   if (!category) {
     notFound();
   }
