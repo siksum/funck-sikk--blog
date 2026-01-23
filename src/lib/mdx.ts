@@ -273,17 +273,45 @@ export async function getAdjacentPostsAsync(currentSlug: string): Promise<{ prev
   return { prevPost, nextPost };
 }
 
+// Helper function to normalize and decode a URL segment for lookup
+// Handles URL encoding and Unicode normalization (NFC)
+function normalizeSlugSegment(segment: string): string {
+  try {
+    // Decode URL-encoded characters (e.g., %EB%8C%80%ED%95%99%EA%B5%90 -> 대학교)
+    const decoded = decodeURIComponent(segment);
+    // Normalize to NFC (composed form) for consistent comparison
+    return decoded.normalize('NFC');
+  } catch {
+    // If decoding fails, just normalize the original string
+    return segment.normalize('NFC');
+  }
+}
+
 // Category helper functions
 export async function getCategoryBySlugPathAsync(slugPath: string[]): Promise<CategoryTreeNode | null> {
   const tree = await buildCategoryTreeAsync();
   let current = tree;
 
   for (const slug of slugPath) {
-    if (!current.children[slug]) {
-      // Category not found in post-built tree, check DB Category table
-      return getCategoryFromDbBySlugPath(slugPath);
+    const normalizedSlug = normalizeSlugSegment(slug);
+
+    // Try exact match first, then normalized match
+    if (current.children[slug]) {
+      current = current.children[slug];
+    } else if (current.children[normalizedSlug]) {
+      current = current.children[normalizedSlug];
+    } else {
+      // Try case-insensitive match
+      const childKey = Object.keys(current.children).find(
+        (key) => key.normalize('NFC').toLowerCase() === normalizedSlug.toLowerCase()
+      );
+      if (childKey) {
+        current = current.children[childKey];
+      } else {
+        // Category not found in post-built tree, check DB Category table
+        return getCategoryFromDbBySlugPath(slugPath);
+      }
     }
-    current = current.children[slug];
   }
 
   return current;
@@ -291,9 +319,34 @@ export async function getCategoryBySlugPathAsync(slugPath: string[]): Promise<Ca
 
 // Helper function to find a category by slug and parent
 async function findDbCategoryBySlugAndParent(slug: string, parentId: string | null) {
-  return prisma.category.findFirst({
-    where: { slug, parentId },
+  // Normalize the slug for consistent comparison
+  const normalizedSlug = normalizeSlugSegment(slug);
+
+  // First try to find by slug (exact match)
+  let category = await prisma.category.findFirst({
+    where: { slug: normalizedSlug, parentId },
   });
+
+  // If not found by slug, try by name (for URL compatibility)
+  if (!category) {
+    category = await prisma.category.findFirst({
+      where: { name: normalizedSlug, parentId },
+    });
+  }
+
+  // If still not found, try case-insensitive search
+  if (!category) {
+    const allCategoriesAtLevel = await prisma.category.findMany({
+      where: { parentId },
+    });
+    category = allCategoriesAtLevel.find(
+      (c) =>
+        c.slug.normalize('NFC').toLowerCase() === normalizedSlug.toLowerCase() ||
+        c.name.normalize('NFC').toLowerCase() === normalizedSlug.toLowerCase()
+    ) || null;
+  }
+
+  return category;
 }
 
 // Helper function to find children categories
