@@ -73,31 +73,26 @@ async function parseSlugPath(slugPath: string[]) {
     return { type: 'database' as const, categorySlugPath, dbSlug };
   }
 
-  // Check if this might be a post (last segment is a post slug)
+  // PRIORITY 1: Check if this is a valid category path FIRST
+  // This ensures category listings take priority over posts with conflicting slugs
+  const categoryExists = await getCategoryBySlugPathAsync(slugPath);
+  if (categoryExists) {
+    return { type: 'category' as const, categorySlugPath: slugPath };
+  }
+
+  // PRIORITY 2: Check if last segment is a post slug (since no category exists with this path)
   if (slugPath.length >= 1) {
     const possiblePostSlug = slugPath[slugPath.length - 1];
-    const possibleCategorySlugPath = slugPath.slice(0, -1);
 
     // Check if a post exists with this slug
     const post = await getPostBySlugAsync(possiblePostSlug);
     if (post) {
-      // Verify the post belongs to this category path
-      const postCategoryPath = post.categorySlugPath || [];
-      const pathsMatch = possibleCategorySlugPath.length === postCategoryPath.length &&
-        possibleCategorySlugPath.every((slug, i) => {
-          // Normalize for comparison
-          const normalizedSlug = slug.normalize('NFC').toLowerCase();
-          const normalizedPostSlug = (postCategoryPath[i] || '').normalize('NFC').toLowerCase();
-          return normalizedSlug === normalizedPostSlug;
-        });
-
-      if (pathsMatch || possibleCategorySlugPath.length === 0) {
-        return { type: 'post' as const, categorySlugPath: possibleCategorySlugPath, postSlug: possiblePostSlug, post };
-      }
+      // Post found - show it (slug is unique across all categories)
+      return { type: 'post' as const, categorySlugPath: post.categorySlugPath || [], postSlug: possiblePostSlug, post };
     }
   }
 
-  // Normal category route
+  // PRIORITY 3: Neither category nor post exists - return as category (will 404 later)
   return { type: 'category' as const, categorySlugPath: slugPath };
 }
 
