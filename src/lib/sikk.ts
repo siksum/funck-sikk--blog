@@ -637,10 +637,16 @@ export async function getSikkCategoryBySlugPathFromDbAsync(slugPath: string[]): 
     let lastSlug = '';
 
     for (let i = 0; i < slugPath.length; i++) {
-      const slug = slugPath[i];
-      // Find all categories with this slug, then filter by parentId
+      const segment = slugPath[i];
+      // Find all categories with this slug OR name, then filter by parentId
+      // This handles cases where the URL might contain name instead of slug
       const allCategories = await prisma.sikkCategory.findMany({
-        where: { slug },
+        where: {
+          OR: [
+            { slug: segment },
+            { name: segment },
+          ],
+        },
       });
       const foundCat = allCategories.find((c) => c.parentId === currentParentId);
 
@@ -701,9 +707,15 @@ export async function getSikkChildCategoriesFromDbAsync(parentSlugPath: string[]
     const pathSlugs: string[] = [];
 
     for (let i = 0; i < parentSlugPath.length; i++) {
-      const slug = parentSlugPath[i];
+      const segment = parentSlugPath[i];
+      // Find all categories with this slug OR name, then filter by parentId
       const allCategories = await prisma.sikkCategory.findMany({
-        where: { slug },
+        where: {
+          OR: [
+            { slug: segment },
+            { name: segment },
+          ],
+        },
       });
       const foundCat = allCategories.find((c) => c.parentId === currentParentId);
 
