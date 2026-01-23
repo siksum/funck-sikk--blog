@@ -63,8 +63,9 @@ export async function uploadToGoogleDriveDirect(
   bodyBuffer.set(closeBytes, metadataBytes.length + filePartBytes.length + fileBytes.length);
 
   // Step 4: Upload directly to Google Drive using multipart/related
+  // supportsAllDrives=true is required for Shared Drives
   const uploadResponse = await fetch(
-    'https://www.googleapis.com/upload/drive/v3/files?uploadType=multipart&fields=id,name,webViewLink,webContentLink,mimeType',
+    'https://www.googleapis.com/upload/drive/v3/files?uploadType=multipart&supportsAllDrives=true&fields=id,name,webViewLink,webContentLink,mimeType',
     {
       method: 'POST',
       headers: {
@@ -92,8 +93,9 @@ export async function uploadToGoogleDriveDirect(
   const fileId = uploadResult.id;
 
   // Step 5: Make the file publicly accessible
+  // supportsAllDrives=true is required for Shared Drives
   const permissionResponse = await fetch(
-    `https://www.googleapis.com/drive/v3/files/${fileId}/permissions`,
+    `https://www.googleapis.com/drive/v3/files/${fileId}/permissions?supportsAllDrives=true`,
     {
       method: 'POST',
       headers: {
