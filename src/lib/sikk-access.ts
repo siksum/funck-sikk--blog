@@ -95,7 +95,12 @@ export async function checkSikkPostAccess(
   }
 
   // Check category-level sharing
+  let categoryHasShareSettings = false;
   if (post.category) {
+    // Check if this category has share settings (admin is controlling access)
+    const categoryShareCheck = await checkCategoryHasShareSettings(post.category);
+    categoryHasShareSettings = categoryShareCheck;
+
     const categoryAccess = await checkPostCategoryAccess(post.category, session);
     if (categoryAccess.canAccess) {
       return categoryAccess;
@@ -103,7 +108,9 @@ export async function checkSikkPostAccess(
   }
 
   // If post is marked as public (legacy isPublic field), allow access
-  if (post.isPublic) {
+  // BUT if the category has share settings, the admin wants to control access - don't allow public access
+  // Also, if the post has its own share settings, don't allow public access without proper token/invitation
+  if (post.isPublic && !post.share && !categoryHasShareSettings) {
     return { canAccess: true, accessType: 'public_token' };
   }
 
@@ -447,6 +454,66 @@ export async function getCategoryShareSettings(categorySlugPath: string[]) {
   });
 
   return share;
+}
+
+/**
+ * Check if a category has share settings (admin is controlling access)
+ * This includes checking parent categories with includeSubcategories enabled
+ * @param categoryPath - Category path (e.g., "성신여자대학교/1번")
+ */
+async function checkCategoryHasShareSettings(categoryPath: string): Promise<boolean> {
+  const pathParts = categoryPath.split('/');
+
+  // Find the category by name path
+  let slugPath: string[] = [];
+  let currentParentId: string | null = null;
+  let categoryId: string | null = null;
+
+  for (const name of pathParts) {
+    const category: { id: string; slug: string } | null = await prisma.sikkCategory.findFirst({
+      where: {
+        name: name,
+        parentId: currentParentId,
+      },
+      select: { id: true, slug: true },
+    });
+
+    if (!category) {
+      return false;
+    }
+
+    slugPath.push(category.slug);
+    currentParentId = category.id;
+    categoryId = category.id;
+  }
+
+  if (!categoryId) return false;
+
+  // Check if this category has share settings
+  const share = await prisma.sikkCategoryShare.findUnique({
+    where: { categoryId },
+  });
+
+  if (share) {
+    return true;
+  }
+
+  // Check parent categories with includeSubcategories enabled
+  for (let i = slugPath.length - 1; i > 0; i--) {
+    const parentSlugPath = slugPath.slice(0, i);
+    const parentCategory = await getCategoryBySlugPath(parentSlugPath);
+    if (!parentCategory) continue;
+
+    const parentShare = await prisma.sikkCategoryShare.findUnique({
+      where: { categoryId: parentCategory.id },
+    });
+
+    if (parentShare && parentShare.includeSubcategories) {
+      return true;
+    }
+  }
+
+  return false;
 }
 
 /**
