@@ -866,6 +866,7 @@ export default async function SikkCategoryPage({ params }: CategoryPageProps) {
       tags={tags}
       sections={sections}
       databases={databases}
+      isAdmin={isAdmin}
     />
   );
 }

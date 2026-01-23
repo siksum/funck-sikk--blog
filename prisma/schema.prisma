@@ -58,6 +58,9 @@ model User {
 
   // Sikk post sharing
   sikkPostInvitations SikkPostShareInvitation[]
+
+  // Sikk category sharing
+  sikkCategoryInvitations SikkCategoryShareInvitation[]
 }
 
 model VerificationToken {
@@ -217,6 +220,9 @@ model SikkCategory {
   createdAt DateTime       @default(now())
   updatedAt DateTime       @updatedAt
 
+  // Sharing relation
+  share     SikkCategoryShare?
+
   @@index([parentId])
   @@index([sectionId])
 }
@@ -313,6 +319,49 @@ model SikkPostShareInvitation {
   expiresAt   DateTime?
 
   invitedAt   DateTime       @default(now())
+  acceptedAt  DateTime?
+
+  @@unique([shareId, email])
+  @@index([email])
+  @@index([userId])
+}
+
+// ============ SIKK CATEGORY SHARING ============
+
+model SikkCategoryShare {
+  id              String       @id @default(cuid())
+  categoryId      String       @unique
+  category        SikkCategory @relation(fields: [categoryId], references: [id], onDelete: Cascade)
+
+  // Public link sharing
+  publicToken     String?      @unique
+  publicEnabled   Boolean      @default(false)
+  publicExpiresAt DateTime?
+
+  // Include subcategories option
+  includeSubcategories Boolean @default(true)
+
+  createdAt       DateTime     @default(now())
+  updatedAt       DateTime     @updatedAt
+
+  invitations     SikkCategoryShareInvitation[]
+
+  @@index([publicToken])
+}
+
+model SikkCategoryShareInvitation {
+  id          String             @id @default(cuid())
+  shareId     String
+  share       SikkCategoryShare  @relation(fields: [shareId], references: [id], onDelete: Cascade)
+
+  email       String
+  userId      String?
+  user        User?              @relation(fields: [userId], references: [id], onDelete: SetNull)
+
+  status      String             @default("pending") // pending, accepted, revoked
+  expiresAt   DateTime?
+
+  invitedAt   DateTime           @default(now())
   acceptedAt  DateTime?
 
   @@unique([shareId, email])
