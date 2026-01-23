@@ -3,6 +3,7 @@
 import { Editor } from '@tiptap/react';
 import { useCallback, useState, useRef } from 'react';
 import { uploadToGoogleDriveDirect } from '@/lib/google-drive-client';
+import GoogleDriveFileBrowser from '@/components/common/GoogleDriveFileBrowser';
 
 interface EditorToolbarProps {
   editor: Editor;
@@ -129,6 +130,7 @@ const EMOJI_CATEGORIES = [
 export default function EditorToolbar({ editor, onSave, onCancel, driveType = 'blog', category = '' }: EditorToolbarProps) {
   const [showLinkInput, setShowLinkInput] = useState(false);
   const [linkUrl, setLinkUrl] = useState('');
+  const [linkLabel, setLinkLabel] = useState('');
   const [showImageInput, setShowImageInput] = useState(false);
   const [imageUrl, setImageUrl] = useState('');
   const [showYoutubeInput, setShowYoutubeInput] = useState(false);
@@ -142,18 +144,34 @@ export default function EditorToolbar({ editor, onSave, onCancel, driveType = 'b
   const [isPdfUploading, setIsPdfUploading] = useState(false);
   const [pdfUploadDestination, setPdfUploadDestination] = useState<'cloudinary' | 'google-drive'>('google-drive');
   const [pdfDisplayMode, setPdfDisplayMode] = useState<'box' | 'embed'>('box');
+  const [showDriveBrowser, setShowDriveBrowser] = useState(false);
+  const [driveBrowserMode, setDriveBrowserMode] = useState<'image' | 'pdf'>('pdf');
   const fileInputRef = useRef<HTMLInputElement>(null);
   const pdfInputRef = useRef<HTMLInputElement>(null);
 
   const setLink = useCallback(() => {
     if (linkUrl) {
-      editor.chain().focus().extendMarkRange('link').setLink({ href: linkUrl }).run();
+      const { from, to } = editor.state.selection;
+      const hasSelection = from !== to;
+
+      if (linkLabel && !hasSelection) {
+        // Insert new link with custom label as a styled box
+        editor
+          .chain()
+          .focus()
+          .insertContent(`<p><a href="${linkUrl}" target="_blank" rel="noopener noreferrer" class="url-link-box">🔗 ${linkLabel}</a></p>`)
+          .run();
+      } else {
+        // Apply link to selection or current position
+        editor.chain().focus().extendMarkRange('link').setLink({ href: linkUrl }).run();
+      }
     } else {
       editor.chain().focus().extendMarkRange('link').unsetLink().run();
     }
     setShowLinkInput(false);
     setLinkUrl('');
-  }, [editor, linkUrl]);
+    setLinkLabel('');
+  }, [editor, linkUrl, linkLabel]);
 
   const addImage = useCallback(() => {
     if (imageUrl) {
@@ -272,6 +290,34 @@ export default function EditorToolbar({ editor, onSave, onCancel, driveType = 'b
       }
     }
   }, [editor, pdfUploadDestination, pdfDisplayMode, driveType, category]);
+
+  const handleDriveFileSelect = useCallback((files: { id: string; name: string; mimeType: string; downloadUrl: string }[]) => {
+    for (const file of files) {
+      if (driveBrowserMode === 'image' && file.mimeType.startsWith('image/')) {
+        // Insert as image
+        editor.chain().focus().setImage({ src: file.downloadUrl }).run();
+      } else if (file.mimeType === 'application/pdf') {
+        // Insert as PDF with current display mode
+        const fileId = file.id;
+        const url = file.downloadUrl;
+
+        let pdfContent: string;
+        if (pdfDisplayMode === 'embed') {
+          const embedUrl = `https://drive.google.com/file/d/${fileId}/preview`;
+          pdfContent = `<p><strong>📄 ${file.name}</strong> <a href="${url}" target="_blank" rel="noopener noreferrer">다운로드</a></p><iframe src="${embedUrl}" width="100%" height="600" frameborder="0" allowfullscreen="true"></iframe><p></p>`;
+        } else {
+          pdfContent = `<p><a href="${url}" target="_blank" rel="noopener noreferrer" class="pdf-link">📄 ${file.name}</a></p>`;
+        }
+        editor.chain().focus().insertContent(pdfContent).run();
+      } else {
+        // Other files - insert as download link
+        editor.chain().focus().insertContent(
+          `<p><a href="${file.downloadUrl}" target="_blank" rel="noopener noreferrer">📎 ${file.name}</a></p>`
+        ).run();
+      }
+    }
+    setShowImageInput(false);
+  }, [editor, driveBrowserMode, pdfDisplayMode]);
 
   return (
     <div className="sticky top-0 z-10 bg-white/95 dark:bg-gray-900/95 backdrop-blur border-2 border-pink-200 dark:border-pink-500/40 rounded-lg p-2 mb-4 flex flex-wrap items-center gap-1">
@@ -590,26 +636,62 @@ export default function EditorToolbar({ editor, onSave, onCancel, driveType = 'b
           </svg>
         </ToolbarButton>
         {showLinkInput && (
-          <div className="absolute top-full left-0 mt-2 p-2 bg-white dark:bg-gray-800 rounded-lg shadow-lg border border-pink-200 dark:border-pink-500/40 z-20">
-            <input
-              type="url"
-              value={linkUrl}
-              onChange={(e) => setLinkUrl(e.target.value)}
-              placeholder="URL 입력..."
-              className="px-2 py-1 border border-gray-300 dark:border-gray-600 rounded text-sm w-48"
-              onKeyDown={(e) => e.key === 'Enter' && setLink()}
-            />
-            <button
-              type="button"
-              onClick={(e) => {
-                e.preventDefault();
-                e.stopPropagation();
-                setLink();
-              }}
-              className="ml-2 px-2 py-1 bg-pink-500 text-white rounded text-sm hover:bg-pink-600"
-            >
-              확인
-            </button>
+          <div className="absolute top-full left-0 mt-2 p-3 bg-white dark:bg-gray-800 rounded-lg shadow-lg border border-pink-200 dark:border-pink-500/40 z-20 w-64">
+            <div className="mb-2">
+              <label className="block text-xs font-medium text-gray-500 dark:text-gray-400 mb-1">
+                URL
+              </label>
+              <input
+                type="url"
+                value={linkUrl}
+                onChange={(e) => setLinkUrl(e.target.value)}
+                placeholder="https://..."
+                className="w-full px-2 py-1 border border-gray-300 dark:border-gray-600 rounded text-sm bg-white dark:bg-gray-900"
+                onKeyDown={(e) => e.key === 'Enter' && setLink()}
+              />
+            </div>
+            <div className="mb-3">
+              <label className="block text-xs font-medium text-gray-500 dark:text-gray-400 mb-1">
+                표시 이름 <span className="text-gray-400">(선택)</span>
+              </label>
+              <input
+                type="text"
+                value={linkLabel}
+                onChange={(e) => setLinkLabel(e.target.value)}
+                placeholder="링크 텍스트..."
+                className="w-full px-2 py-1 border border-gray-300 dark:border-gray-600 rounded text-sm bg-white dark:bg-gray-900"
+                onKeyDown={(e) => e.key === 'Enter' && setLink()}
+              />
+              <p className="text-xs text-gray-400 mt-1">
+                비워두면 선택된 텍스트에 링크 적용
+              </p>
+            </div>
+            <div className="flex justify-end gap-2">
+              <button
+                type="button"
+                onClick={(e) => {
+                  e.preventDefault();
+                  e.stopPropagation();
+                  setShowLinkInput(false);
+                  setLinkUrl('');
+                  setLinkLabel('');
+                }}
+                className="px-3 py-1 text-sm rounded border border-gray-300 dark:border-gray-600 hover:bg-gray-100 dark:hover:bg-gray-700"
+              >
+                취소
+              </button>
+              <button
+                type="button"
+                onClick={(e) => {
+                  e.preventDefault();
+                  e.stopPropagation();
+                  setLink();
+                }}
+                className="px-3 py-1 bg-pink-500 text-white rounded text-sm hover:bg-pink-600"
+              >
+                확인
+              </button>
+            </div>
           </div>
         )}
       </div>
@@ -636,30 +718,48 @@ export default function EditorToolbar({ editor, onSave, onCancel, driveType = 'b
                 className="hidden"
                 id="image-upload"
               />
-              <button
-                type="button"
-                onClick={(e) => {
-                  e.preventDefault();
-                  e.stopPropagation();
-                  fileInputRef.current?.click();
-                }}
-                disabled={isImageUploading}
-                className="w-full px-3 py-2 border-2 border-dashed border-gray-300 dark:border-gray-600 rounded-lg text-sm hover:border-pink-400 dark:hover:border-pink-500 transition-colors flex items-center justify-center gap-2 disabled:opacity-50"
-              >
-                {isImageUploading ? (
-                  <>
-                    <span className="animate-spin w-4 h-4 border-2 border-pink-500 border-t-transparent rounded-full"></span>
-                    업로드 중...
-                  </>
-                ) : (
-                  <>
-                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" />
-                    </svg>
-                    이미지 선택
-                  </>
-                )}
-              </button>
+              <div className="flex gap-2">
+                <button
+                  type="button"
+                  onClick={(e) => {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    fileInputRef.current?.click();
+                  }}
+                  disabled={isImageUploading}
+                  className="flex-1 px-3 py-2 border-2 border-dashed border-gray-300 dark:border-gray-600 rounded-lg text-sm hover:border-pink-400 dark:hover:border-pink-500 transition-colors flex items-center justify-center gap-2 disabled:opacity-50"
+                >
+                  {isImageUploading ? (
+                    <>
+                      <span className="animate-spin w-4 h-4 border-2 border-pink-500 border-t-transparent rounded-full"></span>
+                      업로드 중...
+                    </>
+                  ) : (
+                    <>
+                      <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" />
+                      </svg>
+                      새 이미지
+                    </>
+                  )}
+                </button>
+                <button
+                  type="button"
+                  onClick={(e) => {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    setDriveBrowserMode('image');
+                    setShowDriveBrowser(true);
+                    setShowImageInput(false);
+                  }}
+                  className="flex-1 px-3 py-2 border-2 border-blue-300 dark:border-blue-600 rounded-lg text-sm hover:border-blue-400 dark:hover:border-blue-500 transition-colors flex items-center justify-center gap-2 text-blue-600 dark:text-blue-400"
+                >
+                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-6l-2-2H5a2 2 0 00-2 2z" />
+                  </svg>
+                  Drive
+                </button>
+              </div>
               <p className="text-xs text-gray-400 mt-1">최대 10MB (JPEG, PNG, GIF, WebP)</p>
             </div>
 
@@ -757,30 +857,48 @@ export default function EditorToolbar({ editor, onSave, onCancel, driveType = 'b
                 className="hidden"
                 id="pdf-upload"
               />
-              <button
-                type="button"
-                onClick={(e) => {
-                  e.preventDefault();
-                  e.stopPropagation();
-                  pdfInputRef.current?.click();
-                }}
-                disabled={isPdfUploading}
-                className="w-full px-3 py-2 border-2 border-dashed border-gray-300 dark:border-gray-600 rounded-lg text-sm hover:border-pink-400 dark:hover:border-pink-500 transition-colors flex items-center justify-center gap-2 disabled:opacity-50"
-              >
-                {isPdfUploading ? (
-                  <>
-                    <span className="animate-spin w-4 h-4 border-2 border-pink-500 border-t-transparent rounded-full"></span>
-                    업로드 중...
-                  </>
-                ) : (
-                  <>
-                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z" />
-                    </svg>
-                    PDF 선택
-                  </>
-                )}
-              </button>
+              <div className="flex gap-2">
+                <button
+                  type="button"
+                  onClick={(e) => {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    pdfInputRef.current?.click();
+                  }}
+                  disabled={isPdfUploading}
+                  className="flex-1 px-3 py-2 border-2 border-dashed border-gray-300 dark:border-gray-600 rounded-lg text-sm hover:border-pink-400 dark:hover:border-pink-500 transition-colors flex items-center justify-center gap-2 disabled:opacity-50"
+                >
+                  {isPdfUploading ? (
+                    <>
+                      <span className="animate-spin w-4 h-4 border-2 border-pink-500 border-t-transparent rounded-full"></span>
+                      업로드 중...
+                    </>
+                  ) : (
+                    <>
+                      <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z" />
+                      </svg>
+                      새 PDF
+                    </>
+                  )}
+                </button>
+                <button
+                  type="button"
+                  onClick={(e) => {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    setDriveBrowserMode('pdf');
+                    setShowDriveBrowser(true);
+                    setShowImageInput(false);
+                  }}
+                  className="flex-1 px-3 py-2 border-2 border-blue-300 dark:border-blue-600 rounded-lg text-sm hover:border-blue-400 dark:hover:border-blue-500 transition-colors flex items-center justify-center gap-2 text-blue-600 dark:text-blue-400"
+                >
+                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-6l-2-2H5a2 2 0 00-2 2z" />
+                  </svg>
+                  Drive
+                </button>
+              </div>
               <p className="text-xs text-gray-400 mt-1">최대 20MB</p>
             </div>
 
@@ -1016,6 +1134,16 @@ export default function EditorToolbar({ editor, onSave, onCancel, driveType = 'b
       >
         저장
       </button>
+
+      {/* Google Drive File Browser */}
+      <GoogleDriveFileBrowser
+        isOpen={showDriveBrowser}
+        onClose={() => setShowDriveBrowser(false)}
+        onSelect={handleDriveFileSelect}
+        driveType={driveType}
+        multiple={false}
+        acceptedTypes={driveBrowserMode === 'image' ? ['image/*'] : ['application/pdf']}
+      />
     </div>
   );
 }
