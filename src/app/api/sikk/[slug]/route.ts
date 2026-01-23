@@ -44,7 +44,7 @@ export async function PUT(request: NextRequest, context: RouteContext) {
   try {
     const { slug } = await context.params;
     const body = await request.json();
-    const { title, description, category, tags, content, date, isPublic, thumbnail, thumbnailPosition, thumbnailScale, status } = body;
+    const { title, description, category, tags, content, date, isPublic, thumbnail, thumbnailPosition, thumbnailScale, status, newSlug } = body;
 
     if (!title) {
       return NextResponse.json({ error: 'Title is required' }, { status: 400 });
@@ -59,6 +59,17 @@ export async function PUT(request: NextRequest, context: RouteContext) {
       return NextResponse.json({ error: 'Post not found' }, { status: 404 });
     }
 
+    // If newSlug is provided and different, check for conflicts
+    const finalSlug = newSlug && newSlug !== slug ? newSlug : slug;
+    if (newSlug && newSlug !== slug) {
+      const conflicting = await prisma.sikkPost.findUnique({
+        where: { slug: newSlug },
+      });
+      if (conflicting) {
+        return NextResponse.json({ error: 'Slug already exists' }, { status: 400 });
+      }
+    }
+
     // Parse date
     const postDate = date ? new Date(date) : existing.date;
 
@@ -66,6 +77,7 @@ export async function PUT(request: NextRequest, context: RouteContext) {
     const post = await prisma.sikkPost.update({
       where: { slug },
       data: {
+        slug: finalSlug,
         title,
         description: description || '',
         content: content || '',
@@ -82,6 +94,9 @@ export async function PUT(request: NextRequest, context: RouteContext) {
 
     // Revalidate the sikk post page and sikk listing
     revalidatePath(`/sikk/${slug}`);
+    if (finalSlug !== slug) {
+      revalidatePath(`/sikk/${finalSlug}`);
+    }
     revalidatePath('/sikk');
 
     return NextResponse.json({ success: true, slug: post.slug });
