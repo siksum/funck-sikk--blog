@@ -8,8 +8,13 @@ import { uploadToGoogleDriveDirect } from '@/lib/google-drive-client';
 interface Column {
   id: string;
   name: string;
-  type: 'date' | 'title' | 'text' | 'files' | 'url' | 'select' | 'number';
+  type: 'date' | 'dateRange' | 'title' | 'text' | 'files' | 'url' | 'select' | 'number';
   options?: string[];
+}
+
+interface DateRangeValue {
+  start: string;
+  end: string;
 }
 
 interface Item {
@@ -210,9 +215,12 @@ export default function DatabaseTableView({
   const handleAddItem = useCallback(async () => {
     // Create default data for new item
     const defaultData: Record<string, unknown> = {};
+    const today = new Date().toISOString().split('T')[0];
     columns.forEach((col) => {
       if (col.type === 'date') {
-        defaultData[col.id] = new Date().toISOString().split('T')[0];
+        defaultData[col.id] = today;
+      } else if (col.type === 'dateRange') {
+        defaultData[col.id] = { start: today, end: '' };
       } else if (col.type === 'title') {
         defaultData[col.id] = '새 항목';
       } else {
@@ -566,38 +574,22 @@ export default function DatabaseTableView({
 
     try {
       for (const file of Array.from(files)) {
-        const isPdf = file.type === 'application/pdf' || file.name.toLowerCase().endsWith('.pdf');
-
-        if (isPdf) {
-          // Use direct upload to Google Drive (bypasses server size limit)
-          try {
-            const category = categorySlugPath?.length ? categorySlugPath[categorySlugPath.length - 1] : '';
-            const result = await uploadToGoogleDriveDirect(file, { driveType: 'sikk', category });
-            uploadedUrls.push(result.url);
-          } catch (driveError) {
-            console.warn('Google Drive upload failed, falling back to Cloudinary:', driveError);
-            // Fallback to Cloudinary
-            const formData = new FormData();
-            formData.append('file', file);
-            const fallbackRes = await fetch('/api/upload', {
-              method: 'POST',
-              body: formData,
-            });
-            if (fallbackRes.ok) {
-              const data = await fallbackRes.json();
-              uploadedUrls.push(data.url);
-            }
-          }
-        } else {
-          // Non-PDF files go to Cloudinary
+        // Upload all files to Google Drive (with Cloudinary fallback)
+        try {
+          const category = categorySlugPath?.length ? categorySlugPath[categorySlugPath.length - 1] : '';
+          const result = await uploadToGoogleDriveDirect(file, { driveType: 'sikk', category });
+          uploadedUrls.push(result.url);
+        } catch (driveError) {
+          console.warn('Google Drive upload failed, falling back to Cloudinary:', driveError);
+          // Fallback to Cloudinary
           const formData = new FormData();
           formData.append('file', file);
-          const res = await fetch('/api/upload', {
+          const fallbackRes = await fetch('/api/upload', {
             method: 'POST',
             body: formData,
           });
-          if (res.ok) {
-            const data = await res.json();
+          if (fallbackRes.ok) {
+            const data = await fallbackRes.json();
             uploadedUrls.push(data.url);
           }
         }
@@ -702,13 +694,20 @@ export default function DatabaseTableView({
 
     // Sort
     if (sortColumn) {
+      const sortColumnDef = columns.find((c) => c.id === sortColumn);
       itemsList.sort((a, b) => {
-        const aVal = a.data[sortColumn];
-        const bVal = b.data[sortColumn];
+        let aVal = a.data[sortColumn];
+        let bVal = b.data[sortColumn];
+
+        // For dateRange, use start date for sorting
+        if (sortColumnDef?.type === 'dateRange') {
+          aVal = (aVal as DateRangeValue)?.start || '';
+          bVal = (bVal as DateRangeValue)?.start || '';
+        }
 
         if (aVal === bVal) return 0;
-        if (aVal === null || aVal === undefined) return 1;
-        if (bVal === null || bVal === undefined) return -1;
+        if (aVal === null || aVal === undefined || aVal === '') return 1;
+        if (bVal === null || bVal === undefined || bVal === '') return -1;
 
         const comparison = String(aVal).localeCompare(String(bVal));
         return sortDirection === 'asc' ? comparison : -comparison;
@@ -725,6 +724,10 @@ export default function DatabaseTableView({
         const column = columns.find((c) => c.id === groupByColumn);
         if (column?.type === 'date' && groupKey) {
           groupKey = String(groupKey).substring(0, 4); // Extract year
+        } else if (column?.type === 'dateRange' && groupKey) {
+          // For dateRange, use start date's year
+          const dateRange = groupKey as DateRangeValue;
+          groupKey = dateRange.start ? dateRange.start.substring(0, 4) : null;
         }
 
         const key = groupKey ? String(groupKey) : '(없음)';
@@ -812,6 +815,38 @@ export default function DatabaseTableView({
             className="w-full px-2 py-1 text-sm border border-pink-400 rounded focus:outline-none focus:ring-2 focus:ring-pink-500 bg-white dark:bg-gray-900 text-gray-900 dark:text-white"
             autoFocus
           />
+        );
+      }
+
+      if (column.type === 'dateRange') {
+        const dateRange = (value as DateRangeValue) || { start: '', end: '' };
+        return (
+          <div className="flex items-center gap-1">
+            <input
+              type="date"
+              value={dateRange.start || ''}
+              onChange={(e) => {
+                const newRange = { ...dateRange, start: e.target.value };
+                handleUpdateCell(item.id, column.id, newRange);
+              }}
+              className="w-[130px] px-2 py-1 text-sm border border-pink-400 rounded focus:outline-none focus:ring-2 focus:ring-pink-500 bg-white dark:bg-gray-900 text-gray-900 dark:text-white"
+              autoFocus
+            />
+            <span className="text-gray-400">~</span>
+            <input
+              type="date"
+              value={dateRange.end || ''}
+              onChange={(e) => {
+                const newRange = { ...dateRange, end: e.target.value };
+                handleUpdateCell(item.id, column.id, newRange);
+              }}
+              onBlur={() => setEditingCell(null)}
+              onKeyDown={(e) => {
+                if (e.key === 'Escape') setEditingCell(null);
+              }}
+              className="w-[130px] px-2 py-1 text-sm border border-pink-400 rounded focus:outline-none focus:ring-2 focus:ring-pink-500 bg-white dark:bg-gray-900 text-gray-900 dark:text-white"
+            />
+          </div>
         );
       }
 
@@ -1021,6 +1056,22 @@ export default function DatabaseTableView({
       );
     }
 
+    if (column.type === 'dateRange') {
+      const dateRange = (value as DateRangeValue) || { start: '', end: '' };
+      const startDate = dateRange.start || '';
+      const endDate = dateRange.end || '';
+
+      if (!startDate && !endDate) {
+        return <span className="text-gray-400 dark:text-gray-500 text-sm">-</span>;
+      }
+
+      return (
+        <span className="text-sm text-gray-900 dark:text-white whitespace-nowrap">
+          {startDate || '?'} ~ {endDate || '진행중'}
+        </span>
+      );
+    }
+
     if (column.type === 'title') {
       // New URL format: /sikk/categories/[...categoryPath]/db/[slug]/[itemId]
       const itemHref = categorySlugPath && categorySlugPath.length > 0
@@ -1104,9 +1155,9 @@ export default function DatabaseTableView({
             className="px-2 py-1 text-xs border border-gray-200 dark:border-gray-700 rounded bg-white dark:bg-gray-900 text-gray-900 dark:text-white"
           >
             <option value="">없음</option>
-            {columns.filter((col) => col.type === 'select' || col.type === 'date').map((col) => (
+            {columns.filter((col) => col.type === 'select' || col.type === 'date' || col.type === 'dateRange').map((col) => (
               <option key={col.id} value={col.id}>
-                {col.name}{col.type === 'date' ? ' (연도별)' : ''}
+                {col.name}{(col.type === 'date' || col.type === 'dateRange') ? ' (연도별)' : ''}
               </option>
             ))}
           </select>
