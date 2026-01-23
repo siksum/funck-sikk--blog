@@ -9,7 +9,7 @@ interface DBSikkSection {
   title: string;
   description: string | null;
   order: number;
-  categories: { id: string; name: string; slug: string }[];
+  categories: { id: string; name: string; slug: string; slugPath: string[]; path: string[] }[];
 }
 
 interface SikkSidebarProps {
@@ -115,42 +115,42 @@ export default function SikkSidebar({
     ? (() => {
         const grouped: { section: DBSikkSection | null; categories: Category[] }[] = [];
 
-        // Helper function to find a category by name in the entire tree (including children)
-        const findCategoryByName = (name: string): Category | null => {
-          // First check root categories
-          const rootMatch = categories.find((cat) => cat.name === name);
-          if (rootMatch) {
-            return rootMatch;
+        // Helper function to find category count from post-built tree by slugPath
+        const findCategoryCount = (slugPath: string[]): number => {
+          // Check root categories
+          if (slugPath.length === 1) {
+            const rootMatch = categories.find((cat) => cat.slugPath[0] === slugPath[0]);
+            if (rootMatch) {
+              return rootMatch.count;
+            }
           }
-          // Then check children of root categories
+          // Check children of root categories
           for (const rootCat of categories) {
-            if (rootCat.children) {
-              const childMatch = rootCat.children.find((child) => child.name === name);
+            if (rootCat.children && slugPath.length >= 2 && rootCat.slugPath[0] === slugPath[0]) {
+              const childMatch = rootCat.children.find(
+                (child) => child.slugPath.length === slugPath.length &&
+                  child.slugPath.every((s, i) => s === slugPath[i])
+              );
               if (childMatch) {
-                return childMatch;
+                return childMatch.count;
               }
             }
           }
-          return null;
+          return 0;
         };
 
         // Always show sections, even without categories
         sections.forEach((section) => {
-          // Find matching categories from posts OR create placeholder for section categories
+          // Build categories using slugPath from DB
           const sectionCategories: Category[] = section.categories.map((dbCat) => {
-            // Try to find existing category with posts (including children)
-            const existingCat = findCategoryByName(dbCat.name);
-            if (existingCat) {
-              return existingCat;
-            }
-            // Create placeholder category for categories without posts
+            const count = findCategoryCount(dbCat.slugPath);
             return {
               name: dbCat.name,
               slug: dbCat.slug,
-              count: 0,
-              path: [dbCat.name],
-              slugPath: [dbCat.slug],
-              depth: 0,
+              count,
+              path: dbCat.path,
+              slugPath: dbCat.slugPath, // Use slugPath from DB (includes parent path)
+              depth: dbCat.slugPath.length - 1,
             };
           });
           grouped.push({ section, categories: sectionCategories });
