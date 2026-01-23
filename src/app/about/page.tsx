@@ -66,7 +66,7 @@ interface AboutData {
     international: Array<{ authors: string; title: string; venue: string; badge?: string }>;
     domestic: Array<{ authors: string; title: string; venue: string; korean?: string; award?: string; badge?: string }>;
   };
-  awards: Array<{ title: string; org: string; year: string; highlight?: boolean; korean?: string; linkedSection?: string; linkedItem?: string; badge?: string }>;
+  awards: Array<{ title: string; org: string; year: string; highlight?: boolean; korean?: string; linkedSection?: string; linkedItem?: string; linkedItemNote?: string; badge?: string }>;
   certificates: Array<{ title: string; org: string; date: string }>;
   patents: Array<{ title: string; code: string; date: string; korean: string }>;
   activities: {
@@ -1110,6 +1110,12 @@ export default function AboutPage() {
                         )}
                         {award.org && (
                           <p className="text-sm text-accent-violet mt-1">{award.org}</p>
+                        )}
+                        {award.linkedItem && (
+                          <p className="text-xs text-gray-500 dark:text-gray-400 mt-1 italic">→ {award.linkedItem}</p>
+                        )}
+                        {award.linkedItemNote && (
+                          <p className="text-xs text-gray-400 dark:text-gray-500 mt-1">{award.linkedItemNote}</p>
                         )}
                       </motion.div>
                     </motion.div>

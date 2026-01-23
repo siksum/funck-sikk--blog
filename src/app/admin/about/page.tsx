@@ -64,7 +64,7 @@ interface AboutData {
     international: Array<{ authors: string; title: string; venue: string; badge?: string }>;
     domestic: Array<{ authors: string; title: string; venue: string; korean?: string; award?: string; badge?: string }>;
   };
-  awards: Array<{ title: string; org: string; year: string; highlight?: boolean; korean?: string; linkedSection?: string; linkedItem?: string; badge?: string }>;
+  awards: Array<{ title: string; org: string; year: string; highlight?: boolean; korean?: string; linkedSection?: string; linkedItem?: string; linkedItemNote?: string; badge?: string }>;
   certificates: Array<{ title: string; org: string; date: string }>;
   patents: Array<{ title: string; code: string; date: string; korean: string }>;
   activities: {
@@ -1789,7 +1789,7 @@ function AwardsEditor({ data, setData }: { data: AboutData; setData: (d: AboutDa
   const addAward = () => {
     setData({
       ...data,
-      awards: [...data.awards, { title: '', org: '', year: '', korean: '', linkedSection: '', linkedItem: '', badge: '' }],
+      awards: [...data.awards, { title: '', org: '', year: '', korean: '', linkedSection: '', linkedItem: '', linkedItemNote: '', badge: '' }],
     });
   };
 
@@ -2009,10 +2009,10 @@ function AwardsEditor({ data, setData }: { data: AboutData; setData: (d: AboutDa
               ))}
             </select>
           </div>
-          {/* Linked Item - Both dropdown and text input */}
-          <div className="space-y-2">
-            <label className="block text-xs font-medium text-gray-500 dark:text-gray-400">관련 논문/항목 연결</label>
-            {award.linkedSection && (
+          {/* Linked Item - Dropdown for selection */}
+          {award.linkedSection && (
+            <div>
+              <label className="block text-xs font-medium text-gray-500 dark:text-gray-400 mb-1">관련 논문/항목 연결</label>
               <select
                 value={award.linkedItem || ''}
                 onChange={(e) => updateAward(index, 'linkedItem', e.target.value)}
@@ -2024,15 +2024,18 @@ function AwardsEditor({ data, setData }: { data: AboutData; setData: (d: AboutDa
                   </option>
                 ))}
               </select>
-            )}
+            </div>
+          )}
+          {/* Additional note/comment */}
+          <div>
+            <label className="block text-xs font-medium text-gray-500 dark:text-gray-400 mb-1">추가 코멘트 (선택)</label>
             <input
               type="text"
-              placeholder="직접 입력 (예: rPBFT: Reliable Practical Byzantine...)"
-              value={award.linkedItem || ''}
-              onChange={(e) => updateAward(index, 'linkedItem', e.target.value)}
+              placeholder="예: 공동 1저자, 대회 참가 팀명 등"
+              value={award.linkedItemNote || ''}
+              onChange={(e) => updateAward(index, 'linkedItemNote', e.target.value)}
               className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
             />
-            <p className="text-xs text-gray-400 dark:text-gray-500">드롭다운에서 선택하거나 직접 입력하세요</p>
           </div>
           <div className="flex items-center">
             <label className="flex items-center gap-2 text-sm text-gray-600 dark:text-gray-400">
