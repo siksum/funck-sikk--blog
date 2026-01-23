@@ -7,6 +7,7 @@ import SikkCategoryCard from '@/components/sikk/SikkCategoryCard';
 import SikkDatabaseCard from '@/components/sikk/SikkDatabaseCard';
 import SikkSidebar from '@/components/sikk/SikkSidebar';
 import SikkPostCard from '@/components/sikk/SikkPostCard';
+import CategoryShareModal from '@/components/sikk/CategoryShareModal';
 
 interface ChildCategory {
   name: string;
@@ -47,6 +48,7 @@ interface SikkCategoryPageContentProps {
   tags: { name: string; count: number }[];
   sections?: DBSikkSection[];
   databases?: SikkDatabase[];
+  isAdmin?: boolean;
 }
 
 export default function SikkCategoryPageContent({
@@ -58,11 +60,13 @@ export default function SikkCategoryPageContent({
   tags,
   sections,
   databases = [],
+  isAdmin = false,
 }: SikkCategoryPageContentProps) {
   const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
   const [searchTerm, setSearchTerm] = useState('');
   const [sortBy, setSortBy] = useState<'date' | 'title'>('date');
   const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('desc');
+  const [isShareModalOpen, setIsShareModalOpen] = useState(false);
 
   // Filter and sort posts
   const filteredAndSortedPosts = useMemo(() => {
@@ -177,49 +181,71 @@ export default function SikkCategoryPageContent({
                     : '콘텐츠 없음'}
                 </p>
               </div>
-              {/* View Toggle */}
-              <div
-                className="inline-flex rounded-lg p-1 border border-pink-200 dark:border-pink-500/40"
-                style={{ background: 'var(--card-bg)' }}
-              >
-                <button
-                  onClick={() => setViewMode('grid')}
-                  className={`p-2 rounded-md transition-colors ${
-                    viewMode === 'grid'
-                      ? 'bg-pink-100 dark:bg-pink-500/20 text-pink-600 dark:text-pink-400'
-                      : 'hover:bg-gray-100 dark:hover:bg-pink-500/10'
-                  }`}
-                  style={{ color: viewMode === 'grid' ? undefined : 'var(--foreground-muted)' }}
-                  aria-label="카드 보기"
+              {/* Actions */}
+              <div className="flex items-center gap-2">
+                {/* Share Button (Admin Only) */}
+                {isAdmin && (
+                  <button
+                    onClick={() => setIsShareModalOpen(true)}
+                    className="p-2 rounded-lg border border-pink-200 dark:border-pink-500/40 hover:border-pink-400 dark:hover:border-pink-400 transition-colors"
+                    style={{ background: 'var(--card-bg)', color: 'var(--foreground-muted)' }}
+                    title="카테고리 공유"
+                  >
+                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth={2}
+                        d="M8.684 13.342C8.886 12.938 9 12.482 9 12c0-.482-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m0 2.684l6.632 3.316m-6.632-6l6.632-3.316m0 0a3 3 0 105.367-2.684 3 3 0 00-5.367 2.684zm0 9.316a3 3 0 105.368 2.684 3 3 0 00-5.368-2.684z"
+                      />
+                    </svg>
+                  </button>
+                )}
+
+                {/* View Toggle */}
+                <div
+                  className="inline-flex rounded-lg p-1 border border-pink-200 dark:border-pink-500/40"
+                  style={{ background: 'var(--card-bg)' }}
                 >
-                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      strokeWidth={2}
-                      d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zM14 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z"
-                    />
-                  </svg>
-                </button>
-                <button
-                  onClick={() => setViewMode('list')}
-                  className={`p-2 rounded-md transition-colors ${
-                    viewMode === 'list'
-                      ? 'bg-pink-100 dark:bg-pink-500/20 text-pink-600 dark:text-pink-400'
-                      : 'hover:bg-gray-100 dark:hover:bg-pink-500/10'
-                  }`}
-                  style={{ color: viewMode === 'list' ? undefined : 'var(--foreground-muted)' }}
-                  aria-label="리스트 보기"
-                >
-                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      strokeWidth={2}
-                      d="M4 6h16M4 12h16M4 18h16"
-                    />
-                  </svg>
-                </button>
+                  <button
+                    onClick={() => setViewMode('grid')}
+                    className={`p-2 rounded-md transition-colors ${
+                      viewMode === 'grid'
+                        ? 'bg-pink-100 dark:bg-pink-500/20 text-pink-600 dark:text-pink-400'
+                        : 'hover:bg-gray-100 dark:hover:bg-pink-500/10'
+                    }`}
+                    style={{ color: viewMode === 'grid' ? undefined : 'var(--foreground-muted)' }}
+                    aria-label="카드 보기"
+                  >
+                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth={2}
+                        d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zM14 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z"
+                      />
+                    </svg>
+                  </button>
+                  <button
+                    onClick={() => setViewMode('list')}
+                    className={`p-2 rounded-md transition-colors ${
+                      viewMode === 'list'
+                        ? 'bg-pink-100 dark:bg-pink-500/20 text-pink-600 dark:text-pink-400'
+                        : 'hover:bg-gray-100 dark:hover:bg-pink-500/10'
+                    }`}
+                    style={{ color: viewMode === 'list' ? undefined : 'var(--foreground-muted)' }}
+                    aria-label="리스트 보기"
+                  >
+                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth={2}
+                        d="M4 6h16M4 12h16M4 18h16"
+                      />
+                    </svg>
+                  </button>
+                </div>
               </div>
             </div>
 
@@ -405,6 +431,16 @@ export default function SikkCategoryPageContent({
           </div>
         </div>
       </div>
+
+      {/* Category Share Modal */}
+      {isAdmin && (
+        <CategoryShareModal
+          slugPath={category.slugPath}
+          categoryName={category.name}
+          isOpen={isShareModalOpen}
+          onClose={() => setIsShareModalOpen(false)}
+        />
+      )}
     </div>
   );
 }
