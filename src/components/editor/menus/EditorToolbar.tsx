@@ -136,7 +136,9 @@ export default function EditorToolbar({ editor, onSave, onCancel }: EditorToolba
   const [showTextColorPicker, setShowTextColorPicker] = useState(false);
   const [showHighlightPicker, setShowHighlightPicker] = useState(false);
   const [isUploading, setIsUploading] = useState(false);
+  const [pdfUploadDestination, setPdfUploadDestination] = useState<'cloudinary' | 'google-drive'>('cloudinary');
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const pdfInputRef = useRef<HTMLInputElement>(null);
 
   const setLink = useCallback(() => {
     if (linkUrl) {
@@ -197,6 +199,46 @@ export default function EditorToolbar({ editor, onSave, onCancel }: EditorToolba
       }
     }
   }, [editor]);
+
+  const handlePdfUpload = useCallback(async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    setIsUploading(true);
+    try {
+      const formData = new FormData();
+      formData.append('file', file);
+
+      const endpoint = pdfUploadDestination === 'google-drive'
+        ? '/api/upload/google-drive'
+        : '/api/upload';
+
+      const response = await fetch(endpoint, {
+        method: 'POST',
+        body: formData,
+      });
+
+      if (!response.ok) {
+        const error = await response.json();
+        alert(error.error || '업로드에 실패했습니다.');
+        return;
+      }
+
+      const data = await response.json();
+      // Insert PDF as a link
+      const linkText = `📄 ${file.name}`;
+      editor.chain().focus().insertContent(`<a href="${data.url}" target="_blank">${linkText}</a>`).run();
+      setShowImageInput(false);
+    } catch (error) {
+      console.error('Upload error:', error);
+      alert('업로드 중 오류가 발생했습니다.');
+    } finally {
+      setIsUploading(false);
+      if (pdfInputRef.current) {
+        pdfInputRef.current.value = '';
+      }
+    }
+  }, [editor, pdfUploadDestination]);
 
   return (
     <div className="sticky top-0 z-10 bg-white/95 dark:bg-gray-900/95 backdrop-blur border-2 border-pink-200 dark:border-pink-500/40 rounded-lg p-2 mb-4 flex flex-wrap items-center gap-1">
@@ -540,17 +582,17 @@ export default function EditorToolbar({ editor, onSave, onCancel }: EditorToolba
       </div>
 
       <div className="relative">
-        <ToolbarButton onClick={() => setShowImageInput(!showImageInput)} title="이미지">
+        <ToolbarButton onClick={() => setShowImageInput(!showImageInput)} title="파일 업로드">
           <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
           </svg>
         </ToolbarButton>
         {showImageInput && (
-          <div className="absolute top-full left-0 mt-2 p-3 bg-white dark:bg-gray-800 rounded-lg shadow-lg border border-pink-200 dark:border-pink-500/40 z-20 w-64">
-            {/* File Upload */}
+          <div className="absolute top-full right-0 mt-2 p-3 bg-white dark:bg-gray-800 rounded-lg shadow-lg border border-pink-200 dark:border-pink-500/40 z-20 w-72">
+            {/* Image Upload */}
             <div className="mb-3">
               <label className="block text-xs font-semibold text-gray-500 dark:text-gray-400 mb-1">
-                파일 업로드
+                이미지 업로드
               </label>
               <input
                 ref={fileInputRef}
@@ -588,10 +630,83 @@ export default function EditorToolbar({ editor, onSave, onCancel }: EditorToolba
               <p className="text-xs text-gray-400 mt-1">최대 10MB (JPEG, PNG, GIF, WebP)</p>
             </div>
 
-            {/* URL Input */}
-            <div>
+            {/* PDF Upload */}
+            <div className="mb-3 pt-3 border-t border-gray-200 dark:border-gray-700">
               <label className="block text-xs font-semibold text-gray-500 dark:text-gray-400 mb-1">
-                또는 URL 입력
+                PDF 업로드
+              </label>
+              <div className="flex gap-1 mb-2">
+                <button
+                  type="button"
+                  onClick={(e) => {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    setPdfUploadDestination('cloudinary');
+                  }}
+                  className={`flex-1 px-2 py-1 rounded text-xs font-medium transition-colors ${
+                    pdfUploadDestination === 'cloudinary'
+                      ? 'bg-pink-100 text-pink-700 dark:bg-pink-900/30 dark:text-pink-300'
+                      : 'bg-gray-100 text-gray-600 dark:bg-gray-700 dark:text-gray-400'
+                  }`}
+                >
+                  Cloudinary
+                </button>
+                <button
+                  type="button"
+                  onClick={(e) => {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    setPdfUploadDestination('google-drive');
+                  }}
+                  className={`flex-1 px-2 py-1 rounded text-xs font-medium transition-colors ${
+                    pdfUploadDestination === 'google-drive'
+                      ? 'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-300'
+                      : 'bg-gray-100 text-gray-600 dark:bg-gray-700 dark:text-gray-400'
+                  }`}
+                >
+                  Google Drive
+                </button>
+              </div>
+              <input
+                ref={pdfInputRef}
+                type="file"
+                accept="application/pdf"
+                onChange={handlePdfUpload}
+                disabled={isUploading}
+                className="hidden"
+                id="pdf-upload"
+              />
+              <button
+                type="button"
+                onClick={(e) => {
+                  e.preventDefault();
+                  e.stopPropagation();
+                  pdfInputRef.current?.click();
+                }}
+                disabled={isUploading}
+                className="w-full px-3 py-2 border-2 border-dashed border-gray-300 dark:border-gray-600 rounded-lg text-sm hover:border-pink-400 dark:hover:border-pink-500 transition-colors flex items-center justify-center gap-2 disabled:opacity-50"
+              >
+                {isUploading ? (
+                  <>
+                    <span className="animate-spin w-4 h-4 border-2 border-pink-500 border-t-transparent rounded-full"></span>
+                    업로드 중...
+                  </>
+                ) : (
+                  <>
+                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z" />
+                    </svg>
+                    PDF 선택
+                  </>
+                )}
+              </button>
+              <p className="text-xs text-gray-400 mt-1">최대 20MB</p>
+            </div>
+
+            {/* URL Input */}
+            <div className="pt-3 border-t border-gray-200 dark:border-gray-700">
+              <label className="block text-xs font-semibold text-gray-500 dark:text-gray-400 mb-1">
+                또는 이미지 URL 입력
               </label>
               <div className="flex gap-1">
                 <input
@@ -599,7 +714,7 @@ export default function EditorToolbar({ editor, onSave, onCancel }: EditorToolba
                   value={imageUrl}
                   onChange={(e) => setImageUrl(e.target.value)}
                   placeholder="이미지 URL..."
-                  className="flex-1 px-2 py-1 border border-gray-300 dark:border-gray-600 rounded text-sm"
+                  className="flex-1 px-2 py-1 border border-gray-300 dark:border-gray-600 rounded text-sm bg-white dark:bg-gray-900"
                   onKeyDown={(e) => e.key === 'Enter' && addImage()}
                 />
                 <button
