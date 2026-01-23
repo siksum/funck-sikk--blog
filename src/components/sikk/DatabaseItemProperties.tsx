@@ -236,6 +236,95 @@ export default function DatabaseItemProperties({
     }
   }, [databaseId, columns, initialColumns, newColumnName, newColumnType, router]);
 
+  // Delete column
+  const deleteColumn = useCallback(async (columnId: string) => {
+    const updatedColumns = columns.filter(col => col.id !== columnId);
+    setColumns(updatedColumns);
+
+    // Also remove the data for this column
+    const newData = { ...data };
+    delete newData[columnId];
+    setData(newData);
+
+    try {
+      // Update columns
+      const colResponse = await fetch(`/api/sikk/databases/${databaseId}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ columns: updatedColumns }),
+      });
+
+      if (!colResponse.ok) throw new Error('열 삭제 실패');
+
+      // Update item data
+      const dataResponse = await fetch(`/api/sikk/databases/${databaseId}/items/${itemId}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ data: newData }),
+      });
+
+      if (!dataResponse.ok) throw new Error('데이터 삭제 실패');
+
+      router.refresh();
+    } catch (error) {
+      console.error('Delete column error:', error);
+      setColumns(initialColumns);
+      setData(initialData);
+    }
+  }, [databaseId, itemId, columns, data, initialColumns, initialData, router]);
+
+  // Toggle column type between date and dateRange
+  const toggleDateRange = useCallback(async (columnId: string, currentType: 'date' | 'dateRange', currentValue: unknown) => {
+    const newType = currentType === 'date' ? 'dateRange' : 'date';
+
+    // Convert value
+    let newValue: unknown;
+    if (newType === 'dateRange') {
+      // Convert single date to dateRange
+      newValue = currentValue ? { start: String(currentValue), end: '' } : { start: '', end: '' };
+    } else {
+      // Convert dateRange to single date (use start date)
+      const rangeValue = currentValue as DateRangeValue | null;
+      newValue = rangeValue?.start || '';
+    }
+
+    // Update column type
+    const updatedColumns = columns.map(col =>
+      col.id === columnId ? { ...col, type: newType as Column['type'] } : col
+    );
+    setColumns(updatedColumns);
+
+    // Update data
+    const newData = { ...data, [columnId]: newValue };
+    setData(newData);
+
+    try {
+      // Update columns
+      const colResponse = await fetch(`/api/sikk/databases/${databaseId}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ columns: updatedColumns }),
+      });
+
+      if (!colResponse.ok) throw new Error('타입 변경 실패');
+
+      // Update item data
+      const dataResponse = await fetch(`/api/sikk/databases/${databaseId}/items/${itemId}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ data: newData }),
+      });
+
+      if (!dataResponse.ok) throw new Error('데이터 변경 실패');
+
+      router.refresh();
+    } catch (error) {
+      console.error('Toggle date range error:', error);
+      setColumns(initialColumns);
+      setData(initialData);
+    }
+  }, [databaseId, itemId, columns, data, initialColumns, initialData, router]);
+
   const handleFieldClick = useCallback((columnId: string) => {
     if (isAdmin) {
       setEditingField(columnId);
@@ -257,6 +346,8 @@ export default function DatabaseItemProperties({
             onSave={(value) => saveField(column.id, value)}
             onCancel={() => setEditingField(null)}
             onUpdateOptions={(options) => updateColumnOptions(column.id, options)}
+            onDelete={() => deleteColumn(column.id)}
+            onToggleDateRange={() => toggleDateRange(column.id, column.type as 'date' | 'dateRange', data[column.id])}
             databaseId={databaseId}
           />
         ))}
@@ -337,6 +428,8 @@ interface PropertyRowProps {
   onSave: (value: unknown) => void;
   onCancel: () => void;
   onUpdateOptions: (options: string[]) => void;
+  onDelete: () => void;
+  onToggleDateRange: () => void;
   databaseId: string;
 }
 
@@ -350,6 +443,8 @@ function PropertyRow({
   onSave,
   onCancel,
   onUpdateOptions,
+  onDelete,
+  onToggleDateRange,
   databaseId,
 }: PropertyRowProps) {
   const [editValue, setEditValue] = useState(value);
@@ -508,21 +603,33 @@ function PropertyRow({
     switch (column.type) {
       case 'date':
         return (
-          <input
-            ref={inputRef}
-            type="date"
-            value={String(editValue || '')}
-            onChange={(e) => setEditValue(e.target.value)}
-            onBlur={() => onSave(editValue)}
-            onKeyDown={handleKeyDown}
-            className="w-full px-2 py-1 text-sm border border-purple-300 rounded bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-purple-500"
-          />
+          <div className="flex items-center gap-2">
+            <input
+              ref={inputRef}
+              type="date"
+              value={String(editValue || '')}
+              onChange={(e) => setEditValue(e.target.value)}
+              onBlur={() => onSave(editValue)}
+              onKeyDown={handleKeyDown}
+              className="px-2 py-1 text-sm border border-purple-300 rounded bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-purple-500"
+            />
+            <button
+              onClick={(e) => {
+                e.stopPropagation();
+                onToggleDateRange();
+              }}
+              className="px-2 py-1 text-xs bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300 rounded hover:bg-gray-200 dark:hover:bg-gray-600 whitespace-nowrap"
+              title="기간으로 변경"
+            >
+              → 기간
+            </button>
+          </div>
         );
 
       case 'dateRange':
         const dateRange = (editValue as DateRangeValue) || { start: '', end: '' };
         return (
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-2 flex-wrap">
             <input
               ref={inputRef}
               type="date"
@@ -540,6 +647,16 @@ function PropertyRow({
               onKeyDown={handleKeyDown}
               className="px-2 py-1 text-sm border border-purple-300 rounded bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-purple-500"
             />
+            <button
+              onClick={(e) => {
+                e.stopPropagation();
+                onToggleDateRange();
+              }}
+              className="px-2 py-1 text-xs bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300 rounded hover:bg-gray-200 dark:hover:bg-gray-600 whitespace-nowrap"
+              title="단일 날짜로 변경"
+            >
+              → 날짜
+            </button>
           </div>
         );
 
@@ -736,9 +853,11 @@ function PropertyRow({
     }
   };
 
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
+
   return (
     <div
-      className={`flex items-start py-2 ${isAdmin && !isEditing ? 'cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-800/50 -mx-2 px-2 rounded' : ''} ${isSaving ? 'opacity-50' : ''}`}
+      className={`flex items-start py-2 group ${isAdmin && !isEditing ? 'cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-800/50 -mx-2 px-2 rounded' : ''} ${isSaving ? 'opacity-50' : ''}`}
       onClick={!isEditing ? onClick : undefined}
     >
       {/* Icon */}
@@ -747,14 +866,59 @@ function PropertyRow({
       </div>
 
       {/* Label */}
-      <div className="flex-shrink-0 w-28 text-sm text-gray-500 dark:text-gray-400 pt-0.5">
-        {column.name}
+      <div className="flex-shrink-0 w-28 text-sm text-gray-500 dark:text-gray-400 pt-0.5 flex items-center gap-1">
+        <span>{column.name}</span>
+        {isAdmin && isEditing && (
+          <button
+            onClick={(e) => {
+              e.stopPropagation();
+              setShowDeleteConfirm(true);
+            }}
+            className="p-0.5 text-gray-400 hover:text-red-500 rounded opacity-0 group-hover:opacity-100 transition-opacity"
+            title="속성 삭제"
+          >
+            <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+            </svg>
+          </button>
+        )}
       </div>
 
       {/* Value */}
       <div className="flex-1 min-w-0">
         {renderValue()}
       </div>
+
+      {/* Delete Confirmation Modal */}
+      {showDeleteConfirm && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50" onClick={(e) => e.stopPropagation()}>
+          <div className="bg-white dark:bg-gray-800 rounded-lg shadow-xl p-6 max-w-sm mx-4">
+            <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-2">
+              속성 삭제
+            </h3>
+            <p className="text-gray-600 dark:text-gray-400 mb-4">
+              &apos;{column.name}&apos; 속성을 삭제하시겠습니까? 이 작업은 되돌릴 수 없습니다.
+            </p>
+            <div className="flex gap-2 justify-end">
+              <button
+                onClick={() => setShowDeleteConfirm(false)}
+                className="px-4 py-2 text-sm border border-gray-300 dark:border-gray-600 rounded hover:bg-gray-100 dark:hover:bg-gray-700"
+              >
+                취소
+              </button>
+              <button
+                onClick={() => {
+                  setShowDeleteConfirm(false);
+                  onDelete();
+                }}
+                className="px-4 py-2 text-sm bg-red-500 text-white rounded hover:bg-red-600"
+              >
+                삭제
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
