@@ -152,7 +152,11 @@ async function parseSlugPath(slugPath: string[]) {
           return normalizedSlug === normalizedPostSlug;
         });
 
-      if (pathsMatch || possibleCategorySlugPath.length === 0) {
+      // Allow access if:
+      // 1. paths match exactly, OR
+      // 2. URL has no category path (accessing at /sikk/categories/slug), OR
+      // 3. Post has no category (fallback - post exists but wasn't categorized properly)
+      if (pathsMatch || possibleCategorySlugPath.length === 0 || postCategoryPath.length === 0) {
         return { type: 'post' as const, categorySlugPath: possibleCategorySlugPath, postSlug: possiblePostSlug, post };
       }
     }
