@@ -23,6 +23,7 @@ export async function POST(request: NextRequest) {
 
     const formData = await request.formData();
     const file = formData.get('file') as File;
+    const folder = (formData.get('folder') as string) || 'blog';
 
     if (!file) {
       return NextResponse.json({ error: 'No file provided' }, { status: 400 });
@@ -55,10 +56,14 @@ export async function POST(request: NextRequest) {
     const buffer = Buffer.from(bytes);
     const base64 = `data:${file.type};base64,${buffer.toString('base64')}`;
 
+    // Sanitize folder path (prevent traversal, only allow alphanumeric, slashes, and underscores)
+    const sanitizedFolder = folder.replace(/[^a-zA-Z0-9/_-]/g, '').replace(/\/+/g, '/');
+    const finalFolder = sanitizedFolder || 'blog';
+
     // Upload to Cloudinary
     const resourceType = isPdf ? 'raw' : 'image';
     const result = await cloudinary.uploader.upload(base64, {
-      folder: 'blog',
+      folder: finalFolder,
       resource_type: resourceType,
     });
 
@@ -69,6 +74,7 @@ export async function POST(request: NextRequest) {
       height: result.height,
       resourceType: resourceType,
       format: result.format,
+      folder: finalFolder,
     });
   } catch (error) {
     console.error('Upload error:', error);

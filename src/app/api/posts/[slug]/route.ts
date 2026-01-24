@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { revalidatePath } from 'next/cache';
 import { prisma } from '@/lib/db';
+import { sendNewPostNotifications } from '@/lib/notifications';
 
 export const dynamic = 'force-dynamic';
 
@@ -81,6 +82,15 @@ export async function PUT(request: NextRequest, context: RouteContext) {
     // Revalidate the blog post page and blog listing
     revalidatePath(`/blog/${slug}`);
     revalidatePath('/blog');
+
+    // Send notifications if post was private and is now public
+    if (!existing.isPublic && post.isPublic) {
+      sendNewPostNotifications({
+        title: post.title,
+        slug: post.slug,
+        description: post.description || '',
+      }).catch((err) => console.error('Failed to send notifications:', err));
+    }
 
     return NextResponse.json({ success: true, slug: post.slug });
   } catch (error) {
