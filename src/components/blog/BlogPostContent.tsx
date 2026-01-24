@@ -256,7 +256,7 @@ export default function BlogPostContent({ content, slug, isAdmin, initialMetadat
                       try {
                         // Use direct Google Drive upload (same as TipTap editor)
                         const { uploadToGoogleDriveDirect } = await import('@/lib/google-drive-client');
-                        const result = await uploadToGoogleDriveDirect(file, { driveType: 'blog', category: 'banners' });
+                        const result = await uploadToGoogleDriveDirect(file, { driveType: 'sikk' });
                         setMetadata(prev => ({ ...prev, thumbnail: result.url }));
                       } catch (error) {
                         console.error('Upload error:', error);
