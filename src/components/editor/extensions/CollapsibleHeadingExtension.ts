@@ -10,6 +10,9 @@ declare module '@tiptap/core' {
     collapsibleHeading: {
       setCollapsibleHeading: (options?: { level?: number; title?: string }) => ReturnType;
       toggleCollapsibleHeadingOpen: () => ReturnType;
+      setCollapsibleHeadingColor: (color: string | null) => ReturnType;
+      setCollapsibleHeadingBgColor: (color: string | null) => ReturnType;
+      updateCollapsibleHeadingTitle: (title: string) => ReturnType;
     };
   }
 }
@@ -64,6 +67,30 @@ export const CollapsibleHeading = Node.create<CollapsibleHeadingOptions>({
           return heading?.textContent || '제목';
         },
       },
+      textColor: {
+        default: null,
+        parseHTML: (element) => {
+          const heading = element.querySelector('.collapsible-heading-title');
+          if (heading) {
+            const style = (heading as HTMLElement).style.color;
+            return style || null;
+          }
+          return null;
+        },
+        renderHTML: () => ({}),
+      },
+      backgroundColor: {
+        default: null,
+        parseHTML: (element) => {
+          const summary = element.querySelector('.collapsible-heading-summary');
+          if (summary) {
+            const style = (summary as HTMLElement).style.backgroundColor;
+            return style || null;
+          }
+          return null;
+        },
+        renderHTML: () => ({}),
+      },
     };
   },
 
@@ -110,6 +137,11 @@ export const CollapsibleHeading = Node.create<CollapsibleHeadingOptions>({
 
   renderHTML({ HTMLAttributes, node }) {
     const level = node.attrs.level || 2;
+    const summaryStyle = node.attrs.backgroundColor
+      ? `background-color: ${node.attrs.backgroundColor}; padding: 0.5rem 0.75rem; border-radius: 0.5rem;`
+      : '';
+    const titleStyle = node.attrs.textColor ? `color: ${node.attrs.textColor};` : '';
+
     return [
       'details',
       mergeAttributes(this.options.HTMLAttributes, HTMLAttributes, {
@@ -118,8 +150,8 @@ export const CollapsibleHeading = Node.create<CollapsibleHeadingOptions>({
       }),
       [
         'summary',
-        { class: 'collapsible-heading-summary' },
-        [`h${level}`, { class: 'collapsible-heading-title', 'data-level': level }, node.attrs.title || '제목'],
+        { class: 'collapsible-heading-summary', style: summaryStyle || undefined },
+        [`h${level}`, { class: 'collapsible-heading-title', 'data-level': level, style: titleStyle || undefined }, node.attrs.title || '제목'],
       ],
       ['div', { class: 'collapsible-heading-content' }, 0],
     ];
@@ -156,6 +188,114 @@ export const CollapsibleHeading = Node.create<CollapsibleHeadingOptions>({
           }
           return false;
         },
+      setCollapsibleHeadingColor:
+        (color) =>
+        ({ state, tr }) => {
+          const { selection } = state;
+          // Find the collapsibleHeading node that contains the selection
+          let foundPos: number | null = null;
+          state.doc.nodesBetween(selection.from, selection.to, (node, pos) => {
+            if (node.type.name === 'collapsibleHeading' && foundPos === null) {
+              foundPos = pos;
+              return false;
+            }
+            return true;
+          });
+          // Also check parent nodes
+          if (foundPos === null) {
+            const $pos = state.doc.resolve(selection.from);
+            for (let d = $pos.depth; d > 0; d--) {
+              const node = $pos.node(d);
+              if (node.type.name === 'collapsibleHeading') {
+                foundPos = $pos.before(d);
+                break;
+              }
+            }
+          }
+          if (foundPos !== null) {
+            const node = state.doc.nodeAt(foundPos);
+            if (node) {
+              tr.setNodeMarkup(foundPos, undefined, {
+                ...node.attrs,
+                textColor: color,
+              });
+              return true;
+            }
+          }
+          return false;
+        },
+      setCollapsibleHeadingBgColor:
+        (color) =>
+        ({ state, tr }) => {
+          const { selection } = state;
+          // Find the collapsibleHeading node that contains the selection
+          let foundPos: number | null = null;
+          state.doc.nodesBetween(selection.from, selection.to, (node, pos) => {
+            if (node.type.name === 'collapsibleHeading' && foundPos === null) {
+              foundPos = pos;
+              return false;
+            }
+            return true;
+          });
+          // Also check parent nodes
+          if (foundPos === null) {
+            const $pos = state.doc.resolve(selection.from);
+            for (let d = $pos.depth; d > 0; d--) {
+              const node = $pos.node(d);
+              if (node.type.name === 'collapsibleHeading') {
+                foundPos = $pos.before(d);
+                break;
+              }
+            }
+          }
+          if (foundPos !== null) {
+            const node = state.doc.nodeAt(foundPos);
+            if (node) {
+              tr.setNodeMarkup(foundPos, undefined, {
+                ...node.attrs,
+                backgroundColor: color,
+              });
+              return true;
+            }
+          }
+          return false;
+        },
+      updateCollapsibleHeadingTitle:
+        (title) =>
+        ({ state, tr }) => {
+          const { selection } = state;
+          // Find the collapsibleHeading node that contains the selection
+          let foundPos: number | null = null;
+          state.doc.nodesBetween(selection.from, selection.to, (node, pos) => {
+            if (node.type.name === 'collapsibleHeading' && foundPos === null) {
+              foundPos = pos;
+              return false;
+            }
+            return true;
+          });
+          // Also check parent nodes
+          if (foundPos === null) {
+            const $pos = state.doc.resolve(selection.from);
+            for (let d = $pos.depth; d > 0; d--) {
+              const node = $pos.node(d);
+              if (node.type.name === 'collapsibleHeading') {
+                foundPos = $pos.before(d);
+                break;
+              }
+            }
+          }
+          if (foundPos !== null) {
+            const node = state.doc.nodeAt(foundPos);
+            if (node) {
+              tr.setNodeMarkup(foundPos, undefined, {
+                ...node.attrs,
+                title: title,
+              });
+              return true;
+            }
+          }
+          return false;
+        },
     };
   },
 
@@ -173,26 +313,42 @@ export const CollapsibleHeading = Node.create<CollapsibleHeadingOptions>({
       const summary = document.createElement('summary');
       summary.classList.add('collapsible-heading-summary');
 
-      const heading = document.createElement(`h${level}`);
+      // Apply background color if set
+      if (node.attrs.backgroundColor) {
+        summary.style.backgroundColor = node.attrs.backgroundColor;
+        summary.style.padding = '0.5rem 0.75rem';
+        summary.style.borderRadius = '0.5rem';
+      }
+
+      let heading = document.createElement(`h${level}`) as HTMLHeadingElement;
       heading.classList.add('collapsible-heading-title');
       heading.setAttribute('data-level', String(level));
       heading.textContent = node.attrs.title || '제목';
-      heading.setAttribute('contenteditable', 'false');
 
-      summary.appendChild(heading);
+      // Apply text color if set
+      if (node.attrs.textColor) {
+        heading.style.color = node.attrs.textColor;
+      }
 
-      // Allow editing title on double-click
-      heading.addEventListener('dblclick', (e) => {
-        e.preventDefault();
+      // Make title editable inline
+      heading.setAttribute('contenteditable', 'true');
+      heading.style.outline = 'none';
+      heading.style.minWidth = '50px';
+
+      // Prevent default details toggle when editing
+      heading.addEventListener('click', (e) => {
         e.stopPropagation();
+      });
 
+      // Handle inline title editing
+      heading.addEventListener('blur', () => {
         if (typeof getPos === 'function') {
           const pos = getPos();
           if (pos !== undefined) {
             const currentNode = editor.state.doc.nodeAt(pos);
             if (currentNode && currentNode.type.name === 'collapsibleHeading') {
-              const newTitle = prompt('제목 입력:', currentNode.attrs.title || '');
-              if (newTitle !== null) {
+              const newTitle = heading.textContent || '제목';
+              if (newTitle !== currentNode.attrs.title) {
                 editor.commands.command(({ tr }) => {
                   tr.setNodeMarkup(pos, undefined, {
                     ...currentNode.attrs,
@@ -200,15 +356,38 @@ export const CollapsibleHeading = Node.create<CollapsibleHeadingOptions>({
                   });
                   return true;
                 });
-                heading.textContent = newTitle;
               }
             }
           }
         }
       });
 
-      // Toggle open attribute when summary is clicked
+      // Handle Enter key to finish editing
+      heading.addEventListener('keydown', (e) => {
+        if (e.key === 'Enter') {
+          e.preventDefault();
+          heading.blur();
+        }
+        // Prevent propagation for all keys while editing
+        e.stopPropagation();
+      });
+
+      // Prevent paste with formatting
+      heading.addEventListener('paste', (e) => {
+        e.preventDefault();
+        const text = e.clipboardData?.getData('text/plain') || '';
+        document.execCommand('insertText', false, text);
+      });
+
+      summary.appendChild(heading);
+
+      // Toggle open attribute when summary (but not heading) is clicked
       summary.addEventListener('click', (e) => {
+        // If clicking on the heading itself, don't toggle (allow editing)
+        if (e.target === heading) {
+          return;
+        }
+
         e.preventDefault();
         e.stopPropagation();
 
@@ -257,17 +436,45 @@ export const CollapsibleHeading = Node.create<CollapsibleHeadingOptions>({
           } else {
             container.removeAttribute('open');
           }
-          heading.textContent = updatedNode.attrs.title || '제목';
+
+          // Only update text if it differs (avoid cursor jumping during editing)
+          if (document.activeElement !== heading && heading.textContent !== updatedNode.attrs.title) {
+            heading.textContent = updatedNode.attrs.title || '제목';
+          }
+
+          // Update text color
+          if (updatedNode.attrs.textColor) {
+            heading.style.color = updatedNode.attrs.textColor;
+          } else {
+            heading.style.color = '';
+          }
+
+          // Update background color
+          if (updatedNode.attrs.backgroundColor) {
+            summary.style.backgroundColor = updatedNode.attrs.backgroundColor;
+            summary.style.padding = '0.5rem 0.75rem';
+            summary.style.borderRadius = '0.5rem';
+          } else {
+            summary.style.backgroundColor = '';
+            summary.style.padding = '';
+            summary.style.borderRadius = '';
+          }
 
           // Update heading level if changed
           const newLevel = updatedNode.attrs.level || 2;
           if (heading.tagName.toLowerCase() !== `h${newLevel}`) {
-            const newHeading = document.createElement(`h${newLevel}`);
+            const newHeading = document.createElement(`h${newLevel}`) as HTMLHeadingElement;
             newHeading.classList.add('collapsible-heading-title');
             newHeading.setAttribute('data-level', String(newLevel));
             newHeading.textContent = updatedNode.attrs.title || '제목';
-            newHeading.setAttribute('contenteditable', 'false');
+            newHeading.setAttribute('contenteditable', 'true');
+            newHeading.style.outline = 'none';
+            newHeading.style.minWidth = '50px';
+            if (updatedNode.attrs.textColor) {
+              newHeading.style.color = updatedNode.attrs.textColor;
+            }
             summary.replaceChild(newHeading, heading);
+            heading = newHeading;
           }
 
           return true;

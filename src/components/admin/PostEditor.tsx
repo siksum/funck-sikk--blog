@@ -135,9 +135,16 @@ export default function PostEditor({ initialData = {}, isEdit = false }: PostEdi
     setIsUploadingBanner(true);
     try {
       const { uploadToGoogleDriveDirect } = await import('@/lib/google-drive-client');
-      // Use full category path directly (e.g., wargame/bandit) - the drive root is already 'blog'
-      const categoryFolder = formData.category || 'banners';
-      const result = await uploadToGoogleDriveDirect(file, { driveType: 'blog', category: categoryFolder });
+      // Build full path: category/slug (e.g., wargame/bandit/level0-to-level1)
+      let uploadPath = 'banners';
+      if (formData.category && formData.slug) {
+        uploadPath = `${formData.category}/${formData.slug}`;
+      } else if (formData.category) {
+        uploadPath = formData.category;
+      } else if (formData.slug) {
+        uploadPath = formData.slug;
+      }
+      const result = await uploadToGoogleDriveDirect(file, { driveType: 'blog', category: uploadPath });
       setFormData(prev => ({ ...prev, thumbnail: result.url }));
     } catch (error) {
       console.error('Upload error:', error);
@@ -988,6 +995,9 @@ export default function PostEditor({ initialData = {}, isEdit = false }: PostEdi
                 // Do nothing - cancel is handled by the main form
               }}
               placeholder="포스트 내용을 작성하세요..."
+              driveType="blog"
+              category={formData.category || ''}
+              slug={formData.slug || ''}
             />
           </div>
         </div>

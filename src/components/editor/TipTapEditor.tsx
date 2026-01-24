@@ -132,6 +132,7 @@ interface TipTapEditorProps {
   placeholder?: string;
   driveType?: 'blog' | 'sikk';
   category?: string;
+  slug?: string;
 }
 
 export default function TipTapEditor({
@@ -142,6 +143,7 @@ export default function TipTapEditor({
   placeholder = '내용을 입력하세요...',
   driveType = 'blog',
   category = '',
+  slug = '',
 }: TipTapEditorProps) {
   const [isSaving, setIsSaving] = useState(false);
   const [lastSaved, setLastSaved] = useState<Date | null>(null);
@@ -236,9 +238,16 @@ export default function TipTapEditor({
             setIsUploadingImage(true);
             try {
               const { uploadToGoogleDriveDirect } = await import('@/lib/google-drive-client');
-              // Use actual category path (e.g., wargame/bandit)
-              const categoryPath = category || 'images';
-              const result = await uploadToGoogleDriveDirect(file, { driveType, category: categoryPath });
+              // Build full path: category/slug (e.g., wargame/bandit/level0-to-level1)
+              let uploadPath = 'images';
+              if (category && slug) {
+                uploadPath = `${category}/${slug}`;
+              } else if (category) {
+                uploadPath = category;
+              } else if (slug) {
+                uploadPath = slug;
+              }
+              const result = await uploadToGoogleDriveDirect(file, { driveType, category: uploadPath });
 
               // Insert image with caption
               editor.chain().focus().setImageWithCaption({
@@ -265,7 +274,7 @@ export default function TipTapEditor({
     return () => {
       editorElement.removeEventListener('paste', handlePaste as unknown as EventListener);
     };
-  }, [editor, driveType, category]);
+  }, [editor, driveType, category, slug]);
 
   // Autosave with debounce
   useEffect(() => {

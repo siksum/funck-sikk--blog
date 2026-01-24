@@ -53,13 +53,18 @@ export const Details = Node.create<DetailsOptions>({
   parseHTML() {
     return [
       {
-        tag: 'details',
+        tag: 'details:not(.collapsible-heading)',
         getAttrs: (element) => {
           const el = element as HTMLElement;
+          // Skip if this is a collapsible heading
+          if (el.classList.contains('collapsible-heading')) {
+            return false;
+          }
           const summary = el.querySelector('summary');
+          const titleSpan = summary?.querySelector('.details-title-text');
           return {
             open: false, // Always start collapsed
-            title: summary?.textContent || '접기/펼치기',
+            title: titleSpan?.textContent || summary?.textContent || '접기/펼치기',
           };
         },
         // Custom content element selection - only parse from content div, not summary
@@ -89,7 +94,7 @@ export const Details = Node.create<DetailsOptions>({
     return [
       'details',
       mergeAttributes(this.options.HTMLAttributes, HTMLAttributes, { class: 'details-block' }),
-      ['summary', { class: 'details-summary' }, node.attrs.title || '접기/펼치기'],
+      ['summary', { class: 'details-summary' }, ['span', { class: 'details-title-text' }, node.attrs.title || '접기/펼치기']],
       ['div', { class: 'details-content' }, 0],
     ];
   },
@@ -133,22 +138,30 @@ export const Details = Node.create<DetailsOptions>({
 
       const summary = document.createElement('summary');
       summary.classList.add('details-summary');
-      summary.textContent = node.attrs.title || '접기/펼치기';
-      summary.setAttribute('contenteditable', 'false');
 
-      // Allow editing summary on double-click
-      summary.addEventListener('dblclick', (e) => {
-        e.preventDefault();
+      // Create a span for the title text to enable inline editing
+      const titleSpan = document.createElement('span');
+      titleSpan.classList.add('details-title-text');
+      titleSpan.textContent = node.attrs.title || '접기/펼치기';
+      titleSpan.setAttribute('contenteditable', 'true');
+      titleSpan.style.outline = 'none';
+      titleSpan.style.minWidth = '50px';
+      titleSpan.style.display = 'inline-block';
+
+      // Prevent default details toggle when editing
+      titleSpan.addEventListener('click', (e) => {
         e.stopPropagation();
+      });
 
+      // Handle inline title editing
+      titleSpan.addEventListener('blur', () => {
         if (typeof getPos === 'function') {
           const pos = getPos();
           if (pos !== undefined) {
-            // Get the current node from editor state
             const currentNode = editor.state.doc.nodeAt(pos);
             if (currentNode && currentNode.type.name === 'details') {
-              const newTitle = prompt('제목 입력:', currentNode.attrs.title || '');
-              if (newTitle !== null) {
+              const newTitle = titleSpan.textContent || '접기/펼치기';
+              if (newTitle !== currentNode.attrs.title) {
                 editor.commands.command(({ tr }) => {
                   tr.setNodeMarkup(pos, undefined, {
                     ...currentNode.attrs,
@@ -156,15 +169,38 @@ export const Details = Node.create<DetailsOptions>({
                   });
                   return true;
                 });
-                summary.textContent = newTitle;
               }
             }
           }
         }
       });
 
-      // Toggle open attribute when summary is clicked
+      // Handle Enter key to finish editing
+      titleSpan.addEventListener('keydown', (e) => {
+        if (e.key === 'Enter') {
+          e.preventDefault();
+          titleSpan.blur();
+        }
+        // Prevent propagation for all keys while editing
+        e.stopPropagation();
+      });
+
+      // Prevent paste with formatting
+      titleSpan.addEventListener('paste', (e) => {
+        e.preventDefault();
+        const text = e.clipboardData?.getData('text/plain') || '';
+        document.execCommand('insertText', false, text);
+      });
+
+      summary.appendChild(titleSpan);
+
+      // Toggle open attribute when summary (but not title) is clicked
       summary.addEventListener('click', (e) => {
+        // If clicking on the title span itself, don't toggle (allow editing)
+        if (e.target === titleSpan) {
+          return;
+        }
+
         e.preventDefault();
         e.stopPropagation();
 
@@ -215,7 +251,10 @@ export const Details = Node.create<DetailsOptions>({
           } else {
             container.removeAttribute('open');
           }
-          summary.textContent = updatedNode.attrs.title || '접기/펼치기';
+          // Only update text if it differs (avoid cursor jumping during editing)
+          if (document.activeElement !== titleSpan && titleSpan.textContent !== updatedNode.attrs.title) {
+            titleSpan.textContent = updatedNode.attrs.title || '접기/펼치기';
+          }
           return true;
         },
       };

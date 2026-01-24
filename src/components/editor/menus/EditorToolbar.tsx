@@ -162,6 +162,7 @@ export default function EditorToolbar({ editor, onSave, onCancel, driveType = 'b
   const [showTableInsertMenu, setShowTableInsertMenu] = useState(false);
   const [showHeadingMenu, setShowHeadingMenu] = useState(false);
   const [useImageCaption, setUseImageCaption] = useState(true);
+  const [showCollapsibleColorMenu, setShowCollapsibleColorMenu] = useState(false);
   const [isSticky, setIsSticky] = useState(false);
   const [toolbarWidth, setToolbarWidth] = useState<number | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -1413,13 +1414,104 @@ export default function EditorToolbar({ editor, onSave, onCancel, driveType = 'b
       <ToolbarButton
         onClick={() => editor.chain().focus().setDetails().run()}
         isActive={editor.isActive('details')}
-        title="접기/펼치기 (더블클릭하여 제목 수정)"
+        title="접기/펼치기 (클릭하여 제목 수정)"
       >
         <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 5h14v2H5z" />
         </svg>
       </ToolbarButton>
+
+      {/* Collapsible Heading Color Picker */}
+      {editor.isActive('collapsibleHeading') && (
+        <div className="relative">
+          <ToolbarButton
+            onClick={() => setShowCollapsibleColorMenu(!showCollapsibleColorMenu)}
+            title="접는 글 색상"
+          >
+            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 21a4 4 0 01-4-4V5a2 2 0 012-2h4a2 2 0 012 2v12a4 4 0 01-4 4zm0 0h12a2 2 0 002-2v-4a2 2 0 00-2-2h-2.343M11 7.343l1.657-1.657a2 2 0 012.828 0l2.829 2.829a2 2 0 010 2.828l-8.486 8.485M7 17h.01" />
+            </svg>
+          </ToolbarButton>
+          {showCollapsibleColorMenu && (
+            <div className="absolute top-full left-0 mt-2 p-3 bg-white dark:bg-gray-800 rounded-lg shadow-lg border border-violet-200 dark:border-violet-500/40 z-20 w-44">
+              <div className="text-xs font-semibold text-gray-500 dark:text-gray-400 mb-2 px-1">
+                글자 색상
+              </div>
+              <div className="grid grid-cols-4 gap-1 mb-3">
+                <button
+                  type="button"
+                  onClick={(e) => {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    editor.chain().focus().setCollapsibleHeadingColor(null).run();
+                    setShowCollapsibleColorMenu(false);
+                  }}
+                  className="w-8 h-8 rounded border-2 border-gray-200 dark:border-gray-600 hover:scale-110 transition-transform flex items-center justify-center bg-white dark:bg-gray-900"
+                  title="기본"
+                >
+                  <svg className="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                  </svg>
+                </button>
+                {TEXT_COLORS.slice(1).map((color) => (
+                  <button
+                    type="button"
+                    key={color.value}
+                    onClick={(e) => {
+                      e.preventDefault();
+                      e.stopPropagation();
+                      editor.chain().focus().setCollapsibleHeadingColor(color.value).run();
+                      setShowCollapsibleColorMenu(false);
+                    }}
+                    className="w-8 h-8 rounded border-2 border-gray-200 dark:border-gray-600 hover:scale-110 transition-transform"
+                    style={{ backgroundColor: color.value }}
+                    title={color.label}
+                  />
+                ))}
+              </div>
+              <div className="text-xs font-semibold text-gray-500 dark:text-gray-400 mb-2 px-1">
+                배경 색상
+              </div>
+              <div className="grid grid-cols-4 gap-1">
+                <button
+                  type="button"
+                  onClick={(e) => {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    editor.chain().focus().setCollapsibleHeadingBgColor(null).run();
+                    setShowCollapsibleColorMenu(false);
+                  }}
+                  className="w-8 h-8 rounded border-2 border-gray-200 dark:border-gray-600 hover:scale-110 transition-transform flex items-center justify-center bg-white dark:bg-gray-900"
+                  title="없음"
+                >
+                  <svg className="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                  </svg>
+                </button>
+                {HIGHLIGHT_COLORS.slice(1).map((color) => (
+                  <button
+                    type="button"
+                    key={color.value}
+                    onClick={(e) => {
+                      e.preventDefault();
+                      e.stopPropagation();
+                      editor.chain().focus().setCollapsibleHeadingBgColor(color.value).run();
+                      setShowCollapsibleColorMenu(false);
+                    }}
+                    className="w-8 h-8 rounded border-2 hover:scale-110 transition-transform"
+                    style={{
+                      backgroundColor: color.color,
+                      borderColor: color.border || '#e5e7eb'
+                    }}
+                    title={color.label}
+                  />
+                ))}
+              </div>
+            </div>
+          )}
+        </div>
+      )}
 
       {/* Spacer */}
       <div className="flex-1" />
