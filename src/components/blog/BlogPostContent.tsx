@@ -254,22 +254,10 @@ export default function BlogPostContent({ content, slug, isAdmin, initialMetadat
                         return;
                       }
                       try {
-                        // Upload to Google Drive
-                        const formDataUpload = new FormData();
-                        formDataUpload.append('file', file);
-
-                        const response = await fetch('/api/upload/drive', {
-                          method: 'POST',
-                          body: formDataUpload,
-                        });
-
-                        if (!response.ok) {
-                          const errorData = await response.json();
-                          throw new Error(errorData.error || '업로드 실패');
-                        }
-
-                        const data = await response.json();
-                        setMetadata(prev => ({ ...prev, thumbnail: data.url }));
+                        // Use direct Google Drive upload (same as TipTap editor)
+                        const { uploadToGoogleDriveDirect } = await import('@/lib/google-drive-client');
+                        const result = await uploadToGoogleDriveDirect(file, { driveType: 'blog', category: 'banners' });
+                        setMetadata(prev => ({ ...prev, thumbnail: result.url }));
                       } catch (error) {
                         console.error('Upload error:', error);
                         alert(`이미지 업로드 실패: ${error instanceof Error ? error.message : '네트워크 오류'}`);
