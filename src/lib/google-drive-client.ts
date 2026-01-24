@@ -21,28 +21,27 @@ function normalizeFolderName(name: string): string {
   return name
     .split(/[\s_-]+/)
     .map(word => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase())
-    .join(' ')
-    .replace(/\s+/g, ''); // Remove spaces to match folder names like "Wargame"
+    .join(''); // No spaces - "Wargame" not "War Game"
 }
 
 // Find or create a single folder inside the parent folder
 async function findOrCreateSingleFolder(
   accessToken: string,
   parentFolderId: string,
-  folderName: string,
-  driveId: string
+  folderName: string
 ): Promise<string> {
   // Normalize folder name for consistency
   const normalizedName = normalizeFolderName(folderName);
 
-  // List all folders in the parent directory for more reliable matching
-  // This is more reliable than search query on shared drives
+  // List all folders in the parent directory
+  // Use simple query without corpora parameter for better compatibility
   const listQuery = encodeURIComponent(
     `mimeType='application/vnd.google-apps.folder' and '${parentFolderId}' in parents and trashed=false`
   );
 
-  const listResponse = await fetch(
-    `https://www.googleapis.com/drive/v3/files?q=${listQuery}&supportsAllDrives=true&includeItemsFromAllDrives=true&corpora=drive&driveId=${driveId}&fields=files(id,name)`,
+  // Try listing with allDrives first (for shared drives)
+  let listResponse = await fetch(
+    `https://www.googleapis.com/drive/v3/files?q=${listQuery}&supportsAllDrives=true&includeItemsFromAllDrives=true&fields=files(id,name)`,
     {
       headers: {
         Authorization: `Bearer ${accessToken}`,
@@ -52,6 +51,8 @@ async function findOrCreateSingleFolder(
 
   if (listResponse.ok) {
     const listResult = await listResponse.json();
+    console.log(`Listed ${listResult.files?.length || 0} folders in parent ${parentFolderId}`);
+
     if (listResult.files && listResult.files.length > 0) {
       // Find folder with case-insensitive name match
       const existingFolder = listResult.files.find(
@@ -63,31 +64,12 @@ async function findOrCreateSingleFolder(
         console.log(`Found existing folder: ${existingFolder.name} (${existingFolder.id})`);
         return existingFolder.id;
       }
+      // Log all found folders for debugging
+      console.log(`No match for "${normalizedName}" in:`, listResult.files.map((f: { name: string }) => f.name));
     }
   } else {
-    console.warn('List folders failed, falling back to search:', await listResponse.text());
-
-    // Fallback to search query if list fails
-    const searchQuery = encodeURIComponent(
-      `name='${normalizedName}' and mimeType='application/vnd.google-apps.folder' and '${parentFolderId}' in parents and trashed=false`
-    );
-
-    const searchResponse = await fetch(
-      `https://www.googleapis.com/drive/v3/files?q=${searchQuery}&supportsAllDrives=true&includeItemsFromAllDrives=true&corpora=allDrives&fields=files(id,name)`,
-      {
-        headers: {
-          Authorization: `Bearer ${accessToken}`,
-        },
-      }
-    );
-
-    if (searchResponse.ok) {
-      const searchResult = await searchResponse.json();
-      if (searchResult.files && searchResult.files.length > 0) {
-        console.log(`Found existing folder via search: ${searchResult.files[0].name}`);
-        return searchResult.files[0].id;
-      }
-    }
+    const errorText = await listResponse.text();
+    console.warn('List folders failed:', errorText);
   }
 
   // Create new folder if not found
@@ -121,18 +103,20 @@ async function findOrCreateSingleFolder(
   return createResult.id;
 }
 
-// Find or create nested category folders (supports paths like "blog/banners")
+// Find or create nested category folders (supports paths like "wargame/bandit")
 async function findOrCreateCategoryFolder(
   accessToken: string,
-  driveId: string,
+  rootFolderId: string,
   categoryPath: string
 ): Promise<string> {
   // Split path into parts and create folders recursively
   const parts = categoryPath.split('/').filter(p => p.trim() !== '');
 
-  let currentParentId = driveId;
+  console.log(`Creating category path: ${categoryPath} (parts: ${parts.join(' -> ')}) in root ${rootFolderId}`);
+
+  let currentParentId = rootFolderId;
   for (const folderName of parts) {
-    currentParentId = await findOrCreateSingleFolder(accessToken, currentParentId, folderName, driveId);
+    currentParentId = await findOrCreateSingleFolder(accessToken, currentParentId, folderName);
   }
 
   return currentParentId;
