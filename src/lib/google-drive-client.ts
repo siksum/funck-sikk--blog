@@ -24,6 +24,11 @@ function normalizeFolderName(name: string): string {
     .join(''); // No spaces - "Wargame" not "War Game"
 }
 
+// Persistent cache of known folder IDs (survives the entire session)
+// Key format: "parentFolderId:normalizedFolderName" -> folderId
+// This prevents duplicate folder creation due to Google Drive API eventual consistency
+const knownFolderIds: Map<string, string> = new Map();
+
 // Cache to store pending folder creation promises to prevent race conditions
 // Key format: "parentFolderId:normalizedFolderName"
 const folderCreationCache: Map<string, Promise<string>> = new Map();
@@ -36,6 +41,14 @@ async function findOrCreateSingleFolderInternal(
 ): Promise<string> {
   // Normalize folder name for consistency
   const normalizedName = normalizeFolderName(folderName);
+  const cacheKey = `${parentFolderId}:${normalizedName.toLowerCase()}`;
+
+  // Check persistent cache first (handles Google Drive API eventual consistency)
+  const cachedFolderId = knownFolderIds.get(cacheKey);
+  if (cachedFolderId) {
+    console.log(`Using cached folder ID for "${normalizedName}": ${cachedFolderId}`);
+    return cachedFolderId;
+  }
 
   // List all folders in the parent directory
   // Use simple query without corpora parameter for better compatibility
@@ -66,6 +79,8 @@ async function findOrCreateSingleFolderInternal(
       );
       if (existingFolder) {
         console.log(`Found existing folder: ${existingFolder.name} (${existingFolder.id})`);
+        // Store in persistent cache for future lookups
+        knownFolderIds.set(cacheKey, existingFolder.id);
         return existingFolder.id;
       }
       // Log all found folders for debugging
@@ -104,6 +119,10 @@ async function findOrCreateSingleFolderInternal(
 
   const createResult = await createResponse.json();
   console.log(`Created folder: ${normalizedName} (${createResult.id})`);
+
+  // Store in persistent cache for future lookups
+  knownFolderIds.set(cacheKey, createResult.id);
+
   return createResult.id;
 }
 
