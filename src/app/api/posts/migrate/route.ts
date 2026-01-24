@@ -47,8 +47,8 @@ export async function POST() {
       const gitPath = `${gitPostsPath}/${filename}`;
 
       try {
-        // Check if already exists in database
-        const existing = await prisma.blogPost.findUnique({
+        // Check if already exists in database (by slug alone for migration)
+        const existing = await prisma.blogPost.findFirst({
           where: { slug },
         });
 

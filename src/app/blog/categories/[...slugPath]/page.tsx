@@ -84,12 +84,29 @@ async function parseSlugPath(slugPath: string[]) {
   // PRIORITY 2: Check if last segment is a post slug (since no category exists with this path)
   if (slugPath.length >= 1) {
     const possiblePostSlug = slugPath[slugPath.length - 1];
+    const categorySlugPath = slugPath.slice(0, -1);
 
-    // Check if a post exists with this slug
-    const post = await getPostBySlugAsync(possiblePostSlug);
+    // Build category string from slug path (e.g., ["wargame", "bandit"] -> "Wargame/Bandit")
+    // We need to find the actual category names from the slug path
+    let categoryString = '';
+    if (categorySlugPath.length > 0) {
+      const category = await getCategoryBySlugPathAsync(categorySlugPath);
+      if (category) {
+        categoryString = category.path.join('/');
+      }
+    }
+
+    // Check if a post exists with this slug and category
+    const post = await getPostBySlugAsync(possiblePostSlug, categoryString);
     if (post) {
-      // Post found - show it (slug is unique across all categories)
+      // Post found in the expected category
       return { type: 'post' as const, categorySlugPath: post.categorySlugPath || [], postSlug: possiblePostSlug, post };
+    }
+
+    // If not found with category, try without category (for backwards compatibility)
+    const postWithoutCategory = await getPostBySlugAsync(possiblePostSlug);
+    if (postWithoutCategory) {
+      return { type: 'post' as const, categorySlugPath: postWithoutCategory.categorySlugPath || [], postSlug: possiblePostSlug, post: postWithoutCategory };
     }
   }
 

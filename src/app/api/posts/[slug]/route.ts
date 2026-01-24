@@ -12,9 +12,12 @@ interface RouteContext {
 export async function GET(request: NextRequest, context: RouteContext) {
   try {
     const { slug } = await context.params;
+    const { searchParams } = new URL(request.url);
+    const category = searchParams.get('category');
 
-    const post = await prisma.blogPost.findUnique({
-      where: { slug },
+    // If category is provided, search by both slug and category
+    const post = await prisma.blogPost.findFirst({
+      where: category !== null ? { slug, category } : { slug },
     });
 
     if (!post) {
@@ -44,15 +47,17 @@ export async function PUT(request: NextRequest, context: RouteContext) {
   try {
     const { slug } = await context.params;
     const body = await request.json();
-    const { title, description, category, tags, content, date, isPublic, thumbnail, thumbnailPosition, thumbnailScale } = body;
+    const { title, description, category, tags, content, date, isPublic, thumbnail, thumbnailPosition, thumbnailScale, originalCategory } = body;
 
     if (!title) {
       return NextResponse.json({ error: 'Title is required' }, { status: 400 });
     }
 
-    // Check if post exists
-    const existing = await prisma.blogPost.findUnique({
-      where: { slug },
+    // Check if post exists (use originalCategory if provided to find exact post)
+    const existing = await prisma.blogPost.findFirst({
+      where: originalCategory !== undefined
+        ? { slug, category: originalCategory }
+        : { slug },
     });
 
     if (!existing) {
@@ -62,9 +67,9 @@ export async function PUT(request: NextRequest, context: RouteContext) {
     // Parse date
     const postDate = date ? new Date(date) : existing.date;
 
-    // Update post
+    // Update post using id for unique identification
     const post = await prisma.blogPost.update({
-      where: { slug },
+      where: { id: existing.id },
       data: {
         title,
         description: description || '',
@@ -102,19 +107,21 @@ export async function PUT(request: NextRequest, context: RouteContext) {
 export async function DELETE(request: NextRequest, context: RouteContext) {
   try {
     const { slug } = await context.params;
+    const { searchParams } = new URL(request.url);
+    const category = searchParams.get('category');
 
     // Check if post exists
-    const existing = await prisma.blogPost.findUnique({
-      where: { slug },
+    const existing = await prisma.blogPost.findFirst({
+      where: category !== null ? { slug, category } : { slug },
     });
 
     if (!existing) {
       return NextResponse.json({ error: 'Post not found' }, { status: 404 });
     }
 
-    // Delete post
+    // Delete post using id for unique identification
     await prisma.blogPost.delete({
-      where: { slug },
+      where: { id: existing.id },
     });
 
     // Revalidate the blog listing

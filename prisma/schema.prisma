@@ -373,11 +373,11 @@ model SikkCategoryShareInvitation {
 
 model BlogPost {
   id                String   @id @default(cuid())
-  slug              String   @unique
+  slug              String
   title             String
   description       String?
   content           String   // MDX content
-  category          String?  // Category path (e.g., "개발/React")
+  category          String   @default("") // Category path (e.g., "개발/React")
   tags              String[] @default([])
   thumbnail         String?  // Thumbnail image URL
   thumbnailPosition Int      @default(50) // Vertical position of thumbnail (0-100%)
@@ -387,6 +387,8 @@ model BlogPost {
   createdAt         DateTime @default(now())
   updatedAt         DateTime @updatedAt
 
+  @@unique([slug, category]) // Slug must be unique within each category
+  @@index([slug])
   @@index([category])
   @@index([date])
   @@index([isPublic])
