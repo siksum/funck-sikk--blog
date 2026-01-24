@@ -958,10 +958,11 @@ export default function SikkPostEditor({ initialData = {}, isEdit = false }: Sik
                 setUploading(true);
                 try {
                   const { uploadToGoogleDriveDirect } = await import('@/lib/google-drive-client');
-                  const category = formData.category
-                    ? formData.category.split('/').pop() || 'banners'
-                    : 'banners';
-                  const result = await uploadToGoogleDriveDirect(file, { driveType: 'sikk', category });
+                  // Sikk posts should go to sikk/[category] folder structure within the sikk drive
+                  const categoryFolder = formData.category
+                    ? `sikk/${formData.category.split('/').pop() || 'banners'}`
+                    : 'sikk/banners';
+                  const result = await uploadToGoogleDriveDirect(file, { driveType: 'sikk', category: categoryFolder });
                   setFormData(prev => ({ ...prev, thumbnail: result.url }));
                 } catch (error) {
                   console.error('Upload error:', error);

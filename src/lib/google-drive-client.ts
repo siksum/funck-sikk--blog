@@ -16,16 +16,16 @@ export interface GoogleDriveUploadOptions {
   category?: string;
 }
 
-// Find or create a category folder inside the parent folder
-async function findOrCreateCategoryFolder(
+// Find or create a single folder inside the parent folder
+async function findOrCreateSingleFolder(
   accessToken: string,
   parentFolderId: string,
-  categoryName: string
+  folderName: string
 ): Promise<string> {
   // Search for existing folder inside the parent folder
   // Use corpora=allDrives to search across all shared drives
   const searchQuery = encodeURIComponent(
-    `name='${categoryName}' and mimeType='application/vnd.google-apps.folder' and '${parentFolderId}' in parents and trashed=false`
+    `name='${folderName}' and mimeType='application/vnd.google-apps.folder' and '${parentFolderId}' in parents and trashed=false`
   );
 
   const searchResponse = await fetch(
@@ -46,7 +46,7 @@ async function findOrCreateCategoryFolder(
 
   // Create new folder if not found
   const folderMetadata = {
-    name: categoryName,
+    name: folderName,
     mimeType: 'application/vnd.google-apps.folder',
     parents: [parentFolderId],
   };
@@ -66,11 +66,28 @@ async function findOrCreateCategoryFolder(
   if (!createResponse.ok) {
     const errorText = await createResponse.text();
     console.error('Failed to create folder:', errorText);
-    throw new Error(`Failed to create category folder: ${categoryName}`);
+    throw new Error(`Failed to create category folder: ${folderName}`);
   }
 
   const createResult = await createResponse.json();
   return createResult.id;
+}
+
+// Find or create nested category folders (supports paths like "blog/banners")
+async function findOrCreateCategoryFolder(
+  accessToken: string,
+  parentFolderId: string,
+  categoryPath: string
+): Promise<string> {
+  // Split path into parts and create folders recursively
+  const parts = categoryPath.split('/').filter(p => p.trim() !== '');
+
+  let currentParentId = parentFolderId;
+  for (const folderName of parts) {
+    currentParentId = await findOrCreateSingleFolder(accessToken, currentParentId, folderName);
+  }
+
+  return currentParentId;
 }
 
 export async function uploadToGoogleDriveDirect(

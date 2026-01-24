@@ -4,6 +4,7 @@ import { useState, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import dynamic from 'next/dynamic';
 import MDXContent from '@/components/mdx/MDXContent';
+import GoogleDriveFileBrowser from '@/components/common/GoogleDriveFileBrowser';
 
 // Lazy load the editor to reduce initial bundle size
 const TipTapEditor = dynamic(() => import('@/components/editor/TipTapEditor'), {
@@ -50,8 +51,59 @@ export default function BlogPostContent({ content, slug, isAdmin, initialMetadat
     thumbnailScale: 100,
   });
   const [tagsInput, setTagsInput] = useState(initialMetadata?.tags.join(', ') || '');
+  const [showDriveBrowser, setShowDriveBrowser] = useState(false);
+  const [isDraggingBanner, setIsDraggingBanner] = useState(false);
+  const [isUploadingBanner, setIsUploadingBanner] = useState(false);
+  const [isSaving, setIsSaving] = useState(false);
+
+  // Handle banner image upload
+  const handleBannerUpload = async (file: File) => {
+    if (!file.type.startsWith('image/')) {
+      alert('이미지 파일만 업로드할 수 있습니다.');
+      return;
+    }
+    if (file.size > 50 * 1024 * 1024) {
+      alert('파일이 너무 큽니다. 50MB 이하의 이미지를 사용해주세요.');
+      return;
+    }
+    setIsUploadingBanner(true);
+    try {
+      const { uploadToGoogleDriveDirect } = await import('@/lib/google-drive-client');
+      const result = await uploadToGoogleDriveDirect(file, { driveType: 'blog', category: 'blog/banners' });
+      setMetadata(prev => ({ ...prev, thumbnail: result.url }));
+    } catch (error) {
+      console.error('Upload error:', error);
+      alert(`이미지 업로드 실패: ${error instanceof Error ? error.message : '네트워크 오류'}`);
+    } finally {
+      setIsUploadingBanner(false);
+    }
+  };
+
+  // Handle banner drag and drop
+  const handleBannerDrop = (e: React.DragEvent<HTMLDivElement>) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setIsDraggingBanner(false);
+    const file = e.dataTransfer.files?.[0];
+    if (file) {
+      handleBannerUpload(file);
+    }
+  };
+
+  const handleBannerDragOver = (e: React.DragEvent<HTMLDivElement>) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setIsDraggingBanner(true);
+  };
+
+  const handleBannerDragLeave = (e: React.DragEvent<HTMLDivElement>) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setIsDraggingBanner(false);
+  };
 
   const handleSave = useCallback(async (html: string) => {
+    setIsSaving(true);
     try {
       // Parse tags from input
       const parsedTags = tagsInput
@@ -84,11 +136,14 @@ export default function BlogPostContent({ content, slug, isAdmin, initialMetadat
 
       setCurrentContent(html);
       setMetadata(prev => ({ ...prev, tags: parsedTags }));
+      setIsEditing(false);
       // Refresh the page data
       router.refresh();
     } catch (error) {
       console.error('Save error:', error);
       throw error;
+    } finally {
+      setIsSaving(false);
     }
   }, [slug, metadata, tagsInput, router]);
 
@@ -228,6 +283,35 @@ export default function BlogPostContent({ content, slug, isAdmin, initialMetadat
               <label className="block text-xs font-medium text-gray-600 dark:text-gray-400 mb-1">
                 배너 이미지
               </label>
+
+              {/* Drag and Drop Zone */}
+              <div
+                onDrop={handleBannerDrop}
+                onDragOver={handleBannerDragOver}
+                onDragLeave={handleBannerDragLeave}
+                className={`relative mb-3 p-4 border-2 border-dashed rounded-xl transition-all ${
+                  isDraggingBanner
+                    ? 'border-violet-500 bg-violet-50 dark:bg-violet-900/20'
+                    : 'border-gray-300 dark:border-gray-600 hover:border-violet-400 dark:hover:border-violet-500'
+                }`}
+              >
+                {isUploadingBanner && (
+                  <div className="absolute inset-0 flex items-center justify-center bg-white/80 dark:bg-gray-800/80 rounded-xl z-10">
+                    <div className="flex items-center gap-2 text-violet-600 dark:text-violet-400">
+                      <div className="animate-spin w-5 h-5 border-2 border-violet-500 border-t-transparent rounded-full"></div>
+                      <span className="text-sm">업로드 중...</span>
+                    </div>
+                  </div>
+                )}
+                <div className="flex flex-col items-center justify-center text-gray-500 dark:text-gray-400">
+                  <svg className="w-8 h-8 mb-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                  </svg>
+                  <p className="text-xs font-medium">이미지를 드래그하여 놓거나</p>
+                  <p className="text-xs">아래 버튼으로 업로드하세요</p>
+                </div>
+              </div>
+
               <div className="flex gap-2">
                 <input
                   type="text"
@@ -236,34 +320,31 @@ export default function BlogPostContent({ content, slug, isAdmin, initialMetadat
                   className="flex-1 px-3 py-2 border-2 border-gray-200 dark:border-gray-600 rounded-lg text-sm focus:border-violet-400 dark:focus:border-violet-500 focus:outline-none bg-white dark:bg-gray-900"
                   placeholder="이미지 URL 또는 파일 업로드"
                 />
-                <label className="px-3 py-2 bg-violet-100 dark:bg-violet-900/30 text-violet-700 dark:text-violet-300 rounded-lg hover:bg-violet-200 dark:hover:bg-violet-900/50 transition-colors cursor-pointer flex items-center gap-1 text-sm">
+                <button
+                  type="button"
+                  onClick={() => setShowDriveBrowser(true)}
+                  className="px-3 py-2 bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300 rounded-lg hover:bg-blue-200 dark:hover:bg-blue-900/50 transition-colors flex items-center gap-1 text-sm"
+                >
                   <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                  </svg>
+                  찾아보기
+                </button>
+                <label className="px-3 py-2 bg-violet-100 dark:bg-violet-900/30 text-violet-700 dark:text-violet-300 rounded-lg hover:bg-violet-200 dark:hover:bg-violet-900/50 transition-colors cursor-pointer flex items-center gap-1 text-sm">
+                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" />
                   </svg>
                   업로드
                   <input
                     type="file"
                     accept="image/*"
                     className="hidden"
-                    onChange={async (e) => {
+                    onChange={(e) => {
                       const file = e.target.files?.[0];
-                      if (!file) return;
-                      // Check file size (max 50MB)
-                      if (file.size > 50 * 1024 * 1024) {
-                        alert('파일이 너무 큽니다. 50MB 이하의 이미지를 사용해주세요.');
-                        return;
+                      if (file) {
+                        handleBannerUpload(file);
                       }
-                      try {
-                        // Use direct Google Drive upload (same as TipTap editor)
-                        const { uploadToGoogleDriveDirect } = await import('@/lib/google-drive-client');
-                        const result = await uploadToGoogleDriveDirect(file, { driveType: 'sikk' });
-                        setMetadata(prev => ({ ...prev, thumbnail: result.url }));
-                      } catch (error) {
-                        console.error('Upload error:', error);
-                        alert(`이미지 업로드 실패: ${error instanceof Error ? error.message : '네트워크 오류'}`);
-                      } finally {
-                        e.target.value = '';
-                      }
+                      e.target.value = '';
                     }}
                   />
                 </label>
@@ -371,10 +452,50 @@ export default function BlogPostContent({ content, slug, isAdmin, initialMetadat
             onCancel={handleCancel}
             placeholder="포스트 내용을 입력하세요..."
           />
+
+          {/* Save/Cancel Buttons */}
+          <div className="flex justify-end gap-3 pt-4 border-t border-gray-200 dark:border-gray-700">
+            <button
+              type="button"
+              onClick={handleCancel}
+              disabled={isSaving}
+              className="px-4 py-2 border-2 border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors disabled:opacity-50"
+            >
+              취소
+            </button>
+            <button
+              type="button"
+              onClick={() => handleSave(currentContent)}
+              disabled={isSaving}
+              className="px-6 py-2 bg-violet-600 text-white rounded-lg hover:bg-violet-700 disabled:opacity-50 transition-colors flex items-center gap-2"
+            >
+              {isSaving ? (
+                <>
+                  <div className="animate-spin w-4 h-4 border-2 border-white border-t-transparent rounded-full"></div>
+                  저장 중...
+                </>
+              ) : (
+                '수정하기'
+              )}
+            </button>
+          </div>
         </div>
       ) : (
         <MDXContent content={currentContent} />
       )}
+
+      {/* Google Drive File Browser Modal */}
+      <GoogleDriveFileBrowser
+        isOpen={showDriveBrowser}
+        onClose={() => setShowDriveBrowser(false)}
+        onSelect={(files) => {
+          if (files.length > 0) {
+            setMetadata(prev => ({ ...prev, thumbnail: files[0].downloadUrl }));
+          }
+        }}
+        driveType="blog"
+        acceptedTypes={['image/*']}
+      />
     </div>
   );
 }
