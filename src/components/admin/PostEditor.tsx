@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import dynamic from 'next/dynamic';
-import CloudinaryBrowser from '@/components/admin/CloudinaryBrowser';
+import GoogleDriveFileBrowser from '@/components/common/GoogleDriveFileBrowser';
 
 // Lazy load TipTap editor
 const TipTapEditor = dynamic(() => import('@/components/editor/TipTapEditor'), {
@@ -85,8 +85,8 @@ export default function PostEditor({ initialData = {}, isEdit = false }: PostEdi
   const [newSectionTitle, setNewSectionTitle] = useState('');
   const [newSectionDescription, setNewSectionDescription] = useState('');
 
-  // Cloudinary browser state
-  const [showCloudinaryBrowser, setShowCloudinaryBrowser] = useState(false);
+  // Google Drive browser state
+  const [showDriveBrowser, setShowDriveBrowser] = useState(false);
 
   // Banner drag and drop state
   const [isDraggingBanner, setIsDraggingBanner] = useState(false);
@@ -126,7 +126,7 @@ export default function PostEditor({ initialData = {}, isEdit = false }: PostEdi
     isPublic: initialData.isPublic !== false,
   });
 
-  // Handle banner image upload
+  // Handle banner image upload (using Google Drive direct upload)
   const handleBannerUpload = async (file: File) => {
     if (!file.type.startsWith('image/')) {
       alert('이미지 파일만 업로드할 수 있습니다.');
@@ -134,24 +134,15 @@ export default function PostEditor({ initialData = {}, isEdit = false }: PostEdi
     }
     setIsUploadingBanner(true);
     try {
-      const folder = formData.category
-        ? `blog/${formData.category.replace(/\//g, '/')}`
-        : 'blog';
-      const formDataUpload = new FormData();
-      formDataUpload.append('file', file);
-      formDataUpload.append('folder', folder);
-      const response = await fetch('/api/upload', {
-        method: 'POST',
-        body: formDataUpload,
-      });
-      if (response.ok) {
-        const data = await response.json();
-        setFormData(prev => ({ ...prev, thumbnail: data.url }));
-      } else {
-        alert('이미지 업로드에 실패했습니다.');
-      }
-    } catch {
-      alert('이미지 업로드에 실패했습니다.');
+      const { uploadToGoogleDriveDirect } = await import('@/lib/google-drive-client');
+      const category = formData.category
+        ? formData.category.split('/').pop() || 'banners'
+        : 'banners';
+      const result = await uploadToGoogleDriveDirect(file, { driveType: 'blog', category });
+      setFormData(prev => ({ ...prev, thumbnail: result.url }));
+    } catch (error) {
+      console.error('Upload error:', error);
+      alert(`이미지 업로드 실패: ${error instanceof Error ? error.message : '알 수 없는 오류'}`);
     } finally {
       setIsUploadingBanner(false);
     }
@@ -738,7 +729,7 @@ export default function PostEditor({ initialData = {}, isEdit = false }: PostEdi
           />
           <button
             type="button"
-            onClick={() => setShowCloudinaryBrowser(true)}
+            onClick={() => setShowDriveBrowser(true)}
             className="px-4 py-2 bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300 rounded-lg hover:bg-blue-200 dark:hover:bg-blue-900/50 transition-colors flex items-center gap-2"
           >
             <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -1658,12 +1649,17 @@ export default function PostEditor({ initialData = {}, isEdit = false }: PostEdi
         </div>
       )}
 
-      {/* Cloudinary Browser Modal */}
-      <CloudinaryBrowser
-        isOpen={showCloudinaryBrowser}
-        onClose={() => setShowCloudinaryBrowser(false)}
-        onSelect={(url) => setFormData((prev) => ({ ...prev, thumbnail: url }))}
-        initialFolder={formData.category ? `blog/${formData.category}` : 'blog'}
+      {/* Google Drive Browser Modal */}
+      <GoogleDriveFileBrowser
+        isOpen={showDriveBrowser}
+        onClose={() => setShowDriveBrowser(false)}
+        onSelect={(files) => {
+          if (files.length > 0) {
+            setFormData((prev) => ({ ...prev, thumbnail: files[0].downloadUrl }));
+          }
+        }}
+        driveType="blog"
+        acceptedTypes={['image/*']}
       />
     </form>
   );
