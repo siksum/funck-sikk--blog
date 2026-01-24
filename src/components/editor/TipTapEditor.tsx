@@ -3,7 +3,6 @@
 import { useEditor, EditorContent } from '@tiptap/react';
 import StarterKit from '@tiptap/starter-kit';
 import { Link } from '@tiptap/extension-link';
-import { Image } from '@tiptap/extension-image';
 import { Table } from '@tiptap/extension-table';
 import { TableRow } from '@tiptap/extension-table-row';
 import { TableCell } from '@tiptap/extension-table-cell';
@@ -66,7 +65,7 @@ import { Markdown } from 'tiptap-markdown';
 import { useCallback, useEffect, useState } from 'react';
 import EditorToolbar from './menus/EditorToolbar';
 import BubbleMenuComponent from './menus/BubbleMenu';
-import { Callout, Iframe, MermaidBlock, PrivateBlock, SelectBlock } from './extensions';
+import { Callout, Iframe, ImageWithCaption, MermaidBlock, PrivateBlock, SelectBlock } from './extensions';
 import './styles/editor.css';
 
 const lowlight = createLowlight(common);
@@ -159,11 +158,7 @@ export default function TipTapEditor({
           class: 'text-violet-600 dark:text-violet-400 hover:underline',
         },
       }),
-      Image.configure({
-        HTMLAttributes: {
-          class: 'rounded-lg max-w-full h-auto',
-        },
-      }),
+      ImageWithCaption,
       Table.configure({
         resizable: true,
       }),

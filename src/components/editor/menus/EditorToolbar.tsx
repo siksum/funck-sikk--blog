@@ -86,17 +86,17 @@ const TEXT_COLORS = [
   { value: '#6b7280', label: '회색', color: '#6b7280' },
 ];
 
-// Highlight (background) colors
+// Highlight (background) colors - darker/more vibrant versions
 const HIGHLIGHT_COLORS = [
   { value: '', label: '없음', color: 'transparent' },
-  { value: '#fef2f2', label: '빨강', color: '#fef2f2', border: '#fecaca' },
-  { value: '#fff7ed', label: '주황', color: '#fff7ed', border: '#fed7aa' },
-  { value: '#fefce8', label: '노랑', color: '#fefce8', border: '#fef08a' },
-  { value: '#f0fdf4', label: '초록', color: '#f0fdf4', border: '#bbf7d0' },
-  { value: '#eff6ff', label: '파랑', color: '#eff6ff', border: '#bfdbfe' },
-  { value: '#f5f3ff', label: '보라', color: '#f5f3ff', border: '#ddd6fe' },
-  { value: '#fdf2f8', label: '분홍', color: '#fdf2f8', border: '#fbcfe8' },
-  { value: '#f3f4f6', label: '회색', color: '#f3f4f6', border: '#d1d5db' },
+  { value: '#fecaca', label: '빨강', color: '#fecaca', border: '#f87171' },
+  { value: '#fed7aa', label: '주황', color: '#fed7aa', border: '#fb923c' },
+  { value: '#fef08a', label: '노랑', color: '#fef08a', border: '#facc15' },
+  { value: '#bbf7d0', label: '초록', color: '#bbf7d0', border: '#4ade80' },
+  { value: '#bfdbfe', label: '파랑', color: '#bfdbfe', border: '#60a5fa' },
+  { value: '#ddd6fe', label: '보라', color: '#ddd6fe', border: '#a78bfa' },
+  { value: '#fbcfe8', label: '분홍', color: '#fbcfe8', border: '#f472b6' },
+  { value: '#d1d5db', label: '회색', color: '#d1d5db', border: '#9ca3af' },
 ];
 
 // Table cell background colors

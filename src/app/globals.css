@@ -550,10 +550,17 @@ code, pre, .font-mono {
 }
 
 .mdx-html-content code {
-  background-color: rgba(139, 92, 246, 0.1);
+  background-color: rgba(139, 92, 246, 0.15);
+  color: #7c3aed;
+  font-weight: 700;
   padding: 0.125rem 0.375rem;
   border-radius: 0.25rem;
   font-size: 0.875em;
+}
+
+.dark .mdx-html-content code {
+  background-color: rgba(139, 92, 246, 0.25);
+  color: #a78bfa;
 }
 
 .mdx-html-content pre {
@@ -562,6 +569,13 @@ code, pre, .font-mono {
   border-radius: 0.5rem;
   overflow-x: auto;
   margin-bottom: 1rem;
+}
+
+.mdx-html-content pre code {
+  background-color: transparent;
+  color: #a78bfa;
+  font-weight: 700;
+  padding: 0;
 }
 
 .mdx-html-content blockquote {
@@ -578,6 +592,43 @@ code, pre, .font-mono {
 .mdx-html-content mark {
   padding: 0.125rem 0.25rem;
   border-radius: 0.125rem;
+}
+
+/* Image with Caption */
+.mdx-html-content figure[data-type="image"],
+.prose figure[data-type="image"] {
+  margin: 1rem 0;
+  display: inline-block;
+  max-width: 100%;
+}
+
+.mdx-html-content figure[data-type="image"] img,
+.prose figure[data-type="image"] img {
+  display: block;
+  max-width: 100%;
+  height: auto;
+  border-radius: 0.5rem;
+}
+
+.mdx-html-content .image-caption,
+.mdx-html-content figcaption,
+.prose .image-caption,
+.prose figcaption {
+  text-align: center;
+  padding: 0.5rem 0.75rem;
+  font-size: 0.875rem;
+  color: #6b7280;
+  background-color: rgba(139, 92, 246, 0.05);
+  border-radius: 0 0 0.5rem 0.5rem;
+  margin-top: -0.25rem;
+}
+
+.dark .mdx-html-content .image-caption,
+.dark .mdx-html-content figcaption,
+.dark .prose .image-caption,
+.dark .prose figcaption {
+  color: #9ca3af;
+  background-color: rgba(139, 92, 246, 0.1);
 }
 
 /* PDF Attachment Box - Global styles for viewing */
