@@ -24,8 +24,12 @@ function normalizeFolderName(name: string): string {
     .join(''); // No spaces - "Wargame" not "War Game"
 }
 
-// Find or create a single folder inside the parent folder
-async function findOrCreateSingleFolder(
+// Cache to store pending folder creation promises to prevent race conditions
+// Key format: "parentFolderId:normalizedFolderName"
+const folderCreationCache: Map<string, Promise<string>> = new Map();
+
+// Internal function that actually finds or creates the folder
+async function findOrCreateSingleFolderInternal(
   accessToken: string,
   parentFolderId: string,
   folderName: string
@@ -40,7 +44,7 @@ async function findOrCreateSingleFolder(
   );
 
   // Try listing with allDrives first (for shared drives)
-  let listResponse = await fetch(
+  const listResponse = await fetch(
     `https://www.googleapis.com/drive/v3/files?q=${listQuery}&supportsAllDrives=true&includeItemsFromAllDrives=true&fields=files(id,name)`,
     {
       headers: {
@@ -101,6 +105,36 @@ async function findOrCreateSingleFolder(
   const createResult = await createResponse.json();
   console.log(`Created folder: ${normalizedName} (${createResult.id})`);
   return createResult.id;
+}
+
+// Find or create a single folder inside the parent folder
+// Uses caching to prevent race conditions when multiple uploads happen simultaneously
+async function findOrCreateSingleFolder(
+  accessToken: string,
+  parentFolderId: string,
+  folderName: string
+): Promise<string> {
+  const normalizedName = normalizeFolderName(folderName);
+  const cacheKey = `${parentFolderId}:${normalizedName.toLowerCase()}`;
+
+  // Check if there's already a pending creation for this folder
+  const pending = folderCreationCache.get(cacheKey);
+  if (pending) {
+    console.log(`Waiting for pending folder creation: ${folderName}`);
+    return pending;
+  }
+
+  // Create a promise for this folder operation and cache it
+  const creationPromise = findOrCreateSingleFolderInternal(accessToken, parentFolderId, folderName)
+    .finally(() => {
+      // Clean up cache after completion, with a small delay to catch very close race conditions
+      setTimeout(() => {
+        folderCreationCache.delete(cacheKey);
+      }, 2000);
+    });
+
+  folderCreationCache.set(cacheKey, creationPromise);
+  return creationPromise;
 }
 
 // Find or create nested category folders (supports paths like "wargame/bandit")
