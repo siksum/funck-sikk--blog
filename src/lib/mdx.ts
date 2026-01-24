@@ -61,8 +61,18 @@ export async function getAllPostsAsync(includePrivate: boolean = false): Promise
   return posts.map(transformPost);
 }
 
-export async function getPostBySlugAsync(slug: string): Promise<Post | null> {
-  const post = await prisma.blogPost.findUnique({
+export async function getPostBySlugAsync(slug: string, category?: string): Promise<Post | null> {
+  // If category is provided, search by slug + category (allows same slug in different categories)
+  if (category !== undefined) {
+    const post = await prisma.blogPost.findFirst({
+      where: { slug, category },
+    });
+    if (!post) return null;
+    return transformPost(post);
+  }
+
+  // If no category provided, search by slug only (backwards compatibility)
+  const post = await prisma.blogPost.findFirst({
     where: { slug },
   });
 

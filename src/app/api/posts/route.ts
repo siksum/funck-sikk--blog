@@ -45,13 +45,16 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Slug and title are required' }, { status: 400 });
     }
 
-    // Check if post already exists
-    const existing = await prisma.blogPost.findUnique({
-      where: { slug },
+    // Check if post already exists with same slug and category
+    const existing = await prisma.blogPost.findFirst({
+      where: {
+        slug,
+        category: category || '',
+      },
     });
 
     if (existing) {
-      return NextResponse.json({ error: 'Post already exists' }, { status: 409 });
+      return NextResponse.json({ error: 'Post already exists in this category' }, { status: 409 });
     }
 
     // Parse date
