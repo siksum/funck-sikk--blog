@@ -13,6 +13,21 @@ interface EditorToolbarProps {
   category?: string;
 }
 
+// Helper function to check if cursor is inside a collapsible heading (including nested content)
+function isInsideCollapsibleHeading(editor: Editor): boolean {
+  const { selection } = editor.state;
+  const $pos = selection.$anchor;
+
+  // Check all parent nodes from current position to root
+  for (let d = $pos.depth; d >= 0; d--) {
+    const node = $pos.node(d);
+    if (node.type.name === 'collapsibleHeading') {
+      return true;
+    }
+  }
+  return false;
+}
+
 interface ToolbarButtonProps {
   onClick: () => void;
   isActive?: boolean;
@@ -1423,7 +1438,7 @@ export default function EditorToolbar({ editor, onSave, onCancel, driveType = 'b
       </ToolbarButton>
 
       {/* Collapsible Heading Color Picker */}
-      {editor.isActive('collapsibleHeading') && (
+      {isInsideCollapsibleHeading(editor) && (
         <div className="relative">
           <ToolbarButton
             onClick={() => setShowCollapsibleColorMenu(!showCollapsibleColorMenu)}
