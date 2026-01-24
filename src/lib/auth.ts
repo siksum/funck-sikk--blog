@@ -77,6 +77,19 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
       // Initial sign in - add user id to token
       if (user) {
         token.id = user.id;
+
+        // Update user profile in database with latest OAuth data
+        if (account && profile) {
+          const profileData = profile as Record<string, unknown>;
+          const image = (profileData.picture as string) || (profileData.avatar_url as string);
+          await prisma.user.update({
+            where: { id: user.id },
+            data: {
+              name: profile.name || undefined,
+              image: image || undefined,
+            },
+          });
+        }
       }
       return token;
     },
