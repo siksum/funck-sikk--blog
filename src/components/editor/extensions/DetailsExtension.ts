@@ -109,18 +109,25 @@ export const Details = Node.create<DetailsOptions>({
       summary.addEventListener('dblclick', (e) => {
         e.preventDefault();
         e.stopPropagation();
-        const newTitle = prompt('제목 입력:', node.attrs.title || '');
-        if (newTitle !== null && typeof getPos === 'function') {
+
+        if (typeof getPos === 'function') {
           const pos = getPos();
           if (pos !== undefined) {
-            editor.commands.command(({ tr }) => {
-              tr.setNodeMarkup(pos, undefined, {
-                ...node.attrs,
-                title: newTitle,
-              });
-              return true;
-            });
-            summary.textContent = newTitle;
+            // Get the current node from editor state
+            const currentNode = editor.state.doc.nodeAt(pos);
+            if (currentNode && currentNode.type.name === 'details') {
+              const newTitle = prompt('제목 입력:', currentNode.attrs.title || '');
+              if (newTitle !== null) {
+                editor.commands.command(({ tr }) => {
+                  tr.setNodeMarkup(pos, undefined, {
+                    ...currentNode.attrs,
+                    title: newTitle,
+                  });
+                  return true;
+                });
+                summary.textContent = newTitle;
+              }
+            }
           }
         }
       });
@@ -130,25 +137,31 @@ export const Details = Node.create<DetailsOptions>({
         e.preventDefault();
         e.stopPropagation();
 
-        // Manually toggle the open state
-        const newOpenState = !container.open;
-        if (newOpenState) {
-          container.setAttribute('open', 'open');
-        } else {
-          container.removeAttribute('open');
-        }
-
-        // Update the editor state
+        // Update the editor state only - let the update function handle DOM
         if (typeof getPos === 'function') {
           const pos = getPos();
           if (pos !== undefined) {
-            editor.commands.command(({ tr }) => {
-              tr.setNodeMarkup(pos, undefined, {
-                ...node.attrs,
-                open: newOpenState,
+            // Get the current node from editor state (not the stale closure variable)
+            const currentNode = editor.state.doc.nodeAt(pos);
+            if (currentNode && currentNode.type.name === 'details') {
+              const newOpenState = !currentNode.attrs.open;
+
+              // Toggle DOM state first for immediate feedback
+              if (newOpenState) {
+                container.setAttribute('open', 'open');
+              } else {
+                container.removeAttribute('open');
+              }
+
+              // Update editor state
+              editor.commands.command(({ tr }) => {
+                tr.setNodeMarkup(pos, undefined, {
+                  ...currentNode.attrs,
+                  open: newOpenState,
+                });
+                return true;
               });
-              return true;
-            });
+            }
           }
         }
       });
