@@ -2,6 +2,7 @@ import HeroSection from '@/components/home/HeroSection';
 import AboutPreview from '@/components/home/AboutPreview';
 import BlogShortcut from '@/components/home/BlogShortcut';
 import GithubGrass from '@/components/home/GithubGrass';
+import NewsletterCTA from '@/components/blog/NewsletterCTA';
 import { getAllPostsAsync, getAllCategoriesAsync, getAllTagsAsync } from '@/lib/posts';
 import { prisma } from '@/lib/db';
 
@@ -54,6 +55,9 @@ export default async function Home() {
 
         {/* GitHub Grass */}
         <GithubGrass postDates={postDates} />
+
+        {/* Newsletter Subscription */}
+        <NewsletterCTA />
       </div>
     </>
   );

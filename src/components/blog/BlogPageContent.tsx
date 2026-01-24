@@ -5,6 +5,7 @@ import { Post, Category } from '@/types';
 import CategoryCard from '@/components/category/CategoryCard';
 import Sidebar from '@/components/sidebar/Sidebar';
 import BlogDatabaseCard from '@/components/blog/BlogDatabaseCard';
+import NewsletterCTA from '@/components/blog/NewsletterCTA';
 
 interface CategoryWithTags {
   name: string;
@@ -316,6 +317,9 @@ export default function BlogPageContent({
                 {renderCategoryCards(sectionCategories)}
               </section>
             ))}
+
+            {/* Newsletter Subscription */}
+            <NewsletterCTA />
           </div>
         </div>
       </div>

@@ -7,6 +7,7 @@ import CategoryCard from '@/components/category/CategoryCard';
 import Sidebar from '@/components/sidebar/Sidebar';
 import PostCard from '@/components/post/PostCard';
 import BlogDatabaseCard from '@/components/blog/BlogDatabaseCard';
+import NewsletterCTA from '@/components/blog/NewsletterCTA';
 
 interface ChildCategory {
   name: string;
@@ -515,6 +516,9 @@ export default function CategoryPageContent({
                 이 카테고리에 콘텐츠가 없습니다.
               </p>
             )}
+
+            {/* Newsletter Subscription */}
+            <NewsletterCTA />
           </div>
         </div>
       </div>
