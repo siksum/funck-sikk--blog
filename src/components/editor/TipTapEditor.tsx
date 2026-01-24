@@ -332,6 +332,21 @@ export default function TipTapEditor({
     return () => clearTimeout(timer);
   }, [editor?.getHTML(), hasChanges]);
 
+  // Warn user about unsaved changes when leaving the page
+  useEffect(() => {
+    const handleBeforeUnload = (e: BeforeUnloadEvent) => {
+      if (hasChanges) {
+        e.preventDefault();
+        // Modern browsers require returnValue to be set
+        e.returnValue = '저장하지 않은 변경사항이 있습니다. 정말 나가시겠습니까?';
+        return e.returnValue;
+      }
+    };
+
+    window.addEventListener('beforeunload', handleBeforeUnload);
+    return () => window.removeEventListener('beforeunload', handleBeforeUnload);
+  }, [hasChanges]);
+
   // Keyboard shortcuts
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
@@ -343,6 +358,18 @@ export default function TipTapEditor({
       if ((e.metaKey || e.ctrlKey) && e.key === 'e') {
         e.preventDefault();
         editor?.chain().focus().toggleCode().run();
+      }
+      // Prevent backspace from triggering browser back navigation
+      if (e.key === 'Backspace') {
+        // Only prevent if target is not an input/textarea and editor is focused
+        const target = e.target as HTMLElement;
+        const isEditorFocused = editor?.isFocused;
+        const isInputElement = target.tagName === 'INPUT' || target.tagName === 'TEXTAREA' || target.isContentEditable;
+
+        // If backspace is pressed outside of editable elements, prevent browser back
+        if (!isInputElement && !isEditorFocused) {
+          e.preventDefault();
+        }
       }
     };
 
