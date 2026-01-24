@@ -32,7 +32,7 @@ export const Details = Node.create<DetailsOptions>({
     return {
       open: {
         default: false,
-        parseHTML: (element) => element.hasAttribute('open'),
+        parseHTML: () => false, // Always start collapsed
         renderHTML: (attributes) => {
           if (!attributes.open) {
             return {};
