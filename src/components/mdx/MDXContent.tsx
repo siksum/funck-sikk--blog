@@ -106,17 +106,24 @@ function isHtmlContent(content: string): boolean {
   return trimmed.startsWith('<');
 }
 
+// Remove 'open' attribute from details tags so they start collapsed
+function removeDetailsOpenAttr(html: string): string {
+  return html.replace(/<details([^>]*)\s+open(?:="[^"]*")?([^>]*)>/gi, '<details$1$2>');
+}
+
 export default function MDXContent({ content }: MDXContentProps) {
   const [lightboxImage, setLightboxImage] = useState<{ src: string; alt: string } | null>(null);
 
   // If content is pure HTML, render it directly to preserve inline styles
   if (isHtmlContent(content)) {
+    // Remove 'open' attribute from details so they start collapsed
+    const processedContent = removeDetailsOpenAttr(content);
     return (
       <>
         <article
           className="max-w-none mdx-html-content"
           style={{ color: 'var(--foreground)' }}
-          dangerouslySetInnerHTML={{ __html: content }}
+          dangerouslySetInnerHTML={{ __html: processedContent }}
         />
         {lightboxImage && (
           <ImageLightbox
@@ -283,7 +290,7 @@ export default function MDXContent({ content }: MDXContentProps) {
                 {children}
               </del>
             ),
-            details: ({ children, ...props }) => (
+            details: ({ children, open, ...props }) => (
               <details
                 className="my-4 border border-violet-200 dark:border-violet-500/30 rounded-lg overflow-hidden"
                 {...props}
