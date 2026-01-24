@@ -6,7 +6,6 @@ interface EmailSubscription {
   id: string;
   email: string;
   isVerified: boolean;
-  isActive: boolean;
   createdAt: string;
   lastNotified: string | null;
 }
@@ -87,7 +86,6 @@ export default function AdminSubscribersPage() {
   }
 
   const verifiedCount = data.email.filter((s) => s.isVerified).length;
-  const activeEmailCount = data.email.filter((s) => s.isActive).length;
 
   return (
     <div>
@@ -100,9 +98,9 @@ export default function AdminSubscribersPage() {
         <div className="bg-white dark:bg-gray-800 p-6 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700">
           <p className="text-sm text-gray-500 dark:text-gray-400">이메일 구독자</p>
           <p className="text-3xl font-bold mt-2 text-gray-900 dark:text-white">
-            {activeEmailCount}
+            {data.email.length}
           </p>
-          <p className="text-xs text-gray-400 mt-1">활성 구독</p>
+          <p className="text-xs text-gray-400 mt-1">전체 구독</p>
         </div>
         <div className="bg-white dark:bg-gray-800 p-6 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700">
           <p className="text-sm text-gray-500 dark:text-gray-400">인증 완료</p>
@@ -162,22 +160,15 @@ export default function AdminSubscribersPage() {
                       {sub.email}
                     </td>
                     <td className="px-4 py-3">
-                      <div className="flex gap-1">
-                        <span
-                          className={`px-2 py-1 text-xs rounded-full ${
-                            sub.isVerified
-                              ? 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200'
-                              : 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-200'
-                          }`}
-                        >
-                          {sub.isVerified ? '인증됨' : '대기중'}
-                        </span>
-                        {!sub.isActive && (
-                          <span className="px-2 py-1 text-xs rounded-full bg-gray-100 text-gray-600 dark:bg-gray-700 dark:text-gray-400">
-                            비활성
-                          </span>
-                        )}
-                      </div>
+                      <span
+                        className={`px-2 py-1 text-xs rounded-full ${
+                          sub.isVerified
+                            ? 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200'
+                            : 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-200'
+                        }`}
+                      >
+                        {sub.isVerified ? '인증됨' : '대기중'}
+                      </span>
                     </td>
                     <td className="px-4 py-3 text-sm text-gray-500">
                       {new Date(sub.createdAt).toLocaleDateString('ko-KR')}
