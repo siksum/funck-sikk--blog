@@ -87,6 +87,10 @@ export default function PostEditor({ initialData = {}, isEdit = false }: PostEdi
 
   // Cloudinary browser state
   const [showCloudinaryBrowser, setShowCloudinaryBrowser] = useState(false);
+
+  // Banner drag and drop state
+  const [isDraggingBanner, setIsDraggingBanner] = useState(false);
+  const [isUploadingBanner, setIsUploadingBanner] = useState(false);
   const [editingSection, setEditingSection] = useState<DBSection | null>(null);
   const [editingSectionTitle, setEditingSectionTitle] = useState('');
   const [editingSectionDescription, setEditingSectionDescription] = useState('');
@@ -121,6 +125,60 @@ export default function PostEditor({ initialData = {}, isEdit = false }: PostEdi
     thumbnailScale: initialData.thumbnailScale ?? 100,
     isPublic: initialData.isPublic !== false,
   });
+
+  // Handle banner image upload
+  const handleBannerUpload = async (file: File) => {
+    if (!file.type.startsWith('image/')) {
+      alert('이미지 파일만 업로드할 수 있습니다.');
+      return;
+    }
+    setIsUploadingBanner(true);
+    try {
+      const folder = formData.category
+        ? `blog/${formData.category.replace(/\//g, '/')}`
+        : 'blog';
+      const formDataUpload = new FormData();
+      formDataUpload.append('file', file);
+      formDataUpload.append('folder', folder);
+      const response = await fetch('/api/upload', {
+        method: 'POST',
+        body: formDataUpload,
+      });
+      if (response.ok) {
+        const data = await response.json();
+        setFormData(prev => ({ ...prev, thumbnail: data.url }));
+      } else {
+        alert('이미지 업로드에 실패했습니다.');
+      }
+    } catch {
+      alert('이미지 업로드에 실패했습니다.');
+    } finally {
+      setIsUploadingBanner(false);
+    }
+  };
+
+  // Handle banner drag and drop
+  const handleBannerDrop = (e: React.DragEvent<HTMLDivElement>) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setIsDraggingBanner(false);
+    const file = e.dataTransfer.files?.[0];
+    if (file) {
+      handleBannerUpload(file);
+    }
+  };
+
+  const handleBannerDragOver = (e: React.DragEvent<HTMLDivElement>) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setIsDraggingBanner(true);
+  };
+
+  const handleBannerDragLeave = (e: React.DragEvent<HTMLDivElement>) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setIsDraggingBanner(false);
+  };
 
   // Update formData.category when parent or sub category changes
   useEffect(() => {
@@ -641,6 +699,35 @@ export default function PostEditor({ initialData = {}, isEdit = false }: PostEdi
         <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
           배너 이미지
         </label>
+
+        {/* Drag and Drop Zone */}
+        <div
+          onDrop={handleBannerDrop}
+          onDragOver={handleBannerDragOver}
+          onDragLeave={handleBannerDragLeave}
+          className={`relative mb-3 p-6 border-2 border-dashed rounded-xl transition-all ${
+            isDraggingBanner
+              ? 'border-violet-500 bg-violet-50 dark:bg-violet-900/20'
+              : 'border-gray-300 dark:border-gray-600 hover:border-violet-400 dark:hover:border-violet-500'
+          }`}
+        >
+          {isUploadingBanner && (
+            <div className="absolute inset-0 flex items-center justify-center bg-white/80 dark:bg-gray-800/80 rounded-xl z-10">
+              <div className="flex items-center gap-2 text-violet-600 dark:text-violet-400">
+                <div className="animate-spin w-5 h-5 border-2 border-violet-500 border-t-transparent rounded-full"></div>
+                <span>업로드 중...</span>
+              </div>
+            </div>
+          )}
+          <div className="flex flex-col items-center justify-center text-gray-500 dark:text-gray-400">
+            <svg className="w-10 h-10 mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
+            </svg>
+            <p className="text-sm font-medium">이미지를 드래그하여 놓거나</p>
+            <p className="text-xs mt-1">아래 버튼으로 업로드하세요</p>
+          </div>
+        </div>
+
         <div className="flex gap-2">
           <input
             type="text"
@@ -668,30 +755,12 @@ export default function PostEditor({ initialData = {}, isEdit = false }: PostEdi
               type="file"
               accept="image/*"
               className="hidden"
-              onChange={async (e) => {
+              onChange={(e) => {
                 const file = e.target.files?.[0];
-                if (!file) return;
-                try {
-                  // Build folder path based on category
-                  const folder = formData.category
-                    ? `blog/${formData.category.replace(/\//g, '/')}`
-                    : 'blog';
-                  const formDataUpload = new FormData();
-                  formDataUpload.append('file', file);
-                  formDataUpload.append('folder', folder);
-                  const response = await fetch('/api/upload', {
-                    method: 'POST',
-                    body: formDataUpload,
-                  });
-                  if (response.ok) {
-                    const data = await response.json();
-                    setFormData(prev => ({ ...prev, thumbnail: data.url }));
-                  }
-                } catch {
-                  alert('이미지 업로드에 실패했습니다.');
-                } finally {
-                  e.target.value = '';
+                if (file) {
+                  handleBannerUpload(file);
                 }
+                e.target.value = '';
               }}
             />
           </label>

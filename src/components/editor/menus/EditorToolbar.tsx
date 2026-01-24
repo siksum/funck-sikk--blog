@@ -86,17 +86,17 @@ const TEXT_COLORS = [
   { value: '#6b7280', label: '회색', color: '#6b7280' },
 ];
 
-// Highlight (background) colors
+// Highlight (background) colors - increased opacity for better visibility
 const HIGHLIGHT_COLORS = [
   { value: '', label: '없음', color: 'transparent' },
-  { value: '#fef2f2', label: '빨강', color: '#fef2f2', border: '#fecaca' },
-  { value: '#fff7ed', label: '주황', color: '#fff7ed', border: '#fed7aa' },
-  { value: '#fefce8', label: '노랑', color: '#fefce8', border: '#fef08a' },
-  { value: '#f0fdf4', label: '초록', color: '#f0fdf4', border: '#bbf7d0' },
-  { value: '#eff6ff', label: '파랑', color: '#eff6ff', border: '#bfdbfe' },
-  { value: '#f5f3ff', label: '보라', color: '#f5f3ff', border: '#ddd6fe' },
-  { value: '#fdf2f8', label: '분홍', color: '#fdf2f8', border: '#fbcfe8' },
-  { value: '#f3f4f6', label: '회색', color: '#f3f4f6', border: '#d1d5db' },
+  { value: '#fecaca', label: '빨강', color: '#fecaca', border: '#f87171' },
+  { value: '#fed7aa', label: '주황', color: '#fed7aa', border: '#fb923c' },
+  { value: '#fef08a', label: '노랑', color: '#fef08a', border: '#facc15' },
+  { value: '#bbf7d0', label: '초록', color: '#bbf7d0', border: '#4ade80' },
+  { value: '#bfdbfe', label: '파랑', color: '#bfdbfe', border: '#60a5fa' },
+  { value: '#ddd6fe', label: '보라', color: '#ddd6fe', border: '#a78bfa' },
+  { value: '#fbcfe8', label: '분홍', color: '#fbcfe8', border: '#f472b6' },
+  { value: '#d1d5db', label: '회색', color: '#d1d5db', border: '#9ca3af' },
 ];
 
 // Table cell background colors
@@ -160,6 +160,7 @@ export default function EditorToolbar({ editor, onSave, onCancel, driveType = 'b
   const [driveBrowserMode, setDriveBrowserMode] = useState<'image' | 'pdf'>('pdf');
   const [showTableCellColorPicker, setShowTableCellColorPicker] = useState(false);
   const [showTableInsertMenu, setShowTableInsertMenu] = useState(false);
+  const [useImageCaption, setUseImageCaption] = useState(true);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const pdfInputRef = useRef<HTMLInputElement>(null);
 
@@ -189,11 +190,15 @@ export default function EditorToolbar({ editor, onSave, onCancel, driveType = 'b
 
   const addImage = useCallback(() => {
     if (imageUrl) {
-      editor.chain().focus().setImage({ src: imageUrl }).run();
+      if (useImageCaption) {
+        editor.chain().focus().setImageWithCaption({ src: imageUrl, caption: '' }).run();
+      } else {
+        editor.chain().focus().setImage({ src: imageUrl }).run();
+      }
     }
     setShowImageInput(false);
     setImageUrl('');
-  }, [editor, imageUrl]);
+  }, [editor, imageUrl, useImageCaption]);
 
   const addYoutube = useCallback(() => {
     if (youtubeUrl) {
@@ -224,7 +229,11 @@ export default function EditorToolbar({ editor, onSave, onCancel, driveType = 'b
       }
 
       const data = await response.json();
-      editor.chain().focus().setImage({ src: data.url }).run();
+      if (useImageCaption) {
+        editor.chain().focus().setImageWithCaption({ src: data.url, caption: '' }).run();
+      } else {
+        editor.chain().focus().setImage({ src: data.url }).run();
+      }
       setShowImageInput(false);
     } catch (error) {
       console.error('Upload error:', error);
@@ -235,7 +244,7 @@ export default function EditorToolbar({ editor, onSave, onCancel, driveType = 'b
         fileInputRef.current.value = '';
       }
     }
-  }, [editor]);
+  }, [editor, useImageCaption]);
 
   const handlePdfUpload = useCallback(async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -308,8 +317,12 @@ export default function EditorToolbar({ editor, onSave, onCancel, driveType = 'b
   const handleDriveFileSelect = useCallback((files: { id: string; name: string; mimeType: string; downloadUrl: string }[]) => {
     for (const file of files) {
       if (driveBrowserMode === 'image' && file.mimeType.startsWith('image/')) {
-        // Insert as image
-        editor.chain().focus().setImage({ src: file.downloadUrl }).run();
+        // Insert as image (with or without caption)
+        if (useImageCaption) {
+          editor.chain().focus().setImageWithCaption({ src: file.downloadUrl, caption: '' }).run();
+        } else {
+          editor.chain().focus().setImage({ src: file.downloadUrl }).run();
+        }
       } else if (file.mimeType === 'application/pdf') {
         // Insert as PDF with current display mode
         const fileId = file.id;
@@ -331,10 +344,10 @@ export default function EditorToolbar({ editor, onSave, onCancel, driveType = 'b
       }
     }
     setShowImageInput(false);
-  }, [editor, driveBrowserMode, pdfDisplayMode]);
+  }, [editor, driveBrowserMode, pdfDisplayMode, useImageCaption]);
 
   return (
-    <div className="sticky top-0 z-10 bg-white/95 dark:bg-gray-900/95 backdrop-blur border-2 border-pink-200 dark:border-pink-500/40 rounded-lg p-2 mb-4 flex flex-wrap items-center gap-1">
+    <div className="sticky top-4 z-40 bg-white/95 dark:bg-gray-900/95 backdrop-blur border-2 border-pink-200 dark:border-pink-500/40 rounded-lg p-2 mb-4 flex flex-wrap items-center gap-1 shadow-lg">
       {/* Text Formatting */}
       <ToolbarButton
         onClick={() => editor.chain().focus().toggleBold().run()}
@@ -718,6 +731,30 @@ export default function EditorToolbar({ editor, onSave, onCancel, driveType = 'b
         </ToolbarButton>
         {showImageInput && (
           <div className="absolute top-full right-0 mt-2 p-3 bg-white dark:bg-gray-800 rounded-lg shadow-lg border border-pink-200 dark:border-pink-500/40 z-20 w-72">
+            {/* Caption Toggle */}
+            <div className="mb-3 flex items-center justify-between">
+              <label className="text-xs font-semibold text-gray-500 dark:text-gray-400">
+                캡션 포함
+              </label>
+              <button
+                type="button"
+                onClick={(e) => {
+                  e.preventDefault();
+                  e.stopPropagation();
+                  setUseImageCaption(!useImageCaption);
+                }}
+                className={`relative w-10 h-5 rounded-full transition-colors ${
+                  useImageCaption ? 'bg-pink-500' : 'bg-gray-300 dark:bg-gray-600'
+                }`}
+              >
+                <span
+                  className={`absolute top-0.5 left-0.5 w-4 h-4 bg-white rounded-full transition-transform ${
+                    useImageCaption ? 'translate-x-5' : 'translate-x-0'
+                  }`}
+                />
+              </button>
+            </div>
+
             {/* Image Upload */}
             <div className="mb-3">
               <label className="block text-xs font-semibold text-gray-500 dark:text-gray-400 mb-1">
@@ -1262,6 +1299,17 @@ export default function EditorToolbar({ editor, onSave, onCancel, driveType = 'b
       >
         <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 17V7m0 10a2 2 0 01-2 2H5a2 2 0 01-2-2V7a2 2 0 012-2h2a2 2 0 012 2m0 10a2 2 0 002 2h2a2 2 0 002-2M9 7a2 2 0 012-2h2a2 2 0 012 2m0 10V7m0 10a2 2 0 002 2h2a2 2 0 002-2V7a2 2 0 00-2-2h-2a2 2 0 00-2 2" />
+        </svg>
+      </ToolbarButton>
+
+      <ToolbarButton
+        onClick={() => editor.chain().focus().setDetails().run()}
+        isActive={editor.isActive('details')}
+        title="접기/펼치기 (더블클릭하여 제목 수정)"
+      >
+        <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 5h14v2H5z" />
         </svg>
       </ToolbarButton>
 
