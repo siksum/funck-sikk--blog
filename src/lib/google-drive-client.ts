@@ -56,6 +56,56 @@ function getFolderCreationCache(): Map<string, Promise<string>> {
   return window.__googleDriveFolderCreationCache;
 }
 
+// Helper function to list folders in a parent and cache ALL of them
+async function listAndCacheFolders(
+  accessToken: string,
+  parentFolderId: string
+): Promise<Array<{ id: string; name: string }>> {
+  const knownFolderIds = getKnownFolderIds();
+
+  const listQuery = encodeURIComponent(
+    `mimeType='application/vnd.google-apps.folder' and '${parentFolderId}' in parents and trashed=false`
+  );
+
+  const listResponse = await fetch(
+    `https://www.googleapis.com/drive/v3/files?q=${listQuery}&supportsAllDrives=true&includeItemsFromAllDrives=true&fields=files(id,name)&pageSize=1000`,
+    {
+      headers: {
+        Authorization: `Bearer ${accessToken}`,
+      },
+    }
+  );
+
+  if (!listResponse.ok) {
+    const errorText = await listResponse.text();
+    console.warn('List folders failed:', errorText);
+    return [];
+  }
+
+  const listResult = await listResponse.json();
+  const folders = listResult.files || [];
+
+  console.log(`Listed ${folders.length} folders in parent ${parentFolderId}`);
+
+  // Cache ALL folders found with multiple key formats for maximum compatibility
+  for (const folder of folders) {
+    // Cache with normalized name (lowercase)
+    const normalizedFolderName = normalizeFolderName(folder.name);
+    const normalizedKey = `${parentFolderId}:${normalizedFolderName.toLowerCase()}`;
+    knownFolderIds.set(normalizedKey, folder.id);
+
+    // Also cache with original name (lowercase) for direct lookups
+    const originalKey = `${parentFolderId}:${folder.name.toLowerCase()}`;
+    if (originalKey !== normalizedKey) {
+      knownFolderIds.set(originalKey, folder.id);
+    }
+
+    console.log(`Cached folder: "${folder.name}" (${folder.id}) with keys: ${normalizedKey}, ${originalKey}`);
+  }
+
+  return folders;
+}
+
 // Internal function that actually finds or creates the folder
 async function findOrCreateSingleFolderInternal(
   accessToken: string,
@@ -74,45 +124,40 @@ async function findOrCreateSingleFolderInternal(
     return cachedFolderId;
   }
 
-  // List all folders in the parent directory
-  // Use simple query without corpora parameter for better compatibility
-  const listQuery = encodeURIComponent(
-    `mimeType='application/vnd.google-apps.folder' and '${parentFolderId}' in parents and trashed=false`
-  );
+  // Also check with original name as cache key
+  const originalCacheKey = `${parentFolderId}:${folderName.toLowerCase()}`;
+  const cachedByOriginal = knownFolderIds.get(originalCacheKey);
+  if (cachedByOriginal) {
+    console.log(`Using cached folder ID (original name) for "${folderName}": ${cachedByOriginal}`);
+    // Also store with normalized key for consistency
+    knownFolderIds.set(cacheKey, cachedByOriginal);
+    return cachedByOriginal;
+  }
 
-  // Try listing with allDrives first (for shared drives)
-  const listResponse = await fetch(
-    `https://www.googleapis.com/drive/v3/files?q=${listQuery}&supportsAllDrives=true&includeItemsFromAllDrives=true&fields=files(id,name)`,
-    {
-      headers: {
-        Authorization: `Bearer ${accessToken}`,
-      },
+  // List all folders and cache them
+  const folders = await listAndCacheFolders(accessToken, parentFolderId);
+
+  // Check cache again after listing (listAndCacheFolders populates the cache)
+  const cachedAfterList = knownFolderIds.get(cacheKey) || knownFolderIds.get(originalCacheKey);
+  if (cachedAfterList) {
+    console.log(`Found folder in cache after listing: ${cachedAfterList}`);
+    return cachedAfterList;
+  }
+
+  // Also do a direct search through the results for extra safety
+  if (folders.length > 0) {
+    const existingFolder = folders.find(
+      (f: { id: string; name: string }) =>
+        f.name.toLowerCase() === normalizedName.toLowerCase() ||
+        f.name.toLowerCase() === folderName.toLowerCase()
+    );
+    if (existingFolder) {
+      console.log(`Found existing folder via direct search: ${existingFolder.name} (${existingFolder.id})`);
+      knownFolderIds.set(cacheKey, existingFolder.id);
+      return existingFolder.id;
     }
-  );
-
-  if (listResponse.ok) {
-    const listResult = await listResponse.json();
-    console.log(`Listed ${listResult.files?.length || 0} folders in parent ${parentFolderId}`);
-
-    if (listResult.files && listResult.files.length > 0) {
-      // Find folder with case-insensitive name match
-      const existingFolder = listResult.files.find(
-        (f: { id: string; name: string }) =>
-          f.name.toLowerCase() === normalizedName.toLowerCase() ||
-          f.name.toLowerCase() === folderName.toLowerCase()
-      );
-      if (existingFolder) {
-        console.log(`Found existing folder: ${existingFolder.name} (${existingFolder.id})`);
-        // Store in persistent cache for future lookups
-        knownFolderIds.set(cacheKey, existingFolder.id);
-        return existingFolder.id;
-      }
-      // Log all found folders for debugging
-      console.log(`No match for "${normalizedName}" in:`, listResult.files.map((f: { name: string }) => f.name));
-    }
-  } else {
-    const errorText = await listResponse.text();
-    console.warn('List folders failed:', errorText);
+    // Log all found folders for debugging
+    console.log(`No match for "${normalizedName}" (original: "${folderName}") in:`, folders.map((f: { name: string }) => f.name));
   }
 
   // Create new folder if not found
@@ -181,6 +226,47 @@ async function findOrCreateSingleFolder(
   return creationPromise;
 }
 
+// Pre-fetch all folders in the path to populate cache before creating
+// This ensures we find existing folders even after page refresh
+async function prefetchFolderPath(
+  accessToken: string,
+  rootFolderId: string,
+  categoryPath: string
+): Promise<void> {
+  const parts = categoryPath.split('/').filter(p => p.trim() !== '');
+  const knownFolderIds = getKnownFolderIds();
+
+  console.log(`Pre-fetching folder path: ${categoryPath}`);
+
+  let currentParentId = rootFolderId;
+
+  for (const folderName of parts) {
+    const normalizedName = normalizeFolderName(folderName);
+    const cacheKey = `${currentParentId}:${normalizedName.toLowerCase()}`;
+    const originalCacheKey = `${currentParentId}:${folderName.toLowerCase()}`;
+
+    // Check cache first
+    let folderId = knownFolderIds.get(cacheKey) || knownFolderIds.get(originalCacheKey);
+
+    if (!folderId) {
+      // List and cache all folders in this level
+      const folders = await listAndCacheFolders(accessToken, currentParentId);
+
+      // Check cache again after listing
+      folderId = knownFolderIds.get(cacheKey) || knownFolderIds.get(originalCacheKey);
+
+      if (!folderId) {
+        // Folder doesn't exist at this level, stop prefetching
+        console.log(`Folder "${normalizedName}" not found in parent ${currentParentId}, stopping prefetch`);
+        break;
+      }
+    }
+
+    console.log(`Pre-fetched folder "${normalizedName}": ${folderId}`);
+    currentParentId = folderId;
+  }
+}
+
 // Find or create nested category folders (supports paths like "wargame/bandit")
 async function findOrCreateCategoryFolder(
   accessToken: string,
@@ -191,6 +277,9 @@ async function findOrCreateCategoryFolder(
   const parts = categoryPath.split('/').filter(p => p.trim() !== '');
 
   console.log(`Creating category path: ${categoryPath} (parts: ${parts.join(' -> ')}) in root ${rootFolderId}`);
+
+  // Pre-fetch existing folders first to populate cache
+  await prefetchFolderPath(accessToken, rootFolderId, categoryPath);
 
   let currentParentId = rootFolderId;
   for (const folderName of parts) {
