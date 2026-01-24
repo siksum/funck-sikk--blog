@@ -188,14 +188,24 @@ export async function uploadToGoogleDriveDirect(
   }
 
   const fileName = uploadResult.name || file.name;
+  const mimeType = uploadResult.mimeType || file.type;
+
+  // Use appropriate URL format based on file type
+  let url: string;
+  if (mimeType.startsWith('image/')) {
+    // For images, use lh3.googleusercontent.com for direct embedding
+    url = `https://lh3.googleusercontent.com/d/${fileId}`;
+  } else {
+    // For other files, use download URL
+    url = `https://drive.google.com/uc?id=${fileId}&export=download&name=${encodeURIComponent(fileName)}`;
+  }
 
   return {
-    // Include filename in URL as query parameter for display purposes
-    url: `https://drive.google.com/uc?id=${fileId}&export=download&name=${encodeURIComponent(fileName)}`,
+    url,
     fileId: fileId,
     fileName: fileName,
     webViewLink: uploadResult.webViewLink || `https://drive.google.com/file/d/${fileId}/view`,
-    mimeType: uploadResult.mimeType || file.type,
+    mimeType: mimeType,
     provider: 'google-drive',
   };
 }
