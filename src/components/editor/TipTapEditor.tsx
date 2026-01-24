@@ -229,12 +229,17 @@ export default function TipTapEditor({
     return () => clearTimeout(timer);
   }, [editor?.getHTML(), hasChanges]);
 
-  // Keyboard shortcut for manual save
+  // Keyboard shortcuts
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
       if ((e.metaKey || e.ctrlKey) && e.key === 's') {
         e.preventDefault();
         handleSave();
+      }
+      // Cmd+E for inline code
+      if ((e.metaKey || e.ctrlKey) && e.key === 'e') {
+        e.preventDefault();
+        editor?.chain().focus().toggleCode().run();
       }
     };
 
