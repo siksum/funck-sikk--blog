@@ -146,6 +146,7 @@ export default function TipTapEditor({
   const [isSaving, setIsSaving] = useState(false);
   const [lastSaved, setLastSaved] = useState<Date | null>(null);
   const [hasChanges, setHasChanges] = useState(false);
+  const [isUploadingImage, setIsUploadingImage] = useState(false);
 
   const editor = useEditor({
     extensions: [
@@ -217,6 +218,56 @@ export default function TipTapEditor({
       }
     },
   });
+
+  // Handle image paste - upload to Google Drive
+  useEffect(() => {
+    if (!editor) return;
+
+    const handlePaste = async (event: ClipboardEvent) => {
+      const items = event.clipboardData?.items;
+      if (!items) return;
+
+      for (let i = 0; i < items.length; i++) {
+        const item = items[i];
+        if (item.type.startsWith('image/')) {
+          const file = item.getAsFile();
+          if (file) {
+            event.preventDefault();
+            setIsUploadingImage(true);
+            try {
+              const { uploadToGoogleDriveDirect } = await import('@/lib/google-drive-client');
+              // Use the appropriate category path based on driveType
+              const categoryPath = driveType === 'sikk'
+                ? `sikk/${category || 'images'}`
+                : `blog/${category || 'images'}`;
+              const result = await uploadToGoogleDriveDirect(file, { driveType, category: categoryPath });
+
+              // Insert image with caption
+              editor.chain().focus().setImageWithCaption({
+                src: result.url,
+                alt: file.name,
+                caption: '',
+              }).run();
+            } catch (error) {
+              console.error('Image upload error:', error);
+              alert(`이미지 업로드 실패: ${error instanceof Error ? error.message : '알 수 없는 오류'}`);
+            } finally {
+              setIsUploadingImage(false);
+            }
+            return;
+          }
+        }
+      }
+    };
+
+    // Add paste event listener to the editor element
+    const editorElement = editor.view.dom;
+    editorElement.addEventListener('paste', handlePaste as unknown as EventListener);
+
+    return () => {
+      editorElement.removeEventListener('paste', handlePaste as unknown as EventListener);
+    };
+  }, [editor, driveType, category]);
 
   // Autosave with debounce
   useEffect(() => {
@@ -300,6 +351,12 @@ export default function TipTapEditor({
             <span className="flex items-center gap-1">
               <span className="w-2 h-2 rounded-full bg-yellow-500"></span>
               저장되지 않은 변경사항
+            </span>
+          )}
+          {isUploadingImage && (
+            <span className="flex items-center gap-1">
+              <span className="animate-spin w-3 h-3 border-2 border-blue-500 border-t-transparent rounded-full"></span>
+              이미지 업로드 중...
             </span>
           )}
           {isSaving && (

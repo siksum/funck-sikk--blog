@@ -127,7 +127,7 @@ export const ImageWithCaption = Node.create<ImageWithCaptionOptions>({
       img.src = node.attrs.src;
       if (node.attrs.alt) img.alt = node.attrs.alt;
       if (node.attrs.title) img.title = node.attrs.title;
-      img.classList.add('rounded-lg', 'max-w-full', 'h-auto');
+      img.classList.add('rounded-xl', 'max-w-full', 'h-auto');
 
       const captionWrapper = document.createElement('figcaption');
       captionWrapper.classList.add('image-caption');

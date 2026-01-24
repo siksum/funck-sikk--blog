@@ -127,21 +127,30 @@ export const Details = Node.create<DetailsOptions>({
 
       // Toggle open attribute when summary is clicked
       summary.addEventListener('click', (e) => {
-        // Allow default toggle behavior
-        setTimeout(() => {
-          if (typeof getPos === 'function') {
-            const pos = getPos();
-            if (pos !== undefined) {
-              editor.commands.command(({ tr }) => {
-                tr.setNodeMarkup(pos, undefined, {
-                  ...node.attrs,
-                  open: container.open,
-                });
-                return true;
+        e.preventDefault();
+        e.stopPropagation();
+
+        // Manually toggle the open state
+        const newOpenState = !container.open;
+        if (newOpenState) {
+          container.setAttribute('open', 'open');
+        } else {
+          container.removeAttribute('open');
+        }
+
+        // Update the editor state
+        if (typeof getPos === 'function') {
+          const pos = getPos();
+          if (pos !== undefined) {
+            editor.commands.command(({ tr }) => {
+              tr.setNodeMarkup(pos, undefined, {
+                ...node.attrs,
+                open: newOpenState,
               });
-            }
+              return true;
+            });
           }
-        }, 0);
+        }
       });
 
       const content = document.createElement('div');

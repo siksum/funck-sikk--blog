@@ -717,6 +717,14 @@ code, pre, .font-mono {
 }
 
 /* Image with Caption */
+/* All images should have rounded corners */
+.mdx-html-content img,
+.prose img {
+  border-radius: 0.75rem;
+  max-width: 100%;
+  height: auto;
+}
+
 .mdx-html-content figure[data-type="image"],
 .prose figure[data-type="image"] {
   margin: 1rem 0;
@@ -729,7 +737,7 @@ code, pre, .font-mono {
   display: block;
   max-width: 100%;
   height: auto;
-  border-radius: 0.5rem;
+  border-radius: 0.75rem;
 }
 
 .mdx-html-content .image-caption,
