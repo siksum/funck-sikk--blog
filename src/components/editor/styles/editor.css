@@ -695,6 +695,11 @@
   display: none;
 }
 
+.tiptap-editor .details-block .details-summary::marker {
+  display: none;
+  content: '';
+}
+
 /* Toggle button is now a real element, not a pseudo-element */
 .tiptap-editor .details-block .details-toggle-btn {
   flex-shrink: 0;
@@ -743,6 +748,11 @@
 
 .tiptap-editor .collapsible-heading .collapsible-heading-summary::-webkit-details-marker {
   display: none;
+}
+
+.tiptap-editor .collapsible-heading .collapsible-heading-summary::marker {
+  display: none;
+  content: '';
 }
 
 /* Toggle button is now a real element, not a pseudo-element */
