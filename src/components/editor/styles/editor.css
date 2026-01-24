@@ -29,6 +29,13 @@
   content: none !important;
 }
 
+/* Remove ::before arrows added by globals.css since we use a real toggle button element */
+.tiptap-editor .details-summary::before,
+.tiptap-editor .collapsible-heading-summary::before {
+  content: none !important;
+  display: none !important;
+}
+
 /* Placeholder */
 .tiptap-editor p.is-editor-empty:first-child::before {
   content: attr(data-placeholder);
