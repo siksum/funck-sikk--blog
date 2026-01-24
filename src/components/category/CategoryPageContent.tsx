@@ -64,8 +64,8 @@ export default function CategoryPageContent({
 }: CategoryPageContentProps) {
   const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
   const [searchTerm, setSearchTerm] = useState('');
-  const [sortBy, setSortBy] = useState<'date' | 'title'>('date');
-  const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('desc');
+  const [sortBy, setSortBy] = useState<'date' | 'title'>('title');
+  const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('asc');
   const [commentCounts, setCommentCounts] = useState<Record<string, number>>({});
 
   // Fetch comment counts
@@ -105,7 +105,7 @@ export default function CategoryPageContent({
       if (sortBy === 'date') {
         comparison = new Date(a.date).getTime() - new Date(b.date).getTime();
       } else {
-        comparison = a.title.localeCompare(b.title, 'ko');
+        comparison = a.title.localeCompare(b.title, 'ko', { numeric: true });
       }
       return sortOrder === 'asc' ? comparison : -comparison;
     });
