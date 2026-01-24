@@ -1,7 +1,7 @@
 'use client';
 
 import { Editor } from '@tiptap/react';
-import { useCallback, useState, useRef } from 'react';
+import { useCallback, useState, useRef, useEffect } from 'react';
 import { uploadToGoogleDriveDirect } from '@/lib/google-drive-client';
 import GoogleDriveFileBrowser from '@/components/common/GoogleDriveFileBrowser';
 
@@ -161,8 +161,57 @@ export default function EditorToolbar({ editor, onSave, onCancel, driveType = 'b
   const [showTableCellColorPicker, setShowTableCellColorPicker] = useState(false);
   const [showTableInsertMenu, setShowTableInsertMenu] = useState(false);
   const [useImageCaption, setUseImageCaption] = useState(true);
+  const [isSticky, setIsSticky] = useState(false);
+  const [toolbarWidth, setToolbarWidth] = useState<number | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const pdfInputRef = useRef<HTMLInputElement>(null);
+  const toolbarRef = useRef<HTMLDivElement>(null);
+  const placeholderRef = useRef<HTMLDivElement>(null);
+  const originalTopRef = useRef<number | null>(null);
+
+  // Handle sticky toolbar behavior
+  useEffect(() => {
+    const toolbar = toolbarRef.current;
+    if (!toolbar) return;
+
+    const updateStickyState = () => {
+      if (!toolbar) return;
+
+      // Get the original position on first scroll
+      if (originalTopRef.current === null) {
+        const rect = toolbar.getBoundingClientRect();
+        originalTopRef.current = rect.top + window.scrollY;
+        setToolbarWidth(rect.width);
+      }
+
+      const scrollY = window.scrollY;
+      const threshold = originalTopRef.current - 16; // 16px offset from top
+
+      if (scrollY > threshold && !isSticky) {
+        setIsSticky(true);
+        // Update width when becoming sticky
+        const rect = toolbar.getBoundingClientRect();
+        setToolbarWidth(rect.width);
+      } else if (scrollY <= threshold && isSticky) {
+        setIsSticky(false);
+      }
+    };
+
+    // Initial check
+    updateStickyState();
+
+    window.addEventListener('scroll', updateStickyState, { passive: true });
+    window.addEventListener('resize', () => {
+      // Reset on resize to recalculate
+      originalTopRef.current = null;
+      setIsSticky(false);
+    });
+
+    return () => {
+      window.removeEventListener('scroll', updateStickyState);
+      window.removeEventListener('resize', () => {});
+    };
+  }, [isSticky]);
 
   const setLink = useCallback(() => {
     if (linkUrl) {
@@ -347,7 +396,22 @@ export default function EditorToolbar({ editor, onSave, onCancel, driveType = 'b
   }, [editor, driveBrowserMode, pdfDisplayMode, useImageCaption]);
 
   return (
-    <div className="sticky top-4 z-40 bg-white/95 dark:bg-gray-900/95 backdrop-blur border-2 border-pink-200 dark:border-pink-500/40 rounded-lg p-2 mb-4 flex flex-wrap items-center gap-1 shadow-lg">
+    <>
+      {/* Placeholder to prevent layout shift when toolbar becomes fixed */}
+      {isSticky && (
+        <div
+          ref={placeholderRef}
+          style={{ height: toolbarRef.current?.offsetHeight || 0 }}
+          className="mb-4"
+        />
+      )}
+      <div
+        ref={toolbarRef}
+        className={`bg-white/95 dark:bg-gray-900/95 backdrop-blur border-2 border-pink-200 dark:border-pink-500/40 rounded-lg p-2 flex flex-wrap items-center gap-1 shadow-lg ${
+          isSticky ? 'fixed top-4 left-4 right-4 z-50' : 'mb-4 z-40'
+        }`}
+        style={isSticky && toolbarWidth ? { maxWidth: toolbarWidth, margin: '0 auto', left: '50%', transform: 'translateX(-50%)' } : undefined}
+      >
       {/* Text Formatting */}
       <ToolbarButton
         onClick={() => editor.chain().focus().toggleBold().run()}
@@ -1349,6 +1413,7 @@ export default function EditorToolbar({ editor, onSave, onCancel, driveType = 'b
         multiple={false}
         acceptedTypes={driveBrowserMode === 'image' ? ['image/*'] : ['application/pdf']}
       />
-    </div>
+      </div>
+    </>
   );
 }
