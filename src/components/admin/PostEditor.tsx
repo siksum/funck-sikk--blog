@@ -547,7 +547,16 @@ export default function PostEditor({ initialData = {}, isEdit = false }: PostEdi
   };
 
   return (
-    <form onSubmit={handleSubmit} className="space-y-6">
+    <form
+      onSubmit={handleSubmit}
+      onKeyDown={(e) => {
+        // Prevent Enter key in text inputs from submitting the form
+        if (e.key === 'Enter' && e.target instanceof HTMLInputElement && e.target.type === 'text') {
+          e.preventDefault();
+        }
+      }}
+      className="space-y-6"
+    >
       {/* Template and Management Buttons */}
       <div className="flex flex-wrap gap-2">
         {!isEdit && (
