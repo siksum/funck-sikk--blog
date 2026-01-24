@@ -236,10 +236,8 @@ export default function TipTapEditor({
             setIsUploadingImage(true);
             try {
               const { uploadToGoogleDriveDirect } = await import('@/lib/google-drive-client');
-              // Use the appropriate category path based on driveType
-              const categoryPath = driveType === 'sikk'
-                ? `sikk/${category || 'images'}`
-                : `blog/${category || 'images'}`;
+              // Use actual category path (e.g., wargame/bandit)
+              const categoryPath = category || 'images';
               const result = await uploadToGoogleDriveDirect(file, { driveType, category: categoryPath });
 
               // Insert image with caption
