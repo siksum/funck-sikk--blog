@@ -24,14 +24,37 @@ function normalizeFolderName(name: string): string {
     .join(''); // No spaces - "Wargame" not "War Game"
 }
 
-// Persistent cache of known folder IDs (survives the entire session)
-// Key format: "parentFolderId:normalizedFolderName" -> folderId
-// This prevents duplicate folder creation due to Google Drive API eventual consistency
-const knownFolderIds: Map<string, string> = new Map();
+// Declare global window properties for TypeScript
+declare global {
+  interface Window {
+    __googleDriveKnownFolderIds?: Map<string, string>;
+    __googleDriveFolderCreationCache?: Map<string, Promise<string>>;
+  }
+}
 
-// Cache to store pending folder creation promises to prevent race conditions
+// Get persistent cache of known folder IDs (uses window global to survive module reloads)
+// Key format: "parentFolderId:normalizedFolderName" -> folderId
+function getKnownFolderIds(): Map<string, string> {
+  if (typeof window === 'undefined') {
+    return new Map();
+  }
+  if (!window.__googleDriveKnownFolderIds) {
+    window.__googleDriveKnownFolderIds = new Map();
+  }
+  return window.__googleDriveKnownFolderIds;
+}
+
+// Get cache for pending folder creation promises (uses window global to survive module reloads)
 // Key format: "parentFolderId:normalizedFolderName"
-const folderCreationCache: Map<string, Promise<string>> = new Map();
+function getFolderCreationCache(): Map<string, Promise<string>> {
+  if (typeof window === 'undefined') {
+    return new Map();
+  }
+  if (!window.__googleDriveFolderCreationCache) {
+    window.__googleDriveFolderCreationCache = new Map();
+  }
+  return window.__googleDriveFolderCreationCache;
+}
 
 // Internal function that actually finds or creates the folder
 async function findOrCreateSingleFolderInternal(
@@ -42,6 +65,7 @@ async function findOrCreateSingleFolderInternal(
   // Normalize folder name for consistency
   const normalizedName = normalizeFolderName(folderName);
   const cacheKey = `${parentFolderId}:${normalizedName.toLowerCase()}`;
+  const knownFolderIds = getKnownFolderIds();
 
   // Check persistent cache first (handles Google Drive API eventual consistency)
   const cachedFolderId = knownFolderIds.get(cacheKey);
@@ -135,6 +159,7 @@ async function findOrCreateSingleFolder(
 ): Promise<string> {
   const normalizedName = normalizeFolderName(folderName);
   const cacheKey = `${parentFolderId}:${normalizedName.toLowerCase()}`;
+  const folderCreationCache = getFolderCreationCache();
 
   // Check if there's already a pending creation for this folder
   const pending = folderCreationCache.get(cacheKey);
@@ -148,7 +173,7 @@ async function findOrCreateSingleFolder(
     .finally(() => {
       // Clean up cache after completion, with a small delay to catch very close race conditions
       setTimeout(() => {
-        folderCreationCache.delete(cacheKey);
+        getFolderCreationCache().delete(cacheKey);
       }, 2000);
     });
 
