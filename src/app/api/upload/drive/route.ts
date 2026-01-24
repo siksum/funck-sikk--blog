@@ -8,10 +8,12 @@ export const maxDuration = 60;
 
 // Initialize Google Drive API
 function getDriveClient() {
+  const privateKey = process.env.GOOGLE_DRIVE_PRIVATE_KEY?.replace(/\\n/g, '\n');
+
   const auth = new google.auth.GoogleAuth({
     credentials: {
       client_email: process.env.GOOGLE_DRIVE_CLIENT_EMAIL,
-      private_key: process.env.GOOGLE_DRIVE_PRIVATE_KEY?.replace(/\\n/g, '\n'),
+      private_key: privateKey,
     },
     scopes: ['https://www.googleapis.com/auth/drive.file'],
   });
@@ -19,12 +21,28 @@ function getDriveClient() {
   return google.drive({ version: 'v3', auth });
 }
 
+// Convert buffer to readable stream
+function bufferToStream(buffer: Buffer): Readable {
+  const readable = new Readable({
+    read() {
+      this.push(buffer);
+      this.push(null);
+    }
+  });
+  return readable;
+}
+
 export async function POST(request: NextRequest) {
   try {
     // Check if Google Drive is configured
     if (!process.env.GOOGLE_DRIVE_CLIENT_EMAIL || !process.env.GOOGLE_DRIVE_PRIVATE_KEY || !process.env.GOOGLE_DRIVE_FOLDER_ID) {
+      console.error('Missing Google Drive config:', {
+        hasEmail: !!process.env.GOOGLE_DRIVE_CLIENT_EMAIL,
+        hasKey: !!process.env.GOOGLE_DRIVE_PRIVATE_KEY,
+        hasFolderId: !!process.env.GOOGLE_DRIVE_FOLDER_ID,
+      });
       return NextResponse.json(
-        { error: 'Google Drive is not configured' },
+        { error: 'Google Drive is not configured. Please set environment variables.' },
         { status: 500 }
       );
     }
@@ -37,10 +55,10 @@ export async function POST(request: NextRequest) {
     }
 
     // Validate file type
-    const validTypes = ['image/jpeg', 'image/png', 'image/gif', 'image/webp'];
+    const validTypes = ['image/jpeg', 'image/png', 'image/gif', 'image/webp', 'image/svg+xml'];
     if (!validTypes.includes(file.type)) {
       return NextResponse.json(
-        { error: 'Invalid file type. Allowed: JPEG, PNG, GIF, WebP' },
+        { error: 'Invalid file type. Allowed: JPEG, PNG, GIF, WebP, SVG' },
         { status: 400 }
       );
     }
@@ -49,15 +67,12 @@ export async function POST(request: NextRequest) {
     const bytes = await file.arrayBuffer();
     const buffer = Buffer.from(bytes);
 
-    // Create readable stream from buffer
-    const stream = new Readable();
-    stream.push(buffer);
-    stream.push(null);
-
     // Upload to Google Drive
     const drive = getDriveClient();
     const timestamp = Date.now();
     const fileName = `banner_${timestamp}_${file.name}`;
+
+    console.log('Uploading to Google Drive:', { fileName, size: buffer.length, type: file.type });
 
     const response = await drive.files.create({
       requestBody: {
@@ -66,12 +81,13 @@ export async function POST(request: NextRequest) {
       },
       media: {
         mimeType: file.type,
-        body: stream,
+        body: bufferToStream(buffer),
       },
       fields: 'id, name, webViewLink, webContentLink',
     });
 
     const fileId = response.data.id;
+    console.log('File uploaded, setting permissions:', fileId);
 
     // Make the file publicly accessible
     await drive.permissions.create({
@@ -82,9 +98,10 @@ export async function POST(request: NextRequest) {
       },
     });
 
-    // Get the direct link for the image
-    // Google Drive direct link format: https://drive.google.com/uc?export=view&id=FILE_ID
-    const directUrl = `https://drive.google.com/uc?export=view&id=${fileId}`;
+    // Use lh3.googleusercontent.com for direct image access (better for embedding)
+    const directUrl = `https://lh3.googleusercontent.com/d/${fileId}`;
+
+    console.log('Upload successful:', directUrl);
 
     return NextResponse.json({
       url: directUrl,
