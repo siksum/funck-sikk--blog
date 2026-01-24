@@ -306,43 +306,28 @@ export default function SikkPostContent({ content, slug, isAdmin, initialMetadat
                     onChange={async (e) => {
                       const file = e.target.files?.[0];
                       if (!file) return;
-                      // Check file size (max 100MB - Cloudinary limit)
-                      if (file.size > 100 * 1024 * 1024) {
-                        alert('파일이 너무 큽니다. 100MB 이하의 이미지를 사용해주세요.');
+                      // Check file size (max 50MB)
+                      if (file.size > 50 * 1024 * 1024) {
+                        alert('파일이 너무 큽니다. 50MB 이하의 이미지를 사용해주세요.');
                         return;
                       }
                       try {
-                        // Get signature from our API
-                        const sigResponse = await fetch('/api/upload/signature', {
-                          method: 'POST',
-                          headers: { 'Content-Type': 'application/json' },
-                          body: JSON.stringify({ folder: 'sikk/banners' }),
-                        });
-                        if (!sigResponse.ok) {
-                          throw new Error('서명 생성 실패');
-                        }
-                        const { signature, timestamp, cloudName, apiKey, folder } = await sigResponse.json();
-
-                        // Upload directly to Cloudinary
+                        // Upload to Google Drive
                         const formDataUpload = new FormData();
                         formDataUpload.append('file', file);
-                        formDataUpload.append('signature', signature);
-                        formDataUpload.append('timestamp', timestamp.toString());
-                        formDataUpload.append('api_key', apiKey);
-                        formDataUpload.append('folder', folder);
 
-                        const uploadResponse = await fetch(
-                          `https://api.cloudinary.com/v1_1/${cloudName}/image/upload`,
-                          { method: 'POST', body: formDataUpload }
-                        );
+                        const response = await fetch('/api/upload/drive', {
+                          method: 'POST',
+                          body: formDataUpload,
+                        });
 
-                        if (!uploadResponse.ok) {
-                          const errorData = await uploadResponse.json();
-                          throw new Error(errorData.error?.message || '업로드 실패');
+                        if (!response.ok) {
+                          const errorData = await response.json();
+                          throw new Error(errorData.error || '업로드 실패');
                         }
 
-                        const data = await uploadResponse.json();
-                        setMetadata(prev => ({ ...prev, thumbnail: data.secure_url }));
+                        const data = await response.json();
+                        setMetadata(prev => ({ ...prev, thumbnail: data.url }));
                       } catch (error) {
                         console.error('Upload error:', error);
                         alert(`이미지 업로드 실패: ${error instanceof Error ? error.message : '네트워크 오류'}`);
