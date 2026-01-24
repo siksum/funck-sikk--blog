@@ -195,6 +195,7 @@ export default function GoogleDriveFileBrowser({
             Google Drive에서 파일 선택
           </h2>
           <button
+            type="button"
             onClick={onClose}
             className="p-1 hover:bg-gray-100 dark:hover:bg-gray-700 rounded"
           >
@@ -207,6 +208,7 @@ export default function GoogleDriveFileBrowser({
         {/* Drive Type Tabs */}
         <div className="flex border-b border-gray-200 dark:border-gray-700">
           <button
+            type="button"
             onClick={() => switchDrive('blog')}
             className={`flex-1 px-4 py-2 text-sm font-medium transition-colors ${
               activeDriveType === 'blog'
@@ -217,6 +219,7 @@ export default function GoogleDriveFileBrowser({
             📁 Blog Drive
           </button>
           <button
+            type="button"
             onClick={() => switchDrive('sikk')}
             className={`flex-1 px-4 py-2 text-sm font-medium transition-colors ${
               activeDriveType === 'sikk'
@@ -227,6 +230,7 @@ export default function GoogleDriveFileBrowser({
             📁 Sikk Drive
           </button>
           <button
+            type="button"
             onClick={() => switchDrive('home')}
             className={`flex-1 px-4 py-2 text-sm font-medium transition-colors ${
               activeDriveType === 'home'
@@ -241,6 +245,7 @@ export default function GoogleDriveFileBrowser({
         {/* Breadcrumb */}
         <div className="flex items-center gap-1 px-4 py-2 text-sm text-gray-600 dark:text-gray-400 border-b border-gray-200 dark:border-gray-700 overflow-x-auto">
           <button
+            type="button"
             onClick={navigateToRoot}
             className="hover:text-pink-600 dark:hover:text-pink-400 whitespace-nowrap"
           >
@@ -250,6 +255,7 @@ export default function GoogleDriveFileBrowser({
             <span key={folder.id} className="flex items-center gap-1">
               <span>/</span>
               <button
+                type="button"
                 onClick={() => {
                   const newPath = folderPath.slice(0, index + 1);
                   setFolderPath(newPath);
@@ -274,6 +280,7 @@ export default function GoogleDriveFileBrowser({
             <div className="text-center py-12 text-red-500">
               <p>{error}</p>
               <button
+                type="button"
                 onClick={() => loadFiles(currentFolderId || undefined)}
                 className="mt-2 text-pink-600 hover:underline"
               >
@@ -285,6 +292,7 @@ export default function GoogleDriveFileBrowser({
               {/* Back button */}
               {folderPath.length > 0 && (
                 <button
+                  type="button"
                   onClick={navigateBack}
                   className="flex items-center gap-2 w-full p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 text-gray-700 dark:text-gray-300 mb-2"
                 >
@@ -298,6 +306,7 @@ export default function GoogleDriveFileBrowser({
               {/* Folders */}
               {folders.map(folder => (
                 <button
+                  type="button"
                   key={folder.id}
                   onClick={() => navigateToFolder(folder)}
                   className="flex items-center gap-3 w-full p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 text-left"
@@ -317,6 +326,7 @@ export default function GoogleDriveFileBrowser({
 
                 return (
                   <button
+                    type="button"
                     key={file.id}
                     onClick={() => isAccepted && toggleFileSelection(file)}
                     disabled={!isAccepted}
@@ -349,6 +359,7 @@ export default function GoogleDriveFileBrowser({
               {/* Load more */}
               {nextPageToken && (
                 <button
+                  type="button"
                   onClick={() => loadFiles(currentFolderId || undefined, true)}
                   disabled={loading}
                   className="w-full mt-4 py-2 text-center text-pink-600 dark:text-pink-400 hover:underline disabled:opacity-50"
@@ -376,12 +387,14 @@ export default function GoogleDriveFileBrowser({
           </p>
           <div className="flex gap-2">
             <button
+              type="button"
               onClick={onClose}
               className="px-4 py-2 text-sm rounded-lg border border-gray-300 dark:border-gray-600 hover:bg-gray-100 dark:hover:bg-gray-700"
             >
               취소
             </button>
             <button
+              type="button"
               onClick={handleConfirm}
               disabled={selectedFiles.length === 0}
               className="px-4 py-2 text-sm rounded-lg bg-pink-500 text-white hover:bg-pink-600 disabled:opacity-50 disabled:cursor-not-allowed"

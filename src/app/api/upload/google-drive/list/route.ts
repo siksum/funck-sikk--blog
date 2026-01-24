@@ -103,12 +103,18 @@ export async function GET(request: NextRequest) {
         }
       } else {
         if (!filesMap.has(file.id!)) {
+          // Use lh3.googleusercontent.com for images (embeddable), uc for downloads
+          const isImage = file.mimeType?.startsWith('image/');
+          const downloadUrl = isImage
+            ? `https://lh3.googleusercontent.com/d/${file.id}`
+            : `https://drive.google.com/uc?id=${file.id}&export=download&name=${encodeURIComponent(file.name!)}`;
+
           filesMap.set(file.id!, {
             id: file.id!,
             name: file.name!,
             mimeType: file.mimeType!,
             webViewLink: file.webViewLink || `https://drive.google.com/file/d/${file.id}/view`,
-            downloadUrl: `https://drive.google.com/uc?id=${file.id}&export=download&name=${encodeURIComponent(file.name!)}`,
+            downloadUrl,
             thumbnailLink: file.thumbnailLink || undefined,
             createdTime: file.createdTime!,
             size: file.size || undefined,
