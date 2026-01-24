@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import dynamic from 'next/dynamic';
+import CloudinaryBrowser from '@/components/admin/CloudinaryBrowser';
 
 // Lazy load TipTap editor
 const TipTapEditor = dynamic(() => import('@/components/editor/TipTapEditor'), {
@@ -83,6 +84,9 @@ export default function PostEditor({ initialData = {}, isEdit = false }: PostEdi
   const [showSectionModal, setShowSectionModal] = useState(false);
   const [newSectionTitle, setNewSectionTitle] = useState('');
   const [newSectionDescription, setNewSectionDescription] = useState('');
+
+  // Cloudinary browser state
+  const [showCloudinaryBrowser, setShowCloudinaryBrowser] = useState(false);
   const [editingSection, setEditingSection] = useState<DBSection | null>(null);
   const [editingSectionTitle, setEditingSectionTitle] = useState('');
   const [editingSectionDescription, setEditingSectionDescription] = useState('');
@@ -645,9 +649,19 @@ export default function PostEditor({ initialData = {}, isEdit = false }: PostEdi
             className="flex-1 px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
             placeholder="이미지 URL 또는 파일 업로드"
           />
-          <label className="px-4 py-2 bg-violet-100 dark:bg-violet-900/30 text-violet-700 dark:text-violet-300 rounded-lg hover:bg-violet-200 dark:hover:bg-violet-900/50 transition-colors cursor-pointer flex items-center gap-2">
+          <button
+            type="button"
+            onClick={() => setShowCloudinaryBrowser(true)}
+            className="px-4 py-2 bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300 rounded-lg hover:bg-blue-200 dark:hover:bg-blue-900/50 transition-colors flex items-center gap-2"
+          >
             <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
+            </svg>
+            찾아보기
+          </button>
+          <label className="px-4 py-2 bg-violet-100 dark:bg-violet-900/30 text-violet-700 dark:text-violet-300 rounded-lg hover:bg-violet-200 dark:hover:bg-violet-900/50 transition-colors cursor-pointer flex items-center gap-2">
+            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" />
             </svg>
             업로드
             <input
@@ -658,8 +672,13 @@ export default function PostEditor({ initialData = {}, isEdit = false }: PostEdi
                 const file = e.target.files?.[0];
                 if (!file) return;
                 try {
+                  // Build folder path based on category
+                  const folder = formData.category
+                    ? `blog/${formData.category.replace(/\//g, '/')}`
+                    : 'blog';
                   const formDataUpload = new FormData();
                   formDataUpload.append('file', file);
+                  formDataUpload.append('folder', folder);
                   const response = await fetch('/api/upload', {
                     method: 'POST',
                     body: formDataUpload,
@@ -668,7 +687,7 @@ export default function PostEditor({ initialData = {}, isEdit = false }: PostEdi
                     const data = await response.json();
                     setFormData(prev => ({ ...prev, thumbnail: data.url }));
                   }
-                } catch (error) {
+                } catch {
                   alert('이미지 업로드에 실패했습니다.');
                 } finally {
                   e.target.value = '';
@@ -1569,6 +1588,14 @@ export default function PostEditor({ initialData = {}, isEdit = false }: PostEdi
           </div>
         </div>
       )}
+
+      {/* Cloudinary Browser Modal */}
+      <CloudinaryBrowser
+        isOpen={showCloudinaryBrowser}
+        onClose={() => setShowCloudinaryBrowser(false)}
+        onSelect={(url) => setFormData((prev) => ({ ...prev, thumbnail: url }))}
+        initialFolder={formData.category ? `blog/${formData.category}` : 'blog'}
+      />
     </form>
   );
 }
