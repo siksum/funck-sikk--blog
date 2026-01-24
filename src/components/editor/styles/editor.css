@@ -686,3 +686,79 @@
 .tiptap-editor .details-block.ProseMirror-selectednode {
   outline: 3px solid #8b5cf6;
 }
+
+/* Collapsible Heading */
+.tiptap-editor .collapsible-heading {
+  margin: 1.5rem 0;
+  border: none;
+  background: transparent;
+}
+
+.tiptap-editor .collapsible-heading .collapsible-heading-summary {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  cursor: pointer;
+  user-select: none;
+  list-style: none;
+  padding: 0.25rem 0;
+}
+
+.tiptap-editor .collapsible-heading .collapsible-heading-summary::-webkit-details-marker {
+  display: none;
+}
+
+.tiptap-editor .collapsible-heading .collapsible-heading-summary::before {
+  content: '▶';
+  font-size: 0.65em;
+  color: #9ca3af;
+  transition: transform 0.2s ease;
+  flex-shrink: 0;
+}
+
+.tiptap-editor .collapsible-heading[open] .collapsible-heading-summary::before {
+  transform: rotate(90deg);
+}
+
+.tiptap-editor .collapsible-heading .collapsible-heading-summary:hover::before {
+  color: #6b7280;
+}
+
+.dark .tiptap-editor .collapsible-heading .collapsible-heading-summary::before {
+  color: #6b7280;
+}
+
+.dark .tiptap-editor .collapsible-heading .collapsible-heading-summary:hover::before {
+  color: #9ca3af;
+}
+
+.tiptap-editor .collapsible-heading .collapsible-heading-title {
+  margin: 0 !important;
+  padding: 0 !important;
+  display: inline;
+}
+
+.tiptap-editor .collapsible-heading .collapsible-heading-content {
+  padding-left: 1.25rem;
+  border-left: 2px solid #e5e7eb;
+  margin-left: 0.35rem;
+  margin-top: 0.5rem;
+}
+
+.dark .tiptap-editor .collapsible-heading .collapsible-heading-content {
+  border-left-color: #4b5563;
+}
+
+.tiptap-editor .collapsible-heading .collapsible-heading-content > *:first-child {
+  margin-top: 0;
+}
+
+.tiptap-editor .collapsible-heading .collapsible-heading-content > *:last-child {
+  margin-bottom: 0;
+}
+
+.tiptap-editor .collapsible-heading.ProseMirror-selectednode {
+  outline: 2px solid #8b5cf6;
+  outline-offset: 4px;
+  border-radius: 4px;
+}

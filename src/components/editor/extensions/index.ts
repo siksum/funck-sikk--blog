@@ -5,3 +5,4 @@ export { MermaidBlock } from './MermaidExtension';
 export { PrivateBlock } from './PrivateBlockExtension';
 export { SelectBlock } from './SelectBlockExtension';
 export { Details } from './DetailsExtension';
+export { CollapsibleHeading } from './CollapsibleHeadingExtension';

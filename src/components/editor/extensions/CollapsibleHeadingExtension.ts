@@ -1,24 +1,26 @@
 import { Node, mergeAttributes } from '@tiptap/core';
 
-export interface DetailsOptions {
+export interface CollapsibleHeadingOptions {
   HTMLAttributes: Record<string, unknown>;
+  levels: number[];
 }
 
 declare module '@tiptap/core' {
   interface Commands<ReturnType> {
-    details: {
-      setDetails: (options?: { title?: string }) => ReturnType;
-      toggleDetailsOpen: () => ReturnType;
+    collapsibleHeading: {
+      setCollapsibleHeading: (options?: { level?: number; title?: string }) => ReturnType;
+      toggleCollapsibleHeadingOpen: () => ReturnType;
     };
   }
 }
 
-export const Details = Node.create<DetailsOptions>({
-  name: 'details',
+export const CollapsibleHeading = Node.create<CollapsibleHeadingOptions>({
+  name: 'collapsibleHeading',
 
   addOptions() {
     return {
       HTMLAttributes: {},
+      levels: [1, 2, 3, 4, 5],
     };
   },
 
@@ -30,10 +32,24 @@ export const Details = Node.create<DetailsOptions>({
 
   addAttributes() {
     return {
+      level: {
+        default: 2,
+        parseHTML: (element) => {
+          const heading = element.querySelector('h1, h2, h3, h4, h5, h6, .collapsible-heading-title');
+          if (heading) {
+            const match = heading.tagName.match(/^H(\d)$/i);
+            if (match) return parseInt(match[1]);
+            // Check data attribute
+            const level = heading.getAttribute('data-level');
+            if (level) return parseInt(level);
+          }
+          return 2;
+        },
+        renderHTML: (attributes) => ({}),
+      },
       open: {
-        default: false,
-        // Don't parse from HTML - always start collapsed
-        parseHTML: () => false,
+        default: true, // Start expanded by default
+        parseHTML: (element) => element.hasAttribute('open'),
         renderHTML: (attributes) => {
           if (!attributes.open) {
             return {};
@@ -42,10 +58,11 @@ export const Details = Node.create<DetailsOptions>({
         },
       },
       title: {
-        default: '접기/펼치기',
-        // Title is extracted in parseHTML getAttrs, not here
-        parseHTML: () => null,
-        renderHTML: () => ({}), // Don't render as HTML attribute
+        default: '제목',
+        parseHTML: (element) => {
+          const heading = element.querySelector('h1, h2, h3, h4, h5, h6, .collapsible-heading-title');
+          return heading?.textContent || '제목';
+        },
       },
     };
   },
@@ -53,25 +70,31 @@ export const Details = Node.create<DetailsOptions>({
   parseHTML() {
     return [
       {
-        tag: 'details',
+        tag: 'details.collapsible-heading',
         getAttrs: (element) => {
           const el = element as HTMLElement;
           const summary = el.querySelector('summary');
+          const heading = summary?.querySelector('h1, h2, h3, h4, h5, h6, .collapsible-heading-title');
+          let level = 2;
+          if (heading) {
+            const match = heading.tagName.match(/^H(\d)$/i);
+            if (match) level = parseInt(match[1]);
+            const dataLevel = heading.getAttribute('data-level');
+            if (dataLevel) level = parseInt(dataLevel);
+          }
           return {
-            open: false, // Always start collapsed
-            title: summary?.textContent || '접기/펼치기',
+            open: el.hasAttribute('open'),
+            title: heading?.textContent || summary?.textContent || '제목',
+            level,
           };
         },
-        // Custom content element selection - only parse from content div, not summary
         contentElement: (element) => {
           const el = element as HTMLElement;
-          // Try to find .details-content first
-          const contentDiv = el.querySelector('.details-content');
+          const contentDiv = el.querySelector('.collapsible-heading-content');
           if (contentDiv) {
             return contentDiv as HTMLElement;
           }
-
-          // If no .details-content, create a wrapper with all non-summary children
+          // Fallback: create wrapper with non-summary children
           const wrapper = document.createElement('div');
           const children = Array.from(el.childNodes);
           for (const child of children) {
@@ -86,22 +109,35 @@ export const Details = Node.create<DetailsOptions>({
   },
 
   renderHTML({ HTMLAttributes, node }) {
+    const level = node.attrs.level || 2;
     return [
       'details',
-      mergeAttributes(this.options.HTMLAttributes, HTMLAttributes, { class: 'details-block' }),
-      ['summary', { class: 'details-summary' }, node.attrs.title || '접기/펼치기'],
-      ['div', { class: 'details-content' }, 0],
+      mergeAttributes(this.options.HTMLAttributes, HTMLAttributes, {
+        class: 'collapsible-heading',
+        'data-level': level,
+      }),
+      [
+        'summary',
+        { class: 'collapsible-heading-summary' },
+        [`h${level}`, { class: 'collapsible-heading-title', 'data-level': level }, node.attrs.title || '제목'],
+      ],
+      ['div', { class: 'collapsible-heading-content' }, 0],
     ];
   },
 
   addCommands() {
     return {
-      setDetails:
+      setCollapsibleHeading:
         (options) =>
         ({ commands }) => {
+          const level = options?.level || 2;
           return commands.insertContent({
             type: this.name,
-            attrs: { open: false, title: options?.title || '클릭하여 펼치기' },
+            attrs: {
+              open: true,
+              title: options?.title || '클릭하여 접기/펼치기',
+              level,
+            },
             content: [
               {
                 type: 'paragraph',
@@ -110,13 +146,13 @@ export const Details = Node.create<DetailsOptions>({
             ],
           });
         },
-      toggleDetailsOpen:
+      toggleCollapsibleHeadingOpen:
         () =>
         ({ commands, state }) => {
           const { selection } = state;
           const node = state.doc.nodeAt(selection.from);
-          if (node?.type.name === 'details') {
-            return commands.updateAttributes('details', { open: !node.attrs.open });
+          if (node?.type.name === 'collapsibleHeading') {
+            return commands.updateAttributes('collapsibleHeading', { open: !node.attrs.open });
           }
           return false;
         },
@@ -125,28 +161,36 @@ export const Details = Node.create<DetailsOptions>({
 
   addNodeView() {
     return ({ node, editor, getPos }) => {
+      const level = node.attrs.level || 2;
+
       const container = document.createElement('details');
-      container.classList.add('details-block');
+      container.classList.add('collapsible-heading');
+      container.setAttribute('data-level', String(level));
       if (node.attrs.open) {
         container.setAttribute('open', 'open');
       }
 
       const summary = document.createElement('summary');
-      summary.classList.add('details-summary');
-      summary.textContent = node.attrs.title || '접기/펼치기';
-      summary.setAttribute('contenteditable', 'false');
+      summary.classList.add('collapsible-heading-summary');
 
-      // Allow editing summary on double-click
-      summary.addEventListener('dblclick', (e) => {
+      const heading = document.createElement(`h${level}`);
+      heading.classList.add('collapsible-heading-title');
+      heading.setAttribute('data-level', String(level));
+      heading.textContent = node.attrs.title || '제목';
+      heading.setAttribute('contenteditable', 'false');
+
+      summary.appendChild(heading);
+
+      // Allow editing title on double-click
+      heading.addEventListener('dblclick', (e) => {
         e.preventDefault();
         e.stopPropagation();
 
         if (typeof getPos === 'function') {
           const pos = getPos();
           if (pos !== undefined) {
-            // Get the current node from editor state
             const currentNode = editor.state.doc.nodeAt(pos);
-            if (currentNode && currentNode.type.name === 'details') {
+            if (currentNode && currentNode.type.name === 'collapsibleHeading') {
               const newTitle = prompt('제목 입력:', currentNode.attrs.title || '');
               if (newTitle !== null) {
                 editor.commands.command(({ tr }) => {
@@ -156,7 +200,7 @@ export const Details = Node.create<DetailsOptions>({
                   });
                   return true;
                 });
-                summary.textContent = newTitle;
+                heading.textContent = newTitle;
               }
             }
           }
@@ -168,13 +212,11 @@ export const Details = Node.create<DetailsOptions>({
         e.preventDefault();
         e.stopPropagation();
 
-        // Update the editor state only - let the update function handle DOM
         if (typeof getPos === 'function') {
           const pos = getPos();
           if (pos !== undefined) {
-            // Get the current node from editor state (not the stale closure variable)
             const currentNode = editor.state.doc.nodeAt(pos);
-            if (currentNode && currentNode.type.name === 'details') {
+            if (currentNode && currentNode.type.name === 'collapsibleHeading') {
               const newOpenState = !currentNode.attrs.open;
 
               // Toggle DOM state first for immediate feedback
@@ -198,7 +240,7 @@ export const Details = Node.create<DetailsOptions>({
       });
 
       const content = document.createElement('div');
-      content.classList.add('details-content');
+      content.classList.add('collapsible-heading-content');
 
       container.appendChild(summary);
       container.appendChild(content);
@@ -215,7 +257,19 @@ export const Details = Node.create<DetailsOptions>({
           } else {
             container.removeAttribute('open');
           }
-          summary.textContent = updatedNode.attrs.title || '접기/펼치기';
+          heading.textContent = updatedNode.attrs.title || '제목';
+
+          // Update heading level if changed
+          const newLevel = updatedNode.attrs.level || 2;
+          if (heading.tagName.toLowerCase() !== `h${newLevel}`) {
+            const newHeading = document.createElement(`h${newLevel}`);
+            newHeading.classList.add('collapsible-heading-title');
+            newHeading.setAttribute('data-level', String(newLevel));
+            newHeading.textContent = updatedNode.attrs.title || '제목';
+            newHeading.setAttribute('contenteditable', 'false');
+            summary.replaceChild(newHeading, heading);
+          }
+
           return true;
         },
       };
