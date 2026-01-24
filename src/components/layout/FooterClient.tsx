@@ -63,6 +63,14 @@ export default function FooterClient() {
                   About
                 </Link>
               </li>
+              <li>
+                <Link
+                  href="/subscribe"
+                  className="footer-link transition-colors"
+                >
+                  Subscribe
+                </Link>
+              </li>
             </ul>
           </div>
 
