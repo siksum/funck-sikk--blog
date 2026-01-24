@@ -222,6 +222,148 @@ export default function BlogPostContent({ content, slug, isAdmin, initialMetadat
                 공개
               </label>
             </div>
+
+            {/* Banner Image Upload */}
+            <div>
+              <label className="block text-xs font-medium text-gray-600 dark:text-gray-400 mb-1">
+                배너 이미지
+              </label>
+              <div className="flex gap-2">
+                <input
+                  type="text"
+                  value={metadata.thumbnail || ''}
+                  onChange={(e) => setMetadata(prev => ({ ...prev, thumbnail: e.target.value }))}
+                  className="flex-1 px-3 py-2 border-2 border-gray-200 dark:border-gray-600 rounded-lg text-sm focus:border-violet-400 dark:focus:border-violet-500 focus:outline-none bg-white dark:bg-gray-900"
+                  placeholder="이미지 URL 또는 파일 업로드"
+                />
+                <label className="px-3 py-2 bg-violet-100 dark:bg-violet-900/30 text-violet-700 dark:text-violet-300 rounded-lg hover:bg-violet-200 dark:hover:bg-violet-900/50 transition-colors cursor-pointer flex items-center gap-1 text-sm">
+                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                  </svg>
+                  업로드
+                  <input
+                    type="file"
+                    accept="image/*"
+                    className="hidden"
+                    onChange={async (e) => {
+                      const file = e.target.files?.[0];
+                      if (!file) return;
+                      try {
+                        const formDataUpload = new FormData();
+                        formDataUpload.append('file', file);
+                        const response = await fetch('/api/upload', {
+                          method: 'POST',
+                          body: formDataUpload,
+                        });
+                        if (response.ok) {
+                          const data = await response.json();
+                          setMetadata(prev => ({ ...prev, thumbnail: data.url }));
+                        } else {
+                          alert('이미지 업로드에 실패했습니다.');
+                        }
+                      } catch (error) {
+                        console.error('Upload error:', error);
+                        alert('이미지 업로드에 실패했습니다.');
+                      } finally {
+                        e.target.value = '';
+                      }
+                    }}
+                  />
+                </label>
+                {metadata.thumbnail && (
+                  <button
+                    type="button"
+                    onClick={() => setMetadata(prev => ({ ...prev, thumbnail: '', thumbnailPosition: 50, thumbnailScale: 100 }))}
+                    className="px-3 py-2 bg-red-100 dark:bg-red-900/30 text-red-700 dark:text-red-300 rounded-lg hover:bg-red-200 dark:hover:bg-red-900/50 transition-colors flex items-center gap-1 text-sm"
+                  >
+                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                    </svg>
+                    삭제
+                  </button>
+                )}
+              </div>
+              {metadata.thumbnail && (
+                <div className="mt-3 space-y-3">
+                  {/* Banner preview */}
+                  <div
+                    className="relative h-48 rounded-lg overflow-hidden border border-gray-300 dark:border-gray-600 bg-gray-200 dark:bg-gray-700"
+                    style={{
+                      backgroundImage: `url(${metadata.thumbnail})`,
+                      backgroundSize: `${metadata.thumbnailScale || 100}%`,
+                      backgroundPosition: `center ${metadata.thumbnailPosition || 50}%`,
+                      backgroundRepeat: 'no-repeat',
+                    }}
+                  >
+                    <div className="absolute bottom-2 left-2 px-2 py-1 bg-black/50 text-white text-xs rounded">
+                      미리보기
+                    </div>
+                  </div>
+                  {/* Position adjustment */}
+                  <div className="flex items-center gap-2 bg-gray-100 dark:bg-gray-700 p-2 rounded-lg">
+                    <span className="text-xs text-gray-600 dark:text-gray-400 whitespace-nowrap">위치</span>
+                    <button
+                      type="button"
+                      onClick={() => setMetadata(prev => ({ ...prev, thumbnailPosition: Math.max(0, (prev.thumbnailPosition || 50) - 10) }))}
+                      className="p-1 bg-white dark:bg-gray-600 rounded hover:bg-gray-200 dark:hover:bg-gray-500 transition-colors"
+                    >
+                      <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 15l7-7 7 7" />
+                      </svg>
+                    </button>
+                    <input
+                      type="range"
+                      min="0"
+                      max="100"
+                      value={metadata.thumbnailPosition || 50}
+                      onChange={(e) => setMetadata(prev => ({ ...prev, thumbnailPosition: Number(e.target.value) }))}
+                      className="flex-1 h-1.5 bg-gray-300 dark:bg-gray-600 rounded-lg appearance-none cursor-pointer"
+                    />
+                    <button
+                      type="button"
+                      onClick={() => setMetadata(prev => ({ ...prev, thumbnailPosition: Math.min(100, (prev.thumbnailPosition || 50) + 10) }))}
+                      className="p-1 bg-white dark:bg-gray-600 rounded hover:bg-gray-200 dark:hover:bg-gray-500 transition-colors"
+                    >
+                      <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                      </svg>
+                    </button>
+                    <span className="text-xs text-gray-500 dark:text-gray-400 w-8 text-right">{metadata.thumbnailPosition || 50}%</span>
+                  </div>
+                  {/* Scale adjustment */}
+                  <div className="flex items-center gap-2 bg-gray-100 dark:bg-gray-700 p-2 rounded-lg">
+                    <span className="text-xs text-gray-600 dark:text-gray-400 whitespace-nowrap">배율</span>
+                    <button
+                      type="button"
+                      onClick={() => setMetadata(prev => ({ ...prev, thumbnailScale: Math.max(50, (prev.thumbnailScale || 100) - 10) }))}
+                      className="p-1 bg-white dark:bg-gray-600 rounded hover:bg-gray-200 dark:hover:bg-gray-500 transition-colors"
+                    >
+                      <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M20 12H4" />
+                      </svg>
+                    </button>
+                    <input
+                      type="range"
+                      min="50"
+                      max="200"
+                      value={metadata.thumbnailScale || 100}
+                      onChange={(e) => setMetadata(prev => ({ ...prev, thumbnailScale: Number(e.target.value) }))}
+                      className="flex-1 h-1.5 bg-gray-300 dark:bg-gray-600 rounded-lg appearance-none cursor-pointer"
+                    />
+                    <button
+                      type="button"
+                      onClick={() => setMetadata(prev => ({ ...prev, thumbnailScale: Math.min(200, (prev.thumbnailScale || 100) + 10) }))}
+                      className="p-1 bg-white dark:bg-gray-600 rounded hover:bg-gray-200 dark:hover:bg-gray-500 transition-colors"
+                    >
+                      <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
+                      </svg>
+                    </button>
+                    <span className="text-xs text-gray-500 dark:text-gray-400 w-10 text-right">{metadata.thumbnailScale || 100}%</span>
+                  </div>
+                </div>
+              )}
+            </div>
           </div>
 
           {/* Content Editor */}

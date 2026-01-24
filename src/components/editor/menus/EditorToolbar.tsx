@@ -86,7 +86,7 @@ const TEXT_COLORS = [
   { value: '#6b7280', label: '회색', color: '#6b7280' },
 ];
 
-// Highlight (background) colors - increased opacity for better visibility
+// Highlight (background) colors - darker/more vibrant versions
 const HIGHLIGHT_COLORS = [
   { value: '', label: '없음', color: 'transparent' },
   { value: '#fecaca', label: '빨강', color: '#fecaca', border: '#f87171' },

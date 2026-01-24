@@ -98,8 +98,9 @@
 
 /* Code */
 .tiptap-editor code {
-  background-color: rgba(139, 92, 246, 0.1);
+  background-color: rgba(139, 92, 246, 0.15);
   color: #7c3aed;
+  font-weight: 700;
   padding: 0.125rem 0.375rem;
   border-radius: 0.25rem;
   font-family: ui-monospace, monospace;
@@ -107,7 +108,7 @@
 }
 
 .dark .tiptap-editor code {
-  background-color: rgba(139, 92, 246, 0.2);
+  background-color: rgba(139, 92, 246, 0.25);
   color: #a78bfa;
 }
 
@@ -122,7 +123,8 @@
 
 .tiptap-editor pre code {
   background: none;
-  color: #e5e7eb;
+  color: #a78bfa;
+  font-weight: 700;
   padding: 0;
   font-size: 0.875rem;
 }
@@ -183,6 +185,76 @@
 }
 
 /* Image with Caption */
+.image-with-caption-wrapper {
+  margin: 1rem 0;
+}
+
+.image-figure {
+  position: relative;
+  display: inline-block;
+  max-width: 100%;
+  margin: 0;
+}
+
+.image-figure.selected img {
+  outline: 3px solid #8b5cf6;
+}
+
+.image-figure img {
+  display: block;
+  max-width: 100%;
+  height: auto;
+}
+
+.image-caption {
+  text-align: center;
+  padding: 0.5rem 0.75rem;
+  font-size: 0.875rem;
+  color: #6b7280;
+  background-color: rgba(139, 92, 246, 0.05);
+  border-radius: 0 0 0.5rem 0.5rem;
+  margin-top: -0.25rem;
+}
+
+.dark .image-caption {
+  color: #9ca3af;
+  background-color: rgba(139, 92, 246, 0.1);
+}
+
+.caption-input {
+  width: 100%;
+  padding: 0.25rem 0.5rem;
+  font-size: 0.875rem;
+  text-align: center;
+  background: transparent;
+  border: 1px solid #8b5cf6;
+  border-radius: 0.25rem;
+  outline: none;
+  color: inherit;
+}
+
+.caption-input::placeholder {
+  color: #9ca3af;
+}
+
+.caption-text {
+  display: block;
+}
+
+.caption-hint {
+  text-align: center;
+  padding: 0.5rem;
+  font-size: 0.75rem;
+  color: #9ca3af;
+  opacity: 0;
+  transition: opacity 0.2s ease;
+  cursor: pointer;
+}
+
+.image-figure:hover .caption-hint {
+  opacity: 1;
+}
+
 .tiptap-editor .image-with-caption {
   margin: 1.5rem 0;
   text-align: center;
