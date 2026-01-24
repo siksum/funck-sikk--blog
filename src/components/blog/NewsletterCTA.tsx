@@ -5,18 +5,37 @@ import { useState } from 'react';
 export default function NewsletterCTA() {
   const [email, setEmail] = useState('');
   const [status, setStatus] = useState<'idle' | 'loading' | 'success' | 'error'>('idle');
+  const [message, setMessage] = useState('');
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!email) return;
 
     setStatus('loading');
+    setMessage('');
 
-    // Simulate API call
-    setTimeout(() => {
+    try {
+      const response = await fetch('/api/subscribe/email', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email }),
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        setStatus('error');
+        setMessage(data.error || '구독 처리 중 오류가 발생했습니다.');
+        return;
+      }
+
       setStatus('success');
+      setMessage(data.message || '구독해 주셔서 감사합니다!');
       setEmail('');
-    }, 1000);
+    } catch {
+      setStatus('error');
+      setMessage('네트워크 오류가 발생했습니다.');
+    }
   };
 
   return (
@@ -46,31 +65,36 @@ export default function NewsletterCTA() {
               <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
               </svg>
-              <span className="text-sm font-medium">구독해 주셔서 감사합니다!</span>
+              <span className="text-sm font-medium">{message}</span>
             </div>
           ) : (
-            <form onSubmit={handleSubmit} className="flex gap-2">
-              <input
-                type="email"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                placeholder="your@email.com"
-                className="flex-1 px-4 py-2 rounded-lg border text-sm focus:outline-none focus:ring-2 focus:ring-violet-500 focus:border-transparent"
-                style={{
-                  background: 'var(--card-bg)',
-                  borderColor: 'var(--card-border)',
-                  color: 'var(--foreground)',
-                }}
-                required
-              />
-              <button
-                type="submit"
-                disabled={status === 'loading'}
-                className="px-4 py-2 bg-gradient-to-r from-violet-600 to-indigo-500 text-white rounded-lg text-sm font-medium hover:from-violet-700 hover:to-indigo-600 transition-all disabled:opacity-50"
-              >
-                {status === 'loading' ? '...' : '구독'}
-              </button>
-            </form>
+            <>
+              <form onSubmit={handleSubmit} className="flex gap-2">
+                <input
+                  type="email"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  placeholder="your@email.com"
+                  className="flex-1 px-4 py-2 rounded-lg border text-sm focus:outline-none focus:ring-2 focus:ring-violet-500 focus:border-transparent"
+                  style={{
+                    background: 'var(--card-bg)',
+                    borderColor: 'var(--card-border)',
+                    color: 'var(--foreground)',
+                  }}
+                  required
+                />
+                <button
+                  type="submit"
+                  disabled={status === 'loading'}
+                  className="px-4 py-2 bg-gradient-to-r from-violet-600 to-indigo-500 text-white rounded-lg text-sm font-medium hover:from-violet-700 hover:to-indigo-600 transition-all disabled:opacity-50"
+                >
+                  {status === 'loading' ? '...' : '구독'}
+                </button>
+              </form>
+              {status === 'error' && message && (
+                <p className="mt-2 text-sm text-red-500">{message}</p>
+              )}
+            </>
           )}
         </div>
       </div>
