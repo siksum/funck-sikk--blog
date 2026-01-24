@@ -148,8 +148,18 @@ export const Details = Node.create<DetailsOptions>({
       titleSpan.style.minWidth = '50px';
       titleSpan.style.display = 'inline-block';
 
-      // Prevent default details toggle when editing
+      // Prevent default details toggle when editing and focus the title
+      titleSpan.addEventListener('mousedown', (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        // Focus the title after a small delay to ensure TipTap doesn't steal focus
+        setTimeout(() => {
+          titleSpan.focus();
+        }, 0);
+      });
+
       titleSpan.addEventListener('click', (e) => {
+        e.preventDefault();
         e.stopPropagation();
       });
 
@@ -196,13 +206,14 @@ export const Details = Node.create<DetailsOptions>({
 
       // Toggle open attribute when summary (but not title) is clicked
       summary.addEventListener('click', (e) => {
+        // Always prevent native details toggle behavior first
+        e.preventDefault();
+        e.stopPropagation();
+
         // If clicking on the title span itself, don't toggle (allow editing)
         if (e.target === titleSpan) {
           return;
         }
-
-        e.preventDefault();
-        e.stopPropagation();
 
         // Update the editor state only - let the update function handle DOM
         if (typeof getPos === 'function') {
