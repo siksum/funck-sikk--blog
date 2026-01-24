@@ -731,6 +731,105 @@ code, pre, .font-mono {
   border-radius: 0.125rem;
 }
 
+/* Collapsible Heading */
+.mdx-html-content .collapsible-heading,
+.prose .collapsible-heading {
+  margin: 1.5rem 0;
+  border: none;
+  background: transparent;
+}
+
+.mdx-html-content .collapsible-heading > summary,
+.mdx-html-content .collapsible-heading-summary,
+.prose .collapsible-heading > summary,
+.prose .collapsible-heading-summary {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  cursor: pointer;
+  user-select: none;
+  list-style: none;
+  padding: 0.25rem 0;
+  background: transparent;
+  border: none;
+}
+
+.mdx-html-content .collapsible-heading > summary::-webkit-details-marker,
+.mdx-html-content .collapsible-heading-summary::-webkit-details-marker,
+.prose .collapsible-heading > summary::-webkit-details-marker,
+.prose .collapsible-heading-summary::-webkit-details-marker {
+  display: none;
+}
+
+.mdx-html-content .collapsible-heading > summary::before,
+.mdx-html-content .collapsible-heading-summary::before,
+.prose .collapsible-heading > summary::before,
+.prose .collapsible-heading-summary::before {
+  content: '▶';
+  font-size: 0.65em;
+  color: #9ca3af;
+  transition: transform 0.2s ease;
+  flex-shrink: 0;
+}
+
+.mdx-html-content .collapsible-heading[open] > summary::before,
+.mdx-html-content .collapsible-heading[open] .collapsible-heading-summary::before,
+.prose .collapsible-heading[open] > summary::before,
+.prose .collapsible-heading[open] .collapsible-heading-summary::before {
+  transform: rotate(90deg);
+}
+
+.mdx-html-content .collapsible-heading > summary:hover::before,
+.mdx-html-content .collapsible-heading-summary:hover::before,
+.prose .collapsible-heading > summary:hover::before,
+.prose .collapsible-heading-summary:hover::before {
+  color: #6b7280;
+}
+
+.dark .mdx-html-content .collapsible-heading > summary::before,
+.dark .mdx-html-content .collapsible-heading-summary::before,
+.dark .prose .collapsible-heading > summary::before,
+.dark .prose .collapsible-heading-summary::before {
+  color: #6b7280;
+}
+
+.dark .mdx-html-content .collapsible-heading > summary:hover::before,
+.dark .mdx-html-content .collapsible-heading-summary:hover::before,
+.dark .prose .collapsible-heading > summary:hover::before,
+.dark .prose .collapsible-heading-summary:hover::before {
+  color: #9ca3af;
+}
+
+.mdx-html-content .collapsible-heading .collapsible-heading-title,
+.prose .collapsible-heading .collapsible-heading-title {
+  margin: 0 !important;
+  padding: 0 !important;
+  display: inline;
+}
+
+.mdx-html-content .collapsible-heading .collapsible-heading-content,
+.prose .collapsible-heading .collapsible-heading-content {
+  padding-left: 1.25rem;
+  border-left: 2px solid #e5e7eb;
+  margin-left: 0.35rem;
+  margin-top: 0.5rem;
+}
+
+.dark .mdx-html-content .collapsible-heading .collapsible-heading-content,
+.dark .prose .collapsible-heading .collapsible-heading-content {
+  border-left-color: #4b5563;
+}
+
+.mdx-html-content .collapsible-heading .collapsible-heading-content > *:first-child,
+.prose .collapsible-heading .collapsible-heading-content > *:first-child {
+  margin-top: 0;
+}
+
+.mdx-html-content .collapsible-heading .collapsible-heading-content > *:last-child,
+.prose .collapsible-heading .collapsible-heading-content > *:last-child {
+  margin-bottom: 0;
+}
+
 /* Image with Caption */
 /* All images should have rounded corners */
 .mdx-html-content img,

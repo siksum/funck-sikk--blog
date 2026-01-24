@@ -156,20 +156,33 @@ export const ImageWithCaption = Node.create<ImageWithCaptionOptions>({
       img.style.cursor = 'pointer';
       img.style.display = 'block';
 
-      // Toolbar (hidden by default)
+      // Toolbar (shown on hover via CSS)
       const toolbar = document.createElement('div');
       toolbar.classList.add('image-toolbar');
       toolbar.style.cssText = `
         position: absolute;
         top: 8px;
         right: 8px;
-        display: none;
+        display: flex;
         gap: 4px;
         z-index: 10;
         background: rgba(0, 0, 0, 0.7);
         border-radius: 8px;
         padding: 4px;
+        opacity: 0;
+        transition: opacity 0.2s ease;
+        pointer-events: none;
       `;
+
+      // Show toolbar on hover using CSS class
+      container.addEventListener('mouseenter', () => {
+        toolbar.style.opacity = '1';
+        toolbar.style.pointerEvents = 'auto';
+      });
+      container.addEventListener('mouseleave', () => {
+        toolbar.style.opacity = '0';
+        toolbar.style.pointerEvents = 'none';
+      });
 
       // Caption button
       const captionBtn = document.createElement('button');
@@ -232,20 +245,17 @@ export const ImageWithCaption = Node.create<ImageWithCaptionOptions>({
         captionWrapper.style.display = 'none';
       }
 
-      // Show toolbar on image click
+      // Click on image to select the node
       img.addEventListener('click', (e) => {
         e.preventDefault();
         e.stopPropagation();
-        toolbar.style.display = toolbar.style.display === 'flex' ? 'none' : 'flex';
-      });
-
-      // Hide toolbar when clicking outside
-      const handleOutsideClick = (e: MouseEvent) => {
-        if (!container.contains(e.target as Node)) {
-          toolbar.style.display = 'none';
+        if (typeof getPos === 'function') {
+          const pos = getPos();
+          if (pos !== undefined) {
+            editor.commands.setNodeSelection(pos);
+          }
         }
-      };
-      document.addEventListener('click', handleOutsideClick);
+      });
 
       // Caption button click - show caption input
       captionBtn.addEventListener('click', (e) => {
@@ -328,7 +338,7 @@ export const ImageWithCaption = Node.create<ImageWithCaptionOptions>({
           return true;
         },
         destroy: () => {
-          document.removeEventListener('click', handleOutsideClick);
+          // Cleanup if needed
         },
       };
     };

@@ -160,6 +160,7 @@ export default function EditorToolbar({ editor, onSave, onCancel, driveType = 'b
   const [driveBrowserMode, setDriveBrowserMode] = useState<'image' | 'pdf'>('pdf');
   const [showTableCellColorPicker, setShowTableCellColorPicker] = useState(false);
   const [showTableInsertMenu, setShowTableInsertMenu] = useState(false);
+  const [showHeadingMenu, setShowHeadingMenu] = useState(false);
   const [useImageCaption, setUseImageCaption] = useState(true);
   const [isSticky, setIsSticky] = useState(false);
   const [toolbarWidth, setToolbarWidth] = useState<number | null>(null);
@@ -589,30 +590,85 @@ export default function EditorToolbar({ editor, onSave, onCancel, driveType = 'b
 
       <ToolbarDivider />
 
-      {/* Headings */}
-      <ToolbarButton
-        onClick={() => editor.chain().focus().toggleHeading({ level: 1 }).run()}
-        isActive={editor.isActive('heading', { level: 1 })}
-        title="제목 1"
-      >
-        <span className="font-bold text-sm">H1</span>
-      </ToolbarButton>
-
-      <ToolbarButton
-        onClick={() => editor.chain().focus().toggleHeading({ level: 2 }).run()}
-        isActive={editor.isActive('heading', { level: 2 })}
-        title="제목 2"
-      >
-        <span className="font-bold text-sm">H2</span>
-      </ToolbarButton>
-
-      <ToolbarButton
-        onClick={() => editor.chain().focus().toggleHeading({ level: 3 }).run()}
-        isActive={editor.isActive('heading', { level: 3 })}
-        title="제목 3"
-      >
-        <span className="font-bold text-sm">H3</span>
-      </ToolbarButton>
+      {/* Headings Dropdown */}
+      <div className="relative">
+        <ToolbarButton
+          onClick={() => setShowHeadingMenu(!showHeadingMenu)}
+          isActive={editor.isActive('heading')}
+          title="제목"
+        >
+          <span className="font-bold text-sm flex items-center gap-0.5">
+            H
+            <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+            </svg>
+          </span>
+        </ToolbarButton>
+        {showHeadingMenu && (
+          <div className="absolute top-full left-0 mt-2 p-2 bg-white dark:bg-gray-800 rounded-lg shadow-lg border border-pink-200 dark:border-pink-500/40 z-20 w-44">
+            <div className="text-xs font-semibold text-gray-400 px-2 mb-1">일반 제목</div>
+            {([1, 2, 3, 4, 5] as const).map((level) => (
+              <button
+                type="button"
+                key={level}
+                onClick={(e) => {
+                  e.preventDefault();
+                  e.stopPropagation();
+                  editor.chain().focus().toggleHeading({ level }).run();
+                  setShowHeadingMenu(false);
+                }}
+                className={`w-full text-left px-2 py-1.5 text-sm rounded hover:bg-pink-100 dark:hover:bg-pink-500/20 flex items-center gap-2 ${
+                  editor.isActive('heading', { level }) ? 'bg-pink-100 dark:bg-pink-500/20 text-pink-700 dark:text-pink-300' : ''
+                }`}
+              >
+                <span className="font-bold" style={{ fontSize: `${1.2 - level * 0.1}rem` }}>H{level}</span>
+                <span className="text-gray-400 text-xs">제목 {level}</span>
+              </button>
+            ))}
+            <div className="border-t border-gray-200 dark:border-gray-700 my-1"></div>
+            <div className="text-xs font-semibold text-gray-400 px-2 mb-1">접기/펼치기 제목</div>
+            {([1, 2, 3, 4, 5] as const).map((level) => (
+              <button
+                type="button"
+                key={`collapsible-${level}`}
+                onClick={(e) => {
+                  e.preventDefault();
+                  e.stopPropagation();
+                  editor.chain().focus().setCollapsibleHeading({ level }).run();
+                  setShowHeadingMenu(false);
+                }}
+                className={`w-full text-left px-2 py-1.5 text-sm rounded hover:bg-violet-100 dark:hover:bg-violet-500/20 flex items-center gap-2 ${
+                  editor.isActive('collapsibleHeading', { level }) ? 'bg-violet-100 dark:bg-violet-500/20 text-violet-700 dark:text-violet-300' : ''
+                }`}
+              >
+                <span className="flex items-center gap-1">
+                  <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                  </svg>
+                  <span className="font-bold" style={{ fontSize: `${1.1 - level * 0.08}rem` }}>H{level}</span>
+                </span>
+                <span className="text-gray-400 text-xs">접기</span>
+              </button>
+            ))}
+            <div className="border-t border-gray-200 dark:border-gray-700 my-1"></div>
+            <button
+              type="button"
+              onClick={(e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                editor.chain().focus().setParagraph().run();
+                setShowHeadingMenu(false);
+              }}
+              className={`w-full text-left px-2 py-1.5 text-sm rounded hover:bg-pink-100 dark:hover:bg-pink-500/20 flex items-center gap-2 ${
+                editor.isActive('paragraph') && !editor.isActive('heading') ? 'bg-pink-100 dark:bg-pink-500/20 text-pink-700 dark:text-pink-300' : ''
+              }`}
+            >
+              <span className="font-normal">P</span>
+              <span className="text-gray-400 text-xs">본문</span>
+            </button>
+          </div>
+        )}
+      </div>
 
       <ToolbarDivider />
 
