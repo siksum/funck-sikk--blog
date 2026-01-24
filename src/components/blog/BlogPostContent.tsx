@@ -69,8 +69,8 @@ export default function BlogPostContent({ content, slug, isAdmin, initialMetadat
     setIsUploadingBanner(true);
     try {
       const { uploadToGoogleDriveDirect } = await import('@/lib/google-drive-client');
-      // Use actual category path for organizing uploads (e.g., blog/wargame/bandit)
-      const categoryPath = metadata.category ? `blog/${metadata.category}` : 'blog/images';
+      // Use actual category path for organizing uploads (e.g., wargame/bandit)
+      const categoryPath = metadata.category || 'images';
       const result = await uploadToGoogleDriveDirect(file, { driveType: 'blog', category: categoryPath });
       setMetadata(prev => ({ ...prev, thumbnail: result.url }));
     } catch (error) {

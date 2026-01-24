@@ -74,10 +74,10 @@ export default function SikkPostContent({ content, slug, isAdmin, initialMetadat
     setIsUploadingBanner(true);
     try {
       const { uploadToGoogleDriveDirect } = await import('@/lib/google-drive-client');
-      // Use actual category path for organizing uploads (e.g., sikk/wargame/bandit)
+      // Use actual category path for organizing uploads (e.g., wargame/bandit)
       const categoryPath = categorySlugPath?.length
-        ? `sikk/${categorySlugPath.join('/')}`
-        : (metadata.category ? `sikk/${metadata.category}` : 'sikk/images');
+        ? categorySlugPath.join('/')
+        : (metadata.category || 'images');
       const result = await uploadToGoogleDriveDirect(file, { driveType: 'sikk', category: categoryPath });
       setMetadata(prev => ({ ...prev, thumbnail: result.url }));
     } catch (error) {
