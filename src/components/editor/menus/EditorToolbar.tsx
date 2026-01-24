@@ -11,6 +11,7 @@ interface EditorToolbarProps {
   onCancel: () => void;
   driveType?: 'blog' | 'sikk';
   category?: string;
+  slug?: string;
 }
 
 // Helper function to check if cursor is inside a collapsible heading (including nested content)
@@ -154,7 +155,7 @@ const EMOJI_CATEGORIES = [
   },
 ];
 
-export default function EditorToolbar({ editor, onSave, onCancel, driveType = 'blog', category = '' }: EditorToolbarProps) {
+export default function EditorToolbar({ editor, onSave, onCancel, driveType = 'blog', category = '', slug = '' }: EditorToolbarProps) {
   const [showLinkInput, setShowLinkInput] = useState(false);
   const [linkUrl, setLinkUrl] = useState('');
   const [linkLabel, setLinkLabel] = useState('');
@@ -276,33 +277,31 @@ export default function EditorToolbar({ editor, onSave, onCancel, driveType = 'b
 
     setIsImageUploading(true);
     try {
-      const formData = new FormData();
-      formData.append('file', file);
-
-      const response = await fetch('/api/upload', {
-        method: 'POST',
-        body: formData,
-      });
-
-      if (!response.ok) {
-        const error = await response.json();
-        alert(error.error || '업로드에 실패했습니다.');
-        return;
+      // Build full path: category/slug (e.g., wargame/bandit/2)
+      let uploadPath = 'images';
+      if (category && slug) {
+        uploadPath = `${category}/${slug}`;
+      } else if (category) {
+        uploadPath = category;
+      } else if (slug) {
+        uploadPath = slug;
       }
 
-      const data = await response.json();
-      editor.chain().focus().setImageWithCaption({ src: data.url, caption: '' }).run();
+      // Upload to Google Drive
+      const result = await uploadToGoogleDriveDirect(file, { driveType, category: uploadPath });
+      editor.chain().focus().setImageWithCaption({ src: result.url, caption: '' }).run();
       setShowImageInput(false);
     } catch (error) {
       console.error('Upload error:', error);
-      alert('업로드 중 오류가 발생했습니다.');
+      const errorMessage = error instanceof Error ? error.message : '알 수 없는 오류';
+      alert(`업로드 중 오류가 발생했습니다: ${errorMessage}`);
     } finally {
       setIsImageUploading(false);
       if (fileInputRef.current) {
         fileInputRef.current.value = '';
       }
     }
-  }, [editor, useImageCaption]);
+  }, [editor, useImageCaption, driveType, category, slug]);
 
   const handlePdfUpload = useCallback(async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
