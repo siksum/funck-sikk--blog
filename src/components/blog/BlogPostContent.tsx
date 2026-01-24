@@ -69,9 +69,16 @@ export default function BlogPostContent({ content, slug, isAdmin, initialMetadat
     setIsUploadingBanner(true);
     try {
       const { uploadToGoogleDriveDirect } = await import('@/lib/google-drive-client');
-      // Use actual category path for organizing uploads (e.g., wargame/bandit)
-      const categoryPath = metadata.category || 'images';
-      const result = await uploadToGoogleDriveDirect(file, { driveType: 'blog', category: categoryPath });
+      // Build full path: category/slug (e.g., wargame/bandit/level0-to-level1)
+      let uploadPath = 'images';
+      if (metadata.category && slug) {
+        uploadPath = `${metadata.category}/${slug}`;
+      } else if (metadata.category) {
+        uploadPath = metadata.category;
+      } else if (slug) {
+        uploadPath = slug;
+      }
+      const result = await uploadToGoogleDriveDirect(file, { driveType: 'blog', category: uploadPath });
       setMetadata(prev => ({ ...prev, thumbnail: result.url }));
     } catch (error) {
       console.error('Upload error:', error);
@@ -458,6 +465,7 @@ export default function BlogPostContent({ content, slug, isAdmin, initialMetadat
             placeholder="포스트 내용을 입력하세요..."
             driveType="blog"
             category={metadata.category || ''}
+            slug={slug}
           />
 
           {/* Save/Cancel Buttons */}
