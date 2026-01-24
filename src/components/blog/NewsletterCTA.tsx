@@ -5,18 +5,35 @@ import { useState } from 'react';
 export default function NewsletterCTA() {
   const [email, setEmail] = useState('');
   const [status, setStatus] = useState<'idle' | 'loading' | 'success' | 'error'>('idle');
+  const [errorMessage, setErrorMessage] = useState('');
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!email) return;
 
     setStatus('loading');
+    setErrorMessage('');
 
-    // Simulate API call
-    setTimeout(() => {
-      setStatus('success');
-      setEmail('');
-    }, 1000);
+    try {
+      const res = await fetch('/api/subscribe/email', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email }),
+      });
+
+      const data = await res.json();
+
+      if (res.ok) {
+        setStatus('success');
+        setEmail('');
+      } else {
+        setStatus('error');
+        setErrorMessage(data.error || '구독 처리 중 오류가 발생했습니다.');
+      }
+    } catch {
+      setStatus('error');
+      setErrorMessage('네트워크 오류가 발생했습니다.');
+    }
   };
 
   return (
@@ -47,6 +64,21 @@ export default function NewsletterCTA() {
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
               </svg>
               <span className="text-sm font-medium">구독해 주셔서 감사합니다!</span>
+            </div>
+          ) : status === 'error' ? (
+            <div>
+              <div className="flex items-center gap-2 text-red-600 dark:text-red-400 mb-2">
+                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                </svg>
+                <span className="text-sm font-medium">{errorMessage}</span>
+              </div>
+              <button
+                onClick={() => setStatus('idle')}
+                className="text-sm text-violet-600 dark:text-violet-400 hover:underline"
+              >
+                다시 시도
+              </button>
             </div>
           ) : (
             <form onSubmit={handleSubmit} className="flex gap-2">
