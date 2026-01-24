@@ -10,6 +10,7 @@ import FloatingActions from '@/components/blog/FloatingActions';
 import SocialShareButtons from '@/components/blog/SocialShareButtons';
 import EmojiReactions from '@/components/blog/EmojiReactions';
 import AuthorCard from '@/components/blog/AuthorCard';
+import NewsletterCTA from '@/components/blog/NewsletterCTA';
 import KeyboardNavigation from '@/components/blog/KeyboardNavigation';
 import HighlightShare from '@/components/blog/HighlightShare';
 import DifficultyBadge from '@/components/blog/DifficultyBadge';
@@ -454,6 +455,9 @@ export default async function BlogCategoryPage({ params }: CategoryPageProps) {
 
           {/* Author Card */}
           <AuthorCard />
+
+          {/* Newsletter CTA */}
+          <NewsletterCTA />
 
           {/* Footer */}
           <footer className="mt-12 pt-8 border-t" style={{ borderColor: 'var(--card-border)' }}>
