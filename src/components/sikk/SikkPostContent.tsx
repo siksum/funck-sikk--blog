@@ -74,7 +74,11 @@ export default function SikkPostContent({ content, slug, isAdmin, initialMetadat
     setIsUploadingBanner(true);
     try {
       const { uploadToGoogleDriveDirect } = await import('@/lib/google-drive-client');
-      const result = await uploadToGoogleDriveDirect(file, { driveType: 'sikk', category: 'sikk/banners' });
+      // Use actual category path for organizing uploads (e.g., sikk/wargame/bandit)
+      const categoryPath = categorySlugPath?.length
+        ? `sikk/${categorySlugPath.join('/')}`
+        : (metadata.category ? `sikk/${metadata.category}` : 'sikk/images');
+      const result = await uploadToGoogleDriveDirect(file, { driveType: 'sikk', category: categoryPath });
       setMetadata(prev => ({ ...prev, thumbnail: result.url }));
     } catch (error) {
       console.error('Upload error:', error);
@@ -107,7 +111,7 @@ export default function SikkPostContent({ content, slug, isAdmin, initialMetadat
     setIsDraggingBanner(false);
   };
 
-  const handleSave = useCallback(async (markdown: string) => {
+  const handleSave = useCallback(async (markdown: string, isAutoSave: boolean = false) => {
     setIsSaving(true);
     try {
       // Parse tags from input
@@ -142,9 +146,12 @@ export default function SikkPostContent({ content, slug, isAdmin, initialMetadat
 
       setCurrentContent(markdown);
       setMetadata(prev => ({ ...prev, tags: parsedTags }));
-      setIsEditing(false);
-      // Refresh the page data
-      router.refresh();
+
+      // Only exit edit mode and refresh on manual save, not autosave
+      if (!isAutoSave) {
+        setIsEditing(false);
+        router.refresh();
+      }
     } catch (error) {
       console.error('Save error:', error);
       throw error;
@@ -510,7 +517,7 @@ export default function SikkPostContent({ content, slug, isAdmin, initialMetadat
             onCancel={handleCancel}
             placeholder="포스트 내용을 입력하세요..."
             driveType="sikk"
-            category={categorySlugPath?.length ? categorySlugPath[categorySlugPath.length - 1] : (metadata.category || '')}
+            category={categorySlugPath?.length ? categorySlugPath.join('/') : (metadata.category || '')}
           />
 
           {/* Save/Cancel Buttons */}

@@ -126,7 +126,7 @@ const HighlightWithMarkdown = Highlight.extend({
 
 interface TipTapEditorProps {
   content: string;
-  onSave: (markdown: string) => Promise<void>;
+  onSave: (markdown: string, isAutoSave?: boolean) => Promise<void>;
   onCancel: () => void;
   onChange?: (html: string) => void;
   placeholder?: string;
@@ -274,7 +274,7 @@ export default function TipTapEditor({
     if (!editor || !hasChanges) return;
 
     const timer = setTimeout(async () => {
-      await handleSave();
+      await handleSave(true); // Pass true to indicate autosave
     }, 3000); // 3 second debounce
 
     return () => clearTimeout(timer);
@@ -298,14 +298,14 @@ export default function TipTapEditor({
     return () => document.removeEventListener('keydown', handleKeyDown);
   }, [editor]);
 
-  const handleSave = useCallback(async () => {
+  const handleSave = useCallback(async (isAutoSave: boolean = false) => {
     if (!editor || isSaving) return;
 
     setIsSaving(true);
     try {
       // Use HTML directly to preserve all styling (color, highlight, etc.)
       const html = editor.getHTML();
-      await onSave(html);
+      await onSave(html, isAutoSave);
       setLastSaved(new Date());
       setHasChanges(false);
     } catch (error) {
