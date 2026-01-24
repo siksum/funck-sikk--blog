@@ -139,6 +139,61 @@ export const Details = Node.create<DetailsOptions>({
       const summary = document.createElement('summary');
       summary.classList.add('details-summary');
 
+      // Create toggle button for the arrow
+      const toggleBtn = document.createElement('span');
+      toggleBtn.classList.add('details-toggle-btn');
+      toggleBtn.textContent = '▶';
+      toggleBtn.style.cursor = 'pointer';
+      toggleBtn.style.userSelect = 'none';
+      toggleBtn.style.fontSize = '0.75rem';
+      toggleBtn.style.transition = 'transform 0.2s ease';
+      toggleBtn.style.display = 'inline-block';
+      if (node.attrs.open) {
+        toggleBtn.style.transform = 'rotate(90deg)';
+      }
+
+      // Toggle button click handler
+      const handleToggle = () => {
+        if (typeof getPos === 'function') {
+          const pos = getPos();
+          if (pos !== undefined) {
+            const currentNode = editor.state.doc.nodeAt(pos);
+            if (currentNode && currentNode.type.name === 'details') {
+              const newOpenState = !currentNode.attrs.open;
+
+              // Toggle DOM state first for immediate feedback
+              if (newOpenState) {
+                container.setAttribute('open', 'open');
+                toggleBtn.style.transform = 'rotate(90deg)';
+              } else {
+                container.removeAttribute('open');
+                toggleBtn.style.transform = 'rotate(0deg)';
+              }
+
+              // Update editor state
+              editor.commands.command(({ tr }) => {
+                tr.setNodeMarkup(pos, undefined, {
+                  ...currentNode.attrs,
+                  open: newOpenState,
+                });
+                return true;
+              });
+            }
+          }
+        }
+      };
+
+      toggleBtn.addEventListener('mousedown', (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+      });
+
+      toggleBtn.addEventListener('click', (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        handleToggle();
+      });
+
       // Create a span for the title text to enable inline editing
       const titleSpan = document.createElement('span');
       titleSpan.classList.add('details-title-text');
@@ -147,6 +202,7 @@ export const Details = Node.create<DetailsOptions>({
       titleSpan.style.outline = 'none';
       titleSpan.style.minWidth = '50px';
       titleSpan.style.display = 'inline-block';
+      titleSpan.style.cursor = 'text';
 
       // Prevent default details toggle when editing and focus the title
       titleSpan.addEventListener('mousedown', (e) => {
@@ -202,46 +258,13 @@ export const Details = Node.create<DetailsOptions>({
         document.execCommand('insertText', false, text);
       });
 
+      summary.appendChild(toggleBtn);
       summary.appendChild(titleSpan);
 
-      // Toggle open attribute when summary (but not title) is clicked
+      // Prevent native details toggle entirely on summary
       summary.addEventListener('click', (e) => {
-        // Always prevent native details toggle behavior first
         e.preventDefault();
         e.stopPropagation();
-
-        // If clicking on the title span itself, don't toggle (allow editing)
-        if (e.target === titleSpan) {
-          return;
-        }
-
-        // Update the editor state only - let the update function handle DOM
-        if (typeof getPos === 'function') {
-          const pos = getPos();
-          if (pos !== undefined) {
-            // Get the current node from editor state (not the stale closure variable)
-            const currentNode = editor.state.doc.nodeAt(pos);
-            if (currentNode && currentNode.type.name === 'details') {
-              const newOpenState = !currentNode.attrs.open;
-
-              // Toggle DOM state first for immediate feedback
-              if (newOpenState) {
-                container.setAttribute('open', 'open');
-              } else {
-                container.removeAttribute('open');
-              }
-
-              // Update editor state
-              editor.commands.command(({ tr }) => {
-                tr.setNodeMarkup(pos, undefined, {
-                  ...currentNode.attrs,
-                  open: newOpenState,
-                });
-                return true;
-              });
-            }
-          }
-        }
       });
 
       const content = document.createElement('div');
@@ -259,8 +282,10 @@ export const Details = Node.create<DetailsOptions>({
           }
           if (updatedNode.attrs.open) {
             container.setAttribute('open', 'open');
+            toggleBtn.style.transform = 'rotate(90deg)';
           } else {
             container.removeAttribute('open');
+            toggleBtn.style.transform = 'rotate(0deg)';
           }
           // Only update text if it differs (avoid cursor jumping during editing)
           if (document.activeElement !== titleSpan && titleSpan.textContent !== updatedNode.attrs.title) {

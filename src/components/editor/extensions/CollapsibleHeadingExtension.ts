@@ -329,12 +329,70 @@ export const CollapsibleHeading = Node.create<CollapsibleHeadingOptions>({
         summary.style.borderRadius = '0.5rem';
       }
 
+      // Create toggle button for the arrow
+      const toggleBtn = document.createElement('span');
+      toggleBtn.classList.add('collapsible-heading-toggle-btn');
+      toggleBtn.textContent = '▶';
+      toggleBtn.style.cursor = 'pointer';
+      toggleBtn.style.userSelect = 'none';
+      toggleBtn.style.fontSize = '0.65em';
+      toggleBtn.style.transition = 'transform 0.2s ease';
+      toggleBtn.style.display = 'inline-block';
+      toggleBtn.style.marginRight = '0.5rem';
+      toggleBtn.style.color = '#9ca3af';
+      if (node.attrs.open) {
+        toggleBtn.style.transform = 'rotate(90deg)';
+      }
+
+      // Toggle button click handler
+      const handleToggle = () => {
+        if (typeof getPos === 'function') {
+          const pos = getPos();
+          if (pos !== undefined) {
+            const currentNode = editor.state.doc.nodeAt(pos);
+            if (currentNode && currentNode.type.name === 'collapsibleHeading') {
+              const newOpenState = !currentNode.attrs.open;
+
+              // Toggle DOM state first for immediate feedback
+              if (newOpenState) {
+                container.setAttribute('open', 'open');
+                toggleBtn.style.transform = 'rotate(90deg)';
+              } else {
+                container.removeAttribute('open');
+                toggleBtn.style.transform = 'rotate(0deg)';
+              }
+
+              // Update editor state
+              editor.commands.command(({ tr }) => {
+                tr.setNodeMarkup(pos, undefined, {
+                  ...currentNode.attrs,
+                  open: newOpenState,
+                });
+                return true;
+              });
+            }
+          }
+        }
+      };
+
+      toggleBtn.addEventListener('mousedown', (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+      });
+
+      toggleBtn.addEventListener('click', (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        handleToggle();
+      });
+
       // Helper function to set up heading with all event listeners
       const setupHeading = (h: HTMLHeadingElement) => {
         h.classList.add('collapsible-heading-title');
         h.setAttribute('contenteditable', 'true');
         h.style.outline = 'none';
         h.style.minWidth = '50px';
+        h.style.cursor = 'text';
 
         // Prevent default details toggle when editing and focus the heading
         h.addEventListener('mousedown', (e) => {
@@ -401,44 +459,13 @@ export const CollapsibleHeading = Node.create<CollapsibleHeadingOptions>({
       }
 
       setupHeading(heading);
+      summary.appendChild(toggleBtn);
       summary.appendChild(heading);
 
-      // Toggle open attribute when summary (but not heading) is clicked
+      // Prevent native details toggle entirely on summary
       summary.addEventListener('click', (e) => {
-        // Always prevent native details toggle behavior first
         e.preventDefault();
         e.stopPropagation();
-
-        // If clicking on the heading itself, don't toggle (allow editing)
-        if (e.target === heading) {
-          return;
-        }
-
-        if (typeof getPos === 'function') {
-          const pos = getPos();
-          if (pos !== undefined) {
-            const currentNode = editor.state.doc.nodeAt(pos);
-            if (currentNode && currentNode.type.name === 'collapsibleHeading') {
-              const newOpenState = !currentNode.attrs.open;
-
-              // Toggle DOM state first for immediate feedback
-              if (newOpenState) {
-                container.setAttribute('open', 'open');
-              } else {
-                container.removeAttribute('open');
-              }
-
-              // Update editor state
-              editor.commands.command(({ tr }) => {
-                tr.setNodeMarkup(pos, undefined, {
-                  ...currentNode.attrs,
-                  open: newOpenState,
-                });
-                return true;
-              });
-            }
-          }
-        }
       });
 
       const content = document.createElement('div');
@@ -456,8 +483,10 @@ export const CollapsibleHeading = Node.create<CollapsibleHeadingOptions>({
           }
           if (updatedNode.attrs.open) {
             container.setAttribute('open', 'open');
+            toggleBtn.style.transform = 'rotate(90deg)';
           } else {
             container.removeAttribute('open');
+            toggleBtn.style.transform = 'rotate(0deg)';
           }
 
           // Only update text if it differs (avoid cursor jumping during editing)
