@@ -239,11 +239,7 @@ export default function EditorToolbar({ editor, onSave, onCancel, driveType = 'b
 
   const addImage = useCallback(() => {
     if (imageUrl) {
-      if (useImageCaption) {
-        editor.chain().focus().setImageWithCaption({ src: imageUrl, caption: '' }).run();
-      } else {
-        editor.chain().focus().setImage({ src: imageUrl }).run();
-      }
+      editor.chain().focus().setImageWithCaption({ src: imageUrl, caption: '' }).run();
     }
     setShowImageInput(false);
     setImageUrl('');
@@ -278,11 +274,7 @@ export default function EditorToolbar({ editor, onSave, onCancel, driveType = 'b
       }
 
       const data = await response.json();
-      if (useImageCaption) {
-        editor.chain().focus().setImageWithCaption({ src: data.url, caption: '' }).run();
-      } else {
-        editor.chain().focus().setImage({ src: data.url }).run();
-      }
+      editor.chain().focus().setImageWithCaption({ src: data.url, caption: '' }).run();
       setShowImageInput(false);
     } catch (error) {
       console.error('Upload error:', error);
@@ -366,12 +358,8 @@ export default function EditorToolbar({ editor, onSave, onCancel, driveType = 'b
   const handleDriveFileSelect = useCallback((files: { id: string; name: string; mimeType: string; downloadUrl: string }[]) => {
     for (const file of files) {
       if (driveBrowserMode === 'image' && file.mimeType.startsWith('image/')) {
-        // Insert as image (with or without caption)
-        if (useImageCaption) {
-          editor.chain().focus().setImageWithCaption({ src: file.downloadUrl, caption: '' }).run();
-        } else {
-          editor.chain().focus().setImage({ src: file.downloadUrl }).run();
-        }
+        // Insert as image with caption
+        editor.chain().focus().setImageWithCaption({ src: file.downloadUrl, caption: '' }).run();
       } else if (file.mimeType === 'application/pdf') {
         // Insert as PDF with current display mode
         const fileId = file.id;
