@@ -1,5 +1,9 @@
 /* TipTap Editor Styles */
 
+.tiptap-container {
+  position: relative;
+}
+
 .tiptap-editor {
   min-height: 300px;
   outline: none;
@@ -249,6 +253,44 @@
 
 .image-figure:hover .caption-hint {
   opacity: 1;
+}
+
+.tiptap-editor .image-with-caption {
+  margin: 1.5rem 0;
+  text-align: center;
+}
+
+.tiptap-editor .image-with-caption img {
+  margin: 0 auto 0.5rem auto;
+  display: block;
+}
+
+.tiptap-editor .image-with-caption .image-caption {
+  font-size: 0.875rem;
+  color: #6b7280;
+  padding: 0.5rem;
+  min-height: 1.5rem;
+  text-align: center;
+  outline: none;
+}
+
+.dark .tiptap-editor .image-with-caption .image-caption {
+  color: #9ca3af;
+}
+
+.tiptap-editor .image-with-caption .image-caption:empty::before {
+  content: attr(data-placeholder);
+  color: #9ca3af;
+  font-style: italic;
+}
+
+.dark .tiptap-editor .image-with-caption .image-caption:empty::before {
+  color: #6b7280;
+}
+
+.tiptap-editor .image-with-caption.ProseMirror-selectednode {
+  outline: 3px solid #8b5cf6;
+  border-radius: 0.5rem;
 }
 
 /* Tables */
@@ -504,5 +546,75 @@
 }
 
 .tiptap-editor .iframe-container.ProseMirror-selectednode {
+  outline: 3px solid #8b5cf6;
+}
+
+/* Details/Collapsible Block */
+.tiptap-editor .details-block {
+  margin: 1rem 0;
+  border: 1px solid #e5e7eb;
+  border-radius: 0.75rem;
+  overflow: hidden;
+  background-color: #f9fafb;
+}
+
+.dark .tiptap-editor .details-block {
+  border-color: #374151;
+  background-color: #1f2937;
+}
+
+.tiptap-editor .details-block .details-summary {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.75rem 1rem;
+  font-weight: 600;
+  cursor: pointer;
+  user-select: none;
+  list-style: none;
+  background-color: #f3f4f6;
+  border-bottom: 1px solid #e5e7eb;
+}
+
+.dark .tiptap-editor .details-block .details-summary {
+  background-color: #374151;
+  border-bottom-color: #4b5563;
+}
+
+.tiptap-editor .details-block .details-summary::-webkit-details-marker {
+  display: none;
+}
+
+.tiptap-editor .details-block .details-summary::before {
+  content: '▶';
+  font-size: 0.75rem;
+  transition: transform 0.2s ease;
+}
+
+.tiptap-editor .details-block[open] .details-summary::before {
+  transform: rotate(90deg);
+}
+
+.tiptap-editor .details-block .details-summary:hover {
+  background-color: #e5e7eb;
+}
+
+.dark .tiptap-editor .details-block .details-summary:hover {
+  background-color: #4b5563;
+}
+
+.tiptap-editor .details-block .details-content {
+  padding: 1rem;
+}
+
+.tiptap-editor .details-block .details-content > *:first-child {
+  margin-top: 0;
+}
+
+.tiptap-editor .details-block .details-content > *:last-child {
+  margin-bottom: 0;
+}
+
+.tiptap-editor .details-block.ProseMirror-selectednode {
   outline: 3px solid #8b5cf6;
 }

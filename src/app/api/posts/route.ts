@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/db';
+import { sendNewPostNotifications } from '@/lib/notifications';
 
 export const dynamic = 'force-dynamic';
 
@@ -72,6 +73,15 @@ export async function POST(request: NextRequest) {
         date: postDate,
       },
     });
+
+    // Send push notifications if post is public
+    if (post.isPublic) {
+      sendNewPostNotifications({
+        title: post.title,
+        slug: post.slug,
+        description: post.description || '',
+      }).catch((err) => console.error('Failed to send notifications:', err));
+    }
 
     return NextResponse.json({ success: true, slug: post.slug, id: post.id });
   } catch (error) {

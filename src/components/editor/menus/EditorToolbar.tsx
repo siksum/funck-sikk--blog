@@ -1,7 +1,7 @@
 'use client';
 
 import { Editor } from '@tiptap/react';
-import { useCallback, useState, useRef } from 'react';
+import { useCallback, useState, useRef, useEffect } from 'react';
 import { uploadToGoogleDriveDirect } from '@/lib/google-drive-client';
 import GoogleDriveFileBrowser from '@/components/common/GoogleDriveFileBrowser';
 
@@ -160,8 +160,58 @@ export default function EditorToolbar({ editor, onSave, onCancel, driveType = 'b
   const [driveBrowserMode, setDriveBrowserMode] = useState<'image' | 'pdf'>('pdf');
   const [showTableCellColorPicker, setShowTableCellColorPicker] = useState(false);
   const [showTableInsertMenu, setShowTableInsertMenu] = useState(false);
+  const [useImageCaption, setUseImageCaption] = useState(true);
+  const [isSticky, setIsSticky] = useState(false);
+  const [toolbarWidth, setToolbarWidth] = useState<number | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const pdfInputRef = useRef<HTMLInputElement>(null);
+  const toolbarRef = useRef<HTMLDivElement>(null);
+  const placeholderRef = useRef<HTMLDivElement>(null);
+  const originalTopRef = useRef<number | null>(null);
+
+  // Handle sticky toolbar behavior
+  useEffect(() => {
+    const toolbar = toolbarRef.current;
+    if (!toolbar) return;
+
+    const updateStickyState = () => {
+      if (!toolbar) return;
+
+      // Get the original position on first scroll
+      if (originalTopRef.current === null) {
+        const rect = toolbar.getBoundingClientRect();
+        originalTopRef.current = rect.top + window.scrollY;
+        setToolbarWidth(rect.width);
+      }
+
+      const scrollY = window.scrollY;
+      const threshold = originalTopRef.current - 16; // 16px offset from top
+
+      if (scrollY > threshold && !isSticky) {
+        setIsSticky(true);
+        // Update width when becoming sticky
+        const rect = toolbar.getBoundingClientRect();
+        setToolbarWidth(rect.width);
+      } else if (scrollY <= threshold && isSticky) {
+        setIsSticky(false);
+      }
+    };
+
+    // Initial check
+    updateStickyState();
+
+    window.addEventListener('scroll', updateStickyState, { passive: true });
+    window.addEventListener('resize', () => {
+      // Reset on resize to recalculate
+      originalTopRef.current = null;
+      setIsSticky(false);
+    });
+
+    return () => {
+      window.removeEventListener('scroll', updateStickyState);
+      window.removeEventListener('resize', () => {});
+    };
+  }, [isSticky]);
 
   const setLink = useCallback(() => {
     if (linkUrl) {
@@ -189,11 +239,15 @@ export default function EditorToolbar({ editor, onSave, onCancel, driveType = 'b
 
   const addImage = useCallback(() => {
     if (imageUrl) {
-      editor.chain().focus().setImage({ src: imageUrl }).run();
+      if (useImageCaption) {
+        editor.chain().focus().setImageWithCaption({ src: imageUrl, caption: '' }).run();
+      } else {
+        editor.chain().focus().setImage({ src: imageUrl }).run();
+      }
     }
     setShowImageInput(false);
     setImageUrl('');
-  }, [editor, imageUrl]);
+  }, [editor, imageUrl, useImageCaption]);
 
   const addYoutube = useCallback(() => {
     if (youtubeUrl) {
@@ -224,7 +278,11 @@ export default function EditorToolbar({ editor, onSave, onCancel, driveType = 'b
       }
 
       const data = await response.json();
-      editor.chain().focus().setImage({ src: data.url }).run();
+      if (useImageCaption) {
+        editor.chain().focus().setImageWithCaption({ src: data.url, caption: '' }).run();
+      } else {
+        editor.chain().focus().setImage({ src: data.url }).run();
+      }
       setShowImageInput(false);
     } catch (error) {
       console.error('Upload error:', error);
@@ -235,7 +293,7 @@ export default function EditorToolbar({ editor, onSave, onCancel, driveType = 'b
         fileInputRef.current.value = '';
       }
     }
-  }, [editor]);
+  }, [editor, useImageCaption]);
 
   const handlePdfUpload = useCallback(async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -308,8 +366,12 @@ export default function EditorToolbar({ editor, onSave, onCancel, driveType = 'b
   const handleDriveFileSelect = useCallback((files: { id: string; name: string; mimeType: string; downloadUrl: string }[]) => {
     for (const file of files) {
       if (driveBrowserMode === 'image' && file.mimeType.startsWith('image/')) {
-        // Insert as image
-        editor.chain().focus().setImage({ src: file.downloadUrl }).run();
+        // Insert as image (with or without caption)
+        if (useImageCaption) {
+          editor.chain().focus().setImageWithCaption({ src: file.downloadUrl, caption: '' }).run();
+        } else {
+          editor.chain().focus().setImage({ src: file.downloadUrl }).run();
+        }
       } else if (file.mimeType === 'application/pdf') {
         // Insert as PDF with current display mode
         const fileId = file.id;
@@ -331,10 +393,25 @@ export default function EditorToolbar({ editor, onSave, onCancel, driveType = 'b
       }
     }
     setShowImageInput(false);
-  }, [editor, driveBrowserMode, pdfDisplayMode]);
+  }, [editor, driveBrowserMode, pdfDisplayMode, useImageCaption]);
 
   return (
-    <div className="sticky top-0 z-10 bg-white/95 dark:bg-gray-900/95 backdrop-blur border-2 border-pink-200 dark:border-pink-500/40 rounded-lg p-2 mb-4 flex flex-wrap items-center gap-1">
+    <>
+      {/* Placeholder to prevent layout shift when toolbar becomes fixed */}
+      {isSticky && (
+        <div
+          ref={placeholderRef}
+          style={{ height: toolbarRef.current?.offsetHeight || 0 }}
+          className="mb-4"
+        />
+      )}
+      <div
+        ref={toolbarRef}
+        className={`bg-white/95 dark:bg-gray-900/95 backdrop-blur border-2 border-pink-200 dark:border-pink-500/40 rounded-lg p-2 flex flex-wrap items-center gap-1 shadow-lg ${
+          isSticky ? 'fixed top-4 left-4 right-4 z-50' : 'mb-4 z-40'
+        }`}
+        style={isSticky && toolbarWidth ? { maxWidth: toolbarWidth, margin: '0 auto', left: '50%', transform: 'translateX(-50%)' } : undefined}
+      >
       {/* Text Formatting */}
       <ToolbarButton
         onClick={() => editor.chain().focus().toggleBold().run()}
@@ -718,6 +795,30 @@ export default function EditorToolbar({ editor, onSave, onCancel, driveType = 'b
         </ToolbarButton>
         {showImageInput && (
           <div className="absolute top-full right-0 mt-2 p-3 bg-white dark:bg-gray-800 rounded-lg shadow-lg border border-pink-200 dark:border-pink-500/40 z-20 w-72">
+            {/* Caption Toggle */}
+            <div className="mb-3 flex items-center justify-between">
+              <label className="text-xs font-semibold text-gray-500 dark:text-gray-400">
+                캡션 포함
+              </label>
+              <button
+                type="button"
+                onClick={(e) => {
+                  e.preventDefault();
+                  e.stopPropagation();
+                  setUseImageCaption(!useImageCaption);
+                }}
+                className={`relative w-10 h-5 rounded-full transition-colors ${
+                  useImageCaption ? 'bg-pink-500' : 'bg-gray-300 dark:bg-gray-600'
+                }`}
+              >
+                <span
+                  className={`absolute top-0.5 left-0.5 w-4 h-4 bg-white rounded-full transition-transform ${
+                    useImageCaption ? 'translate-x-5' : 'translate-x-0'
+                  }`}
+                />
+              </button>
+            </div>
+
             {/* Image Upload */}
             <div className="mb-3">
               <label className="block text-xs font-semibold text-gray-500 dark:text-gray-400 mb-1">
@@ -1265,6 +1366,17 @@ export default function EditorToolbar({ editor, onSave, onCancel, driveType = 'b
         </svg>
       </ToolbarButton>
 
+      <ToolbarButton
+        onClick={() => editor.chain().focus().setDetails().run()}
+        isActive={editor.isActive('details')}
+        title="접기/펼치기 (더블클릭하여 제목 수정)"
+      >
+        <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 5h14v2H5z" />
+        </svg>
+      </ToolbarButton>
+
       {/* Spacer */}
       <div className="flex-1" />
 
@@ -1301,6 +1413,7 @@ export default function EditorToolbar({ editor, onSave, onCancel, driveType = 'b
         multiple={false}
         acceptedTypes={driveBrowserMode === 'image' ? ['image/*'] : ['application/pdf']}
       />
-    </div>
+      </div>
+    </>
   );
 }
