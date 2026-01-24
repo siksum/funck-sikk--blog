@@ -988,6 +988,8 @@ export default function PostEditor({ initialData = {}, isEdit = false }: PostEdi
                 // Do nothing - cancel is handled by the main form
               }}
               placeholder="포스트 내용을 작성하세요..."
+              driveType="blog"
+              category={formData.category}
             />
           </div>
         </div>
