@@ -51,6 +51,30 @@ const CustomTableHeader = TableHeader.extend({
     };
   },
 });
+
+// Custom TableRow with height support for row resizing
+const CustomTableRow = TableRow.extend({
+  addAttributes() {
+    return {
+      ...this.parent?.(),
+      height: {
+        default: null,
+        parseHTML: element => {
+          const height = element.style.height;
+          return height || null;
+        },
+        renderHTML: attributes => {
+          if (!attributes.height) {
+            return {};
+          }
+          return {
+            style: `height: ${attributes.height}`,
+          };
+        },
+      },
+    };
+  },
+});
 import { TaskList } from '@tiptap/extension-task-list';
 import { TaskItem } from '@tiptap/extension-task-item';
 import { Placeholder } from '@tiptap/extension-placeholder';
@@ -165,7 +189,7 @@ export default function TipTapEditor({
       Table.configure({
         resizable: true,
       }),
-      TableRow,
+      CustomTableRow,
       CustomTableCell,
       CustomTableHeader,
       TaskList,
@@ -303,6 +327,107 @@ export default function TipTapEditor({
 
     document.addEventListener('keydown', handleKeyDown);
     return () => document.removeEventListener('keydown', handleKeyDown);
+  }, [editor]);
+
+  // Table row resize functionality
+  useEffect(() => {
+    if (!editor) return;
+
+    const editorElement = editor.view.dom;
+    let isResizing = false;
+    let currentRow: HTMLTableRowElement | null = null;
+    let startY = 0;
+    let startHeight = 0;
+
+    const handleMouseDown = (e: MouseEvent) => {
+      const target = e.target as HTMLElement;
+
+      // Check if we're clicking on the row resize area (bottom of last cell in row)
+      const cell = target.closest('td, th') as HTMLTableCellElement | null;
+      if (!cell) return;
+
+      const row = cell.closest('tr') as HTMLTableRowElement | null;
+      if (!row) return;
+
+      // Check if click is near the bottom border of the cell
+      const cellRect = cell.getBoundingClientRect();
+      const isNearBottom = e.clientY >= cellRect.bottom - 6;
+
+      // Only allow resize from the last cell in the row
+      const isLastCell = cell === row.cells[row.cells.length - 1];
+
+      if (isNearBottom && isLastCell) {
+        e.preventDefault();
+        isResizing = true;
+        currentRow = row;
+        startY = e.clientY;
+        startHeight = row.offsetHeight;
+
+        row.classList.add('row-resizing');
+        editorElement.classList.add('row-resize-cursor');
+
+        document.addEventListener('mousemove', handleMouseMove);
+        document.addEventListener('mouseup', handleMouseUp);
+      }
+    };
+
+    const handleMouseMove = (e: MouseEvent) => {
+      if (!isResizing || !currentRow) return;
+
+      const deltaY = e.clientY - startY;
+      const newHeight = Math.max(30, startHeight + deltaY); // Minimum 30px height
+
+      currentRow.style.height = `${newHeight}px`;
+    };
+
+    const handleMouseUp = () => {
+      if (!isResizing || !currentRow) return;
+
+      // Update the editor state with the new row height
+      const rowHeight = currentRow.style.height;
+      const table = currentRow.closest('table');
+      if (table && rowHeight) {
+        const rowIndex = Array.from(table.rows).indexOf(currentRow);
+
+        // Find the table node in ProseMirror and update the row height
+        const { state } = editor;
+        const { doc, tr } = state;
+
+        doc.descendants((node, pos) => {
+          if (node.type.name === 'table') {
+            let rowCount = 0;
+            node.forEach((row, offset) => {
+              if (row.type.name === 'tableRow' && rowCount === rowIndex) {
+                tr.setNodeMarkup(pos + offset + 1, undefined, {
+                  ...row.attrs,
+                  height: rowHeight,
+                });
+              }
+              rowCount++;
+            });
+          }
+        });
+
+        editor.view.dispatch(tr);
+      }
+
+      currentRow.classList.remove('row-resizing');
+      editorElement.classList.remove('row-resize-cursor');
+
+      isResizing = false;
+      currentRow = null;
+
+      document.removeEventListener('mousemove', handleMouseMove);
+      document.removeEventListener('mouseup', handleMouseUp);
+    };
+
+    editorElement.addEventListener('mousedown', handleMouseDown);
+
+    return () => {
+      editorElement.removeEventListener('mousedown', handleMouseDown);
+      document.removeEventListener('mousemove', handleMouseMove);
+      document.removeEventListener('mouseup', handleMouseUp);
+    };
   }, [editor]);
 
   const handleSave = useCallback(async (isAutoSave: boolean = false) => {
