@@ -2,12 +2,15 @@
 
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
+import { useSession } from 'next-auth/react';
 import { usePushSubscription } from '@/hooks/usePushSubscription';
 
 export default function FooterClient() {
   const pathname = usePathname();
   const isAdminPage = pathname?.startsWith('/admin');
-  const { isSubscribed, isSupported, isLoading, subscribe, unsubscribe } = usePushSubscription();
+  const { data: session } = useSession();
+  const isLoggedIn = !!session?.user;
+  const { isSubscribed, isSupported, isLoading, subscribe, unsubscribe } = usePushSubscription(isLoggedIn);
 
   const handleNotificationToggle = async () => {
     if (isSubscribed) {
@@ -121,7 +124,11 @@ export default function FooterClient() {
             </div>
             {isSupported && !isLoading && (
               <p className="mt-2 text-xs" style={{ color: 'var(--foreground-muted)' }}>
-                {isSubscribed ? '알림이 활성화되어 있습니다' : '알림을 구독하세요'}
+                {isSubscribed
+                  ? '알림이 활성화되어 있습니다'
+                  : isLoggedIn
+                    ? '알림을 구독하세요'
+                    : '로그인하면 알림을 구독할 수 있습니다'}
               </p>
             )}
           </div>

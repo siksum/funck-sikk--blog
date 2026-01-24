@@ -4,6 +4,15 @@ import { auth } from '@/lib/auth';
 
 export async function POST(request: NextRequest) {
   const session = await auth();
+
+  // Require authentication for push subscription
+  if (!session?.user?.id) {
+    return NextResponse.json(
+      { error: '로그인이 필요합니다.' },
+      { status: 401 }
+    );
+  }
+
   const body = await request.json();
   const { endpoint, keys } = body;
 
@@ -20,12 +29,12 @@ export async function POST(request: NextRequest) {
       endpoint,
       p256dh: keys.p256dh,
       auth: keys.auth,
-      userId: session?.user?.id || null,
+      userId: session.user.id,
     },
     update: {
       p256dh: keys.p256dh,
       auth: keys.auth,
-      userId: session?.user?.id || null,
+      userId: session.user.id,
     },
   });
 
