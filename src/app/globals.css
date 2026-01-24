@@ -492,6 +492,21 @@ code, pre, .font-mono {
 
 .mdx-html-content p {
   margin-bottom: 1rem;
+  min-height: 1.5em; /* Preserve empty paragraphs from Enter key */
+}
+
+/* Preserve empty paragraphs - show as line break */
+.mdx-html-content p:empty,
+.mdx-html-content p:has(br:only-child) {
+  min-height: 1.5em;
+  margin-bottom: 0.5rem;
+}
+
+/* Handle br tags for soft line breaks (Shift+Enter) */
+.mdx-html-content br {
+  display: block;
+  content: "";
+  margin-top: 0.25em;
 }
 
 .mdx-html-content h1 {
