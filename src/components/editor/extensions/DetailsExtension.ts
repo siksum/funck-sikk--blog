@@ -31,7 +31,7 @@ export const Details = Node.create<DetailsOptions>({
   addAttributes() {
     return {
       open: {
-        default: true,
+        default: false,
         parseHTML: (element) => element.hasAttribute('open'),
         renderHTML: (attributes) => {
           if (!attributes.open) {
@@ -70,7 +70,7 @@ export const Details = Node.create<DetailsOptions>({
         ({ commands }) => {
           return commands.insertContent({
             type: this.name,
-            attrs: { open: true, title: options?.title || '클릭하여 펼치기' },
+            attrs: { open: false, title: options?.title || '클릭하여 펼치기' },
             content: [
               {
                 type: 'paragraph',
