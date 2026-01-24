@@ -130,14 +130,16 @@ export const Details = Node.create<DetailsOptions>({
 
   addNodeView() {
     return ({ node, editor, getPos }) => {
-      const container = document.createElement('details');
+      // Use div instead of details to avoid native marker
+      const container = document.createElement('div');
       container.classList.add('details-block');
       if (node.attrs.open) {
-        container.setAttribute('open', 'open');
+        container.classList.add('is-open');
       }
 
-      const summary = document.createElement('summary');
-      summary.classList.add('details-summary');
+      // Use div instead of summary to avoid native marker
+      const summaryDiv = document.createElement('div');
+      summaryDiv.classList.add('details-summary');
 
       // Create toggle button for the arrow
       const toggleBtn = document.createElement('span');
@@ -163,11 +165,13 @@ export const Details = Node.create<DetailsOptions>({
 
               // Toggle DOM state first for immediate feedback
               if (newOpenState) {
-                container.setAttribute('open', 'open');
+                container.classList.add('is-open');
                 toggleBtn.style.transform = 'rotate(90deg)';
+                content.style.display = 'block';
               } else {
-                container.removeAttribute('open');
+                container.classList.remove('is-open');
                 toggleBtn.style.transform = 'rotate(0deg)';
+                content.style.display = 'none';
               }
 
               // Update editor state
@@ -204,7 +208,7 @@ export const Details = Node.create<DetailsOptions>({
       titleSpan.style.display = 'inline-block';
       titleSpan.style.cursor = 'text';
 
-      // Stop propagation to prevent summary click handler, but allow default for cursor placement
+      // Stop propagation but allow default for cursor placement
       titleSpan.addEventListener('mousedown', (e) => {
         e.stopPropagation();
       });
@@ -252,19 +256,15 @@ export const Details = Node.create<DetailsOptions>({
         document.execCommand('insertText', false, text);
       });
 
-      summary.appendChild(toggleBtn);
-      summary.appendChild(titleSpan);
-
-      // Prevent native details toggle entirely on summary
-      summary.addEventListener('click', (e) => {
-        e.preventDefault();
-        e.stopPropagation();
-      });
+      summaryDiv.appendChild(toggleBtn);
+      summaryDiv.appendChild(titleSpan);
 
       const content = document.createElement('div');
       content.classList.add('details-content');
+      // Set initial visibility based on open state
+      content.style.display = node.attrs.open ? 'block' : 'none';
 
-      container.appendChild(summary);
+      container.appendChild(summaryDiv);
       container.appendChild(content);
 
       return {
@@ -275,11 +275,13 @@ export const Details = Node.create<DetailsOptions>({
             return false;
           }
           if (updatedNode.attrs.open) {
-            container.setAttribute('open', 'open');
+            container.classList.add('is-open');
             toggleBtn.style.transform = 'rotate(90deg)';
+            content.style.display = 'block';
           } else {
-            container.removeAttribute('open');
+            container.classList.remove('is-open');
             toggleBtn.style.transform = 'rotate(0deg)';
+            content.style.display = 'none';
           }
           // Only update text if it differs (avoid cursor jumping during editing)
           if (document.activeElement !== titleSpan && titleSpan.textContent !== updatedNode.attrs.title) {
