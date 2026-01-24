@@ -13,6 +13,22 @@
   outline: none;
 }
 
+/* Global: Hide ALL native details/summary markers in the editor */
+.tiptap-editor summary {
+  list-style: none !important;
+  list-style-type: none !important;
+}
+
+.tiptap-editor summary::-webkit-details-marker {
+  display: none !important;
+}
+
+.tiptap-editor summary::marker {
+  display: none !important;
+  font-size: 0 !important;
+  content: none !important;
+}
+
 /* Placeholder */
 .tiptap-editor p.is-editor-empty:first-child::before {
   content: attr(data-placeholder);
@@ -682,22 +698,27 @@
   cursor: pointer;
   user-select: none;
   list-style: none;
+  list-style-type: none;
   background-color: #f3f4f6;
   border-bottom: 1px solid #e5e7eb;
+}
+
+/* Hide native details marker in all browsers */
+.tiptap-editor .details-block .details-summary::-webkit-details-marker,
+.tiptap-editor .details-block summary::-webkit-details-marker {
+  display: none !important;
+}
+
+.tiptap-editor .details-block .details-summary::marker,
+.tiptap-editor .details-block summary::marker {
+  display: none !important;
+  font-size: 0;
+  content: none;
 }
 
 .dark .tiptap-editor .details-block .details-summary {
   background-color: #374151;
   border-bottom-color: #4b5563;
-}
-
-.tiptap-editor .details-block .details-summary::-webkit-details-marker {
-  display: none;
-}
-
-.tiptap-editor .details-block .details-summary::marker {
-  display: none;
-  content: '';
 }
 
 /* Toggle button is now a real element, not a pseudo-element */
@@ -743,16 +764,21 @@
   cursor: pointer;
   user-select: none;
   list-style: none;
+  list-style-type: none;
   padding: 0.25rem 0;
 }
 
-.tiptap-editor .collapsible-heading .collapsible-heading-summary::-webkit-details-marker {
-  display: none;
+/* Hide native details marker in all browsers */
+.tiptap-editor .collapsible-heading .collapsible-heading-summary::-webkit-details-marker,
+.tiptap-editor .collapsible-heading summary::-webkit-details-marker {
+  display: none !important;
 }
 
-.tiptap-editor .collapsible-heading .collapsible-heading-summary::marker {
-  display: none;
-  content: '';
+.tiptap-editor .collapsible-heading .collapsible-heading-summary::marker,
+.tiptap-editor .collapsible-heading summary::marker {
+  display: none !important;
+  font-size: 0;
+  content: none;
 }
 
 /* Toggle button is now a real element, not a pseudo-element */
