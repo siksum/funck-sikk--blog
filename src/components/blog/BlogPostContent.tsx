@@ -248,9 +248,9 @@ export default function BlogPostContent({ content, slug, isAdmin, initialMetadat
                     onChange={async (e) => {
                       const file = e.target.files?.[0];
                       if (!file) return;
-                      // Check file size (max 10MB)
-                      if (file.size > 10 * 1024 * 1024) {
-                        alert('파일이 너무 큽니다. 10MB 이하의 이미지를 사용해주세요.');
+                      // Check file size (max 50MB)
+                      if (file.size > 50 * 1024 * 1024) {
+                        alert('파일이 너무 큽니다. 50MB 이하의 이미지를 사용해주세요.');
                         return;
                       }
                       try {

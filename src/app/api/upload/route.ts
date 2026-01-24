@@ -4,6 +4,10 @@ import { v2 as cloudinary } from 'cloudinary';
 // Force dynamic rendering
 export const dynamic = 'force-dynamic';
 
+// Increase body size limit for Vercel Pro (max 50MB)
+export const maxDuration = 60;
+export const runtime = 'nodejs';
+
 // Configure Cloudinary
 cloudinary.config({
   cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
@@ -41,12 +45,12 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Validate file size (max 10MB for images, 20MB for PDFs)
+    // Validate file size (max 50MB for images, 100MB for PDFs - Cloudinary limits)
     const isPdf = file.type === 'application/pdf';
-    const maxSize = isPdf ? 20 * 1024 * 1024 : 10 * 1024 * 1024;
+    const maxSize = isPdf ? 100 * 1024 * 1024 : 50 * 1024 * 1024;
     if (file.size > maxSize) {
       return NextResponse.json(
-        { error: `File too large. Maximum size is ${isPdf ? '20MB' : '10MB'}` },
+        { error: `File too large. Maximum size is ${isPdf ? '100MB' : '50MB'}` },
         { status: 400 }
       );
     }
