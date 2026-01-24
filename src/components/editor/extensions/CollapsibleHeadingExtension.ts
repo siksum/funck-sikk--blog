@@ -338,6 +338,7 @@ export const CollapsibleHeading = Node.create<CollapsibleHeadingOptions>({
 
         // Prevent default details toggle when editing and focus the heading
         h.addEventListener('mousedown', (e) => {
+          e.preventDefault();
           e.stopPropagation();
           // Focus the heading after a small delay to ensure TipTap doesn't steal focus
           setTimeout(() => {
@@ -404,13 +405,14 @@ export const CollapsibleHeading = Node.create<CollapsibleHeadingOptions>({
 
       // Toggle open attribute when summary (but not heading) is clicked
       summary.addEventListener('click', (e) => {
+        // Always prevent native details toggle behavior first
+        e.preventDefault();
+        e.stopPropagation();
+
         // If clicking on the heading itself, don't toggle (allow editing)
         if (e.target === heading) {
           return;
         }
-
-        e.preventDefault();
-        e.stopPropagation();
 
         if (typeof getPos === 'function') {
           const pos = getPos();
