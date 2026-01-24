@@ -768,6 +768,14 @@ code, pre, .font-mono {
   margin-top: -0.25rem;
 }
 
+/* Hide empty captions in rendered content */
+.mdx-html-content .image-caption:empty,
+.mdx-html-content figcaption:empty,
+.prose .image-caption:empty,
+.prose figcaption:empty {
+  display: none;
+}
+
 .dark .mdx-html-content .image-caption,
 .dark .mdx-html-content figcaption,
 .dark .prose .image-caption,
