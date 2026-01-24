@@ -248,6 +248,11 @@ export default function BlogPostContent({ content, slug, isAdmin, initialMetadat
                     onChange={async (e) => {
                       const file = e.target.files?.[0];
                       if (!file) return;
+                      // Check file size (max ~4MB for Vercel)
+                      if (file.size > 4 * 1024 * 1024) {
+                        alert('파일이 너무 큽니다. 4MB 이하의 이미지를 사용해주세요.');
+                        return;
+                      }
                       try {
                         const formDataUpload = new FormData();
                         formDataUpload.append('file', file);
@@ -255,7 +260,15 @@ export default function BlogPostContent({ content, slug, isAdmin, initialMetadat
                           method: 'POST',
                           body: formDataUpload,
                         });
-                        const data = await response.json();
+                        const text = await response.text();
+                        let data;
+                        try {
+                          data = JSON.parse(text);
+                        } catch {
+                          console.error('Non-JSON response:', text);
+                          alert('서버 오류: 파일이 너무 크거나 서버에 문제가 있습니다.');
+                          return;
+                        }
                         if (response.ok) {
                           setMetadata(prev => ({ ...prev, thumbnail: data.url }));
                         } else {
