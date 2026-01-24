@@ -394,19 +394,13 @@ export const CollapsibleHeading = Node.create<CollapsibleHeadingOptions>({
         h.style.minWidth = '50px';
         h.style.cursor = 'text';
 
-        // Prevent default details toggle when editing and focus the heading
+        // Stop propagation to prevent summary click handler, but allow default for cursor placement
         h.addEventListener('mousedown', (e) => {
-          e.preventDefault();
           e.stopPropagation();
-          // Focus the heading after a small delay to ensure TipTap doesn't steal focus
-          setTimeout(() => {
-            h.focus();
-          }, 0);
         });
 
         h.addEventListener('click', (e) => {
           e.stopPropagation();
-          e.preventDefault();
         });
 
         // Handle inline title editing

@@ -204,22 +204,16 @@ export const Details = Node.create<DetailsOptions>({
       titleSpan.style.display = 'inline-block';
       titleSpan.style.cursor = 'text';
 
-      // Prevent default details toggle when editing and focus the title
+      // Stop propagation to prevent summary click handler, but allow default for cursor placement
       titleSpan.addEventListener('mousedown', (e) => {
-        e.preventDefault();
         e.stopPropagation();
-        // Focus the title after a small delay to ensure TipTap doesn't steal focus
-        setTimeout(() => {
-          titleSpan.focus();
-        }, 0);
       });
 
       titleSpan.addEventListener('click', (e) => {
-        e.preventDefault();
         e.stopPropagation();
       });
 
-      // Handle inline title editing
+      // Handle inline title editing on blur
       titleSpan.addEventListener('blur', () => {
         if (typeof getPos === 'function') {
           const pos = getPos();
