@@ -312,21 +312,23 @@ export const CollapsibleHeading = Node.create<CollapsibleHeadingOptions>({
     return ({ node, editor, getPos }) => {
       const level = node.attrs.level || 2;
 
-      const container = document.createElement('details');
+      // Use div instead of details to avoid native marker
+      const container = document.createElement('div');
       container.classList.add('collapsible-heading');
       container.setAttribute('data-level', String(level));
       if (node.attrs.open) {
-        container.setAttribute('open', 'open');
+        container.classList.add('is-open');
       }
 
-      const summary = document.createElement('summary');
-      summary.classList.add('collapsible-heading-summary');
+      // Use div instead of summary to avoid native marker
+      const summaryDiv = document.createElement('div');
+      summaryDiv.classList.add('collapsible-heading-summary');
 
       // Apply background color if set
       if (node.attrs.backgroundColor) {
-        summary.style.backgroundColor = node.attrs.backgroundColor;
-        summary.style.padding = '0.5rem 0.75rem';
-        summary.style.borderRadius = '0.5rem';
+        summaryDiv.style.backgroundColor = node.attrs.backgroundColor;
+        summaryDiv.style.padding = '0.5rem 0.75rem';
+        summaryDiv.style.borderRadius = '0.5rem';
       }
 
       // Create toggle button for the arrow
@@ -355,11 +357,13 @@ export const CollapsibleHeading = Node.create<CollapsibleHeadingOptions>({
 
               // Toggle DOM state first for immediate feedback
               if (newOpenState) {
-                container.setAttribute('open', 'open');
+                container.classList.add('is-open');
                 toggleBtn.style.transform = 'rotate(90deg)';
+                content.style.display = 'block';
               } else {
-                container.removeAttribute('open');
+                container.classList.remove('is-open');
                 toggleBtn.style.transform = 'rotate(0deg)';
+                content.style.display = 'none';
               }
 
               // Update editor state
@@ -394,7 +398,7 @@ export const CollapsibleHeading = Node.create<CollapsibleHeadingOptions>({
         h.style.minWidth = '50px';
         h.style.cursor = 'text';
 
-        // Stop propagation to prevent summary click handler, but allow default for cursor placement
+        // Stop propagation but allow default for cursor placement
         h.addEventListener('mousedown', (e) => {
           e.stopPropagation();
         });
@@ -453,19 +457,15 @@ export const CollapsibleHeading = Node.create<CollapsibleHeadingOptions>({
       }
 
       setupHeading(heading);
-      summary.appendChild(toggleBtn);
-      summary.appendChild(heading);
-
-      // Prevent native details toggle entirely on summary
-      summary.addEventListener('click', (e) => {
-        e.preventDefault();
-        e.stopPropagation();
-      });
+      summaryDiv.appendChild(toggleBtn);
+      summaryDiv.appendChild(heading);
 
       const content = document.createElement('div');
       content.classList.add('collapsible-heading-content');
+      // Set initial visibility based on open state
+      content.style.display = node.attrs.open ? 'block' : 'none';
 
-      container.appendChild(summary);
+      container.appendChild(summaryDiv);
       container.appendChild(content);
 
       return {
@@ -476,11 +476,13 @@ export const CollapsibleHeading = Node.create<CollapsibleHeadingOptions>({
             return false;
           }
           if (updatedNode.attrs.open) {
-            container.setAttribute('open', 'open');
+            container.classList.add('is-open');
             toggleBtn.style.transform = 'rotate(90deg)';
+            content.style.display = 'block';
           } else {
-            container.removeAttribute('open');
+            container.classList.remove('is-open');
             toggleBtn.style.transform = 'rotate(0deg)';
+            content.style.display = 'none';
           }
 
           // Only update text if it differs (avoid cursor jumping during editing)
@@ -497,13 +499,13 @@ export const CollapsibleHeading = Node.create<CollapsibleHeadingOptions>({
 
           // Update background color
           if (updatedNode.attrs.backgroundColor) {
-            summary.style.backgroundColor = updatedNode.attrs.backgroundColor;
-            summary.style.padding = '0.5rem 0.75rem';
-            summary.style.borderRadius = '0.5rem';
+            summaryDiv.style.backgroundColor = updatedNode.attrs.backgroundColor;
+            summaryDiv.style.padding = '0.5rem 0.75rem';
+            summaryDiv.style.borderRadius = '0.5rem';
           } else {
-            summary.style.backgroundColor = '';
-            summary.style.padding = '';
-            summary.style.borderRadius = '';
+            summaryDiv.style.backgroundColor = '';
+            summaryDiv.style.padding = '';
+            summaryDiv.style.borderRadius = '';
           }
 
           // Update heading level if changed
@@ -516,7 +518,7 @@ export const CollapsibleHeading = Node.create<CollapsibleHeadingOptions>({
               newHeading.style.color = updatedNode.attrs.textColor;
             }
             setupHeading(newHeading);
-            summary.replaceChild(newHeading, heading);
+            summaryDiv.replaceChild(newHeading, heading);
             heading = newHeading;
           }
 
