@@ -957,18 +957,15 @@ export default function SikkPostEditor({ initialData = {}, isEdit = false }: Sik
                 if (!file) return;
                 setUploading(true);
                 try {
-                  const formDataUpload = new FormData();
-                  formDataUpload.append('file', file);
-                  const response = await fetch('/api/upload', {
-                    method: 'POST',
-                    body: formDataUpload,
-                  });
-                  if (response.ok) {
-                    const data = await response.json();
-                    setFormData(prev => ({ ...prev, thumbnail: data.url }));
-                  }
+                  const { uploadToGoogleDriveDirect } = await import('@/lib/google-drive-client');
+                  const category = formData.category
+                    ? formData.category.split('/').pop() || 'banners'
+                    : 'banners';
+                  const result = await uploadToGoogleDriveDirect(file, { driveType: 'sikk', category });
+                  setFormData(prev => ({ ...prev, thumbnail: result.url }));
                 } catch (error) {
-                  alert('이미지 업로드에 실패했습니다.');
+                  console.error('Upload error:', error);
+                  alert(`이미지 업로드 실패: ${error instanceof Error ? error.message : '알 수 없는 오류'}`);
                 } finally {
                   setUploading(false);
                   e.target.value = '';
