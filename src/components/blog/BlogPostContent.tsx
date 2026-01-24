@@ -136,6 +136,7 @@ export default function BlogPostContent({ content, slug, isAdmin, initialMetadat
           thumbnailPosition: metadata.thumbnailPosition,
           thumbnailScale: metadata.thumbnailScale,
           content: html,
+          originalCategory: initialMetadata?.category,
         }),
       });
 
