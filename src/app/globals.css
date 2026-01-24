@@ -572,16 +572,137 @@ code, pre, .font-mono {
 }
 
 .mdx-html-content pre code {
-  background-color: transparent;
-  color: #a78bfa;
+  background-color: transparent !important;
+  color: #a78bfa !important;
   font-weight: 700;
   padding: 0;
+  font-size: 0.875rem;
+}
+
+/* Override highlight.js styles for HTML content */
+.mdx-html-content pre code .hljs,
+.mdx-html-content pre code span {
+  color: inherit !important;
+}
+
+.mdx-html-content pre code,
+.mdx-html-content pre code * {
+  color: #a78bfa !important;
 }
 
 .mdx-html-content blockquote {
   border-left: 4px solid #8b5cf6;
   padding-left: 1rem;
   margin: 1rem 0;
+}
+
+/* Horizontal Rule */
+.mdx-html-content hr,
+.prose hr {
+  border: none;
+  border-top: 2px solid rgba(139, 92, 246, 0.3);
+  margin: 2rem 0;
+}
+
+/* Details/Collapsible Block */
+.mdx-html-content details,
+.mdx-html-content .details-block,
+.prose details,
+.prose .details-block {
+  margin: 1rem 0;
+  border: 1px solid #e5e7eb;
+  border-radius: 0.75rem;
+  overflow: hidden;
+  background-color: #f9fafb;
+}
+
+.dark .mdx-html-content details,
+.dark .mdx-html-content .details-block,
+.dark .prose details,
+.dark .prose .details-block {
+  border-color: #374151;
+  background-color: #1f2937;
+}
+
+.mdx-html-content details > summary,
+.mdx-html-content .details-summary,
+.prose details > summary,
+.prose .details-summary {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.75rem 1rem;
+  font-weight: 600;
+  cursor: pointer;
+  user-select: none;
+  list-style: none;
+  background-color: #f3f4f6;
+  border-bottom: 1px solid #e5e7eb;
+}
+
+.dark .mdx-html-content details > summary,
+.dark .mdx-html-content .details-summary,
+.dark .prose details > summary,
+.dark .prose .details-summary {
+  background-color: #374151;
+  border-bottom-color: #4b5563;
+}
+
+.mdx-html-content details > summary::-webkit-details-marker,
+.mdx-html-content .details-summary::-webkit-details-marker,
+.prose details > summary::-webkit-details-marker,
+.prose .details-summary::-webkit-details-marker {
+  display: none;
+}
+
+.mdx-html-content details > summary::before,
+.mdx-html-content .details-summary::before,
+.prose details > summary::before,
+.prose .details-summary::before {
+  content: '▶';
+  font-size: 0.75rem;
+  transition: transform 0.2s ease;
+}
+
+.mdx-html-content details[open] > summary::before,
+.mdx-html-content .details-block[open] .details-summary::before,
+.prose details[open] > summary::before,
+.prose .details-block[open] .details-summary::before {
+  transform: rotate(90deg);
+}
+
+.mdx-html-content details > summary:hover,
+.mdx-html-content .details-summary:hover,
+.prose details > summary:hover,
+.prose .details-summary:hover {
+  background-color: #e5e7eb;
+}
+
+.dark .mdx-html-content details > summary:hover,
+.dark .mdx-html-content .details-summary:hover,
+.dark .prose details > summary:hover,
+.dark .prose .details-summary:hover {
+  background-color: #4b5563;
+}
+
+.mdx-html-content .details-content,
+.prose .details-content {
+  padding: 1rem;
+}
+
+.mdx-html-content details > *:not(summary),
+.prose details > *:not(summary) {
+  padding: 1rem;
+}
+
+.mdx-html-content details > *:not(summary):first-of-type,
+.prose details > *:not(summary):first-of-type {
+  margin-top: 0;
+}
+
+.mdx-html-content details > *:not(summary):last-child,
+.prose details > *:not(summary):last-child {
+  margin-bottom: 0;
 }
 
 .mdx-html-content a {
