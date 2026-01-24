@@ -342,22 +342,20 @@ export default function TipTapEditor({
     const handleMouseDown = (e: MouseEvent) => {
       const target = e.target as HTMLElement;
 
-      // Check if we're clicking on the row resize area (bottom of last cell in row)
+      // Check if we're clicking on the row resize area (bottom of any cell in row)
       const cell = target.closest('td, th') as HTMLTableCellElement | null;
       if (!cell) return;
 
       const row = cell.closest('tr') as HTMLTableRowElement | null;
       if (!row) return;
 
-      // Check if click is near the bottom border of the cell
-      const cellRect = cell.getBoundingClientRect();
-      const isNearBottom = e.clientY >= cellRect.bottom - 6;
+      // Check if click is near the bottom border of the row
+      const rowRect = row.getBoundingClientRect();
+      const isNearBottom = e.clientY >= rowRect.bottom - 8;
 
-      // Only allow resize from the last cell in the row
-      const isLastCell = cell === row.cells[row.cells.length - 1];
-
-      if (isNearBottom && isLastCell) {
+      if (isNearBottom) {
         e.preventDefault();
+        e.stopPropagation();
         isResizing = true;
         currentRow = row;
         startY = e.clientY;

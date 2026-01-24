@@ -388,30 +388,40 @@
   background-color: rgba(139, 92, 246, 0.3);
 }
 
-/* Row resize handle */
+/* Row resize handle - appears on all cells at row bottom */
 .tiptap-editor table tr {
   position: relative;
 }
 
-.tiptap-editor table tr td:last-child::after,
-.tiptap-editor table tr th:last-child::after {
+.tiptap-editor table tr td,
+.tiptap-editor table tr th {
+  position: relative;
+}
+
+.tiptap-editor table tr td::after,
+.tiptap-editor table tr th::after {
   content: '';
   position: absolute;
   left: 0;
   right: 0;
-  bottom: -3px;
-  height: 6px;
+  bottom: -4px;
+  height: 8px;
   cursor: row-resize;
   z-index: 10;
 }
 
-.tiptap-editor table tr td:last-child:hover::after,
-.tiptap-editor table tr th:last-child:hover::after {
-  background-color: rgba(139, 92, 246, 0.3);
+.tiptap-editor table tr:hover td::after,
+.tiptap-editor table tr:hover th::after {
+  background-color: transparent;
 }
 
-.tiptap-editor table tr.row-resizing td:last-child::after,
-.tiptap-editor table tr.row-resizing th:last-child::after {
+.tiptap-editor table tr td:hover::after,
+.tiptap-editor table tr th:hover::after {
+  background-color: rgba(139, 92, 246, 0.2);
+}
+
+.tiptap-editor table tr.row-resizing td::after,
+.tiptap-editor table tr.row-resizing th::after {
   background-color: #8b5cf6;
 }
 
@@ -685,14 +695,9 @@
   display: none;
 }
 
-.tiptap-editor .details-block .details-summary::before {
-  content: '▶';
-  font-size: 0.75rem;
-  transition: transform 0.2s ease;
-}
-
-.tiptap-editor .details-block[open] .details-summary::before {
-  transform: rotate(90deg);
+/* Toggle button is now a real element, not a pseudo-element */
+.tiptap-editor .details-block .details-toggle-btn {
+  flex-shrink: 0;
 }
 
 .tiptap-editor .details-block .details-summary:hover {
@@ -740,27 +745,20 @@
   display: none;
 }
 
-.tiptap-editor .collapsible-heading .collapsible-heading-summary::before {
-  content: '▶';
-  font-size: 0.65em;
-  color: #9ca3af;
-  transition: transform 0.2s ease;
+/* Toggle button is now a real element, not a pseudo-element */
+.tiptap-editor .collapsible-heading .collapsible-heading-toggle-btn {
   flex-shrink: 0;
 }
 
-.tiptap-editor .collapsible-heading[open] .collapsible-heading-summary::before {
-  transform: rotate(90deg);
-}
-
-.tiptap-editor .collapsible-heading .collapsible-heading-summary:hover::before {
+.tiptap-editor .collapsible-heading .collapsible-heading-summary:hover .collapsible-heading-toggle-btn {
   color: #6b7280;
 }
 
-.dark .tiptap-editor .collapsible-heading .collapsible-heading-summary::before {
+.dark .tiptap-editor .collapsible-heading .collapsible-heading-toggle-btn {
   color: #6b7280;
 }
 
-.dark .tiptap-editor .collapsible-heading .collapsible-heading-summary:hover::before {
+.dark .tiptap-editor .collapsible-heading .collapsible-heading-summary:hover .collapsible-heading-toggle-btn {
   color: #9ca3af;
 }
 
