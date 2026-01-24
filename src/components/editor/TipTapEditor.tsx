@@ -245,6 +245,27 @@ export default function TipTapEditor({
     },
   });
 
+  // Prevent link navigation in editor - links should not navigate while editing
+  useEffect(() => {
+    if (!editor) return;
+
+    const handleClick = (event: MouseEvent) => {
+      const target = event.target as HTMLElement;
+      const anchor = target.closest('a');
+      if (anchor) {
+        event.preventDefault();
+        event.stopPropagation();
+      }
+    };
+
+    const editorElement = editor.view.dom;
+    editorElement.addEventListener('click', handleClick);
+
+    return () => {
+      editorElement.removeEventListener('click', handleClick);
+    };
+  }, [editor]);
+
   // Handle image paste - upload to Google Drive
   useEffect(() => {
     if (!editor) return;
