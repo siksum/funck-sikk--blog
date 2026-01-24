@@ -464,7 +464,7 @@ export default function TipTapEditor({
   return (
     <div className="tiptap-container">
       {/* Toolbar */}
-      <EditorToolbar editor={editor} onSave={handleSave} onCancel={handleCancel} driveType={driveType} category={category} />
+      <EditorToolbar editor={editor} onSave={handleSave} onCancel={handleCancel} driveType={driveType} category={category} slug={slug} />
 
       {/* Bubble Menu */}
       <BubbleMenuComponent editor={editor} />
