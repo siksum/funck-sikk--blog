@@ -32,16 +32,64 @@ declare global {
   }
 }
 
-// Get persistent cache of known folder IDs (uses window global to survive module reloads)
+// LocalStorage key for persistent folder cache
+const FOLDER_CACHE_KEY = 'googleDriveFolderCache';
+const FOLDER_CACHE_TTL = 24 * 60 * 60 * 1000; // 24 hours
+
+// Load folder cache from localStorage
+function loadFolderCacheFromStorage(): Map<string, string> {
+  if (typeof window === 'undefined' || typeof localStorage === 'undefined') {
+    return new Map();
+  }
+  try {
+    const cached = localStorage.getItem(FOLDER_CACHE_KEY);
+    if (cached) {
+      const { data, timestamp } = JSON.parse(cached);
+      // Check if cache is still valid (within TTL)
+      if (Date.now() - timestamp < FOLDER_CACHE_TTL) {
+        return new Map(Object.entries(data));
+      }
+    }
+  } catch (e) {
+    console.warn('Failed to load folder cache from localStorage:', e);
+  }
+  return new Map();
+}
+
+// Save folder cache to localStorage
+function saveFolderCacheToStorage(cache: Map<string, string>): void {
+  if (typeof window === 'undefined' || typeof localStorage === 'undefined') {
+    return;
+  }
+  try {
+    const data = Object.fromEntries(cache);
+    localStorage.setItem(FOLDER_CACHE_KEY, JSON.stringify({
+      data,
+      timestamp: Date.now(),
+    }));
+  } catch (e) {
+    console.warn('Failed to save folder cache to localStorage:', e);
+  }
+}
+
+// Get persistent cache of known folder IDs (uses window global + localStorage for persistence)
 // Key format: "parentFolderId:normalizedFolderName" -> folderId
 function getKnownFolderIds(): Map<string, string> {
   if (typeof window === 'undefined') {
     return new Map();
   }
   if (!window.__googleDriveKnownFolderIds) {
-    window.__googleDriveKnownFolderIds = new Map();
+    // Initialize from localStorage on first access
+    window.__googleDriveKnownFolderIds = loadFolderCacheFromStorage();
   }
   return window.__googleDriveKnownFolderIds;
+}
+
+// Helper to add folder to cache and persist to localStorage
+function cacheFolder(key: string, folderId: string): void {
+  const cache = getKnownFolderIds();
+  cache.set(key, folderId);
+  saveFolderCacheToStorage(cache);
 }
 
 // Get cache for pending folder creation promises (uses window global to survive module reloads)
@@ -103,6 +151,9 @@ async function listAndCacheFolders(
     console.log(`Cached folder: "${folder.name}" (${folder.id}) with keys: ${normalizedKey}, ${originalKey}`);
   }
 
+  // Persist cache to localStorage after batch update
+  saveFolderCacheToStorage(knownFolderIds);
+
   return folders;
 }
 
@@ -130,7 +181,7 @@ async function findOrCreateSingleFolderInternal(
   if (cachedByOriginal) {
     console.log(`Using cached folder ID (original name) for "${folderName}": ${cachedByOriginal}`);
     // Also store with normalized key for consistency
-    knownFolderIds.set(cacheKey, cachedByOriginal);
+    cacheFolder(cacheKey, cachedByOriginal);
     return cachedByOriginal;
   }
 
@@ -153,7 +204,7 @@ async function findOrCreateSingleFolderInternal(
     );
     if (existingFolder) {
       console.log(`Found existing folder via direct search: ${existingFolder.name} (${existingFolder.id})`);
-      knownFolderIds.set(cacheKey, existingFolder.id);
+      cacheFolder(cacheKey, existingFolder.id);
       return existingFolder.id;
     }
     // Log all found folders for debugging
@@ -189,8 +240,8 @@ async function findOrCreateSingleFolderInternal(
   const createResult = await createResponse.json();
   console.log(`Created folder: ${normalizedName} (${createResult.id})`);
 
-  // Store in persistent cache for future lookups
-  knownFolderIds.set(cacheKey, createResult.id);
+  // Store in persistent cache for future lookups (persists to localStorage)
+  cacheFolder(cacheKey, createResult.id);
 
   return createResult.id;
 }
