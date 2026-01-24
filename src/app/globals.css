@@ -995,7 +995,7 @@ iframe[src*="drive.google.com"],
 .mdx-content th,
 .mdx-content td {
   border: 1px solid rgb(221 214 254);
-  padding: 0.5rem 1rem;
+  padding: 0.25rem 0.75rem;
   text-align: left;
 }
 
@@ -1037,7 +1037,7 @@ iframe[src*="drive.google.com"],
 .mdx-html-content th,
 .mdx-html-content td {
   border: 1px solid rgb(221 214 254);
-  padding: 0.5rem 1rem;
+  padding: 0.25rem 0.75rem;
   text-align: left;
 }
 
