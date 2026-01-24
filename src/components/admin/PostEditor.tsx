@@ -135,10 +135,8 @@ export default function PostEditor({ initialData = {}, isEdit = false }: PostEdi
     setIsUploadingBanner(true);
     try {
       const { uploadToGoogleDriveDirect } = await import('@/lib/google-drive-client');
-      // Blog posts should go to blog/[category] folder structure within the blog drive
-      const categoryFolder = formData.category
-        ? `blog/${formData.category.split('/').pop() || 'banners'}`
-        : 'blog/banners';
+      // Use full category path directly (e.g., wargame/bandit) - the drive root is already 'blog'
+      const categoryFolder = formData.category || 'banners';
       const result = await uploadToGoogleDriveDirect(file, { driveType: 'blog', category: categoryFolder });
       setFormData(prev => ({ ...prev, thumbnail: result.url }));
     } catch (error) {
