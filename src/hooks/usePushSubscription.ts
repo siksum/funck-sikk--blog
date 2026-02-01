@@ -13,7 +13,7 @@ function urlBase64ToUint8Array(base64String: string) {
   return outputArray;
 }
 
-export function usePushSubscription() {
+export function usePushSubscription(isLoggedIn: boolean = false) {
   const [isSubscribed, setIsSubscribed] = useState(false);
   const [isSupported, setIsSupported] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
@@ -40,6 +40,10 @@ export function usePushSubscription() {
 
   const subscribe = useCallback(async () => {
     if (!isSupported) return false;
+    if (!isLoggedIn) {
+      alert('로그인이 필요합니다.');
+      return false;
+    }
 
     try {
       const registration = await navigator.serviceWorker.ready;
@@ -64,13 +68,18 @@ export function usePushSubscription() {
       if (res.ok) {
         setIsSubscribed(true);
         return true;
+      } else {
+        const data = await res.json();
+        if (res.status === 401) {
+          alert(data.error || '로그인이 필요합니다.');
+        }
+        return false;
       }
-      return false;
     } catch (error) {
       console.error('Push subscription failed:', error);
       return false;
     }
-  }, [isSupported]);
+  }, [isSupported, isLoggedIn]);
 
   const unsubscribe = useCallback(async () => {
     if (!isSupported) return false;
