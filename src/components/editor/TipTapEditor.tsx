@@ -235,6 +235,49 @@ export default function TipTapEditor({
       attributes: {
         class: 'tiptap-editor prose prose-violet dark:prose-invert max-w-none focus:outline-none',
       },
+      handlePaste: (view, event) => {
+        const items = event.clipboardData?.items;
+        if (!items) return false;
+
+        for (const item of items) {
+          if (item.type.startsWith('image/')) {
+            event.preventDefault();
+            const file = item.getAsFile();
+            if (!file) return false;
+
+            // Upload the image
+            const formData = new FormData();
+            formData.append('file', file);
+
+            fetch('/api/upload', {
+              method: 'POST',
+              body: formData,
+            })
+              .then((response) => {
+                if (!response.ok) {
+                  throw new Error('Upload failed');
+                }
+                return response.json();
+              })
+              .then((data) => {
+                // Insert the uploaded image
+                const { state } = view;
+                const { tr } = state;
+                const pos = state.selection.from;
+                const node = state.schema.nodes.image.create({ src: data.url });
+                view.dispatch(tr.insert(pos, node));
+              })
+              .catch((error) => {
+                console.error('Image paste upload error:', error);
+                alert('이미지 업로드에 실패했습니다.');
+              });
+
+            return true;
+          }
+        }
+
+        return false;
+      },
     },
     onUpdate: ({ editor }) => {
       setHasChanges(true);
